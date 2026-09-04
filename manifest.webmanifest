@@ -2,8 +2,9 @@
   "name": "Noor Traders Hisab",
   "short_name": "Noor Hisab",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#f4f7fb",
+  "background_color": "#edf3f8",
   "theme_color": "#0f766e",
   "lang": "ur",
   "dir": "rtl"
