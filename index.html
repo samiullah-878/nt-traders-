@@ -7,8 +7,35 @@
 <title>Noor Traders Hisab v79</title>
 <link rel="stylesheet" href="assets/css/styles.css">
 </head>
-<body><div class="app">
-<div class="top"><div><h1>Noor Traders Hisab</h1><small>Gulyana • v79 Standalone HTML</small></div><div><b id="todayLabel"></b><br><small>Data اسی browser/device میں محفوظ ہوگا</small></div></div>
+<body>
+
+<div id="loginGate" class="login-gate">
+  <div class="login-card">
+    <h2>Noor Traders Login</h2>
+    <p class="muted">صرف اجازت یافتہ user اپنے Email اور Password سے login کریں۔</p>
+    <form id="loginForm">
+      <label>Email</label>
+      <input id="loginEmail" type="email" autocomplete="username" required placeholder="name@example.com">
+      <label style="margin-top:10px;display:block">Password</label>
+      <input id="loginPassword" type="password" autocomplete="current-password" required placeholder="••••••••">
+      <button id="loginBtn" class="primary" type="submit" style="width:100%;margin-top:14px">Login</button>
+    </form>
+    <div id="loginMessage" class="login-message"></div>
+  </div>
+</div>
+
+<div class="app">
+<div class="top">
+  <div><h1>Noor Traders Hisab</h1><small>Gulyana • v79 • Firebase Online Sync</small></div>
+  <div class="cloud-box">
+    <b id="todayLabel"></b><br>
+    <small id="cloudStatus">Firebase سے رابطہ ہو رہا ہے…</small>
+    <div id="userBar" class="user-bar" hidden>
+      <span id="userEmail"></span>
+      <button id="logoutBtn" class="top-logout" type="button">Logout</button>
+    </div>
+  </div>
+</div>
 <div class="nav" id="nav"></div>
 
 <section id="ledger" class="tab active">
@@ -31,9 +58,10 @@
 
 <section id="reports" class="tab"><div class="grid"><div class="card span12"><h3>Monthly Report</h3><div class="row"><input id="reportMonth" type="month" style="width:auto"><button class="primary" onclick="renderReport()">Report بنائیں</button><button class="soft" onclick="window.print()">Print / PDF</button></div></div><div class="card span12" id="reportBox"></div></div></section>
 
-<section id="settings" class="tab"><div class="grid"><div class="card span6"><h3>Full Migration Backup</h3><p class="muted">Standalone HTML کا مکمل JSON backup download کریں یا restore کریں۔</p><div class="row"><button class="primary" onclick="backupAll()">Full Migration Backup Download</button><label class="soft" style="cursor:pointer">Backup Restore<input type="file" id="restoreFile" accept="application/json" style="display:none"></label></div></div><div class="card span6"><h3>Expense Categories</h3><div class="row"><input id="newCat" placeholder="نئی category"><button class="soft" onclick="addCategory()">Add</button></div><div id="catList" style="margin-top:10px"></div></div><div class="card span12"><h3>Storage</h3><p>یہ HTML version server/D1/R2 کے بجائے browser <b>localStorage</b> استعمال کرتا ہے۔ تصاویر browser storage limit کے اندر base64 میں محفوظ ہوتی ہیں۔</p><button class="danger" onclick="resetAll()">تمام Local Data Reset</button></div></div></section>
+<section id="settings" class="tab"><div class="grid"><div class="card span6"><h3>Full Migration Backup</h3><p class="muted">مکمل JSON backup download کریں یا restore کریں۔ Restore ہونے پر online data بھی sync ہوگا۔</p><div class="row"><button class="primary" onclick="backupAll()">Full Migration Backup Download</button><label class="soft" style="cursor:pointer">Backup Restore<input type="file" id="restoreFile" accept="application/json" style="display:none"></label></div></div><div class="card span6"><h3>Expense Categories</h3><div class="row"><input id="newCat" placeholder="نئی category"><button class="soft" onclick="addCategory()">Add</button></div><div id="catList" style="margin-top:10px"></div></div><div class="card span12"><h3>Storage</h3><p>یہ version <b>Firebase Firestore</b> کے ساتھ online sync کرتا ہے اور browser <b>localStorage</b> کو offline/local cache کے طور پر رکھتا ہے۔</p><button class="danger" onclick="resetAll()">صرف اس Browser کا Local Cache صاف کریں</button></div></div></section>
 
 <div class="footer">Noor Traders Hisab — Standalone HTML conversion from v79 source</div></div>
 <script src="assets/js/app.js"></script>
+<script type="module" src="assets/js/firebase-sync.js"></script>
 <script>if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw.js").catch(()=>{})}</script>
 </body></html>

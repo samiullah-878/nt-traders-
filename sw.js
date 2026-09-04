@@ -1,5 +1,12 @@
-const CACHE='noor-traders-hisab-v79';
-const ASSETS=['./','./index.html','./assets/css/styles.css','./assets/js/app.js','./manifest.webmanifest'];
+const CACHE='noor-traders-hisab-v79-firebase-1';
+const ASSETS=[
+  './','./index.html','./assets/css/styles.css','./assets/js/app.js',
+  './assets/js/firebase-sync.js','./assets/js/firebase-config.js',
+  './manifest.webmanifest'
+];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS))));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))));
-self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));
+self.addEventListener('fetch',e=>{
+  if(e.request.method!=='GET') return;
+  e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));
+});

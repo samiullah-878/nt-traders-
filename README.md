@@ -1,27 +1,17 @@
-# Noor Traders Hisab v79 — GitHub Pages
+# Noor Traders Hisab v79 — Firebase + GitHub Pages
 
-یہ repository Noor Traders Hisab v79 کے browser-based version کے لیے تیار ہے۔
+Firebase-enabled version of Noor Traders Hisab.
 
-## Structure
-- `index.html`
-- `assets/css/styles.css`
-- `assets/js/app.js`
-- `manifest.webmanifest`
-- `sw.js`
-- `.github/workflows/pages.yml`
+Features in this build:
+- Firebase Email/Password login
+- Cloud Firestore online multi-user synchronization
+- Realtime updates between logged-in devices
+- localStorage offline/local cache
+- Entries, stock, attendance, staff, purchases, pictures and batches sync
+- Full Migration Backup/Restore
+- GitHub Pages workflow
+- No secret admin passwords included
 
-## GitHub پر چلانے کا طریقہ
-1. GitHub پر نئی repository بنائیں۔
-2. اس ZIP کے تمام files repository root میں upload کریں۔
-3. branch کا نام `main` رکھیں۔
-4. GitHub → Settings → Pages میں جائیں۔
-5. Source میں **GitHub Actions** منتخب کریں۔
-6. `main` پر push ہوتے ہی site deploy ہو جائے گی۔
+Firebase Web config is client-side configuration. Database access is protected using Firebase Authentication and Firestore Security Rules.
 
-## Data
-یہ version browser `localStorage` استعمال کرتا ہے۔
-یعنی data اسی browser/device میں رہتا ہے۔
-Settings میں **Full Migration Backup** سے JSON backup بنائیں۔
-
-## Security
-اس repository میں passwords, secret keys یا API tokens شامل نہیں ہیں۔
+See `FIREBASE_SETUP_URDU.md` for setup/upload instructions.
