@@ -3,11 +3,501 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0f766e">
-<link rel="manifest" href="manifest.webmanifest">
-<title>Noor Traders Hisab v80</title>
-<link rel="stylesheet" href="assets/css/styles.css">
+
+<title>Noor Traders Hisab v81</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#6b7280;--brand:#0f766e;--brand2:#115e59;--red:#b91c1c;--line:#dce3ec;--gold:#b7791f;--blue:#1d4ed8}*{box-sizing:border-box}body{margin:0;font-family:system-ui,"Noto Nastaliq Urdu","Noto Sans Arabic",sans-serif;background:var(--bg);color:var(--ink)}button,input,select,textarea{font:inherit}.app{max-width:1280px;margin:auto;padding:12px}.top{background:linear-gradient(135deg,#134e4a,#0f766e);color:#fff;border-radius:22px;padding:18px;display:flex;gap:12px;align-items:center;justify-content:space-between;box-shadow:0 10px 30px #0f766e30}.top h1{margin:0;font-size:clamp(24px,5vw,40px)}.top small{opacity:.9}.nav{display:flex;gap:8px;overflow:auto;padding:12px 0;position:sticky;top:0;z-index:5;background:var(--bg)}.nav button{white-space:nowrap;border:1px solid var(--line);background:#fff;padding:10px 14px;border-radius:13px;font-weight:700}.nav button.active{background:var(--brand);color:#fff;border-color:var(--brand)}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 4px 16px #1720330a}.span12{grid-column:span 12}.span8{grid-column:span 8}.span6{grid-column:span 6}.span4{grid-column:span 4}.span3{grid-column:span 3}.kpi{font-size:13px;color:var(--muted)}.kpi strong{display:block;font-size:24px;color:var(--ink);margin-top:4px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.form{display:grid;grid-template-columns:repeat(12,1fr);gap:8px}.f2{grid-column:span 2}.f3{grid-column:span 3}.f4{grid-column:span 4}.f5{grid-column:span 5}.f6{grid-column:span 6}.f8{grid-column:span 8}.f12{grid-column:span 12}label{font-size:13px;color:var(--muted)}input,select,textarea{width:100%;border:1px solid #ccd5e0;border-radius:11px;padding:10px;background:#fff}button.primary{background:var(--brand);color:#fff;border:0;border-radius:11px;padding:10px 15px;font-weight:800}button.danger{background:#fff1f2;color:var(--red);border:1px solid #fecdd3;border-radius:10px;padding:8px 11px}button.soft{background:#eef7f6;color:var(--brand2);border:1px solid #cce8e5;border-radius:10px;padding:8px 11px}table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:9px 7px;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle}th{color:var(--muted);font-size:12px}.amt{font-weight:800;font-variant-numeric:tabular-nums}.muted{color:var(--muted)}.tab{display:none}.tab.active{display:block}.badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:12px;background:#eef2ff;color:#3730a3}.photo{width:52px;height:52px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}.stocktable input{min-width:80px;padding:7px}.pos{color:#15803d;font-weight:800}.neg{color:#b91c1c;font-weight:800}.notice{padding:10px 12px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;margin:10px 0}.footer{padding:20px;text-align:center;color:var(--muted)}@media(max-width:800px){.span8,.span6,.span4,.span3{grid-column:span 12}.f2,.f3,.f4,.f5,.f6,.f8{grid-column:span 12}.top{align-items:flex-start;flex-direction:column}table{font-size:12px}.card{padding:11px}}
+
+.login-gate{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0f766e,#134e4a);display:flex;align-items:center;justify-content:center;padding:18px}
+.login-gate.hidden{display:none}
+.login-card{width:min(430px,100%);background:#fff;border-radius:22px;padding:24px;box-shadow:0 24px 70px #0004}
+.login-card h2{margin:0 0 8px;font-size:30px}
+.login-message{min-height:24px;margin-top:10px;font-size:13px;color:#b91c1c}
+.login-message.ok{color:#15803d}
+.cloud-box{text-align:right}
+.user-bar{margin-top:8px;display:flex;gap:8px;align-items:center;justify-content:flex-start;flex-wrap:wrap;font-size:12px}
+.top-logout{border:1px solid #ffffff55;background:#ffffff18;color:#fff;border-radius:9px;padding:5px 9px;cursor:pointer}
+.sync-ok{color:#d1fae5}
+.sync-warn{color:#fef3c7}
+.sync-bad{color:#fecaca}
+
+/* ===== Noor Traders v80 Professional UI ===== */
+:root{
+  --bg:#eef3f8;
+  --card:#ffffff;
+  --ink:#142033;
+  --muted:#64748b;
+  --brand:#0f766e;
+  --brand2:#115e59;
+  --brand-soft:#e7f6f3;
+  --blue:#1d4ed8;
+  --blue-soft:#eaf0ff;
+  --gold:#b7791f;
+  --gold-soft:#fff7df;
+  --red:#b91c1c;
+  --red-soft:#fff0f0;
+  --green:#15803d;
+  --green-soft:#edf9f0;
+  --purple:#6d28d9;
+  --purple-soft:#f3edff;
+  --line:#dbe4ee;
+  --shadow:0 10px 30px rgba(15,23,42,.08);
+}
+
+body{
+  background:
+    radial-gradient(circle at 10% 0%,rgba(29,78,216,.08),transparent 28%),
+    radial-gradient(circle at 90% 0%,rgba(15,118,110,.10),transparent 32%),
+    var(--bg);
+}
+
+.app{
+  max-width:1440px;
+  padding:16px 18px 30px;
+}
+
+.top{
+  background:
+    linear-gradient(135deg,rgba(15,118,110,.98),rgba(19,78,74,.98));
+  border-radius:24px;
+  padding:20px 24px;
+  box-shadow:0 18px 45px rgba(15,118,110,.22);
+  border:1px solid rgba(255,255,255,.14);
+}
+
+.top h1{
+  font-size:clamp(26px,4vw,42px);
+  letter-spacing:-.5px;
+}
+.top small{font-weight:600}
+.cloud-box{
+  background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:16px;
+  padding:10px 13px;
+  min-width:250px;
+}
+
+.nav{
+  gap:10px;
+  padding:14px 4px;
+  background:transparent;
+  position:sticky;
+  top:0;
+  z-index:20;
+  backdrop-filter:blur(10px);
+}
+.nav button{
+  border:1px solid #d9e2ec;
+  background:rgba(255,255,255,.92);
+  padding:11px 16px;
+  border-radius:14px;
+  font-weight:800;
+  box-shadow:0 5px 14px rgba(15,23,42,.05);
+  transition:.2s ease;
+}
+.nav button:hover{
+  transform:translateY(-1px);
+  border-color:#b7c8d8;
+}
+.nav button.active{
+  background:linear-gradient(135deg,var(--brand),var(--brand2));
+  color:#fff;
+  box-shadow:0 8px 20px rgba(15,118,110,.22);
+}
+
+.software-strip{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:2px 0 14px;
+  padding:13px 16px;
+  border-radius:17px;
+  background:rgba(255,255,255,.78);
+  border:1px solid rgba(219,228,238,.95);
+  box-shadow:0 7px 20px rgba(15,23,42,.04);
+  backdrop-filter:blur(8px);
+}
+.software-strip strong{
+  display:block;
+  font-size:16px;
+}
+.software-strip span{
+  color:var(--muted);
+  font-size:12px;
+}
+.software-strip-badges{
+  display:flex;
+  gap:7px;
+  flex-wrap:wrap;
+  justify-content:flex-start;
+}
+.status-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  background:#f8fafc;
+  color:#334155 !important;
+  border:1px solid #e2e8f0;
+  border-radius:999px;
+  padding:6px 10px;
+  font-size:11px !important;
+  font-weight:800;
+}
+.status-pill.online{
+  background:var(--green-soft);
+  color:var(--green)!important;
+  border-color:#cdebd5;
+}
+
+.grid{gap:14px}
+
+.card{
+  border:1px solid #dce5ee;
+  border-radius:20px;
+  padding:16px;
+  box-shadow:var(--shadow);
+  background:rgba(255,255,255,.96);
+}
+.card h3{
+  margin-top:0;
+  font-size:18px;
+  letter-spacing:-.2px;
+}
+
+/* KPI cards */
+.grid > .card.span3:nth-child(1){border-top:4px solid var(--brand)}
+.grid > .card.span3:nth-child(2){border-top:4px solid var(--red)}
+.grid > .card.span3:nth-child(3){border-top:4px solid var(--blue)}
+.grid > .card.span3:nth-child(4){border-top:4px solid var(--gold)}
+
+.kpi{
+  font-size:12px;
+  font-weight:800;
+  color:#64748b;
+}
+.kpi strong{
+  font-size:25px;
+  margin-top:7px;
+  letter-spacing:-.4px;
+}
+
+input,select,textarea{
+  border:1px solid #cbd8e6;
+  background:#fbfdff;
+  border-radius:12px;
+  padding:11px 12px;
+  outline:none;
+  transition:.18s ease;
+}
+input:focus,select:focus,textarea:focus{
+  background:#fff;
+  border-color:#5aa99f;
+  box-shadow:0 0 0 3px rgba(15,118,110,.10);
+}
+label{
+  font-weight:800;
+  color:#526175;
+  margin-bottom:4px;
+  display:block;
+}
+
+button.primary{
+  background:linear-gradient(135deg,var(--brand),var(--brand2));
+  border-radius:12px;
+  padding:11px 16px;
+  box-shadow:0 7px 16px rgba(15,118,110,.18);
+}
+button.primary:hover{filter:brightness(1.04)}
+button.soft{
+  background:var(--blue-soft);
+  color:var(--blue);
+  border-color:#cad8ff;
+  font-weight:800;
+}
+button.danger{
+  background:var(--red-soft);
+  color:var(--red);
+  border-color:#ffd2d2;
+  font-weight:800;
+}
+
+table{
+  border-collapse:separate;
+  border-spacing:0;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:14px;
+}
+thead th{
+  background:#f4f7fb;
+  color:#526175;
+  font-weight:900;
+  border-bottom:1px solid var(--line);
+}
+tbody tr:nth-child(even){background:#fbfdff}
+tbody tr:hover{background:#f2f8f7}
+th,td{padding:11px 9px}
+
+.badge{
+  background:var(--purple-soft);
+  color:var(--purple);
+  border:1px solid #e3d5ff;
+  font-weight:800;
+}
+
+.notice{
+  background:var(--gold-soft);
+  border-color:#f5dea1;
+  color:#8a5c00;
+  font-weight:700;
+}
+
+.photo{
+  width:58px;
+  height:58px;
+  border-radius:12px;
+  box-shadow:0 4px 12px rgba(15,23,42,.08);
+}
+
+.login-gate{
+  background:
+    radial-gradient(circle at 20% 20%,rgba(255,255,255,.13),transparent 22%),
+    radial-gradient(circle at 80% 0%,rgba(255,255,255,.10),transparent 26%),
+    linear-gradient(135deg,#0b5f59,#133d3a);
+}
+.login-card{
+  border:1px solid rgba(255,255,255,.55);
+  box-shadow:0 30px 90px rgba(0,0,0,.25);
+  padding:28px;
+}
+.login-card:before{
+  content:"NT";
+  display:flex;
+  width:54px;
+  height:54px;
+  align-items:center;
+  justify-content:center;
+  border-radius:16px;
+  margin:0 auto 14px;
+  background:linear-gradient(135deg,var(--brand),var(--brand2));
+  color:white;
+  font-weight:900;
+  font-size:20px;
+  box-shadow:0 10px 25px rgba(15,118,110,.25);
+}
+
+.footer{
+  font-size:12px;
+  padding:28px 20px 10px;
+}
+
+/* desktop software-like layout */
+@media(min-width:1050px){
+  .app{
+    padding-right:245px;
+    position:relative;
+  }
+  .nav{
+    position:fixed;
+    right:18px;
+    top:18px;
+    width:210px;
+    max-height:calc(100vh - 36px);
+    overflow:auto;
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    background:rgba(255,255,255,.94);
+    border:1px solid #dce5ee;
+    border-radius:22px;
+    padding:14px;
+    box-shadow:0 18px 50px rgba(15,23,42,.10);
+  }
+  .nav:before{
+    content:"NOOR TRADERS";
+    display:block;
+    color:var(--brand2);
+    font-weight:1000;
+    letter-spacing:.5px;
+    padding:7px 6px 14px;
+    border-bottom:1px solid #e6edf4;
+    margin-bottom:6px;
+    text-align:center;
+  }
+  .nav button{
+    width:100%;
+    text-align:right;
+    margin:2px 0;
+    box-shadow:none;
+  }
+}
+
+/* mobile polished */
+@media(max-width:800px){
+  .app{padding:10px}
+  .top{border-radius:18px;padding:16px}
+  .cloud-box{min-width:0;width:100%}
+  .software-strip{align-items:flex-start;flex-direction:column}
+  .software-strip-badges{width:100%}
+  .nav{
+    margin:0 -2px;
+    padding:10px 2px;
+  }
+  .nav button{
+    padding:9px 12px;
+    font-size:12px;
+    border-radius:12px;
+  }
+  .card{
+    border-radius:16px;
+    padding:12px;
+  }
+  .kpi strong{font-size:22px}
+}
+
+
+/* ===== v81 stronger professional business-software layout ===== */
+html{scroll-behavior:smooth}
+body{min-height:100vh}
+.app{min-height:100vh}
+
+.top{
+  position:relative;
+  overflow:hidden;
+}
+.top:after{
+  content:"";
+  position:absolute;
+  width:260px;height:260px;
+  border-radius:50%;
+  background:rgba(255,255,255,.06);
+  left:-90px;top:-130px;
+}
+.top > *{position:relative;z-index:1}
+
+section.tab{
+  animation:fadeIn .18s ease;
+}
+@keyframes fadeIn{
+  from{opacity:.25;transform:translateY(4px)}
+  to{opacity:1;transform:none}
+}
+
+.card{
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.card:hover{
+  box-shadow:0 14px 34px rgba(15,23,42,.10);
+}
+.card h3{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  border-bottom:1px solid #edf2f7;
+  padding-bottom:10px;
+  margin-bottom:14px;
+}
+
+#ledger .grid > .card.span3{
+  min-height:112px;
+  display:flex;
+  align-items:center;
+  background:
+    linear-gradient(160deg,#ffffff 0%,#fbfdff 100%);
+}
+#ledger .grid > .card.span3:nth-child(1){
+  background:linear-gradient(145deg,#ffffff,#eafaf7);
+}
+#ledger .grid > .card.span3:nth-child(2){
+  background:linear-gradient(145deg,#ffffff,#fff3f3);
+}
+#ledger .grid > .card.span3:nth-child(3){
+  background:linear-gradient(145deg,#ffffff,#eef4ff);
+}
+#ledger .grid > .card.span3:nth-child(4){
+  background:linear-gradient(145deg,#ffffff,#fff8e8);
+}
+
+#ledger .grid > .card.span3:nth-child(1) .kpi strong{color:#0f766e}
+#ledger .grid > .card.span3:nth-child(2) .kpi strong{color:#b91c1c}
+#ledger .grid > .card.span3:nth-child(3) .kpi strong{color:#1d4ed8}
+#ledger .grid > .card.span3:nth-child(4) .kpi strong{color:#a16207}
+
+tbody td{background:transparent}
+table{background:#fff}
+
+.form{
+  background:#f8fafc;
+  border:1px solid #e5edf5;
+  border-radius:16px;
+  padding:12px;
+}
+
+#reportBox .card{
+  box-shadow:none;
+  border:1px solid #e5edf5;
+}
+
+@media(min-width:1050px){
+  body{padding:0}
+  .app{
+    padding-right:270px;
+    padding-left:24px;
+    padding-top:22px;
+  }
+  .nav{
+    width:230px;
+    right:20px;
+    top:20px;
+    padding:16px;
+  }
+  .nav:before{
+    content:"NOOR TRADERS\A BUSINESS SOFTWARE";
+    white-space:pre;
+    line-height:1.5;
+    font-size:14px;
+  }
+  .nav button{
+    min-height:48px;
+    font-size:14px;
+  }
+  .top{
+    min-height:118px;
+  }
+}
+
+@media(max-width:1049px){
+  .nav{
+    position:sticky;
+    top:0;
+    z-index:30;
+    background:rgba(238,243,248,.94);
+    backdrop-filter:blur(12px);
+  }
+}
+
+@media(max-width:650px){
+  .software-strip{display:none}
+  .top h1{font-size:27px}
+  .top small{font-size:11px}
+  .form{padding:9px}
+  th,td{white-space:nowrap}
+}
+
+</style>
 </head>
 <body>
+
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.getRegistrations().then(function(regs){
+    regs.forEach(function(r){ r.unregister(); });
+  }).catch(function(){});
+}
+</script>
+
 
 <div id="loginGate" class="login-gate">
   <div class="login-card">
@@ -26,7 +516,7 @@
 
 <div class="app">
 <div class="top">
-  <div><h1>Noor Traders Hisab</h1><small>Gulyana • v80 • Professional Business Dashboard</small></div>
+  <div><h1>Noor Traders Hisab</h1><small>Gulyana • v81 • Professional Business Software</small></div>
   <div class="cloud-box">
     <b id="todayLabel"></b><br>
     <small id="cloudStatus">Firebase سے رابطہ ہو رہا ہے…</small>
@@ -72,7 +562,461 @@
 <section id="settings" class="tab"><div class="grid"><div class="card span6"><h3>Full Migration Backup</h3><p class="muted">مکمل JSON backup download کریں یا restore کریں۔ Restore ہونے پر online data بھی sync ہوگا۔</p><div class="row"><button class="primary" onclick="backupAll()">Full Migration Backup Download</button><label class="soft" style="cursor:pointer">Backup Restore<input type="file" id="restoreFile" accept="application/json" style="display:none"></label></div></div><div class="card span6"><h3>Expense Categories</h3><div class="row"><input id="newCat" placeholder="نئی category"><button class="soft" onclick="addCategory()">Add</button></div><div id="catList" style="margin-top:10px"></div></div><div class="card span12"><h3>Storage</h3><p>یہ version <b>Firebase Firestore</b> کے ساتھ online sync کرتا ہے اور browser <b>localStorage</b> کو offline/local cache کے طور پر رکھتا ہے۔</p><button class="danger" onclick="resetAll()">صرف اس Browser کا Local Cache صاف کریں</button></div></div></section>
 
 <div class="footer">Noor Traders Hisab — Standalone HTML conversion from v79 source</div></div>
-<script src="assets/js/app.js"></script>
-<script type="module" src="assets/js/firebase-sync.js"></script>
-<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw.js").catch(()=>{})}</script>
+<script>
+const KEY='noor-traders-v79-standalone';
+const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Karachi'}).format(new Date());
+const defaults={entries:[],categories:['بجلی کا بل','گیس / پانی','کرایہ','تنخواہ','چائے / کھانا','ٹرانسپورٹ','مرمت','موبائل / انٹرنیٹ','گھر کا خرچ','قرض / ادائیگی','فیس / ٹیکس','پیکنگ','دیگر'],stockItems:['صوفی گھی','صوفی آئل','صوفی آئل کی بڑی بوتل','صوفی آئل کی چھوٹی بوتل','مومن آئل کی بوتل','مومن آئل','مجاہد آئل کا پیکٹ','چینی','چاول بابا','چاول سپر','چاول سٹیم','سیلا چاول','دال ماش','گڑ','شکر','مجاہد گھی','شفیع گھی','ڈالڈا گھی','ڈالڈا آئل','بادام','لپٹن پتی','سپرِیم پتی','لائف شیمپو'].map((name,i)=>({id:i+1,name,unit:['چینی','چاول بابا','چاول سپر','چاول سٹیم','سیلا چاول','دال ماش','گڑ','شکر','بادام'].includes(name)?'کلو':'عدد',rate:0})),stockRecords:{},staff:[],attendance:{},purchases:[],batches:[]};
+let db=load();
+function load(){try{return Object.assign(structuredClone(defaults),JSON.parse(localStorage.getItem(KEY)||'{}'))}catch{return structuredClone(defaults)}}
+function save(){
+  localStorage.setItem(KEY,JSON.stringify(db));
+  renderAll();
+  if(window.noorFirebaseSync && window.noorFirebaseSync.ready){
+    window.noorFirebaseSync.saveState(structuredClone(db));
+  }
+}
+window.getNoorDb=()=>structuredClone(db);
+window.applyNoorDb=(next)=>{
+  db=Object.assign(structuredClone(defaults),next||{});
+  localStorage.setItem(KEY,JSON.stringify(db));
+  renderAll();
+};
+window.getNoorDefaults=()=>structuredClone(defaults);
+const money=n=>'Rs '+Number(n||0).toLocaleString('en-PK',{maximumFractionDigits:2});
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const tabs=[['ledger','🏠 حساب کتاب'],['stock','📦 Stock'],['attendance','👥 Staff / حاضری'],['purchases','🧾 Purchase Pics'],['manufacturing','🏭 Batch Cost'],['reports','📊 Reports'],['settings','⚙️ Settings']];
+nav.innerHTML=tabs.map(([id,l],i)=>`<button data-tab="${id}" class="${i?'':'active'}">${l}</button>`).join('');
+nav.onclick=e=>{if(!e.target.dataset.tab)return;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('#nav button').forEach(x=>x.classList.remove('active'));document.getElementById(e.target.dataset.tab).classList.add('active');e.target.classList.add('active')};
+
+function fileData(file,max=800){return new Promise((res,rej)=>{if(!file)return res('');const r=new FileReader;r.onload=()=>{const im=new Image;im.onload=()=>{const c=document.createElement('canvas'),sc=Math.min(1,max/Math.max(im.width,im.height));c.width=im.width*sc;c.height=im.height*sc;c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.72))};im.onerror=rej;im.src=r.result};r.onerror=rej;r.readAsDataURL(file)})}
+function setupDates(){['eDate','ledgerDate','stockDate','attDate','pDate','bDate'].forEach(id=>document.getElementById(id).value=today());reportMonth.value=today().slice(0,7);todayLabel.textContent=new Date().toLocaleString('ur-PK',{timeZone:'Asia/Karachi',dateStyle:'full'})}
+
+entryForm.onsubmit=async e=>{e.preventDefault();const pic=await fileData(ePicture.files[0]);db.entries.push({id:Date.now(),date:eDate.value,type:eType.value,note:eNote.value,amount:+eAmount.value||0,category:eCategory.value,picture:pic});eNote.value='';eAmount.value='';ePicture.value='';save()};
+function renderLedger(){const d=ledgerDate.value||today(),rows=db.entries.filter(x=>x.date===d).sort((a,b)=>b.id-a.id);ledgerRows.innerHTML=rows.map(x=>`<tr><td>${labelType(x.type)}</td><td>${esc(x.note)}</td><td>${esc(x.category||'')}</td><td class=amt>${money(x.amount)}</td><td>${x.picture?`<img class=photo src="${x.picture}">`:''}</td><td><button class=danger onclick="delEntry(${x.id})">Delete</button></td></tr>`).join('')||'<tr><td colspan=6 class=muted>کوئی entry نہیں</td></tr>';const todays=db.entries.filter(x=>x.date===today());let sale=sum(todays,'sale'),coll=sum(todays,'collection'),exp=sum(todays,'expense')+sum(todays,'shop_goods'),acc=sum(todays,'account'),ct=sum(todays,'change_today'),cy=sum(todays,'change_yesterday'),cash=sum(todays,'cash'),cashout=sum(todays,'cash_out');kpiSale.textContent=money(sale);kpiIn.textContent=money(sale+coll+cy+cash);kpiOut.textContent=money(exp+ct+acc+cashout);kpiBalance.textContent=money(sale+coll+cy+cash-exp-ct-acc-cashout)}
+function labelType(t){return {sale:'سیل',collection:'وصولی',expense:'خرچ',shop_goods:'دکان کا سامان',pending_bill:'واجب الادا Bill',cash:'کل کی Cash',cash_out:'Cash',account:'اکاؤنٹ میں آمد',change_today:'آج کا Change',change_yesterday:'کل کا Change'}[t]||t}
+function sum(a,t){return a.filter(x=>x.type===t).reduce((s,x)=>s+(+x.amount||0),0)}
+function delEntry(id){if(confirm('Entry delete کریں؟')){db.entries=db.entries.filter(x=>x.id!==id);save()}}
+function clearDay(){let d=ledgerDate.value;if(confirm(d+' کی تمام entries صاف کریں؟')){db.entries=db.entries.filter(x=>x.date!==d);save()}}
+
+function renderCategories(){eCategory.innerHTML='<option value="">—</option>'+db.categories.map(x=>`<option>${esc(x)}</option>`).join('');catList.innerHTML=db.categories.map((x,i)=>`<span class=badge>${esc(x)} <b onclick="delCat(${i})" style="cursor:pointer">×</b></span> `).join('')}
+function addCategory(){let v=newCat.value.trim();if(v&&!db.categories.includes(v)){db.categories.push(v);newCat.value='';save()}}
+function delCat(i){db.categories.splice(i,1);save()}
+
+function renderStock(){let d=stockDate.value||today(),r=db.stockRecords[d]||{};stockRows.innerHTML=db.stockItems.map(it=>{let x=r[it.id]||{},diff=(x.physical===''||x.system===''||x.physical==null||x.system==null)?'':(+x.physical-+x.system),val=diff===''?'':diff*(+it.rate||0);return `<tr data-id=${it.id}><td>${esc(it.name)}</td><td>${esc(it.unit)}</td><td><input class=rate type=number value="${it.rate||0}"></td><td><input class=system type=number value="${x.system??''}"></td><td><input class=physical type=number value="${x.physical??''}"></td><td class="${diff>0?'pos':diff<0?'neg':''}">${diff}</td><td>${val===''?'':money(val)}</td></tr>`}).join('')}
+stockDate.onchange=renderStock;
+function saveStock(){let d=stockDate.value,rec={};document.querySelectorAll('#stockRows tr').forEach(tr=>{let id=+tr.dataset.id,it=db.stockItems.find(x=>x.id===id);it.rate=+tr.querySelector('.rate').value||0;rec[id]={system:tr.querySelector('.system').value,physical:tr.querySelector('.physical').value}});db.stockRecords[d]=rec;save()}
+function addStockItem(){let n=prompt('Item نام؟');if(n){db.stockItems.push({id:Date.now(),name:n,unit:prompt('Unit؟','عدد')||'عدد',rate:0});save()}}
+function clearStockDay(){if(confirm('اس دن کا Stock صاف؟')){delete db.stockRecords[stockDate.value];save()}}
+stockRows.addEventListener('input',e=>{let tr=e.target.closest('tr');if(!tr)return;let s=tr.querySelector('.system').value,p=tr.querySelector('.physical').value,d=(s===''||p==='')?'':(+p-+s),rate=+tr.querySelector('.rate').value||0;tr.children[5].textContent=d;tr.children[5].className=d>0?'pos':d<0?'neg':'';tr.children[6].textContent=d===''?'':money(d*rate)});
+
+staffForm.onsubmit=e=>{e.preventDefault();db.staff.push({id:Date.now(),name:staffName.value,meal:staffMeal.value,mealAmount:+staffMealAmount.value||0});staffName.value='';save()};
+function renderAttendance(){let d=attDate.value||today();db.attendance[d]??={};let rec=db.attendance[d];attRows.innerHTML=db.staff.map(s=>{let a=rec[s.id]||{};return `<tr><td>${esc(s.name)}</td><td>${s.meal} ${s.mealAmount?money(s.mealAmount):''}</td><td>${a.in||'-'}</td><td>${esc(a.location||'-')}</td><td>${a.out||'-'}</td><td><input class=score data-id=${s.id} type=number value="${a.score??''}" style="width:75px"></td><td><button class=soft onclick="checkIn(${s.id})">Check-in</button> <button class=soft onclick="checkOut(${s.id})">Checkout</button> <button class=danger onclick="delStaff(${s.id})">×</button></td></tr>`}).join('');let present=db.staff.filter(s=>rec[s.id]?.in).length,daily=db.staff.filter(s=>rec[s.id]?.in&&s.meal==='daily').reduce((z,s)=>z+s.mealAmount,0);attSummary.textContent=`حاضر ${present}/${db.staff.length} • Daily meal ${money(daily)}`}
+attDate.onchange=renderAttendance;
+function now(){return new Date().toLocaleTimeString('en-PK',{timeZone:'Asia/Karachi',hour:'2-digit',minute:'2-digit'})}
+function checkIn(id){let d=attDate.value;db.attendance[d]??={};navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>{db.attendance[d][id]=Object.assign(db.attendance[d][id]||{},{in:now(),location:p.coords.latitude.toFixed(5)+','+p.coords.longitude.toFixed(5)});save()},()=>{db.attendance[d][id]=Object.assign(db.attendance[d][id]||{},{in:now(),location:'Permission نہیں'});save()}):0}
+function checkOut(id){let d=attDate.value;db.attendance[d]??={};db.attendance[d][id]=Object.assign(db.attendance[d][id]||{},{out:now()});save()}
+function saveScores(){let d=attDate.value;db.attendance[d]??={};document.querySelectorAll('.score').forEach(i=>{db.attendance[d][i.dataset.id]=Object.assign(db.attendance[d][i.dataset.id]||{},{score:i.value===''?'':+i.value})});save()}
+function delStaff(id){if(confirm('Staff delete؟')){db.staff=db.staff.filter(x=>x.id!==id);save()}}
+
+purchaseForm.onsubmit=async e=>{e.preventDefault();let fs=[...pPics.files].slice(0,5),pics=[];for(const f of fs)pics.push(await fileData(f,700));db.purchases.push({id:Date.now(),date:pDate.value,note:pNote.value,amount:+pAmount.value||0,status:pPending.value,pictures:pics});pNote.value='';pAmount.value='';pPics.value='';save()};
+function renderPurchases(){purchaseRows.innerHTML=db.purchases.slice().reverse().map(x=>`<tr><td>${x.date}</td><td>${esc(x.note)}</td><td>${money(x.amount)}</td><td>${x.status}</td><td>${x.pictures.map(p=>`<img class=photo src="${p}">`).join(' ')}</td><td><button class=danger onclick="delPurchase(${x.id})">Delete</button></td></tr>`).join('')}
+function delPurchase(id){db.purchases=db.purchases.filter(x=>x.id!==id);save()}
+
+batchForm.onsubmit=e=>{e.preventDefault();let total=(+bMaterial.value||0)+(+bExtra.value||0),kg=+bKg.value||0;db.batches.push({id:Date.now(),date:bDate.value,name:bName.value,product:bProduct.value,kg,total,costKg:kg?total/kg:0});save()};
+function renderBatches(){batchRows.innerHTML=db.batches.slice().reverse().map(x=>`<tr><td>${x.date}</td><td>${esc(x.name)}</td><td>${esc(x.product)}</td><td>${x.kg}</td><td>${money(x.total)}</td><td>${money(x.costKg)}</td><td><button class=danger onclick="delBatch(${x.id})">Delete</button></td></tr>`).join('')}
+function delBatch(id){db.batches=db.batches.filter(x=>x.id!==id);save()}
+
+function renderReport(){let m=reportMonth.value,es=db.entries.filter(x=>x.date.startsWith(m)),sales=sum(es,'sale'),coll=sum(es,'collection'),expense=sum(es,'expense'),goods=sum(es,'shop_goods'),pending=sum(es,'pending_bill'),acc=sum(es,'account');reportBox.innerHTML=`<h2>${m} Summary</h2><div class=grid><div class="card span3"><div class=kpi>Sales<strong>${money(sales)}</strong></div></div><div class="card span3"><div class=kpi>Wasooli<strong>${money(coll)}</strong></div></div><div class="card span3"><div class=kpi>Expenses<strong>${money(expense)}</strong></div></div><div class="card span3"><div class=kpi>Shop Goods<strong>${money(goods)}</strong></div></div></div><p>Pending Bills: <b>${money(pending)}</b> • Account incoming: <b>${money(acc)}</b></p>`}
+function backupAll(){let blob=new Blob([JSON.stringify({format:'noor-traders-business-backup-html',version:79,createdAt:new Date().toISOString(),data:db},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Noor-Traders-Full-Migration-Backup-${today()}.json`;a.click();URL.revokeObjectURL(a.href)}
+restoreFile.onchange=async()=>{try{let x=JSON.parse(await restoreFile.files[0].text());if(!x.data)throw Error();if(confirm('Backup restore ہونے سے موجود data replace ہوگا اور Firebase online data بھی sync ہو جائے گا۔ جاری رکھیں؟')){db=x.data;save()}}catch{alert('درست backup file نہیں')}};
+function resetAll(){
+  if(confirm('صرف اس browser کا local cache صاف ہوگا۔ Firebase online data delete نہیں ہوگا۔ جاری رکھیں؟')){
+    localStorage.removeItem(KEY);
+    location.reload();
+  }
+}
+function renderAll(){renderCategories();renderLedger();renderStock();renderAttendance();renderPurchases();renderBatches();renderReport()}
+setupDates();renderAll();
+
+</script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+import {
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
+  setPersistence, browserLocalPersistence
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+import {
+  getFirestore, collection, doc, onSnapshot, writeBatch
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyDz9sNBaSblZQYEJPhoAZmyygcghmHSh_I",
+  authDomain: "nt-traders.firebaseapp.com",
+  projectId: "nt-traders",
+  storageBucket: "nt-traders.firebasestorage.app",
+  messagingSenderId: "312840988986",
+  appId: "1:312840988986:web:6b9e8030bfb2a596540803",
+  measurementId: "G-EVZKK3ZBJK"
+};
+
+const BUSINESS_ID = "noor-traders";
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const fs = getFirestore(app);
+
+const loginGate = document.getElementById("loginGate");
+const loginForm = document.getElementById("loginForm");
+const loginEmail = document.getElementById("loginEmail");
+const loginPassword = document.getElementById("loginPassword");
+const loginMessage = document.getElementById("loginMessage");
+const loginBtn = document.getElementById("loginBtn");
+const cloudStatus = document.getElementById("cloudStatus");
+const userBar = document.getElementById("userBar");
+const userEmail = document.getElementById("userEmail");
+const logoutBtn = document.getElementById("logoutBtn");
+
+const remote = {
+  settings: null,
+  entries: new Map(),
+  entryPictures: new Map(),
+  staff: new Map(),
+  purchases: new Map(),
+  purchasePictures: new Map(),
+  batches: new Map(),
+  attendance: new Map(),
+  stockRecords: new Map()
+};
+const requiredSegments = new Set(Object.keys(remote));
+const readySegments = new Set();
+let unsubscribers = [];
+let initialResolved = false;
+let lastPushed = null;
+let saveTimer = null;
+let applyingRemote = false;
+
+function setCloud(text, type="warn"){
+  if(!cloudStatus) return;
+  cloudStatus.textContent = text;
+  cloudStatus.className = type==="ok" ? "sync-ok" : type==="bad" ? "sync-bad" : "sync-warn";
+}
+
+function clean(v){
+  return JSON.parse(JSON.stringify(v));
+}
+function same(a,b){
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+function mapById(arr){
+  const m = new Map();
+  for(const x of arr || []) m.set(String(x.id), clean(x));
+  return m;
+}
+function mapObject(obj){
+  return new Map(Object.entries(obj || {}).map(([k,v])=>[String(k), clean(v)]));
+}
+function mapPictures(state){
+  const entryPictures = new Map();
+  for(const e of state.entries || []){
+    if(e.picture) entryPictures.set(String(e.id), {entryId:e.id, data:e.picture});
+  }
+  const purchasePictures = new Map();
+  for(const p of state.purchases || []){
+    (p.pictures || []).forEach((data,index)=>{
+      if(data) purchasePictures.set(`${p.id}_${index}`, {purchaseId:p.id,index,data});
+    });
+  }
+  return {entryPictures,purchasePictures};
+}
+function stripPictures(state){
+  return {
+    settings: {
+      categories: clean(state.categories || []),
+      stockItems: clean(state.stockItems || [])
+    },
+    entries: mapById((state.entries || []).map(({picture,...x})=>x)),
+    staff: mapById(state.staff || []),
+    purchases: mapById((state.purchases || []).map(({pictures,...x})=>x)),
+    batches: mapById(state.batches || []),
+    attendance: mapObject(state.attendance || {}),
+    stockRecords: mapObject(state.stockRecords || {}),
+    ...mapPictures(state)
+  };
+}
+
+function buildRemoteState(){
+  const defaults = window.getNoorDefaults ? window.getNoorDefaults() : {};
+  const state = Object.assign({}, defaults);
+
+  state.categories = clean(remote.settings?.categories || defaults.categories || []);
+  state.stockItems = clean(remote.settings?.stockItems || defaults.stockItems || []);
+
+  state.entries = [...remote.entries.values()].map(x=>{
+    const pic = remote.entryPictures.get(String(x.id));
+    return {...clean(x), picture: pic?.data || ""};
+  });
+
+  state.staff = [...remote.staff.values()].map(clean);
+
+  const picsByPurchase = new Map();
+  for(const p of remote.purchasePictures.values()){
+    const key = String(p.purchaseId);
+    if(!picsByPurchase.has(key)) picsByPurchase.set(key, []);
+    picsByPurchase.get(key)[Number(p.index)||0] = p.data;
+  }
+  state.purchases = [...remote.purchases.values()].map(x=>({
+    ...clean(x),
+    pictures: (picsByPurchase.get(String(x.id)) || []).filter(Boolean)
+  }));
+
+  state.batches = [...remote.batches.values()].map(clean);
+  state.attendance = Object.fromEntries([...remote.attendance.entries()].map(([k,v])=>[k,clean(v)]));
+  state.stockRecords = Object.fromEntries([...remote.stockRecords.entries()].map(([k,v])=>[k,clean(v)]));
+
+  return state;
+}
+
+function remoteHasData(){
+  if(remote.settings) return true;
+  return [
+    remote.entries, remote.entryPictures, remote.staff, remote.purchases,
+    remote.purchasePictures, remote.batches, remote.attendance, remote.stockRecords
+  ].some(m=>m.size>0);
+}
+
+function allReady(){
+  return [...requiredSegments].every(x=>readySegments.has(x));
+}
+
+async function applyOrSeed(){
+  if(!allReady()) return;
+
+  if(!initialResolved){
+    initialResolved = true;
+
+    if(remoteHasData()){
+      const state = buildRemoteState();
+      applyingRemote = true;
+      window.applyNoorDb?.(state);
+      applyingRemote = false;
+      lastPushed = stripPictures(state);
+      window.noorFirebaseSync.ready = true;
+      setCloud("Online sync تیار ہے", "ok");
+    } else {
+      const local = window.getNoorDb?.() || window.getNoorDefaults?.() || {};
+      lastPushed = {
+        settings:null,
+        entries:new Map(), entryPictures:new Map(), staff:new Map(),
+        purchases:new Map(), purchasePictures:new Map(), batches:new Map(),
+        attendance:new Map(), stockRecords:new Map()
+      };
+      window.noorFirebaseSync.ready = true;
+      setCloud("پہلا data Firebase پر محفوظ ہو رہا ہے…");
+      await saveStateNow(local);
+      setCloud("Online sync تیار ہے", "ok");
+    }
+    return;
+  }
+
+  if(!applyingRemote){
+    const state = buildRemoteState();
+    applyingRemote = true;
+    window.applyNoorDb?.(state);
+    applyingRemote = false;
+    lastPushed = stripPictures(state);
+    setCloud("Online sync ہو گیا", "ok");
+  }
+}
+
+function listenMap(segment, colName){
+  const ref = collection(fs, "businesses", BUSINESS_ID, colName);
+  const un = onSnapshot(ref, snap=>{
+    const m = new Map();
+    snap.forEach(d=>m.set(d.id, clean(d.data())));
+    remote[segment] = m;
+    readySegments.add(segment);
+    applyOrSeed();
+  }, err=>{
+    console.error(err);
+    setCloud("Firestore sync error", "bad");
+  });
+  unsubscribers.push(un);
+}
+
+function startListeners(){
+  stopListeners();
+  readySegments.clear();
+  initialResolved = false;
+  lastPushed = null;
+
+  const settingsRef = doc(fs, "businesses", BUSINESS_ID, "settings", "main");
+  unsubscribers.push(onSnapshot(settingsRef, snap=>{
+    remote.settings = snap.exists() ? clean(snap.data()) : null;
+    readySegments.add("settings");
+    applyOrSeed();
+  }, err=>{
+    console.error(err);
+    setCloud("Firestore settings error", "bad");
+  }));
+
+  listenMap("entries", "entries");
+  listenMap("entryPictures", "entryPictures");
+  listenMap("staff", "staff");
+  listenMap("purchases", "purchases");
+  listenMap("purchasePictures", "purchasePictures");
+  listenMap("batches", "batches");
+  listenMap("attendance", "attendance");
+  listenMap("stockRecords", "stockRecords");
+}
+
+function stopListeners(){
+  for(const un of unsubscribers) try{un()}catch{}
+  unsubscribers = [];
+}
+
+function collectionRef(name){
+  return collection(fs, "businesses", BUSINESS_ID, name);
+}
+
+function addMapOps(ops, name, current, previous){
+  previous = previous || new Map();
+  for(const [id, value] of current.entries()){
+    if(!previous.has(id) || !same(value, previous.get(id))){
+      ops.push({type:"set", ref:doc(collectionRef(name), id), data:clean(value)});
+    }
+  }
+  for(const [id] of previous.entries()){
+    if(!current.has(id)){
+      ops.push({type:"delete", ref:doc(collectionRef(name), id)});
+    }
+  }
+}
+
+async function commitOps(ops){
+  const chunkSize = 400;
+  for(let i=0;i<ops.length;i+=chunkSize){
+    const batch = writeBatch(fs);
+    for(const op of ops.slice(i,i+chunkSize)){
+      if(op.type==="set") batch.set(op.ref, op.data);
+      else batch.delete(op.ref);
+    }
+    await batch.commit();
+  }
+}
+
+async function saveStateNow(state){
+  if(!auth.currentUser || applyingRemote) return;
+  const cur = stripPictures(clean(state));
+  const prev = lastPushed || {
+    settings:null,
+    entries:new Map(), entryPictures:new Map(), staff:new Map(),
+    purchases:new Map(), purchasePictures:new Map(), batches:new Map(),
+    attendance:new Map(), stockRecords:new Map()
+  };
+
+  const ops = [];
+  if(!prev.settings || !same(cur.settings, prev.settings)){
+    ops.push({
+      type:"set",
+      ref:doc(fs, "businesses", BUSINESS_ID, "settings", "main"),
+      data:clean(cur.settings)
+    });
+  }
+
+  addMapOps(ops, "entries", cur.entries, prev.entries);
+  addMapOps(ops, "entryPictures", cur.entryPictures, prev.entryPictures);
+  addMapOps(ops, "staff", cur.staff, prev.staff);
+  addMapOps(ops, "purchases", cur.purchases, prev.purchases);
+  addMapOps(ops, "purchasePictures", cur.purchasePictures, prev.purchasePictures);
+  addMapOps(ops, "batches", cur.batches, prev.batches);
+  addMapOps(ops, "attendance", cur.attendance, prev.attendance);
+  addMapOps(ops, "stockRecords", cur.stockRecords, prev.stockRecords);
+
+  if(!ops.length){
+    setCloud("Online sync ہو گیا", "ok");
+    lastPushed = cur;
+    return;
+  }
+
+  try{
+    setCloud("Firebase پر save ہو رہا ہے…");
+    await commitOps(ops);
+    lastPushed = cur;
+    setCloud("Online sync ہو گیا", "ok");
+  }catch(err){
+    console.error(err);
+    setCloud("Save نہیں ہوا — internet/rules check کریں", "bad");
+  }
+}
+
+function saveState(state){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>saveStateNow(state), 350);
+}
+
+window.noorFirebaseSync = {
+  ready:false,
+  saveState
+};
+
+loginForm?.addEventListener("submit", async e=>{
+  e.preventDefault();
+  loginMessage.textContent = "";
+  loginMessage.className = "login-message";
+  loginBtn.disabled = true;
+  loginBtn.textContent = "Login ہو رہا ہے…";
+  try{
+    await signInWithEmailAndPassword(auth, loginEmail.value.trim(), loginPassword.value);
+  }catch(err){
+    console.error(err);
+    loginMessage.textContent =
+      err.code === "auth/invalid-credential" ? "Email یا Password درست نہیں۔" :
+      err.code === "auth/too-many-requests" ? "کوششیں زیادہ ہو گئیں۔ کچھ دیر بعد دوبارہ کریں۔" :
+      "Login نہیں ہوا۔ Firebase Authentication user check کریں۔";
+  }finally{
+    loginBtn.disabled = false;
+    loginBtn.textContent = "Login";
+  }
+});
+
+logoutBtn?.addEventListener("click", async()=>{
+  await signOut(auth);
+});
+
+try{
+  await setPersistence(auth, browserLocalPersistence);
+}catch(err){
+  console.warn("Auth persistence:", err);
+}
+
+onAuthStateChanged(auth, user=>{
+  if(user){
+    loginGate?.classList.add("hidden");
+    userBar.hidden = false;
+    userEmail.textContent = user.email || "Logged in";
+    setCloud("Firebase data load ہو رہا ہے…");
+    startListeners();
+  }else{
+    stopListeners();
+    window.noorFirebaseSync.ready = false;
+    userBar.hidden = true;
+    loginGate?.classList.remove("hidden");
+    setCloud("Login درکار ہے", "bad");
+  }
+});
+
+</script>
+
+
+<script>
+window.addEventListener("load", function(){
+  const probe = document.createElement("div");
+  probe.className = "card";
+  probe.style.position="fixed";
+  probe.style.left="-9999px";
+  document.body.appendChild(probe);
+  const styled = getComputedStyle(probe).borderRadius !== "0px";
+  probe.remove();
+  if(!styled) console.error("Noor Traders UI styles did not initialize.");
+});
+</script>
+
 </body></html>
