@@ -1,25 +1,28 @@
-# Noor Traders Hisab v80 — Firebase + GitHub Pages
+# Noor Traders Hisab v82 — New Attendance Layout
 
-Firebase-enabled version of Noor Traders Hisab.
+پرانا Attendance UI مکمل replace کر دیا گیا ہے۔
 
-Features in this build:
-- Firebase Email/Password login
-- Cloud Firestore online multi-user synchronization
-- Realtime updates between logged-in devices
-- localStorage offline/local cache
-- Entries, stock, attendance, staff, purchases, pictures and batches sync
-- Full Migration Backup/Restore
-- GitHub Pages workflow
-- No secret admin passwords included
+نیا Attendance module:
+- Present / Absent summary cards
+- Daily Meal total
+- Monthly staff count
+- Date-wise attendance
+- Check-in time کے مطابق arrival sorting
+- GPS on Check-in
+- GPS on Check-out
+- Selfie option
+- Staff profile picture
+- Staff role
+- Daily / Monthly meal
+- Score
+- Search / filters
+- Staff edit/delete
+- Selected day clear
+- All attendance history delete button
+- Mobile card layout
 
-Firebase Web config is client-side configuration. Database access is protected using Firebase Authentication and Firestore Security Rules.
+اہم: پرانی attendance history خودکار delete نہیں کی گئی تاکہ data ضائع نہ ہو۔
+اگر واقعی تمام history delete کرنی ہو تو Attendance Tools میں
+`تمام Attendance Data Delete` دبائیں۔
 
-See `FIREBASE_SETUP_URDU.md` for setup/upload instructions.
-
-## v80 Professional UI
-- Software-style desktop sidebar
-- Professional dashboard cards
-- Improved colors, forms, tables and buttons
-- Better mobile layout
-- Online / Secure / Firebase status strip
-- Refined login screen
+GitHub پر صرف نئی `index.html` upload/replace کریں اور Commit changes کریں۔

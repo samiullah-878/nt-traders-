@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0f766e">
 
-<title>Noor Traders Hisab v81</title>
+<title>Noor Traders Hisab v82</title>
 <style>
 :root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#6b7280;--brand:#0f766e;--brand2:#115e59;--red:#b91c1c;--line:#dce3ec;--gold:#b7791f;--blue:#1d4ed8}*{box-sizing:border-box}body{margin:0;font-family:system-ui,"Noto Nastaliq Urdu","Noto Sans Arabic",sans-serif;background:var(--bg);color:var(--ink)}button,input,select,textarea{font:inherit}.app{max-width:1280px;margin:auto;padding:12px}.top{background:linear-gradient(135deg,#134e4a,#0f766e);color:#fff;border-radius:22px;padding:18px;display:flex;gap:12px;align-items:center;justify-content:space-between;box-shadow:0 10px 30px #0f766e30}.top h1{margin:0;font-size:clamp(24px,5vw,40px)}.top small{opacity:.9}.nav{display:flex;gap:8px;overflow:auto;padding:12px 0;position:sticky;top:0;z-index:5;background:var(--bg)}.nav button{white-space:nowrap;border:1px solid var(--line);background:#fff;padding:10px 14px;border-radius:13px;font-weight:700}.nav button.active{background:var(--brand);color:#fff;border-color:var(--brand)}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 4px 16px #1720330a}.span12{grid-column:span 12}.span8{grid-column:span 8}.span6{grid-column:span 6}.span4{grid-column:span 4}.span3{grid-column:span 3}.kpi{font-size:13px;color:var(--muted)}.kpi strong{display:block;font-size:24px;color:var(--ink);margin-top:4px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.form{display:grid;grid-template-columns:repeat(12,1fr);gap:8px}.f2{grid-column:span 2}.f3{grid-column:span 3}.f4{grid-column:span 4}.f5{grid-column:span 5}.f6{grid-column:span 6}.f8{grid-column:span 8}.f12{grid-column:span 12}label{font-size:13px;color:var(--muted)}input,select,textarea{width:100%;border:1px solid #ccd5e0;border-radius:11px;padding:10px;background:#fff}button.primary{background:var(--brand);color:#fff;border:0;border-radius:11px;padding:10px 15px;font-weight:800}button.danger{background:#fff1f2;color:var(--red);border:1px solid #fecdd3;border-radius:10px;padding:8px 11px}button.soft{background:#eef7f6;color:var(--brand2);border:1px solid #cce8e5;border-radius:10px;padding:8px 11px}table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:9px 7px;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle}th{color:var(--muted);font-size:12px}.amt{font-weight:800;font-variant-numeric:tabular-nums}.muted{color:var(--muted)}.tab{display:none}.tab.active{display:block}.badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:12px;background:#eef2ff;color:#3730a3}.photo{width:52px;height:52px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}.stocktable input{min-width:80px;padding:7px}.pos{color:#15803d;font-weight:800}.neg{color:#b91c1c;font-weight:800}.notice{padding:10px 12px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;margin:10px 0}.footer{padding:20px;text-align:center;color:var(--muted)}@media(max-width:800px){.span8,.span6,.span4,.span3{grid-column:span 12}.f2,.f3,.f4,.f5,.f6,.f8{grid-column:span 12}.top{align-items:flex-start;flex-direction:column}table{font-size:12px}.card{padding:11px}}
 
@@ -486,6 +486,59 @@ table{background:#fff}
   th,td{white-space:nowrap}
 }
 
+
+/* ===== v82 Attendance Redesign ===== */
+.attendance-shell{display:grid;gap:14px}
+.attendance-head{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px 22px;background:linear-gradient(135deg,#ffffff,#f7fbff)}
+.attendance-head h2{margin:3px 0 4px;font-size:26px}.attendance-head p{margin:0;color:var(--muted)}
+.eyebrow{font-size:10px;font-weight:1000;letter-spacing:1.4px;color:var(--brand)}
+.att-head-actions{display:flex;align-items:end;gap:10px;flex-wrap:wrap}.att-date-box{min-width:170px}.att-date-box label{font-size:11px}
+.att-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.att-kpi{display:flex;align-items:center;gap:12px;min-height:104px;padding:16px;border-radius:18px;border:1px solid var(--line);box-shadow:var(--shadow);background:#fff}
+.att-kpi-icon{width:48px;height:48px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:1000}
+.att-kpi span{display:block;color:var(--muted);font-size:12px;font-weight:800}.att-kpi strong{display:block;font-size:25px;margin-top:3px}
+.att-kpi.present{background:linear-gradient(145deg,#fff,#effbf3)}.att-kpi.present .att-kpi-icon{background:#dcfce7;color:#15803d}
+.att-kpi.absent{background:linear-gradient(145deg,#fff,#fff2f2)}.att-kpi.absent .att-kpi-icon{background:#fee2e2;color:#b91c1c}
+.att-kpi.meal{background:linear-gradient(145deg,#fff,#fff8e8)}.att-kpi.meal .att-kpi-icon{background:#fef3c7;color:#a16207}
+.att-kpi.monthly{background:linear-gradient(145deg,#fff,#f3efff)}.att-kpi.monthly .att-kpi-icon{background:#ede9fe;color:#6d28d9}
+.attendance-grid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:14px;align-items:start}
+.staff-panel{position:sticky;top:18px}.panel-title,.board-toolbar,.attendance-footer{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.panel-title h3,.board-toolbar h3{margin:2px 0 0}
+.staff-total-badge{background:var(--brand-soft);color:var(--brand2);border:1px solid #cbe9e4;border-radius:999px;padding:6px 9px;font-size:11px;font-weight:900}
+.staff-form{margin-top:14px;display:grid;gap:8px;background:#f8fafc;border:1px solid #e7edf4;padding:12px;border-radius:16px}
+.staff-photo-picker{display:flex;align-items:center;gap:10px;margin-bottom:3px}
+.staff-photo-preview{width:62px;height:62px;border-radius:18px;background:#e8f3f1 center/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:28px;border:1px solid #cfe2df}
+.photo-pick-btn{cursor:pointer;background:#fff;border:1px solid var(--line);padding:9px 11px;border-radius:11px;font-size:12px!important}.add-staff-btn{width:100%;margin-top:5px}
+.gps-status-box{display:flex;gap:9px;align-items:center;margin-top:12px;padding:11px;border-radius:14px;background:#f8fafc;border:1px solid var(--line)}
+.gps-dot{width:10px;height:10px;border-radius:50%;background:#94a3b8}.gps-status-box.ok .gps-dot{background:#16a34a;box-shadow:0 0 0 4px #dcfce7}.gps-status-box.bad .gps-dot{background:#dc2626;box-shadow:0 0 0 4px #fee2e2}
+.gps-status-box b{display:block;font-size:12px}.gps-status-box small{display:block;color:var(--muted);margin-top:2px}
+.attendance-board{min-width:0}.board-toolbar{border-bottom:1px solid #edf2f7;padding-bottom:12px;margin-bottom:12px}.board-tools{display:flex;gap:8px;flex-wrap:wrap}
+.board-tools input{width:210px}.board-tools select{width:170px}.attendance-table-wrap{overflow:auto}.attendance-table{min-width:980px}.attendance-table th{white-space:nowrap}.attendance-table td{vertical-align:middle}
+.staff-cell{display:flex;align-items:center;gap:10px;min-width:190px}.staff-avatar{width:44px;height:44px;border-radius:13px;object-fit:cover;border:1px solid #d7e2ec;background:#eef3f8}
+.staff-initials{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#dff5f1,#eef3ff);color:var(--brand2);font-weight:1000}
+.staff-cell b{display:block}.staff-cell small{display:block;color:var(--muted);font-size:11px;margin:2px 0 4px}
+.staff-status{display:inline-flex;padding:3px 7px;border-radius:999px;font-size:10px;font-weight:900}.staff-status.present{background:#dcfce7;color:#15803d}.staff-status.absent{background:#fee2e2;color:#b91c1c}.staff-status.checkedout{background:#e0e7ff;color:#4338ca}
+.meal-chip{display:inline-block;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:900;white-space:nowrap}.meal-chip.daily{background:#fff7df;color:#a16207}.meal-chip.monthly{background:#f0eaff;color:#6d28d9}.meal-chip.none{background:#f1f5f9;color:#64748b}
+.time-cell b{display:block;font-size:12px}.loc-ok,.loc-bad,.loc-empty{display:block;margin-top:3px;font-size:9px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.loc-ok{color:#15803d}.loc-bad{color:#b91c1c}.loc-empty{color:#94a3b8}
+.attendance-selfie{width:30px;height:30px;object-fit:cover;border-radius:8px;margin-top:5px;border:1px solid var(--line)}.score-box{width:66px!important;text-align:center;padding:7px!important}
+.att-actions{display:flex;align-items:center;gap:5px;white-space:nowrap}.att-actions button,.camera-mini{border-radius:9px;padding:7px 8px;border:1px solid var(--line);font-size:10px;font-weight:900;cursor:pointer;background:#fff}
+.camera-mini{display:inline-flex;align-items:center;justify-content:center}.camera-mini.has-selfie{background:#dcfce7;border-color:#bbf7d0}
+.checkin-btn{background:#eaf8f5!important;color:#0f766e;border-color:#c6e8e2!important}.checkout-btn{background:#eef2ff!important;color:#4338ca;border-color:#d6dcff!important}.edit-mini{color:#1d4ed8}.delete-mini{color:#b91c1c}
+.att-actions button:disabled{opacity:.4;cursor:not-allowed}.row-present{background:#fbfffd!important}.row-absent{background:#fffdfd!important}
+.attendance-footer{margin-top:12px;padding-top:12px;border-top:1px solid #edf2f7;align-items:flex-start}.att-summary{display:flex;gap:7px;flex-wrap:wrap}
+.att-summary span{display:inline-flex;gap:4px;align-items:center;padding:6px 9px;border-radius:999px;background:#f8fafc;border:1px solid #e5ebf1;font-size:11px}
+.att-footer-actions{display:flex;gap:7px;flex-wrap:wrap}.empty-attendance{padding:28px;text-align:center;color:var(--muted)}
+.attendance-tools-card{display:flex;align-items:center;justify-content:space-between;gap:18px}.attendance-tools-card h3{margin:2px 0 3px!important}.attendance-tools-card p{margin:0}
+@media(max-width:1150px){.attendance-grid{grid-template-columns:1fr}.staff-panel{position:static}.staff-form{grid-template-columns:repeat(2,1fr)}.staff-photo-picker,.add-staff-btn{grid-column:span 2}}
+@media(max-width:800px){
+  .attendance-head{flex-direction:column;align-items:stretch}.att-head-actions{align-items:stretch}.att-date-box{flex:1}.att-kpis{grid-template-columns:repeat(2,1fr)}
+  .board-toolbar,.attendance-footer,.attendance-tools-card{flex-direction:column;align-items:stretch}.board-tools input,.board-tools select{width:100%}.staff-form{grid-template-columns:1fr}.staff-photo-picker,.add-staff-btn{grid-column:auto}
+  .attendance-table{min-width:0;border:0}.attendance-table thead{display:none}.attendance-table,.attendance-table tbody,.attendance-table tr,.attendance-table td{display:block;width:100%}
+  .attendance-table tr{border:1px solid var(--line);border-radius:16px;margin-bottom:10px;padding:10px;background:#fff!important;box-shadow:0 5px 14px rgba(15,23,42,.04)}
+  .attendance-table td{border:0;padding:7px 0;display:grid;grid-template-columns:95px 1fr;align-items:center;gap:8px}.attendance-table td:before{content:attr(data-label);font-size:10px;font-weight:900;color:var(--muted)}
+  .staff-cell{min-width:0}.att-actions{flex-wrap:wrap}
+}
+
 </style>
 </head>
 <body>
@@ -516,7 +569,7 @@ if ("serviceWorker" in navigator) {
 
 <div class="app">
 <div class="top">
-  <div><h1>Noor Traders Hisab</h1><small>Gulyana • v81 • Professional Business Software</small></div>
+  <div><h1>Noor Traders Hisab</h1><small>Gulyana • v82 • Professional Attendance</small></div>
   <div class="cloud-box">
     <b id="todayLabel"></b><br>
     <small id="cloudStatus">Firebase سے رابطہ ہو رہا ہے…</small>
@@ -551,7 +604,101 @@ if ("serviceWorker" in navigator) {
 
 <section id="stock" class="tab"><div class="grid"><div class="card span12"><div class="row" style="justify-content:space-between"><h3>Stock Audit</h3><input id="stockDate" type="date" style="width:auto"></div><div class="notice">Computer Stock، Physical Stock اور Plus/Minus محفوظ کریں۔ Rates آئندہ dates پر برقرار رہیں گے۔</div><div style="overflow:auto"><table class="stocktable"><thead><tr><th>Item</th><th>Unit</th><th>Rate</th><th>Computer</th><th>Physical</th><th>آج فرق</th><th>Value</th></tr></thead><tbody id="stockRows"></tbody></table></div><div class="row" style="margin-top:12px"><button class="primary" onclick="saveStock()">Stock محفوظ کریں</button><button class="soft" onclick="addStockItem()">نیا Item</button><button class="danger" onclick="clearStockDay()">آج کا Stock صاف</button></div></div></div></section>
 
-<section id="attendance" class="tab"><div class="grid"><div class="card span12"><h3>Staff Attendance / Checkout</h3><form id="staffForm" class="form"><div class="f4"><label>نام</label><input id="staffName" required></div><div class="f3"><label>کھانے کا طریقہ</label><select id="staffMeal"><option value="daily">Daily</option><option value="monthly">Monthly</option><option value="none">None</option></select></div><div class="f3"><label>رقم</label><input id="staffMealAmount" type="number" value="0"></div><div class="f2" style="align-self:end"><button class="primary">Staff Add</button></div></form></div><div class="card span12"><div class="row" style="justify-content:space-between"><h3>آج کی حاضری</h3><input id="attDate" type="date" style="width:auto"></div><div style="overflow:auto"><table><thead><tr><th>Staff</th><th>Meal</th><th>Check-in</th><th>Location</th><th>Checkout</th><th>Score</th><th>Action</th></tr></thead><tbody id="attRows"></tbody></table></div><div class="row"><span class="badge" id="attSummary"></span><button class="primary" onclick="saveScores()">Save All Scores</button></div></div></div></section>
+
+<section id="attendance" class="tab">
+  <div class="attendance-shell">
+    <div class="attendance-head card">
+      <div>
+        <div class="eyebrow">STAFF CONTROL</div>
+        <h2>حاضری اور Staff Management</h2>
+        <p>Check-in، Check-out، GPS، Meal allowance اور Score ایک ہی جگہ</p>
+      </div>
+      <div class="att-head-actions">
+        <div class="att-date-box">
+          <label>تاریخ</label>
+          <input id="attDate" type="date">
+        </div>
+        <button class="soft" type="button" onclick="refreshGpsStatus()">📍 GPS Check</button>
+      </div>
+    </div>
+
+    <div class="att-kpis">
+      <div class="att-kpi present"><div class="att-kpi-icon">✓</div><div><span>حاضر</span><strong id="attPresentCount">0</strong></div></div>
+      <div class="att-kpi absent"><div class="att-kpi-icon">×</div><div><span>غیر حاضر</span><strong id="attAbsentCount">0</strong></div></div>
+      <div class="att-kpi meal"><div class="att-kpi-icon">₨</div><div><span>Daily Meal</span><strong id="attDailyMealTotal">Rs 0</strong></div></div>
+      <div class="att-kpi monthly"><div class="att-kpi-icon">M</div><div><span>Monthly Staff</span><strong id="attMonthlyCount">0</strong></div></div>
+    </div>
+
+    <div class="attendance-grid">
+      <aside class="card staff-panel">
+        <div class="panel-title">
+          <div><div class="eyebrow">STAFF SETUP</div><h3>نیا Staff شامل کریں</h3></div>
+          <span class="staff-total-badge" id="staffTotalBadge">0 Staff</span>
+        </div>
+
+        <form id="staffForm" class="staff-form">
+          <div class="staff-photo-picker">
+            <div class="staff-photo-preview" id="staffPhotoPreview">👤</div>
+            <label class="photo-pick-btn">📷 تصویر<input id="staffPhoto" type="file" accept="image/*" capture="user" hidden></label>
+          </div>
+          <label>نام</label>
+          <input id="staffName" required placeholder="مثلاً Zeeshan">
+          <label>کام / Role</label>
+          <input id="staffRole" placeholder="مثلاً Packing / Picker">
+          <label>کھانے کا طریقہ</label>
+          <select id="staffMeal"><option value="daily">Daily</option><option value="monthly">Monthly</option><option value="none">None</option></select>
+          <label>Meal رقم</label>
+          <input id="staffMealAmount" type="number" min="0" value="0">
+          <button class="primary add-staff-btn" type="submit">+ Staff Add کریں</button>
+        </form>
+
+        <div class="gps-status-box" id="gpsStatusBox">
+          <span class="gps-dot"></span>
+          <div><b>GPS Status</b><small id="gpsStatusText">Check نہیں کیا گیا</small></div>
+        </div>
+      </aside>
+
+      <main class="card attendance-board">
+        <div class="board-toolbar">
+          <div><div class="eyebrow">DAILY ATTENDANCE</div><h3>آج کی حاضری</h3></div>
+          <div class="board-tools">
+            <input id="attSearch" placeholder="Staff تلاش کریں">
+            <select id="attFilter">
+              <option value="all">تمام Staff</option>
+              <option value="present">صرف حاضر</option>
+              <option value="absent">صرف غیر حاضر</option>
+              <option value="checkedout">Checkout ہو چکے</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="attendance-table-wrap">
+          <table class="attendance-table">
+            <thead><tr><th>#</th><th>Staff</th><th>Meal</th><th>Check-In</th><th>Check-Out</th><th>Score</th><th>Action</th></tr></thead>
+            <tbody id="attRows"></tbody>
+          </table>
+        </div>
+
+        <div class="attendance-footer">
+          <div id="attSummary" class="att-summary"></div>
+          <div class="att-footer-actions">
+            <button class="soft" type="button" onclick="saveScores()">💾 Save Scores</button>
+            <button class="danger" type="button" onclick="clearAttendanceDay()">Selected Day Clear</button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div class="card attendance-tools-card">
+      <div>
+        <div class="eyebrow">ATTENDANCE TOOLS</div>
+        <h3>Attendance Data</h3>
+        <p class="muted">پرانا data خودکار delete نہیں کیا گیا۔ ضرورت ہو تو یہاں سے منتخب دن یا تمام attendance records صاف کیے جا سکتے ہیں۔</p>
+      </div>
+      <button class="danger" type="button" onclick="clearAllAttendanceData()">تمام Attendance Data Delete</button>
+    </div>
+  </div>
+</section>
 
 <section id="purchases" class="tab"><div class="grid"><div class="card span12"><h3>Purchase / سامان / Bill تصاویر</h3><form id="purchaseForm" class="form"><div class="f3"><label>تاریخ</label><input id="pDate" type="date"></div><div class="f3"><label>Supplier / تفصیل</label><input id="pNote"></div><div class="f2"><label>رقم</label><input id="pAmount" type="number"></div><div class="f2"><label>Payment</label><select id="pPending"><option value="paid">Paid</option><option value="pending">Pending Bill</option></select></div><div class="f2"><label>Pictures (1-5)</label><input id="pPics" type="file" accept="image/*" multiple capture="environment"></div><div class="f12"><button class="primary">Purchase محفوظ کریں</button></div></form></div><div class="card span12"><table><thead><tr><th>Date</th><th>Detail</th><th>Amount</th><th>Status</th><th>Pictures</th><th></th></tr></thead><tbody id="purchaseRows"></tbody></table></div></div></section>
 
@@ -609,14 +756,249 @@ function addStockItem(){let n=prompt('Item نام؟');if(n){db.stockItems.push({
 function clearStockDay(){if(confirm('اس دن کا Stock صاف؟')){delete db.stockRecords[stockDate.value];save()}}
 stockRows.addEventListener('input',e=>{let tr=e.target.closest('tr');if(!tr)return;let s=tr.querySelector('.system').value,p=tr.querySelector('.physical').value,d=(s===''||p==='')?'':(+p-+s),rate=+tr.querySelector('.rate').value||0;tr.children[5].textContent=d;tr.children[5].className=d>0?'pos':d<0?'neg':'';tr.children[6].textContent=d===''?'':money(d*rate)});
 
-staffForm.onsubmit=e=>{e.preventDefault();db.staff.push({id:Date.now(),name:staffName.value,meal:staffMeal.value,mealAmount:+staffMealAmount.value||0});staffName.value='';save()};
-function renderAttendance(){let d=attDate.value||today();db.attendance[d]??={};let rec=db.attendance[d];attRows.innerHTML=db.staff.map(s=>{let a=rec[s.id]||{};return `<tr><td>${esc(s.name)}</td><td>${s.meal} ${s.mealAmount?money(s.mealAmount):''}</td><td>${a.in||'-'}</td><td>${esc(a.location||'-')}</td><td>${a.out||'-'}</td><td><input class=score data-id=${s.id} type=number value="${a.score??''}" style="width:75px"></td><td><button class=soft onclick="checkIn(${s.id})">Check-in</button> <button class=soft onclick="checkOut(${s.id})">Checkout</button> <button class=danger onclick="delStaff(${s.id})">×</button></td></tr>`}).join('');let present=db.staff.filter(s=>rec[s.id]?.in).length,daily=db.staff.filter(s=>rec[s.id]?.in&&s.meal==='daily').reduce((z,s)=>z+s.mealAmount,0);attSummary.textContent=`حاضر ${present}/${db.staff.length} • Daily meal ${money(daily)}`}
-attDate.onchange=renderAttendance;
-function now(){return new Date().toLocaleTimeString('en-PK',{timeZone:'Asia/Karachi',hour:'2-digit',minute:'2-digit'})}
-function checkIn(id){let d=attDate.value;db.attendance[d]??={};navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>{db.attendance[d][id]=Object.assign(db.attendance[d][id]||{},{in:now(),location:p.coords.latitude.toFixed(5)+','+p.coords.longitude.toFixed(5)});save()},()=>{db.attendance[d][id]=Object.assign(db.attendance[d][id]||{},{in:now(),location:'Permission نہیں'});save()}):0}
-function checkOut(id){let d=attDate.value;db.attendance[d]??={};db.attendance[d][id]=Object.assign(db.attendance[d][id]||{},{out:now()});save()}
-function saveScores(){let d=attDate.value;db.attendance[d]??={};document.querySelectorAll('.score').forEach(i=>{db.attendance[d][i.dataset.id]=Object.assign(db.attendance[d][i.dataset.id]||{},{score:i.value===''?'':+i.value})});save()}
-function delStaff(id){if(confirm('Staff delete؟')){db.staff=db.staff.filter(x=>x.id!==id);save()}}
+
+let pendingAttendanceSelfies = {};
+
+staffPhoto.onchange = async () => {
+  const f = staffPhoto.files?.[0];
+  if(!f){
+    staffPhotoPreview.textContent = '👤';
+    staffPhotoPreview.style.backgroundImage = '';
+    staffPhotoPreview.dataset.photo = '';
+    return;
+  }
+  const data = await fileData(f, 320);
+  staffPhotoPreview.textContent = '';
+  staffPhotoPreview.style.backgroundImage = `url("${data}")`;
+  staffPhotoPreview.dataset.photo = data;
+};
+
+staffForm.onsubmit = async e => {
+  e.preventDefault();
+  const photo = staffPhotoPreview.dataset.photo || '';
+  db.staff.push({
+    id: Date.now(),
+    name: staffName.value.trim(),
+    role: staffRole.value.trim(),
+    meal: staffMeal.value,
+    mealAmount: +staffMealAmount.value || 0,
+    photo
+  });
+  staffName.value = '';
+  staffRole.value = '';
+  staffMeal.value = 'daily';
+  staffMealAmount.value = '0';
+  staffPhoto.value = '';
+  staffPhotoPreview.dataset.photo = '';
+  staffPhotoPreview.style.backgroundImage = '';
+  staffPhotoPreview.textContent = '👤';
+  save();
+};
+
+function attRecordFor(date, id){
+  db.attendance[date] ??= {};
+  return db.attendance[date][id] ??= {};
+}
+
+function staffAvatar(s){
+  if(s.photo) return `<img class="staff-avatar" src="${s.photo}" alt="">`;
+  const initials = (s.name || '?').trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
+  return `<div class="staff-avatar staff-initials">${esc(initials || '?')}</div>`;
+}
+
+function locationLabel(a, type){
+  const loc = type === 'out' ? (a.outLocation || '') : (a.inLocation || a.location || '');
+  if(!loc) return '<span class="loc-empty">—</span>';
+  if(loc === 'Permission نہیں') return '<span class="loc-bad">GPS denied</span>';
+  return `<span class="loc-ok">📍 ${esc(loc)}</span>`;
+}
+
+function getAttendanceRows(){
+  const d = attDate.value || today();
+  db.attendance[d] ??= {};
+  const rec = db.attendance[d];
+  const q = (attSearch?.value || '').trim().toLowerCase();
+  const filter = attFilter?.value || 'all';
+
+  let rows = db.staff.map(s => ({s, a: rec[s.id] || {}}));
+
+  rows = rows.filter(({s,a}) => {
+    const searchHit = !q || `${s.name||''} ${s.role||''}`.toLowerCase().includes(q);
+    if(!searchHit) return false;
+    if(filter === 'present') return !!a.in;
+    if(filter === 'absent') return !a.in;
+    if(filter === 'checkedout') return !!a.out;
+    return true;
+  });
+
+  rows.sort((x,y) => {
+    if(!!x.a.in !== !!y.a.in) return x.a.in ? -1 : 1;
+    const ax = x.a.inTs || Number.MAX_SAFE_INTEGER;
+    const ay = y.a.inTs || Number.MAX_SAFE_INTEGER;
+    if(x.a.in && y.a.in && ax !== ay) return ax - ay;
+    return (x.s.name || '').localeCompare(y.s.name || '');
+  });
+
+  return rows;
+}
+
+function renderAttendance(){
+  const d = attDate.value || today();
+  db.attendance[d] ??= {};
+  const rec = db.attendance[d];
+
+  const present = db.staff.filter(s => rec[s.id]?.in);
+  const absent = Math.max(0, db.staff.length - present.length);
+  const dailyMeal = present.filter(s => (s.meal || 'none') === 'daily').reduce((z,s) => z + (+s.mealAmount || 0), 0);
+  const monthlyPresent = present.filter(s => s.meal === 'monthly');
+
+  attPresentCount.textContent = present.length;
+  attAbsentCount.textContent = absent;
+  attDailyMealTotal.textContent = money(dailyMeal);
+  attMonthlyCount.textContent = monthlyPresent.length;
+  staffTotalBadge.textContent = `${db.staff.length} Staff`;
+
+  const rows = getAttendanceRows();
+
+  attRows.innerHTML = rows.map(({s,a}, idx) => {
+    const mealText = s.meal === 'daily'
+      ? `<span class="meal-chip daily">Daily ${s.mealAmount ? money(s.mealAmount) : ''}</span>`
+      : s.meal === 'monthly'
+        ? `<span class="meal-chip monthly">Monthly ${s.mealAmount ? money(s.mealAmount) : ''}</span>`
+        : `<span class="meal-chip none">None</span>`;
+
+    const status = a.in
+      ? (a.out ? '<span class="staff-status checkedout">Checked Out</span>' : '<span class="staff-status present">Present</span>')
+      : '<span class="staff-status absent">Absent</span>';
+
+    return `
+      <tr class="${a.in ? 'row-present' : 'row-absent'}">
+        <td data-label="#">${idx + 1}</td>
+        <td data-label="Staff"><div class="staff-cell">${staffAvatar(s)}<div><b>${esc(s.name)}</b><small>${esc(s.role || 'Staff')}</small>${status}</div></div></td>
+        <td data-label="Meal">${mealText}</td>
+        <td data-label="Check-In"><div class="time-cell"><b>${a.in || '—'}</b>${locationLabel(a,'in')}${a.selfie ? `<img class="attendance-selfie" src="${a.selfie}" alt="selfie">` : ''}</div></td>
+        <td data-label="Check-Out"><div class="time-cell"><b>${a.out || '—'}</b>${locationLabel(a,'out')}</div></td>
+        <td data-label="Score"><input class="score score-box" data-id="${s.id}" type="number" min="0" step="1" value="${a.score ?? ''}" placeholder="0"></td>
+        <td data-label="Action"><div class="att-actions">
+          <label class="camera-mini" title="Selfie">📷<input type="file" accept="image/*" capture="user" hidden onchange="captureAttendanceSelfie(event,${s.id})"></label>
+          <button class="checkin-btn" type="button" onclick="checkIn(${s.id})" ${a.in ? 'disabled' : ''}>Check-In</button>
+          <button class="checkout-btn" type="button" onclick="checkOut(${s.id})" ${!a.in || a.out ? 'disabled' : ''}>Check-Out</button>
+          <button class="edit-mini" type="button" onclick="editStaff(${s.id})">✎</button>
+          <button class="delete-mini" type="button" onclick="delStaff(${s.id})">×</button>
+        </div></td>
+      </tr>`;
+  }).join('') || `<tr><td colspan="7"><div class="empty-attendance">کوئی Staff نہیں ملا</div></td></tr>`;
+
+  const monthlyAmount = monthlyPresent.reduce((z,s)=>z+(+s.mealAmount||0),0);
+  attSummary.innerHTML = `
+    <span><b>${present.length}</b> حاضر</span>
+    <span><b>${absent}</b> غیر حاضر</span>
+    <span>Daily Meal <b>${money(dailyMeal)}</b></span>
+    <span>Monthly <b>${monthlyPresent.length}</b>${monthlyAmount ? ` • ${money(monthlyAmount)}` : ''}</span>`;
+}
+
+attDate.onchange = renderAttendance;
+attSearch.oninput = renderAttendance;
+attFilter.onchange = renderAttendance;
+
+function now(){
+  return new Date().toLocaleTimeString('en-PK',{timeZone:'Asia/Karachi',hour:'2-digit',minute:'2-digit'});
+}
+
+async function captureAttendanceSelfie(ev,id){
+  const file = ev.target.files?.[0];
+  if(!file) return;
+  pendingAttendanceSelfies[id] = await fileData(file, 320);
+  ev.target.closest('.camera-mini')?.classList.add('has-selfie');
+}
+
+function getGps(){
+  return new Promise(resolve => {
+    if(!navigator.geolocation) return resolve({text:'GPS unavailable', ok:false});
+    navigator.geolocation.getCurrentPosition(
+      p => resolve({text:`${p.coords.latitude.toFixed(5)},${p.coords.longitude.toFixed(5)}`, ok:true}),
+      () => resolve({text:'Permission نہیں', ok:false}),
+      {enableHighAccuracy:true, timeout:12000, maximumAge:30000}
+    );
+  });
+}
+
+async function refreshGpsStatus(){
+  gpsStatusText.textContent = 'GPS check ہو رہا ہے…';
+  gpsStatusBox.classList.remove('ok','bad');
+  const g = await getGps();
+  gpsStatusText.textContent = g.ok ? `Ready • ${g.text}` : g.text;
+  gpsStatusBox.classList.add(g.ok ? 'ok' : 'bad');
+}
+
+async function checkIn(id){
+  const d = attDate.value || today();
+  const a = attRecordFor(d,id);
+  if(a.in) return;
+  const g = await getGps();
+  Object.assign(a,{in:now(),inTs:Date.now(),inLocation:g.text,location:g.text,selfie:pendingAttendanceSelfies[id] || a.selfie || ''});
+  delete pendingAttendanceSelfies[id];
+  save();
+}
+
+async function checkOut(id){
+  const d = attDate.value || today();
+  const a = attRecordFor(d,id);
+  if(!a.in || a.out) return;
+  const g = await getGps();
+  Object.assign(a,{out:now(),outTs:Date.now(),outLocation:g.text});
+  save();
+}
+
+function saveScores(){
+  const d = attDate.value || today();
+  db.attendance[d] ??= {};
+  document.querySelectorAll('#attRows .score').forEach(i=>{
+    db.attendance[d][i.dataset.id] = Object.assign(db.attendance[d][i.dataset.id] || {}, {score:i.value === '' ? '' : +i.value});
+  });
+  save();
+}
+
+function editStaff(id){
+  const s = db.staff.find(x=>String(x.id)===String(id));
+  if(!s) return;
+  const name = prompt('Staff نام', s.name || ''); if(name === null) return;
+  const role = prompt('Role / کام', s.role || ''); if(role === null) return;
+  const meal = prompt('Meal: daily / monthly / none', s.meal || 'none'); if(meal === null) return;
+  const amount = prompt('Meal رقم', s.mealAmount || 0); if(amount === null) return;
+  s.name = name.trim() || s.name;
+  s.role = role.trim();
+  s.meal = ['daily','monthly','none'].includes(meal) ? meal : s.meal;
+  s.mealAmount = +amount || 0;
+  save();
+}
+
+function delStaff(id){
+  const s = db.staff.find(x=>String(x.id)===String(id));
+  if(!s) return;
+  if(confirm(`${s.name} کو Staff list سے delete کریں؟`)){
+    db.staff = db.staff.filter(x=>String(x.id)!==String(id));
+    save();
+  }
+}
+
+function clearAttendanceDay(){
+  const d = attDate.value || today();
+  if(confirm(`${d} کی تمام attendance صاف کریں؟ Staff list delete نہیں ہوگی۔`)){
+    delete db.attendance[d];
+    save();
+  }
+}
+
+function clearAllAttendanceData(){
+  if(confirm('تمام dates کی Attendance history delete ہو جائے گی۔ Staff list محفوظ رہے گی۔ جاری رکھیں؟')){
+    if(confirm('آخری تصدیق: تمام Attendance records واقعی delete کرنے ہیں؟')){
+      db.attendance = {};
+      save();
+    }
+  }
+}
+
 
 purchaseForm.onsubmit=async e=>{e.preventDefault();let fs=[...pPics.files].slice(0,5),pics=[];for(const f of fs)pics.push(await fileData(f,700));db.purchases.push({id:Date.now(),date:pDate.value,note:pNote.value,amount:+pAmount.value||0,status:pPending.value,pictures:pics});pNote.value='';pAmount.value='';pPics.value='';save()};
 function renderPurchases(){purchaseRows.innerHTML=db.purchases.slice().reverse().map(x=>`<tr><td>${x.date}</td><td>${esc(x.note)}</td><td>${money(x.amount)}</td><td>${x.status}</td><td>${x.pictures.map(p=>`<img class=photo src="${p}">`).join(' ')}</td><td><button class=danger onclick="delPurchase(${x.id})">Delete</button></td></tr>`).join('')}
