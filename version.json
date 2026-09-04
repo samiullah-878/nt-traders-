@@ -1,6 +1,6 @@
 {
-  "version": "v84",
+  "version": "v85",
   "variant": "Production",
   "buildDate": "2026-09-04",
-  "notes": "Advanced multi-screen business + attendance system"
+  "notes": "Approved mobile-first multi-screen owner/staff build with scoring, advanced reports, staff edit modal and auto-update"
 }
