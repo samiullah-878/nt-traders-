@@ -1,4 +1,4 @@
-const CACHE='noor-traders-hisab-v79-firebase-1';
+const CACHE='noor-traders-hisab-v80-pro-ui';
 const ASSETS=[
   './','./index.html','./assets/css/styles.css','./assets/js/app.js',
   './assets/js/firebase-sync.js','./assets/js/firebase-config.js',

@@ -1,4 +1,4 @@
-# Noor Traders Hisab v79 — Firebase + GitHub Pages
+# Noor Traders Hisab v80 — Firebase + GitHub Pages
 
 Firebase-enabled version of Noor Traders Hisab.
 
@@ -15,3 +15,11 @@ Features in this build:
 Firebase Web config is client-side configuration. Database access is protected using Firebase Authentication and Firestore Security Rules.
 
 See `FIREBASE_SETUP_URDU.md` for setup/upload instructions.
+
+## v80 Professional UI
+- Software-style desktop sidebar
+- Professional dashboard cards
+- Improved colors, forms, tables and buttons
+- Better mobile layout
+- Online / Secure / Firebase status strip
+- Refined login screen

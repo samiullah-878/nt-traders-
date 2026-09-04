@@ -19,7 +19,7 @@ window.applyNoorDb=(next)=>{
 window.getNoorDefaults=()=>structuredClone(defaults);
 const money=n=>'Rs '+Number(n||0).toLocaleString('en-PK',{maximumFractionDigits:2});
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const tabs=[['ledger','حساب کتاب'],['stock','Stock'],['attendance','Staff / حاضری'],['purchases','Purchase Pics'],['manufacturing','Batch Cost'],['reports','Reports'],['settings','Settings']];
+const tabs=[['ledger','🏠 حساب کتاب'],['stock','📦 Stock'],['attendance','👥 Staff / حاضری'],['purchases','🧾 Purchase Pics'],['manufacturing','🏭 Batch Cost'],['reports','📊 Reports'],['settings','⚙️ Settings']];
 nav.innerHTML=tabs.map(([id,l],i)=>`<button data-tab="${id}" class="${i?'':'active'}">${l}</button>`).join('');
 nav.onclick=e=>{if(!e.target.dataset.tab)return;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('#nav button').forEach(x=>x.classList.remove('active'));document.getElementById(e.target.dataset.tab).classList.add('active');e.target.classList.add('active')};
 

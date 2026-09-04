@@ -12,3 +12,339 @@
 .sync-ok{color:#d1fae5}
 .sync-warn{color:#fef3c7}
 .sync-bad{color:#fecaca}
+
+/* ===== Noor Traders v80 Professional UI ===== */
+:root{
+  --bg:#eef3f8;
+  --card:#ffffff;
+  --ink:#142033;
+  --muted:#64748b;
+  --brand:#0f766e;
+  --brand2:#115e59;
+  --brand-soft:#e7f6f3;
+  --blue:#1d4ed8;
+  --blue-soft:#eaf0ff;
+  --gold:#b7791f;
+  --gold-soft:#fff7df;
+  --red:#b91c1c;
+  --red-soft:#fff0f0;
+  --green:#15803d;
+  --green-soft:#edf9f0;
+  --purple:#6d28d9;
+  --purple-soft:#f3edff;
+  --line:#dbe4ee;
+  --shadow:0 10px 30px rgba(15,23,42,.08);
+}
+
+body{
+  background:
+    radial-gradient(circle at 10% 0%,rgba(29,78,216,.08),transparent 28%),
+    radial-gradient(circle at 90% 0%,rgba(15,118,110,.10),transparent 32%),
+    var(--bg);
+}
+
+.app{
+  max-width:1440px;
+  padding:16px 18px 30px;
+}
+
+.top{
+  background:
+    linear-gradient(135deg,rgba(15,118,110,.98),rgba(19,78,74,.98));
+  border-radius:24px;
+  padding:20px 24px;
+  box-shadow:0 18px 45px rgba(15,118,110,.22);
+  border:1px solid rgba(255,255,255,.14);
+}
+
+.top h1{
+  font-size:clamp(26px,4vw,42px);
+  letter-spacing:-.5px;
+}
+.top small{font-weight:600}
+.cloud-box{
+  background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:16px;
+  padding:10px 13px;
+  min-width:250px;
+}
+
+.nav{
+  gap:10px;
+  padding:14px 4px;
+  background:transparent;
+  position:sticky;
+  top:0;
+  z-index:20;
+  backdrop-filter:blur(10px);
+}
+.nav button{
+  border:1px solid #d9e2ec;
+  background:rgba(255,255,255,.92);
+  padding:11px 16px;
+  border-radius:14px;
+  font-weight:800;
+  box-shadow:0 5px 14px rgba(15,23,42,.05);
+  transition:.2s ease;
+}
+.nav button:hover{
+  transform:translateY(-1px);
+  border-color:#b7c8d8;
+}
+.nav button.active{
+  background:linear-gradient(135deg,var(--brand),var(--brand2));
+  color:#fff;
+  box-shadow:0 8px 20px rgba(15,118,110,.22);
+}
+
+.software-strip{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:2px 0 14px;
+  padding:13px 16px;
+  border-radius:17px;
+  background:rgba(255,255,255,.78);
+  border:1px solid rgba(219,228,238,.95);
+  box-shadow:0 7px 20px rgba(15,23,42,.04);
+  backdrop-filter:blur(8px);
+}
+.software-strip strong{
+  display:block;
+  font-size:16px;
+}
+.software-strip span{
+  color:var(--muted);
+  font-size:12px;
+}
+.software-strip-badges{
+  display:flex;
+  gap:7px;
+  flex-wrap:wrap;
+  justify-content:flex-start;
+}
+.status-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  background:#f8fafc;
+  color:#334155 !important;
+  border:1px solid #e2e8f0;
+  border-radius:999px;
+  padding:6px 10px;
+  font-size:11px !important;
+  font-weight:800;
+}
+.status-pill.online{
+  background:var(--green-soft);
+  color:var(--green)!important;
+  border-color:#cdebd5;
+}
+
+.grid{gap:14px}
+
+.card{
+  border:1px solid #dce5ee;
+  border-radius:20px;
+  padding:16px;
+  box-shadow:var(--shadow);
+  background:rgba(255,255,255,.96);
+}
+.card h3{
+  margin-top:0;
+  font-size:18px;
+  letter-spacing:-.2px;
+}
+
+/* KPI cards */
+.grid > .card.span3:nth-child(1){border-top:4px solid var(--brand)}
+.grid > .card.span3:nth-child(2){border-top:4px solid var(--red)}
+.grid > .card.span3:nth-child(3){border-top:4px solid var(--blue)}
+.grid > .card.span3:nth-child(4){border-top:4px solid var(--gold)}
+
+.kpi{
+  font-size:12px;
+  font-weight:800;
+  color:#64748b;
+}
+.kpi strong{
+  font-size:25px;
+  margin-top:7px;
+  letter-spacing:-.4px;
+}
+
+input,select,textarea{
+  border:1px solid #cbd8e6;
+  background:#fbfdff;
+  border-radius:12px;
+  padding:11px 12px;
+  outline:none;
+  transition:.18s ease;
+}
+input:focus,select:focus,textarea:focus{
+  background:#fff;
+  border-color:#5aa99f;
+  box-shadow:0 0 0 3px rgba(15,118,110,.10);
+}
+label{
+  font-weight:800;
+  color:#526175;
+  margin-bottom:4px;
+  display:block;
+}
+
+button.primary{
+  background:linear-gradient(135deg,var(--brand),var(--brand2));
+  border-radius:12px;
+  padding:11px 16px;
+  box-shadow:0 7px 16px rgba(15,118,110,.18);
+}
+button.primary:hover{filter:brightness(1.04)}
+button.soft{
+  background:var(--blue-soft);
+  color:var(--blue);
+  border-color:#cad8ff;
+  font-weight:800;
+}
+button.danger{
+  background:var(--red-soft);
+  color:var(--red);
+  border-color:#ffd2d2;
+  font-weight:800;
+}
+
+table{
+  border-collapse:separate;
+  border-spacing:0;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:14px;
+}
+thead th{
+  background:#f4f7fb;
+  color:#526175;
+  font-weight:900;
+  border-bottom:1px solid var(--line);
+}
+tbody tr:nth-child(even){background:#fbfdff}
+tbody tr:hover{background:#f2f8f7}
+th,td{padding:11px 9px}
+
+.badge{
+  background:var(--purple-soft);
+  color:var(--purple);
+  border:1px solid #e3d5ff;
+  font-weight:800;
+}
+
+.notice{
+  background:var(--gold-soft);
+  border-color:#f5dea1;
+  color:#8a5c00;
+  font-weight:700;
+}
+
+.photo{
+  width:58px;
+  height:58px;
+  border-radius:12px;
+  box-shadow:0 4px 12px rgba(15,23,42,.08);
+}
+
+.login-gate{
+  background:
+    radial-gradient(circle at 20% 20%,rgba(255,255,255,.13),transparent 22%),
+    radial-gradient(circle at 80% 0%,rgba(255,255,255,.10),transparent 26%),
+    linear-gradient(135deg,#0b5f59,#133d3a);
+}
+.login-card{
+  border:1px solid rgba(255,255,255,.55);
+  box-shadow:0 30px 90px rgba(0,0,0,.25);
+  padding:28px;
+}
+.login-card:before{
+  content:"NT";
+  display:flex;
+  width:54px;
+  height:54px;
+  align-items:center;
+  justify-content:center;
+  border-radius:16px;
+  margin:0 auto 14px;
+  background:linear-gradient(135deg,var(--brand),var(--brand2));
+  color:white;
+  font-weight:900;
+  font-size:20px;
+  box-shadow:0 10px 25px rgba(15,118,110,.25);
+}
+
+.footer{
+  font-size:12px;
+  padding:28px 20px 10px;
+}
+
+/* desktop software-like layout */
+@media(min-width:1050px){
+  .app{
+    padding-right:245px;
+    position:relative;
+  }
+  .nav{
+    position:fixed;
+    right:18px;
+    top:18px;
+    width:210px;
+    max-height:calc(100vh - 36px);
+    overflow:auto;
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    background:rgba(255,255,255,.94);
+    border:1px solid #dce5ee;
+    border-radius:22px;
+    padding:14px;
+    box-shadow:0 18px 50px rgba(15,23,42,.10);
+  }
+  .nav:before{
+    content:"NOOR TRADERS";
+    display:block;
+    color:var(--brand2);
+    font-weight:1000;
+    letter-spacing:.5px;
+    padding:7px 6px 14px;
+    border-bottom:1px solid #e6edf4;
+    margin-bottom:6px;
+    text-align:center;
+  }
+  .nav button{
+    width:100%;
+    text-align:right;
+    margin:2px 0;
+    box-shadow:none;
+  }
+}
+
+/* mobile polished */
+@media(max-width:800px){
+  .app{padding:10px}
+  .top{border-radius:18px;padding:16px}
+  .cloud-box{min-width:0;width:100%}
+  .software-strip{align-items:flex-start;flex-direction:column}
+  .software-strip-badges{width:100%}
+  .nav{
+    margin:0 -2px;
+    padding:10px 2px;
+  }
+  .nav button{
+    padding:9px 12px;
+    font-size:12px;
+    border-radius:12px;
+  }
+  .card{
+    border-radius:16px;
+    padding:12px;
+  }
+  .kpi strong{font-size:22px}
+}
