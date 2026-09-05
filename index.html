@@ -4,6 +4,9 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0f766e">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <title>Noor Traders Hisab v85</title>
 <style>
@@ -631,6 +634,100 @@ table{background:#fff}
   .staff-profile-hero h2{font-size:20px!important}
 }
 
+/* ===== Premium dashboard refresh ===== */
+:root{
+  --bg:#f5f7fb;
+  --card:#ffffff;
+  --ink:#172235;
+  --muted:#667085;
+  --brand:#0b766e;
+  --brand2:#075e59;
+  --brand-soft:#e8f6f3;
+  --line:#e2e8f0;
+  --shadow:0 14px 38px rgba(22,34,53,.08);
+  --shadow-hover:0 18px 42px rgba(22,34,53,.14);
+}
+html{background:var(--bg)}
+body{
+  font-family:"Inter","Noto Sans Arabic","Segoe UI",sans-serif;
+  color:var(--ink);
+  letter-spacing:-.01em;
+  background:
+    radial-gradient(circle at 8% 0%,rgba(11,118,110,.08),transparent 28rem),
+    radial-gradient(circle at 94% 8%,rgba(58,91,160,.07),transparent 25rem),
+    var(--bg);
+}
+button,input,select,textarea{font-family:inherit}
+h1,h2,h3,h4,b,strong{letter-spacing:-.025em}
+.app{max-width:1480px;padding:20px 24px 38px}
+.top{border-radius:26px;padding:24px 28px;box-shadow:0 18px 46px rgba(7,94,89,.2)}
+.top h1{font-size:clamp(28px,4vw,44px);font-weight:800}
+.top small{font-size:12px}
+.nav{
+  gap:8px;
+  padding:16px 4px;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.nav::-webkit-scrollbar{display:none}
+.nav button{
+  border:1px solid #d9e2ec;
+  border-radius:12px;
+  padding:11px 15px;
+  color:#455468;
+  font-size:13px;
+  transition:transform .2s ease,box-shadow .2s ease,background .2s ease;
+}
+.nav button:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(22,34,53,.08)}
+.nav button.active{background:linear-gradient(135deg,var(--brand),var(--brand2));border-color:transparent}
+.screen-head{border-radius:22px;padding:22px 24px;background:rgba(255,255,255,.72);border:1px solid rgba(226,232,240,.9);box-shadow:var(--shadow)}
+.screen-head h2{font-size:clamp(24px,3vw,34px);font-weight:800;margin:4px 0 5px}
+.screen-head p{font-size:13px;color:var(--muted);margin:0}
+.eyebrow{font-size:10px;letter-spacing:.14em;font-weight:800;color:var(--brand)}
+.pro-card,.card{border-color:var(--line);border-radius:20px;box-shadow:var(--shadow)}
+.pro-card:hover{box-shadow:var(--shadow-hover)}
+input,select,textarea{min-height:44px;border-radius:12px;border-color:#d4dde8;color:var(--ink)}
+input::placeholder,textarea::placeholder{color:#98a2b3}
+button.primary,button.soft,button.danger{min-height:42px;border-radius:12px;font-weight:700}
+button.primary{background:linear-gradient(135deg,var(--brand),var(--brand2))}
+button.soft{background:var(--brand-soft);color:var(--brand2);border-color:#cbe9e4}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid rgba(11,118,110,.22);outline-offset:2px}
+.staff-dashboard-heading{margin-bottom:16px}
+.staff-summary-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:14px}
+.staff-summary-card{display:flex;align-items:center;gap:13px;min-height:118px;padding:18px;border:1px solid var(--line);border-radius:20px;background:#fff;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.staff-summary-card:after{content:"";position:absolute;inset:auto -30px -42px auto;width:130px;height:130px;border-radius:50%;background:currentColor;opacity:.06}
+.staff-summary-card .summary-icon{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;font-size:22px;background:currentColor;color:#fff}
+.staff-summary-card small,.staff-summary-card b,.staff-summary-card em{display:block}
+.staff-summary-card small{font-size:11px;color:var(--muted);font-weight:700}
+.staff-summary-card b{font-size:28px;line-height:1.1;margin:4px 0}
+.staff-summary-card em{font-size:10px;color:var(--muted);font-style:normal}
+.staff-summary-total{color:#167d75}.staff-summary-present{color:#218653}.staff-summary-absent{color:#c25757}.staff-summary-out{color:#456fc0}
+.staff-live-summary{margin-bottom:14px}
+.staff-feature-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.staff-feature-card{min-height:142px;display:flex;align-items:flex-start;gap:13px;text-align:start;padding:18px;border:1px solid var(--line);border-radius:20px;background:#fff;color:var(--ink);box-shadow:var(--shadow);cursor:pointer;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.staff-feature-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-hover);border-color:#b8d9d4}
+.staff-feature-card .feature-icon{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:13px;background:var(--brand-soft);color:var(--brand2);font-size:21px}
+.staff-feature-card b,.staff-feature-card small{display:block}
+.staff-feature-card b{font-size:15px;margin:2px 0 7px}
+.staff-feature-card small{font-size:11px;line-height:1.55;color:var(--muted)}
+.staff-feature-card strong{margin-inline-start:auto;color:var(--brand);font-size:20px}
+.staff-feature-primary{background:linear-gradient(145deg,#f0fbf9,#fff)}
+.staff-feature-action{background:linear-gradient(145deg,#eef5ff,#fff);border-color:#d7e2f7}
+.staff-feature-action .feature-icon{background:#e7efff;color:#315ca8}
+@media(max-width:1050px){
+  .staff-summary-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .staff-feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  .app{padding:10px 10px 82px}
+  .top{padding:18px;border-radius:20px}
+  .screen-head{padding:17px;border-radius:18px}
+  .staff-summary-cards,.staff-feature-grid{grid-template-columns:1fr}
+  .staff-summary-card{min-height:96px;padding:15px}
+  .staff-summary-card b{font-size:24px}
+  .staff-feature-card{min-height:118px;padding:15px}
+}
+
 </style>
 </head>
 <body>
@@ -813,7 +910,7 @@ table{background:#fff}
 </div>
 
 
-<div id="mobileDockV84" class="mobile-dock-v84"><button data-go="dashboard">🏠<span>Home</span></button><button data-go="sales">💰<span>Sale</span></button><button data-go="attendanceToday">✓<span>Attendance</span></button><button data-go="staffAccounts">👥<span>Staff</span></button><button id="mobileMoreV84">☰<span>More</span></button></div>
+<div id="mobileDockV84" class="mobile-dock-v84"><button data-go="dashboard">🏠<span>Home</span></button><button data-go="sales">💰<span>Sale</span></button><button data-go="staffCenter">👥<span>Staff Control</span></button><button id="mobileMoreV84">☰<span>More</span></button></div>
 <section id="dashboard" class="tab active app-screen">
   <div class="screen-head"><div><div class="eyebrow">OWNER DASHBOARD</div><h2>آج کا Business Overview</h2><p>حساب، Cash، Staff اور Attendance ایک نظر میں</p></div><div class="screen-actions"><input id="dashDate" type="date"><button class="soft" onclick="renderV84Dashboard()">Refresh</button></div></div>
   <div class="dash-kpis">
@@ -853,6 +950,30 @@ table{background:#fff}
 <section id="accountIncoming" class="tab app-screen entry-screen">
   <div class="screen-head"><div><div class="eyebrow">BUSINESS • BANK / ACCOUNT</div><h2>Accounts Incoming</h2><p>اکاؤنٹ میں آنے والی رقم کا الگ record</p></div></div>
   <div class="split-layout"><div class="pro-card entry-form-card"><h3>نئی Account Entry</h3><form id="accountFormV84" class="vertical-form"><label>Date</label><input id="accountDateV84" type="date"><label>Detail</label><input id="accountNoteV84"><label>Amount</label><input id="accountAmountV84" type="number" required><button class="primary">Save</button></form></div><div class="pro-card"><div class="pro-card-head"><h3>History</h3><input id="accountFilterDateV84" type="date"></div><div class="table-scroll"><table><thead><tr><th>Detail</th><th>Amount</th><th>Action</th></tr></thead><tbody id="accountRowsV84"></tbody></table></div><div class="screen-total">Total <b id="accountTotalV84">Rs 0</b></div></div></div>
+</section>
+
+<section id="staffCenter" class="tab app-screen staff-center-screen">
+  <div class="screen-head staff-dashboard-heading">
+    <div><div class="eyebrow">PEOPLE OPERATIONS</div><h2>Staff Dashboard</h2><p>ملازمین، حاضری، location اور performance ایک ہی جگہ</p></div>
+    <div class="screen-actions"><button class="primary" onclick="goScreen('staffAccounts');toggleStaffCreateV84(true)">＋ Add Staff</button><button class="soft" onclick="goScreen('attendanceToday')">Open Attendance</button></div>
+  </div>
+  <div class="staff-summary-cards">
+    <div class="staff-summary-card staff-summary-total"><span class="summary-icon">👥</span><div><small>Total Staff</small><b id="staffCenterTotal">0</b><em>Active accounts</em></div></div>
+    <div class="staff-summary-card staff-summary-present"><span class="summary-icon">✓</span><div><small>Present Today</small><b id="staffCenterPresent">0</b><em>Checked in</em></div></div>
+    <div class="staff-summary-card staff-summary-absent"><span class="summary-icon">○</span><div><small>Absent Today</small><b id="staffCenterAbsent">0</b><em>Needs attention</em></div></div>
+    <div class="staff-summary-card staff-summary-out"><span class="summary-icon">↗</span><div><small>Checked Out</small><b id="staffCenterOut">0</b><em>Shift completed</em></div></div>
+  </div>
+  <div class="staff-center-summary pro-card staff-live-summary"><div class="pro-card-head"><div><div class="eyebrow">LIVE SNAPSHOT</div><h3>آج کی Staff Activity</h3></div><button class="soft" onclick="goScreen('attendanceToday')">Refresh</button></div><div class="staff-center-stats"><div><small>Total Staff</small><b id="staffCenterCount">0 accounts</b></div><div><small>Present</small><b id="staffCenterPresentMirror">0</b></div><div><small>Absent</small><b id="staffCenterAbsentMirror">0</b></div><div><small>Late</small><b id="staffCenterLate">0</b></div><div><small>Checked Out</small><b id="staffCenterOutMirror">0</b></div></div></div>
+  <div class="staff-feature-grid">
+    <button class="staff-feature-card staff-feature-primary" onclick="goScreen('staffAccounts')"><span class="feature-icon">👥</span><span><b>Staff List</b><small>Profiles, phone, address and account status</small></span><strong>→</strong></button>
+    <button class="staff-feature-card staff-feature-action" onclick="goScreen('attendanceToday')"><span class="feature-icon">✓</span><span><b>Check In / Check Out</b><small>Live attendance, GPS, selfie and late status</small></span><strong>→</strong></button>
+    <button class="staff-feature-card" onclick="goScreen('attendanceHistory')"><span class="feature-icon">📅</span><span><b>Attendance History</b><small>Date selection, calendar-style records and PDF</small></span><strong>→</strong></button>
+    <button class="staff-feature-card" onclick="goScreen('scores')"><span class="feature-icon">🏆</span><span><b>Scores & Ranking</b><small>Performance, punctuality and monthly scores</small></span><strong>→</strong></button>
+    <button class="staff-feature-card" onclick="goScreen('staffAccounts');toggleStaffCreateV84(true)"><span class="feature-icon">＋</span><span><b>Add Staff</b><small>Create a new employee account and profile</small></span><strong>→</strong></button>
+    <button class="staff-feature-card" onclick="goScreen('staffProfile')"><span class="feature-icon">◎</span><span><b>Staff Profile</b><small>View profile, edit details or manage photo</small></span><strong>→</strong></button>
+    <button class="staff-feature-card" onclick="goScreen('attendanceToday')"><span class="feature-icon">📍</span><span><b>Location Attendance</b><small>200m geofence, GPS distance and evidence</small></span><strong>→</strong></button>
+    <button class="staff-feature-card" onclick="goScreen('attendanceHistory');printHistoryReportV84()"><span class="feature-icon">▣</span><span><b>Reports & Summary</b><small>Daily/monthly staff reports and exports</small></span><strong>→</strong></button>
+  </div>
 </section>
 
 <section id="staffAccounts" class="tab app-screen">
@@ -1067,9 +1188,9 @@ window.applyNoorDb=(next)=>{
 window.getNoorDefaults=()=>structuredClone(defaults);
 const money=n=>'Rs '+Number(n||0).toLocaleString('en-PK',{maximumFractionDigits:2});
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const tabs=[['dashboard','🏠 Dashboard'],['sales','💰 Sale'],['collections','🧾 Wasooli'],['expenses','💸 Expenses'],['cashScreen','💵 Cash / Change'],['accountIncoming','🏦 Accounts Incoming'],['stock','📦 Stock Audit'],['staffAccounts','👥 Staff Accounts'],['attendanceToday','✅ Today Attendance'],['attendanceHistory','📅 Attendance History'],['scores','🏆 Scores'],['purchases','🧾 Purchase / Bills'],['manufacturing','🏭 Batch Cost'],['reports','📊 Reports'],['backup','💾 Backup'],['settings','⚙️ Settings']];
+const tabs=[['dashboard','🏠 Dashboard'],['sales','💰 Sale'],['collections','🧾 Wasooli'],['expenses','💸 Expenses'],['cashScreen','💵 Cash / Change'],['accountIncoming','🏦 Accounts Incoming'],['stock','📦 Stock Audit'],['staffCenter','👥 Staff Control'],['purchases','🧾 Purchase / Bills'],['manufacturing','🏭 Batch Cost'],['reports','📊 Reports'],['backup','💾 Backup'],['settings','⚙️ Settings']];
 nav.innerHTML=tabs.map(([id,l],i)=>`<button data-tab="${id}" class="${i?'':'active'}">${l}</button>`).join('');
-function goScreen(id){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));const el=document.getElementById(id);if(el){el.classList.add('active');window.scrollTo({top:0,behavior:'smooth'});}document.getElementById('nav')?.classList.remove('mobile-open');if(id==='dashboard')renderV84Dashboard();if(id==='staffAccounts')renderStaffAccountsV84();if(id==='attendanceToday')renderTodayAttendanceV84();if(id==='attendanceHistory')renderAttendanceHistoryV84();if(id==='scores')renderScoresV84();if(id==='staffProfile')renderStaffProfileV84();}
+function goScreen(id){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));const el=document.getElementById(id);if(el){el.classList.add('active');window.scrollTo({top:0,behavior:'smooth'});}document.getElementById('nav')?.classList.remove('mobile-open');if(id==='dashboard')renderV84Dashboard();if(id==='staffCenter')renderStaffCenterV84();if(id==='staffAccounts')renderStaffAccountsV84();if(id==='attendanceToday')renderTodayAttendanceV84();if(id==='attendanceHistory')renderAttendanceHistoryV84();if(id==='scores')renderScoresV84();if(id==='staffProfile')renderStaffProfileV84();}
 window.goScreen=goScreen;
 nav.onclick=e=>{const b=e.target.closest('[data-tab]');if(b)goScreen(b.dataset.tab)};
 
@@ -1319,6 +1440,25 @@ staffPhoneV84.oninput=()=>staffPasswordV84.textContent=normPhoneV84(staffPhoneV8
 staffPhotoV84.onchange=async()=>{const f=staffPhotoV84.files?.[0];staffPhotoDataV84=f?await fileData(f,360):'';staffPhotoPreviewV84.textContent=staffPhotoDataV84?'':'👤';staffPhotoPreviewV84.style.backgroundImage=staffPhotoDataV84?`url("${staffPhotoDataV84}")`:''};
 staffFormV84.onsubmit=async e=>{e.preventDefault();const phone=normPhoneV84(staffPhoneV84.value);if(phone.length<10)return alert('Phone Number درست درج کریں');if(db.staff.some(s=>normPhoneV84(s.phone||s.id)===phone))return alert('یہ Phone Number پہلے موجود ہے');const s={id:phone,name:staffNameV84.value.trim(),address:staffAddressV84.value.trim(),phone,photo:staffPhotoDataV84||'',active:true,createdAt:Date.now()};db.staff.push(s);save();await window.noorStaffSystem?.upsertAccount(s);staffFormV84.reset();staffPhotoDataV84='';staffPhotoPreviewV84.textContent='👤';staffPhotoPreviewV84.style.backgroundImage='';toggleStaffCreateV84(false)};
 staffSearchV84.oninput=renderStaffAccountsV84;
+function renderStaffCenterV84(){
+  const total=db.staff.length;
+  const date=todayAttDateV84?.value||today();
+  const attendanceMap=typeof ownerStaffAttendance==='undefined'?new Map():ownerStaffAttendance;
+  const records=[...attendanceMap.values()].filter(x=>x.date===date);
+  const present=records.filter(x=>x.checkIn||x.checkInTime).length;
+  const late=records.filter(x=>Number(x.lateMinutes||x.late||0)>0).length;
+  const out=records.filter(x=>x.checkOut||x.checkOutTime).length;
+  const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value};
+  set('staffCenterCount',`${total} accounts`);
+  set('staffCenterTotal',total);
+  set('staffCenterPresent',present);
+  set('staffCenterAbsent',Math.max(total-present,0));
+  set('staffCenterLate',late);
+  set('staffCenterOut',out);
+  set('staffCenterPresentMirror',present);
+  set('staffCenterAbsentMirror',Math.max(total-present,0));
+  set('staffCenterOutMirror',out);
+}
 function renderStaffAccountsV84(){const q=(staffSearchV84.value||'').toLowerCase(),items=db.staff.filter(s=>`${s.name||''} ${s.phone||''} ${s.address||''}`.toLowerCase().includes(q));staffCountV84.textContent=`${db.staff.length} accounts`;histStaffV84.innerHTML='<option value="">All Staff</option>'+db.staff.map(s=>`<option value="${normPhoneV84(s.phone||s.id)}">${esc(s.name)} • ${esc(normPhoneV84(s.phone||s.id))}</option>`).join('');staffCardsV84.innerHTML=items.map(s=>{const p=normPhoneV84(s.phone||s.id),initials=(s.name||'?').split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();return `<article class="staff-card-v84"><div class="staff-card-top"><div class="staff-card-avatar">${s.photo?`<img src="${s.photo}">`:esc(initials)}</div><div><h4>${esc(s.name)}</h4><span>${esc(p)}</span></div><span class="active-chip-v84">${s.active===false?'Inactive':'Active'}</span></div><p>📍 ${esc(s.address||'—')}</p><div class="staff-card-password">🔐 Password = <b>${esc(p)}</b></div><div class="staff-card-actions"><button onclick="openStaffProfileV84('${p}')">View</button><button onclick="editStaffV84('${p}')">Edit</button><button class="danger" onclick="deleteStaffV84('${p}')">Delete</button></div></article>`}).join('')||'<div class="empty-state-v84">No staff found</div>'}
 async function editStaffV84(phone){const s=staffForPhoneV84(phone);if(!s.phone&&!s.id)return;const name=prompt('Name',s.name||'');if(name===null)return;const address=prompt('Address',s.address||'');if(address===null)return;const np=normPhoneV84(prompt('Phone Number',normPhoneV84(s.phone||s.id)));if(!np)return;const old=normPhoneV84(s.phone||s.id);s.name=name.trim()||s.name;s.address=address.trim();s.phone=np;s.id=np;if(old!==np)await window.noorStaffSystem?.deleteAccount(old);await window.noorStaffSystem?.upsertAccount(s);save()}
 async function deleteStaffV84(phone){const s=staffForPhoneV84(phone);if(confirm(`${s.name||phone} delete کریں؟`)){db.staff=db.staff.filter(x=>normPhoneV84(x.phone||x.id)!==normPhoneV84(phone));save();await window.noorStaffSystem?.deleteAccount(phone)}}
@@ -1472,7 +1612,7 @@ function printIndividualStaffV84(phone){
   printWindowV84('Individual Staff Performance Report',`${s.name||phone} • ${normPhoneV84(phone)} • ${ms.start} to ${ms.end}`,summary,['Date','Check-In','Late min','Auto Score','Final Score','Check-Out','Distance','Owner Note'],rows);
 }
 
-function renderAllV84(){renderEntryScreensV84();renderV84Dashboard();renderStaffAccountsV84();renderTodayAttendanceV84();renderAttendanceHistoryV84();renderScoresV84();if(currentProfilePhoneV84)renderStaffProfileV84()}
+function renderAllV84(){renderEntryScreensV84();renderV84Dashboard();renderStaffCenterV84();renderStaffAccountsV84();renderTodayAttendanceV84();renderAttendanceHistoryV84();renderScoresV84();if(currentProfilePhoneV84)renderStaffProfileV84()}
 const _oldRenderAllV84=renderAll;renderAll=function(){_oldRenderAllV84();try{renderAllV84()}catch(e){console.warn('v84 render',e)}};
 
 document.querySelectorAll('#mobileDockV84 [data-go]').forEach(b=>b.onclick=()=>goScreen(b.dataset.go));mobileMoreV84.onclick=()=>nav.classList.toggle('mobile-open');
@@ -1901,5 +2041,22 @@ window.addEventListener("load", function(){
   if(!styled) console.error("Noor Traders UI styles did not initialize.");
 });
 </script>
+
+<style>
+:root{--font-ui:"Noto Sans Arabic","Noto Sans Urdu","Segoe UI",sans-serif;--staff-teal:#0f766e;--staff-blue:#2563eb;--staff-gold:#b7791f;--staff-purple:#7c3aed}
+body{font-family:var(--font-ui);letter-spacing:0}
+button,input,select,textarea{font-family:var(--font-ui)}
+.staff-center-screen{animation:staffFadeIn .28s ease both}
+.staff-center-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:14px}
+.staff-center-card{display:flex;align-items:center;gap:12px;min-height:108px;padding:18px;border:1px solid transparent;border-radius:18px;color:#172033;text-align:right;cursor:pointer;box-shadow:0 8px 22px rgba(15,23,42,.08);transition:transform .18s ease,box-shadow .18s ease}
+.staff-center-card:hover{transform:translateY(-3px);box-shadow:0 14px 28px rgba(15,23,42,.14)}
+.staff-center-card>span:nth-child(2){display:grid;gap:5px;flex:1}.staff-center-card b{font-size:16px}.staff-center-card small{color:#526175;font-size:12px;line-height:1.45}.staff-center-card strong{font-size:22px;color:#526175}.staff-center-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:#fff;font-size:22px;box-shadow:0 4px 12px rgba(15,23,42,.08)}
+.staff-card-teal{background:#e5f7f3;border-color:#b9e7dc}.staff-card-blue{background:#eaf0ff;border-color:#c9d8ff}.staff-card-gold{background:#fff7df;border-color:#f1dda0}.staff-card-purple{background:#f3edff;border-color:#ddd0ff}
+.staff-card-teal .staff-center-icon{color:var(--staff-teal)}.staff-card-blue .staff-center-icon{color:var(--staff-blue)}.staff-card-gold .staff-center-icon{color:var(--staff-gold)}.staff-card-purple .staff-center-icon{color:var(--staff-purple)}
+.staff-center-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.staff-center-stats>div{padding:14px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0}.staff-center-stats small{display:block;color:#64748b;font-weight:700;font-size:12px}.staff-center-stats b{display:block;margin-top:5px;font-size:25px;color:#172033}
+@keyframes staffFadeIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+@media(max-width:850px){.staff-center-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.staff-center-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:520px){.staff-center-grid{grid-template-columns:1fr}.staff-center-card{min-height:86px;padding:14px}.staff-center-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.staff-center-screen .screen-actions{width:100%}.staff-center-screen .screen-actions button{flex:1}}
+</style>
 
 </body></html>
