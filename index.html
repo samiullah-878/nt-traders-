@@ -2201,22 +2201,8 @@ loginForm?.addEventListener("submit",async e=>{
       if(!acc.exists()||acc.data().active===false||acc.data().loginEnabled===false||normalizePhone(loginPassword.value)!==normalized){await signOut(auth);throw new Error("staff-login")}
       await setDoc(doc(staffSessionsCol,cred.user.uid),{phone:normalized,createdAt:Date.now()});await loadStaffSession(cred.user,normalized);
     }else{throw new Error("login-id")}
-  }catch(err){console.error(err);loginMessage.textContent=err.code==="auth/invalid-credential"?"Login ID یا Password درست نہیں۔":err.message==="staff-login"?"Staff mobile یا default password درست نہیں۔":"Login نہیں ہوا۔ Admin Firebase account یا staff account check کریں۔"}
+  }catch(err){console.error(err);loginMessage.textContent=err.code==="auth/invalid-credential"?"Login ID یا Password درست نہیں۔":err.code==="auth/operation-not-allowed"?"Staff login کے لیے Firebase Authentication میں Anonymous provider enable کریں۔":err.code==="permission-denied"?"Staff account access denied — Firestore Rules اور account status check کریں۔":err.message==="staff-login"?"Staff mobile یا default password درست نہیں۔":"Login نہیں ہوا۔ Firebase Authentication اور Firestore Rules check کریں۔"}
   finally{loginBtn.disabled=false}
-});
-staffLoginForm?.addEventListener("submit",async e=>{
-  e.preventDefault();staffLoginMessage.textContent="";
-  const phone=normalizePhone(staffLoginPhone.value),pass=normalizePhone(staffLoginPassword.value);
-  if(!phone||phone!==pass){staffLoginMessage.textContent="Password وہی Phone Number ہونا چاہیے۔";return}
-  staffLoginBtn.disabled=true;
-  try{
-    const cred=await signInAnonymously(auth);
-    const acc=await getDoc(doc(staffAccountsCol,phone));
-    if(!acc.exists()||acc.data().active===false){staffLoginMessage.textContent="یہ Staff account موجود یا active نہیں ہے۔";await signOut(auth);return}
-    await setDoc(doc(staffSessionsCol,cred.user.uid),{phone,createdAt:Date.now()});
-    await loadStaffSession(cred.user,phone);
-  }catch(err){console.error(err);staffLoginMessage.textContent="Staff login نہیں ہوا۔ Firebase Anonymous Auth اور Rules check کریں۔"}
-  finally{staffLoginBtn.disabled=false}
 });
 logoutBtn?.addEventListener("click",()=>signOut(auth));
 staffLogoutBtn?.addEventListener("click",()=>signOut(auth));

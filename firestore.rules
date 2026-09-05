@@ -8,7 +8,8 @@ service cloud.firestore {
     }
 
     // Owner signs in with Firebase Email/Password.
-    // Anonymous users are Staff portal sessions.
+    // Anonymous users are restricted Staff portal sessions. Enable the
+    // Anonymous provider in Firebase Authentication for mobile staff login.
     function isOwner() {
       return signedIn() && request.auth.token.email != null;
     }
@@ -21,6 +22,12 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/businesses/noor-traders/staffSessions/$(request.auth.uid)).data.phone;
     }
 
+    function enabledStaffAccount(phone) {
+      let account = get(/databases/$(database)/documents/businesses/noor-traders/staffAccounts/$(phone)).data;
+      return (!('active' in account) || account.active == true)
+        && (!('loginEnabled' in account) || account.loginEnabled == true);
+    }
+
     // Existing owner business data: owner only.
     match /businesses/noor-traders/{collectionName}/{docId} {
       allow read, write: if isOwner();
@@ -28,7 +35,8 @@ service cloud.firestore {
 
     // Staff account: owner can list/write. Anonymous staff may GET only a known phone document.
     match /businesses/noor-traders/staffAccounts/{phone} {
-      allow get: if signedIn();
+      allow get: if isOwner()
+        || (isStaff() && enabledStaffAccount(phone));
       allow list, create, update, delete: if isOwner();
     }
 
@@ -36,7 +44,7 @@ service cloud.firestore {
     match /businesses/noor-traders/staffSessions/{uid} {
       allow create, update: if isStaff()
         && request.auth.uid == uid
-        && exists(/databases/$(database)/documents/businesses/noor-traders/staffAccounts/$(request.resource.data.phone));
+        && enabledStaffAccount(request.resource.data.phone);
       allow get: if request.auth.uid == uid || isOwner();
       allow delete, list: if isOwner();
     }
