@@ -36,7 +36,9 @@ service cloud.firestore {
     // Staff account: owner can list/write. Anonymous staff may GET only a known phone document.
     match /businesses/noor-traders/staffAccounts/{phone} {
       allow get: if isOwner()
-        || (isStaff() && enabledStaffAccount(phone));
+        || (isStaff()
+          && (!('active' in resource.data) || resource.data.active == true)
+          && (!('loginEnabled' in resource.data) || resource.data.loginEnabled == true));
       allow list, create, update, delete: if isOwner();
     }
 

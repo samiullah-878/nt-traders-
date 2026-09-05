@@ -2201,7 +2201,7 @@ loginForm?.addEventListener("submit",async e=>{
       if(!acc.exists()||acc.data().active===false||acc.data().loginEnabled===false||normalizePhone(loginPassword.value)!==normalized){await signOut(auth);throw new Error("staff-login")}
       await setDoc(doc(staffSessionsCol,cred.user.uid),{phone:normalized,createdAt:Date.now()});await loadStaffSession(cred.user,normalized);
     }else{throw new Error("login-id")}
-  }catch(err){console.error(err);loginMessage.textContent=err.code==="auth/invalid-credential"?"Login ID یا Password درست نہیں۔":err.code==="auth/operation-not-allowed"?"Staff login کے لیے Firebase Authentication میں Anonymous provider enable کریں۔":err.code==="permission-denied"?"Staff account access denied — Firestore Rules اور account status check کریں۔":err.message==="staff-login"?"Staff mobile یا default password درست نہیں۔":"Login نہیں ہوا۔ Firebase Authentication اور Firestore Rules check کریں۔"}
+  }catch(err){console.error(err);loginMessage.textContent=err.code==="auth/invalid-credential"?(isAdmin?"Admin login کے لیے Firebase user admin@nt-traders.firebaseapp.com کو Email/Password provider میں provision کریں۔":"Login ID یا Password درست نہیں۔"):err.code==="auth/operation-not-allowed"?"Staff login کے لیے Firebase Authentication میں Anonymous provider enable کریں۔":err.code==="permission-denied"?"Staff account access denied — Firestore Rules اور account status check کریں۔":err.message==="staff-login"?"Staff mobile یا default password درست نہیں۔":"Login نہیں ہوا۔ Firebase Authentication اور Firestore Rules check کریں۔"}
   finally{loginBtn.disabled=false}
 });
 logoutBtn?.addEventListener("click",()=>signOut(auth));
