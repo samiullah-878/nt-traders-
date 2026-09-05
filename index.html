@@ -1397,7 +1397,24 @@ function forceAppUpdateV85(){
     navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.update()))).finally(go);
   }else go();
 }
-window.addEventListener('load',()=>{checkAppUpdateV85(true);setInterval(()=>checkAppUpdateV85(false),300000)});
+async function registerAutoUpdateV85(){
+  if(!('serviceWorker' in navigator))return;
+  let refreshing=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(refreshing)return;
+    refreshing=true;
+    window.location.reload();
+  });
+  try{
+    const registration=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});
+    await registration.update();
+  }catch(e){console.warn('Service worker update unavailable',e)}
+}
+window.addEventListener('load',()=>{
+  registerAutoUpdateV85();
+  checkAppUpdateV85(true);
+  setInterval(()=>checkAppUpdateV85(false),300000)
+});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkAppUpdateV85(false)});
 
 let staffEditPhotoDataV85='';
