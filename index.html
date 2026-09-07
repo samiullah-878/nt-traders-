@@ -776,25 +776,30 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   .attendance-table-v84 td:nth-child(1)::before{content:"Order"}.attendance-table-v84 td:nth-child(2)::before{content:"Staff"}.attendance-table-v84 td:nth-child(3)::before{content:"Status"}.attendance-table-v84 td:nth-child(4)::before{content:"Check-In"}.attendance-table-v84 td:nth-child(5)::before{content:"Check-Out"}.attendance-table-v84 td:nth-child(6)::before{content:"Attendance Selfie"}.attendance-table-v84 td:nth-child(7)::before{content:"Score / Edit"}
 }
 @media(min-width:1051px){
-  .app{padding-right:292px!important;padding-left:24px!important}
+  .app{padding-right:24px!important;padding-left:24px!important}
   #nav.nav{
-    position:fixed!important;right:20px!important;top:20px!important;bottom:20px!important;width:252px!important;
-    max-height:none!important;overflow-y:auto!important;overflow-x:hidden!important;display:flex!important;flex-direction:column!important;
-    align-items:stretch!important;gap:8px!important;padding:16px!important;background:rgba(255,255,255,.97)!important;
-    border:1px solid #dce5ee!important;border-radius:22px!important;box-shadow:0 18px 50px rgba(15,23,42,.12)!important;
+    position:sticky!important;right:auto!important;top:0!important;bottom:auto!important;width:auto!important;
+    max-height:none!important;overflow-y:visible!important;overflow-x:auto!important;display:flex!important;flex-direction:row!important;
+    align-items:flex-start!important;gap:8px!important;padding:12px 4px!important;background:rgba(238,243,248,.94)!important;
+    border:0!important;border-radius:0!important;box-shadow:none!important;
   }
-  #nav.nav:before{content:"NOOR TRADERS\\A BUSINESS SOFTWARE"!important;white-space:pre!important;display:block!important;padding:7px 6px 14px!important;margin-bottom:4px!important;border-bottom:1px solid #e6edf4!important;text-align:center!important;color:var(--brand2)!important;font-size:14px!important;line-height:1.5!important}
-  #nav .nav-back-button{order:10!important;width:100%!important;margin-top:auto!important;min-height:40px!important;text-align:center!important}
-  #nav .nav-category{display:flex!important;flex-direction:column!important;gap:4px!important;min-width:0!important;width:100%!important}
-  #nav .nav-category-toggle{width:100%!important;min-height:48px!important;margin:0!important;padding:11px 13px!important;justify-content:space-between!important;text-align:right!important;background:#f7fafc!important;border:1px solid #dce5ee!important;border-radius:13px!important;color:#334155!important;font-size:16px!important;font-weight:800!important;cursor:pointer!important}
-  #nav .nav-category-toggle span{transition:transform .18s ease;color:var(--brand)!important}
-  #nav .nav-category.expanded .nav-category-toggle{background:var(--brand-soft)!important;border-color:#bfe4dd!important;color:var(--brand2)!important;box-shadow:inset 3px 0 0 var(--brand)!important}
-  #nav .nav-category.expanded .nav-category-toggle span{transform:rotate(180deg)!important}
-  #nav .nav-category-items{display:none!important;flex-direction:column!important;gap:3px!important;padding:3px 0 4px 10px!important}
-  #nav .nav-category.expanded .nav-category-items{display:flex!important}
-  #nav .nav-category-items button{width:100%!important;min-height:40px!important;margin:0!important;padding:8px 12px!important;text-align:right!important;background:#fff!important;border:1px solid transparent!important;border-radius:10px!important;color:#526175!important;font-size:15px!important;font-weight:700!important;box-shadow:none!important;transform:none!important}
+  #nav .nav-back-button{flex:0 0 auto!important;min-height:44px!important;text-align:center!important}
+  #nav .nav-category{display:flex!important;flex:0 0 auto!important;flex-direction:row!important;align-items:center!important;gap:5px!important;min-width:max-content!important;width:auto!important}
+  #nav .nav-category-toggle{flex:0 0 auto!important;min-height:44px!important;margin:0!important;padding:9px 12px!important;justify-content:space-between!important;text-align:right!important;background:#f7fafc!important;border:1px solid #dce5ee!important;border-radius:12px!important;color:#334155!important;font-size:16px!important;font-weight:800!important;cursor:pointer!important}
+  #nav .nav-category-toggle span{display:none!important}
+  #nav .nav-category-items,#nav .nav-category.expanded .nav-category-items{display:flex!important;flex:0 0 auto!important;flex-direction:row!important;gap:5px!important;padding:0!important}
+  #nav .nav-category-items button{flex:0 0 auto!important;min-height:44px!important;width:auto!important;margin:0!important;padding:9px 12px!important;text-align:right!important;background:#fff!important;border:1px solid #dce5ee!important;border-radius:10px!important;color:#526175!important;font-size:15px!important;font-weight:700!important;box-shadow:none!important;transform:none!important}
   #nav .nav-category-items button:hover{background:#f1f7f6!important;border-color:#d3ebe7!important;color:var(--brand2)!important}
   #nav .nav-category-items button.active{background:var(--brand)!important;border-color:var(--brand)!important;color:#fff!important;box-shadow:0 5px 12px rgba(15,118,110,.18)!important}
+}
+@media(max-width:1050px){
+  #nav.nav{display:flex!important;flex-direction:row!important;align-items:flex-start!important;flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:visible!important;position:sticky!important;top:0!important;padding:12px 4px!important;background:rgba(238,243,248,.94)!important}
+  #nav .nav-back-button{flex:0 0 auto!important;min-height:44px!important}
+  #nav .nav-category{display:flex!important;flex:0 0 auto!important;flex-direction:row!important;align-items:center!important;gap:5px!important;min-width:max-content!important;width:auto!important}
+  #nav .nav-category-toggle{flex:0 0 auto!important;min-height:44px!important;padding:9px 12px!important}
+  #nav .nav-category-toggle span{display:none!important}
+  #nav .nav-category-items,#nav .nav-category.expanded .nav-category-items{display:flex!important;flex:0 0 auto!important;flex-direction:row!important;gap:5px!important;padding:0!important}
+  #nav .nav-category-items button{flex:0 0 auto!important;min-height:44px!important;width:auto!important;padding:9px 12px!important}
 }
 
 /* Final readable type scale. Keep this presentation-only layer last so older
@@ -2016,6 +2021,7 @@ window.noorFirebaseSync={ready:false,saveState};
 const staffAccountsCol=collection(fs,"businesses",BUSINESS_ID,"staffAccounts");
 const staffAttendanceCol=collection(fs,"businesses",BUSINESS_ID,"staffAttendance");
 const staffSessionsCol=collection(fs,"businesses",BUSINESS_ID,"staffSessions");
+const STAFF_SESSION_KEY="noor-traders-staff-session";
 const staffConfigDoc=doc(fs,"businesses",BUSINESS_ID,"staffConfig","main");
 let staffConfig={shiftStart:'09:00',shiftEnd:'',radius:200,variant:'Production',instruction:'سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔',scores:{m10:10,m20:8,m30:6,m45:4,late:2},version:'v85'};
 
@@ -2095,16 +2101,22 @@ function pkDate(){return new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Karachi
 
 async function loadStaffSession(user,phoneFromLogin=""){
   let phone=normalizePhone(phoneFromLogin);
+  if(!phone)phone=normalizePhone(localStorage.getItem(STAFF_SESSION_KEY));
   if(!phone){
-    const sess=await getDoc(doc(staffSessionsCol,user.uid));
-    if(sess.exists())phone=normalizePhone(sess.data().phone);
+    for(let attempt=0;attempt<3&&!phone;attempt++){
+      const sess=await getDoc(doc(staffSessionsCol,user.uid));
+      if(sess.exists())phone=normalizePhone(sess.data().phone);
+      if(!phone)await new Promise(resolve=>setTimeout(resolve,250));
+    }
   }
-  if(!phone){await signOut(auth);return}
+  if(!phone)return false;
   const acc=await getDoc(doc(staffAccountsCol,phone));
-  if(!acc.exists()){await signOut(auth);return}
+  if(!acc.exists()||acc.data().active===false||acc.data().loginEnabled===false)return false;
   currentStaff={...acc.data(),phone};currentStaffPhone=phone;
+  localStorage.setItem(STAFF_SESSION_KEY,phone);
   renderStaffProfile();
   startStaffOwnListener();
+  return true;
 }
 function renderStaffProfile(){
   if(!currentStaff)return;
@@ -2199,6 +2211,7 @@ loginForm?.addEventListener("submit",async e=>{
     else if(normalized){
       const cred=await signInAnonymously(auth),acc=await getDoc(doc(staffAccountsCol,normalized));
       if(!acc.exists()||acc.data().active===false||acc.data().loginEnabled===false||normalizePhone(loginPassword.value)!==normalized){await signOut(auth);throw new Error("staff-login")}
+      localStorage.setItem(STAFF_SESSION_KEY,normalized);
       await setDoc(doc(staffSessionsCol,cred.user.uid),{phone:normalized,createdAt:Date.now()});await loadStaffSession(cred.user,normalized);
     }else{throw new Error("login-id")}
   }catch(err){console.error(err);loginMessage.textContent=err.code==="auth/invalid-credential"?(isAdmin?"Admin login کے لیے Firebase user admin@nt-traders.firebaseapp.com کو Email/Password provider میں provision کریں۔":"Login ID یا Password درست نہیں۔"):err.code==="auth/operation-not-allowed"?"Staff login کے لیے Firebase Authentication میں Anonymous provider enable کریں۔":err.code==="permission-denied"?"Staff account access denied — Firestore Rules اور account status check کریں۔":err.message==="staff-login"?"Staff mobile یا default password درست نہیں۔":"Login نہیں ہوا۔ Firebase Authentication اور Firestore Rules check کریں۔"}
@@ -2214,13 +2227,15 @@ onAuthStateChanged(auth,async user=>{
   if(ownAttendanceUnsub){try{ownAttendanceUnsub()}catch{};ownAttendanceUnsub=null}
   if(!user){
     stopListeners();window.noorFirebaseSync.ready=false;
+    currentStaff=null;currentStaffPhone="";
     loginGate.classList.remove("hidden");ownerApp.style.display="none";staffPortal.hidden=true;userBar.hidden=true;return;
   }
   loginGate.classList.add("hidden");
   if(user.isAnonymous){
     stopListeners();window.noorFirebaseSync.ready=false;
     ownerApp.style.display="none";staffPortal.hidden=false;
-    await loadStaffSession(user);
+    const loaded=await loadStaffSession(user);
+    if(!loaded){await signOut(auth);return}
   }else{
     staffPortal.hidden=true;ownerApp.style.display="";
     userBar.hidden=false;userEmail.textContent="ADMIN • "+(user.email||"Owner");
