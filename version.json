@@ -1,6 +1,6 @@
 {
-  "version": "v100",
+  "version": "v101",
   "variant": "Production",
   "buildDate": "2026-09-09",
-  "notes": "Sab staff cloud par bhejne ka button (login accounts fix)"
+  "notes": "Cloud accounts check button (staff login diagnosis)"
 }
