@@ -1344,7 +1344,7 @@ function goScreen(id,fromHistory=false){
   if(!screenExists(id))return;
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('#nav [data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));
-  const el=document.getElementById(id);el.classList.add('active');window.scrollTo({top:0,behavior:'smooth'});
+  const el=document.getElementById(id);el.classList.add('active');scrollToScreenV94(el);
   document.getElementById('nav')?.classList.remove('mobile-open');
   renderNavigation(id);
   if(id!=='dashboard'){
@@ -1358,8 +1358,31 @@ function goScreen(id,fromHistory=false){
   }
   if(!fromHistory)history.pushState({screen:id},'',`#${id}`);
   if(id==='dashboard')renderV84Dashboard();if(id==='staffCenter')renderStaffCenterV84();if(id==='staffAccounts')renderStaffAccountsV84();if(id==='attendanceToday')renderTodayAttendanceV84();if(id==='attendanceHistory')renderAttendanceHistoryV84();if(id==='scores')renderScoresV84();if(id==='staffKhana')renderKhanaAllowanceV85();if(id==='staffProfile')renderStaffProfileV84();if(id==='staffReports')renderStaffReportsV84();if(id==='salesReports')renderSalesReportsV84();if(id==='completeReport')renderCompleteReportScreenV84();
+  setTimeout(cleanEmptyBoxesV92,60);
 }
 window.goScreen=goScreen;
+function scrollToScreenV94(el){
+  // Screen kholte hi seedha usi ke content par le jata hai — upar khali jagah par nahi.
+  try{
+    const nav=document.getElementById('nav');
+    let off=8;
+    if(nav&&getComputedStyle(nav).position==='sticky')off=nav.offsetHeight+10;
+    const y=Math.max(0,el.getBoundingClientRect().top+window.pageYOffset-off);
+    window.scrollTo({top:y,behavior:'smooth'});
+  }catch(e){window.scrollTo({top:0,behavior:'smooth'})}
+}
+function cleanEmptyBoxesV92(){
+  // Khali dabbe / khali jagah hata deta hai (jo box mein kuch bhi nahi wo chhup jata hai).
+  const screen=document.querySelector('.app-screen.active, .tab.active');
+  if(!screen)return;
+  screen.querySelectorAll('.pro-card,.card,.screen-head,.staff-feature-grid,.staff-search-results-v89,.staff-summary-cards,.staff-center-stats,.profile-kpis-v84,.grid>div,.dash-layout>div').forEach(el=>{
+    if(el.dataset.keepV92)return;
+    const hasMedia=el.querySelector('img,input,select,textarea,button,canvas,svg,table');
+    const hasText=(el.textContent||'').trim().length>0;
+    if(!hasMedia&&!hasText){el.style.display='none'}else if(el.style.display==='none'&&(hasMedia||hasText)){el.style.display=''}
+  });
+}
+window.cleanEmptyBoxesV92=cleanEmptyBoxesV92;
 function filterStaffCatV87(cat){
   document.querySelectorAll('#staffCatTabsV87 .staff-cat-chip-v87').forEach(b=>b.classList.toggle('active',b.dataset.cat===cat));
   document.querySelectorAll('#staffFeatureGridV87 .staff-feature-card').forEach(c=>{
@@ -1758,7 +1781,7 @@ window.applyPolicyV84=applyPolicyV84;
 restoreFileV84.onchange=async()=>{try{const x=JSON.parse(await restoreFileV84.files[0].text());if(!x.data)throw Error();if(confirm('Backup restore کرنے سے موجود data replace ہوگا۔ جاری رکھیں؟')){db=x.data;save()}}catch{alert('درست backup file نہیں')}};
 
 
-const APP_VERSION_V85='v92';
+const APP_VERSION_V85='v94';
 let currentPdfHtmlV85='';
 
 /* ===== AUTO UPDATE (v88) =====
@@ -2609,6 +2632,12 @@ td b,td strong{color:#0f766e}
 
 .sync-now-btn-v91{width:100%;margin:0 0 12px;border:1px solid #cce8e5;background:#eef8f6;color:#0f766e;font-weight:1000;font-size:15px;padding:12px;border-radius:13px}
 .sync-now-btn-v91:active{background:#0f766e;color:#fff}
+/* khali jagah kam karne ke liye */
+.app-screen{min-height:0}
+.staff-center-screen .screen-head{margin-bottom:10px}
+.staff-search-results-v89:empty{display:none;margin:0}
+.staff-feature-grid:empty{display:none}
+@media(max-width:800px){.nav{max-height:60vh!important;height:auto!important}}
 </style>
 
 </body></html>

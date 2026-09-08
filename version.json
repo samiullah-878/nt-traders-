@@ -1,6 +1,6 @@
 {
-  "version": "v92",
+  "version": "v94",
   "variant": "Production",
   "buildDate": "2026-09-09",
-  "notes": "Manual Sync/Update button on login and header; colourful staff theme"
+  "notes": "Screen kholte hi seedha content par scroll"
 }
