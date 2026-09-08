@@ -1716,7 +1716,7 @@ window.applyPolicyV84=applyPolicyV84;
 restoreFileV84.onchange=async()=>{try{const x=JSON.parse(await restoreFileV84.files[0].text());if(!x.data)throw Error();if(confirm('Backup restore کرنے سے موجود data replace ہوگا۔ جاری رکھیں؟')){db=x.data;save()}}catch{alert('درست backup file نہیں')}};
 
 
-const APP_VERSION_V85='v86';
+const APP_VERSION_V85='v87';
 let currentPdfHtmlV85='';
 
 async function checkAppUpdateV85(auto=false){
@@ -2212,6 +2212,7 @@ staffPdfBtn?.addEventListener("click",()=>{
    Password badalna ho to sirf OWNER_PASSWORD ki line change karein,
    aur Firebase Console > Authentication > Users mein bhi wohi password rakhein. */
 const ADMIN_AUTH_EMAIL="admin@nt-traders.firebaseapp.com";
+const OWNER_EMAILS=[ADMIN_AUTH_EMAIL,"hp6235@gmail.com"];
 const OWNER_LOGIN_ID="admin";
 const OWNER_PASSWORD="123456";
 let manualLoginBusy=false;
@@ -2221,18 +2222,20 @@ function setLoginMessage(text,ok=false){
   loginMessage.textContent=text;
 }
 async function ownerSignIn(pass){
+  const badCred=c=>c==="auth/user-not-found"||c==="auth/invalid-credential"||c==="auth/invalid-login-credentials"||c==="auth/wrong-password";
+  let lastErr=null;
+  // OWNER_EMAILS mein se jo bhi email is password ke sath chalti hai, usi se login ho jayega.
+  for(const email of OWNER_EMAILS){
+    try{await signInWithEmailAndPassword(auth,email,pass);return}
+    catch(err){lastErr=err;if(!badCred(err.code))throw err}
+  }
+  // Koi bhi na chali: pehli dafa admin account khud bana dete hain.
   try{
-    await signInWithEmailAndPassword(auth,ADMIN_AUTH_EMAIL,pass);
-  }catch(err){
-    // Pehli dafa: agar admin user Firebase mein banaya hi nahi gaya to yahan khud ban jayega.
-    if(err.code==="auth/user-not-found"||err.code==="auth/invalid-credential"||err.code==="auth/invalid-login-credentials"){
-      try{
-        await createUserWithEmailAndPassword(auth,ADMIN_AUTH_EMAIL,pass);
-      }catch(e2){
-        if(e2.code==="auth/email-already-in-use"||e2.code==="auth/weak-password")throw new Error("owner-firebase");
-        throw e2;
-      }
-    }else throw err;
+    await createUserWithEmailAndPassword(auth,OWNER_EMAILS[0],pass);
+  }catch(e2){
+    if(e2.code==="auth/email-already-in-use")throw new Error("owner-firebase");
+    if(e2.code==="auth/operation-not-allowed"||e2.code==="auth/weak-password")throw e2;
+    throw lastErr||e2;
   }
 }
 async function staffSignIn(phone,pass){
@@ -2254,9 +2257,14 @@ loginForm?.addEventListener("submit",async e=>{
   e.preventDefault();setLoginMessage("");loginBtn.disabled=true;manualLoginBusy=true;
   const loginId=loginEmail.value.trim(),pass=loginPassword.value.trim();
   const normalized=normalizePhone(loginId);
-  const isAdmin=loginId.toLowerCase()===OWNER_LOGIN_ID||loginId.toLowerCase()===ADMIN_AUTH_EMAIL;
+  const isEmail=loginId.includes("@");
+  const isAdmin=loginId.toLowerCase()===OWNER_LOGIN_ID;
   try{
-    if(isAdmin){
+    if(isEmail){
+      // Malik apni asli Firebase email + uska password bhi laga sakta hai.
+      await signInWithEmailAndPassword(auth,loginId,pass);
+      loginPassword.value="";
+    }else if(isAdmin){
       if(pass!==OWNER_PASSWORD)throw new Error("owner-password");
       await ownerSignIn(pass);
       loginPassword.value="";
@@ -2268,7 +2276,7 @@ loginForm?.addEventListener("submit",async e=>{
     console.error(err);
     const m=
       err.message==="owner-password"?"Malik ka password ghalat hai.":
-      err.message==="owner-firebase"?"Firebase mein admin ka password alag hai. Firebase Console > Authentication > Users > admin@nt-traders.firebaseapp.com ka password 123456 kar dein.":
+      err.message==="owner-firebase"?"Firebase mein admin user ka password alag hai. Console > Authentication > Users mein admin@nt-traders.firebaseapp.com ko DELETE kar ke 'Add user' se dobara banayein (password 123456). Ya apni asli email aur uska password yahan Login ID mein likhein.":
       err.message==="staff-login"?"Mulazim ka mobile number ya password ghalat hai (password = wohi mobile number).":
       err.message==="login-id"?"Login ID mein 'admin' ya poora mobile number likhein.":
       err.code==="auth/operation-not-allowed"?"Firebase Authentication mein Email/Password aur Anonymous provider enable karein.":

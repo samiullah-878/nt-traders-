@@ -1,5 +1,5 @@
 {
-  "version": "v86",
+  "version": "v87",
   "variant": "Production",
   "buildDate": "2026-09-09",
   "notes": "Login fix: admin/123456 owner login, staff phone login, auto-logout race removed"
