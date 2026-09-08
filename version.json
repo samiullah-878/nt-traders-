@@ -1,6 +1,6 @@
 {
-  "version": "v87",
+  "version": "v89",
   "variant": "Production",
   "buildDate": "2026-09-09",
-  "notes": "Login fix: admin/123456 owner login, staff phone login, auto-logout race removed"
+  "notes": "Reliable auto-update: cache+service worker reset, Update button; staff dashboard category tabs"
 }

@@ -762,10 +762,14 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   .app{padding:10px 10px 82px}
   .top{padding:18px;border-radius:20px}
   .screen-head{padding:17px;border-radius:18px}
-  .staff-summary-cards,.staff-feature-grid{grid-template-columns:1fr}
+  .staff-summary-cards{grid-template-columns:1fr}
+  .staff-feature-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .staff-summary-card{min-height:96px;padding:15px}
   .staff-summary-card b{font-size:24px}
-  .staff-feature-card{min-height:118px;padding:15px}
+  .staff-feature-card{min-height:0;padding:14px;flex-direction:column;align-items:flex-start;gap:8px}
+  .staff-feature-card b{font-size:14px;margin:0 0 4px}
+  .staff-feature-card small{font-size:10px;line-height:1.45}
+  .staff-feature-card strong{display:none}
   .nav{display:grid;grid-template-columns:1fr 1fr;overflow:visible}
   .nav-category{min-width:0}.nav-back-button{grid-column:1/-1}
   .summary-grid-v84,.complete-report-filters{grid-template-columns:1fr 1fr}
@@ -1064,16 +1068,25 @@ th,td{font-size:16px;line-height:1.55}
     <div class="staff-summary-card staff-summary-out"><span class="summary-icon">↗</span><div><small>Checked Out</small><b id="staffCenterOut">0</b><em>Shift completed</em></div></div>
   </div>
   <div class="staff-center-summary pro-card staff-live-summary"><div class="pro-card-head"><div><div class="eyebrow">LIVE SNAPSHOT</div><h3>آج کی Staff Activity</h3></div><button class="soft" onclick="goScreen('attendanceToday')">Refresh</button></div><div class="staff-center-stats"><div><small>Total Staff</small><b id="staffCenterCount">0 accounts</b></div><div><small>Present</small><b id="staffCenterPresentMirror">0</b></div><div><small>Absent</small><b id="staffCenterAbsentMirror">0</b></div><div><small>Late</small><b id="staffCenterLate">0</b></div><div><small>Checked Out</small><b id="staffCenterOutMirror">0</b></div></div></div>
-  <div class="staff-feature-grid">
-    <button class="staff-feature-card staff-feature-primary" onclick="goScreen('staffAccounts')"><span class="feature-icon">👥</span><span><b>Staff List</b><small>Profiles, phone, address and account status</small></span><strong>→</strong></button>
-    <button class="staff-feature-card staff-feature-action" onclick="goScreen('attendanceToday')"><span class="feature-icon">✓</span><span><b>Check In / Check Out</b><small>Live attendance, GPS, selfie and late status</small></span><strong>→</strong></button>
-    <button class="staff-feature-card" onclick="goScreen('attendanceHistory')"><span class="feature-icon">📅</span><span><b>Attendance History</b><small>Date selection, calendar-style records and PDF</small></span><strong>→</strong></button>
-    <button class="staff-feature-card" onclick="goScreen('scores')"><span class="feature-icon">🏆</span><span><b>Scores & Ranking</b><small>Performance, punctuality and monthly scores</small></span><strong>→</strong></button>
-    <button class="staff-feature-card" onclick="goScreen('staffKhana')"><span class="feature-icon">🍽</span><span><b>Khana Allowance</b><small>Daily and monthly meal allowance totals</small></span><strong>→</strong></button>
-    <button class="staff-feature-card" onclick="goScreen('staffAccounts');toggleStaffCreateV84(true)"><span class="feature-icon">＋</span><span><b>Add Staff</b><small>Create a new employee account and profile</small></span><strong>→</strong></button>
-    <button class="staff-feature-card" onclick="goScreen('staffProfile')"><span class="feature-icon">◎</span><span><b>Staff Profile</b><small>View profile, edit details or manage photo</small></span><strong>→</strong></button>
-    <button class="staff-feature-card" onclick="goScreen('attendanceToday')"><span class="feature-icon">📍</span><span><b>Location Attendance</b><small>200m geofence, GPS distance and evidence</small></span><strong>→</strong></button>
-    <button class="staff-feature-card" onclick="goScreen('attendanceHistory');printHistoryReportV84()"><span class="feature-icon">▣</span><span><b>Reports & Summary</b><small>Daily/monthly staff reports and exports</small></span><strong>→</strong></button>
+  <div class="staff-cat-tabs-v87" id="staffCatTabsV87">
+    <button class="staff-cat-chip-v87 active" data-cat="all" onclick="filterStaffCatV87('all')">📋 Sab</button>
+    <button class="staff-cat-chip-v87" data-cat="staff" onclick="filterStaffCatV87('staff')">👥 Staff</button>
+    <button class="staff-cat-chip-v87" data-cat="hazri" onclick="filterStaffCatV87('hazri')">✓ Hazri</button>
+    <button class="staff-cat-chip-v87" data-cat="performance" onclick="filterStaffCatV87('performance')">🏆 Performance</button>
+    <button class="staff-cat-chip-v87" data-cat="reports" onclick="filterStaffCatV87('reports')">📊 Reports</button>
+  </div>
+  <div class="staff-feature-grid" id="staffFeatureGridV87">
+    <button class="staff-feature-card staff-feature-primary" data-cat="staff" onclick="goScreen('staffAccounts')"><span class="feature-icon">👥</span><span><b>Staff List</b><small>Profiles, phone, address and account status</small></span><strong>→</strong></button>
+    <button class="staff-feature-card" data-cat="staff" onclick="goScreen('staffAccounts');toggleStaffCreateV84(true)"><span class="feature-icon">＋</span><span><b>Add Staff</b><small>Create a new employee account and profile</small></span><strong>→</strong></button>
+    <button class="staff-feature-card" data-cat="staff" onclick="goScreen('staffProfile')"><span class="feature-icon">◎</span><span><b>Staff Profile</b><small>View profile, edit details or manage photo</small></span><strong>→</strong></button>
+    <button class="staff-feature-card staff-feature-action" data-cat="hazri" onclick="goScreen('attendanceToday')"><span class="feature-icon">✓</span><span><b>Check In / Check Out</b><small>Live attendance, GPS, selfie and late status</small></span><strong>→</strong></button>
+    <button class="staff-feature-card" data-cat="hazri" onclick="goScreen('attendanceToday')"><span class="feature-icon">📍</span><span><b>Location Attendance</b><small>200m geofence, GPS distance and evidence</small></span><strong>→</strong></button>
+    <button class="staff-feature-card" data-cat="hazri" onclick="goScreen('attendanceHistory')"><span class="feature-icon">📅</span><span><b>Attendance History</b><small>Date selection, calendar-style records and PDF</small></span><strong>→</strong></button>
+    <button class="staff-feature-card" data-cat="performance" onclick="goScreen('scores')"><span class="feature-icon">🏆</span><span><b>Scores & Ranking</b><small>Performance, punctuality and monthly scores</small></span><strong>→</strong></button>
+    <button class="staff-feature-card" data-cat="performance" onclick="goScreen('staffKhana')"><span class="feature-icon">🍽</span><span><b>Khana Allowance</b><small>Daily and monthly meal allowance totals</small></span><strong>→</strong></button>
+    <button class="staff-feature-card" data-cat="reports" onclick="goScreen('staffReports')"><span class="feature-icon">▤</span><span><b>Staff Reports</b><small>Date range reports for all staff</small></span><strong>→</strong></button>
+    <button class="staff-feature-card" data-cat="reports" onclick="goScreen('attendanceHistory');printHistoryReportV84()"><span class="feature-icon">▣</span><span><b>Reports & Summary</b><small>Daily/monthly staff reports and exports</small></span><strong>→</strong></button>
+  </div>
   </div>
 </section>
 
@@ -1339,6 +1352,14 @@ function goScreen(id,fromHistory=false){
   if(id==='dashboard')renderV84Dashboard();if(id==='staffCenter')renderStaffCenterV84();if(id==='staffAccounts')renderStaffAccountsV84();if(id==='attendanceToday')renderTodayAttendanceV84();if(id==='attendanceHistory')renderAttendanceHistoryV84();if(id==='scores')renderScoresV84();if(id==='staffKhana')renderKhanaAllowanceV85();if(id==='staffProfile')renderStaffProfileV84();if(id==='staffReports')renderStaffReportsV84();if(id==='salesReports')renderSalesReportsV84();if(id==='completeReport')renderCompleteReportScreenV84();
 }
 window.goScreen=goScreen;
+function filterStaffCatV87(cat){
+  document.querySelectorAll('#staffCatTabsV87 .staff-cat-chip-v87').forEach(b=>b.classList.toggle('active',b.dataset.cat===cat));
+  document.querySelectorAll('#staffFeatureGridV87 .staff-feature-card').forEach(c=>{
+    c.style.display=(cat==='all'||c.dataset.cat===cat)?'':'none';
+  });
+  try{sessionStorage.setItem('nt_staff_cat',cat)}catch(e){}
+}
+window.filterStaffCatV87=filterStaffCatV87;
 nav.onclick=e=>{const b=e.target.closest('[data-tab]');if(b){goScreen(b.dataset.tab);return}const toggle=e.target.closest('[data-category-toggle]');if(toggle){toggle.closest('.nav-category')?.classList.toggle('expanded');return}if(e.target.closest('[data-back]')){if(history.length>1)history.back();else goScreen('dashboard')}};
 window.addEventListener('popstate',()=>goScreen(location.hash.slice(1)||'dashboard',true));
 
@@ -1716,54 +1737,83 @@ window.applyPolicyV84=applyPolicyV84;
 restoreFileV84.onchange=async()=>{try{const x=JSON.parse(await restoreFileV84.files[0].text());if(!x.data)throw Error();if(confirm('Backup restore کرنے سے موجود data replace ہوگا۔ جاری رکھیں؟')){db=x.data;save()}}catch{alert('درست backup file نہیں')}};
 
 
-const APP_VERSION_V85='v87';
+const APP_VERSION_V85='v89';
 let currentPdfHtmlV85='';
+
+/* ===== AUTO UPDATE (v88) =====
+   Har baar version.json check hota hai. Nayi version milte hi purana cache aur
+   service worker mita kar page fresh load hota hai — GitHub se dobara download
+   karne ki zarurat nahi. Neeche ek "Update" button bhi aata hai. */
+let latestVersionV88=APP_VERSION_V85, updatingV88=false;
+
+async function clearAppCachesV88(){
+  try{if('caches' in window){const keys=await caches.keys();await Promise.all(keys.map(k=>caches.delete(k)))}}catch(e){}
+  try{if('serviceWorker' in navigator){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()))}}catch(e){}
+}
+async function applyUpdateV88(ver){
+  if(updatingV88)return;updatingV88=true;
+  showUpdateBannerV88(ver,true);
+  await clearAppCachesV88();
+  const base=location.href.split('?')[0].split('#')[0];
+  location.replace(base+'?v='+encodeURIComponent(ver||'new')+'&t='+Date.now());
+}
+function showUpdateBannerV88(ver,busy=false){
+  let bar=document.getElementById('updateBannerV88');
+  if(!bar){
+    bar=document.createElement('div');bar.id='updateBannerV88';bar.className='update-banner-v88';
+    document.body.appendChild(bar);
+  }
+  bar.innerHTML=busy
+    ? '<span>Update ho raha hai…</span>'
+    : `<span>Nayi version <b>${ver}</b> tayyar hai</span><button type="button">Update</button>`;
+  const btn=bar.querySelector('button');
+  if(btn)btn.onclick=()=>applyUpdateV88(ver);
+  bar.classList.add('show');
+}
+function hideUpdateBannerV88(){document.getElementById('updateBannerV88')?.classList.remove('show')}
+function forceAppUpdateV85(){applyUpdateV88(latestVersionV88)}
+window.forceAppUpdateV85=forceAppUpdateV85;
 
 async function checkAppUpdateV85(auto=false){
   try{
     const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
     if(!r.ok)return;
     const v=await r.json();
-    const different=v.version&&v.version!==APP_VERSION_V85;
+    const different=!!(v.version&&v.version!==APP_VERSION_V85);
+    latestVersionV88=v.version||APP_VERSION_V85;
     ['loginUpdateStatus','settingsUpdateV84','staffUpdateState'].forEach(id=>{
       const el=document.getElementById(id);
-      if(el){el.textContent=different?`Version ${v.version} Ready`:'✓ Up to date';el.classList.toggle('ok',!different);el.classList.toggle('bad',false)}
+      if(el){el.textContent=different?`Version ${v.version} Ready — tap Update`:'✓ Up to date';el.classList.toggle('ok',!different);el.classList.toggle('bad',false)}
     });
-    ['loginVersionLabel','headerVersionLabel','settingsVersionV84','staffVersionLabel'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=v.version||APP_VERSION_V85});
-    if(different&&auto){
-      const k='nt_auto_update_'+v.version;
-      if(!sessionStorage.getItem(k)){
-        sessionStorage.setItem(k,'1');
-        location.replace(location.pathname+'?v='+encodeURIComponent(v.version)+'&t='+Date.now());
+    ['loginVersionLabel','headerVersionLabel','settingsVersionV84','staffVersionLabel'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=different?`${APP_VERSION_V85} → ${v.version}`:(v.version||APP_VERSION_V85)});
+    if(!different){hideUpdateBannerV88();try{localStorage.removeItem('nt_update_try_'+APP_VERSION_V85)}catch(e){}return}
+    showUpdateBannerV88(v.version);
+    if(auto){
+      // Do baar khud koshish; phir bhi na chale to user Update button daba sakta hai.
+      const k='nt_update_try_'+v.version;
+      let tries=0;try{tries=+(localStorage.getItem(k)||0)}catch(e){}
+      if(tries<2){
+        try{localStorage.setItem(k,String(tries+1))}catch(e){}
+        await applyUpdateV88(v.version);
       }
     }
   }catch(e){}
 }
-function forceAppUpdateV85(){
-  const go=()=>location.replace(location.pathname+'?v=v85&t='+Date.now());
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.update()))).finally(go);
-  }else go();
-}
 async function registerAutoUpdateV85(){
   if(!('serviceWorker' in navigator))return;
-  let refreshing=false;
-  navigator.serviceWorker.addEventListener('controllerchange',()=>{
-    if(refreshing)return;
-    refreshing=true;
-    window.location.reload();
-  });
   try{
     const registration=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});
     await registration.update();
+    setInterval(()=>registration.update().catch(()=>{}),120000);
   }catch(e){console.warn('Service worker update unavailable',e)}
 }
 window.addEventListener('load',()=>{
   registerAutoUpdateV85();
   checkAppUpdateV85(true);
-  setInterval(()=>checkAppUpdateV85(false),300000)
+  setInterval(()=>checkAppUpdateV85(false),120000);
 });
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkAppUpdateV85(false)});
+window.addEventListener('focus',()=>checkAppUpdateV85(false));
 
 let staffEditPhotoDataV85='';
 function closeStaffEditV85(){staffEditModalV85.hidden=true;staffEditPhotoDataV85='';staffEditPhotoV85.value=''}
@@ -2342,7 +2392,14 @@ window.addEventListener("load", function(){
 :root{--font-ui:"Noto Sans Arabic","Noto Sans Urdu","Segoe UI",sans-serif;--staff-teal:#0f766e;--staff-blue:#2563eb;--staff-gold:#b7791f;--staff-purple:#7c3aed}
 body{font-family:var(--font-ui);letter-spacing:0}
 button,input,select,textarea{font-family:var(--font-ui)}
+.update-banner-v88{position:fixed;left:12px;right:12px;bottom:16px;z-index:10001;display:none;align-items:center;justify-content:space-between;gap:12px;background:#0f766e;color:#fff;border-radius:16px;padding:13px 16px;font-size:14px;font-weight:800;box-shadow:0 14px 34px rgba(15,23,42,.35)}
+.update-banner-v88.show{display:flex}
+.update-banner-v88 button{border:0;background:#fff;color:#0f766e;font-weight:1000;border-radius:11px;padding:9px 16px;font-size:14px}
 .staff-center-screen{animation:staffFadeIn .28s ease both}
+.staff-cat-tabs-v87{position:sticky;top:0;z-index:20;display:flex;gap:8px;overflow-x:auto;padding:10px 2px;margin:4px 0 12px;background:linear-gradient(#edf3f8,#edf3f8 78%,rgba(237,243,248,0));-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.staff-cat-tabs-v87::-webkit-scrollbar{display:none}
+.staff-cat-chip-v87{flex:0 0 auto;border:1px solid #d7e2ea;background:#fff;color:#0f766e;font-weight:900;font-size:14px;padding:11px 16px;border-radius:999px;white-space:nowrap;box-shadow:0 4px 12px rgba(15,23,42,.06)}
+.staff-cat-chip-v87.active{background:#0f766e;border-color:#0f766e;color:#fff;box-shadow:0 8px 18px rgba(15,118,110,.28)}
 .staff-center-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:14px}
 .staff-center-card{display:flex;align-items:center;gap:12px;min-height:108px;padding:18px;border:1px solid transparent;border-radius:18px;color:#172033;text-align:right;cursor:pointer;box-shadow:0 8px 22px rgba(15,23,42,.08);transition:transform .18s ease,box-shadow .18s ease}
 .staff-center-card:hover{transform:translateY(-3px);box-shadow:0 14px 28px rgba(15,23,42,.14)}
