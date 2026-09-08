@@ -1,6 +1,6 @@
 {
-  "version": "v101",
+  "version": "v102",
   "variant": "Production",
   "buildDate": "2026-09-09",
-  "notes": "Cloud accounts check button (staff login diagnosis)"
+  "notes": "Staff login: qadam-ba-qadam wajah, session likhna nakaam ho to bhi login"
 }
