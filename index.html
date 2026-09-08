@@ -872,6 +872,7 @@ th,td{font-size:16px;line-height:1.55}
     <div class="auth-card">
       <div class="login-card-title"><span class="brand-mark mini">NT</span><div><h2>Noor Traders Hisab</h2><p>Business & Staff System</p></div></div>
       <div class="login-build-strip"><span class="variant-badge">Production</span><span>Version: <b id="loginVersionLabel">v85</b></span><span id="loginUpdateStatus" class="sync-state"><i class="status-dot"></i>Syncing...</span></div>
+      <button type="button" class="sync-now-btn-v91" onclick="forceAppUpdateV85()">🔄 Sync / Update Now</button>
       <div id="ownerLoginPane" class="auth-pane active">
         <div class="auth-pane-title">
           <span class="auth-icon">A</span>
@@ -990,6 +991,7 @@ th,td{font-size:16px;line-height:1.55}
     <small id="cloudStatus">Firebase سے رابطہ ہو رہا ہے…</small>
     <div id="userBar" class="user-bar" hidden>
       <span id="userEmail"></span>
+      <button class="top-logout" type="button" onclick="forceAppUpdateV85()">🔄 Sync</button>
       <button id="logoutBtn" class="top-logout" type="button">Logout</button>
     </div>
   </div>
@@ -1756,7 +1758,7 @@ window.applyPolicyV84=applyPolicyV84;
 restoreFileV84.onchange=async()=>{try{const x=JSON.parse(await restoreFileV84.files[0].text());if(!x.data)throw Error();if(confirm('Backup restore کرنے سے موجود data replace ہوگا۔ جاری رکھیں؟')){db=x.data;save()}}catch{alert('درست backup file نہیں')}};
 
 
-const APP_VERSION_V85='v90';
+const APP_VERSION_V85='v92';
 let currentPdfHtmlV85='';
 
 /* ===== AUTO UPDATE (v88) =====
@@ -1790,7 +1792,12 @@ function showUpdateBannerV88(ver,busy=false){
   bar.classList.add('show');
 }
 function hideUpdateBannerV88(){document.getElementById('updateBannerV88')?.classList.remove('show')}
-function forceAppUpdateV85(){applyUpdateV88(latestVersionV88)}
+function forceAppUpdateV85(){
+  // Manual Sync: har halat mein cache saaf kar ke bilkul nayi files load karta hai.
+  try{Object.keys(localStorage).filter(k=>k.startsWith('nt_update_try_')).forEach(k=>localStorage.removeItem(k))}catch(e){}
+  updatingV88=false;
+  applyUpdateV88('sync-'+Date.now());
+}
 window.forceAppUpdateV85=forceAppUpdateV85;
 
 async function checkAppUpdateV85(auto=false){
@@ -2496,6 +2503,112 @@ button,input,select,textarea{font-family:var(--font-ui)}
 @keyframes staffFadeIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
 @media(max-width:850px){.staff-center-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.staff-center-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:520px){.staff-center-grid{grid-template-columns:1fr}.staff-center-card{min-height:86px;padding:14px}.staff-center-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.staff-center-screen .screen-actions{width:100%}.staff-center-screen .screen-actions button{flex:1}}
+
+/* ================= RANGEEN THEME (v91) — halka neela background, har card apne rang mein ================= */
+:root{--bg:#e9f1fd}
+body{background:linear-gradient(180deg,#e6f0fd 0%,#eef6ff 45%,#e9f1fd 100%)!important;background-attachment:fixed!important}
+.nav{background:transparent!important}
+
+/* Headings & text — kaale ki jagah rangeen */
+.screen-head h2,.pro-card-head h3,.profile-hero-v84 h3{color:#0b5a86!important}
+.screen-head .eyebrow,.pro-card-head .eyebrow{color:#c2410c!important;letter-spacing:1.2px}
+.screen-head p{color:#4b6b86!important}
+th{color:#7c3aed!important;font-weight:900}
+td{color:#12354d}
+td b,td strong{color:#0f766e}
+.dash-kpi strong{color:#0b5a86}
+
+/* Category chips — har button apna rang */
+.staff-cat-tabs-v87{background:linear-gradient(#e9f1fd,#e9f1fd 78%,rgba(233,241,253,0))!important}
+.staff-cat-chip-v87[data-cat="all"]{color:#0f766e;border-color:#a7ddd6;background:#e6f8f5}
+.staff-cat-chip-v87[data-cat="staff"]{color:#1d4ed8;border-color:#bcd0ff;background:#eaf0ff}
+.staff-cat-chip-v87[data-cat="hazri"]{color:#15803d;border-color:#b6e6c6;background:#e9f9ef}
+.staff-cat-chip-v87[data-cat="performance"]{color:#b45309;border-color:#f3d9a4;background:#fff6e5}
+.staff-cat-chip-v87[data-cat="reports"]{color:#7c3aed;border-color:#d9c9ff;background:#f4eeff}
+.staff-cat-chip-v87.active{color:#fff!important}
+.staff-cat-chip-v87[data-cat="all"].active{background:#0f766e;border-color:#0f766e}
+.staff-cat-chip-v87[data-cat="staff"].active{background:#1d4ed8;border-color:#1d4ed8}
+.staff-cat-chip-v87[data-cat="hazri"].active{background:#15803d;border-color:#15803d}
+.staff-cat-chip-v87[data-cat="performance"].active{background:#b45309;border-color:#b45309}
+.staff-cat-chip-v87[data-cat="reports"].active{background:#7c3aed;border-color:#7c3aed}
+
+/* Feature cards — har category ka apna rang */
+.staff-feature-card[data-cat="staff"]{background:linear-gradient(150deg,#fff,#e9f0ff);border-color:#c3d4ff}
+.staff-feature-card[data-cat="staff"] b{color:#1d4ed8}
+.staff-feature-card[data-cat="staff"] .feature-icon{background:#dbe6ff;color:#1d4ed8}
+.staff-feature-card[data-cat="hazri"]{background:linear-gradient(150deg,#fff,#e7f9ee);border-color:#b7e6c8}
+.staff-feature-card[data-cat="hazri"] b{color:#15803d}
+.staff-feature-card[data-cat="hazri"] .feature-icon{background:#d5f4e0;color:#15803d}
+.staff-feature-card[data-cat="performance"]{background:linear-gradient(150deg,#fff,#fff4e0);border-color:#f2d8a2}
+.staff-feature-card[data-cat="performance"] b{color:#b45309}
+.staff-feature-card[data-cat="performance"] .feature-icon{background:#ffe9c2;color:#b45309}
+.staff-feature-card[data-cat="reports"]{background:linear-gradient(150deg,#fff,#f4edff);border-color:#dbc9ff}
+.staff-feature-card[data-cat="reports"] b{color:#7c3aed}
+.staff-feature-card[data-cat="reports"] .feature-icon{background:#e7dbff;color:#7c3aed}
+.staff-feature-card small{color:#5b6b7f!important}
+.staff-feature-card strong{color:inherit}
+
+/* Search bar aur results */
+.staff-search-v89{border-color:#bcd3f5;background:#fff}
+.staff-search-v89 input{color:#0b5a86}
+.staff-search-row-v89 b{color:#0b5a86}
+.staff-search-row-v89 .ssr-pic{background:#dbe6ff;color:#1d4ed8}
+
+/* Upar ke summary cards — chaar alag rang */
+.staff-summary-card{border:1px solid transparent}
+.staff-summary-total{background:linear-gradient(145deg,#fff,#e6f0ff)!important;border-color:#c3d4ff!important}
+.staff-summary-total b{color:#1d4ed8!important}
+.staff-summary-present{background:linear-gradient(145deg,#fff,#e7f9ee)!important;border-color:#b7e6c8!important}
+.staff-summary-present b{color:#15803d!important}
+.staff-summary-absent{background:linear-gradient(145deg,#fff,#ffeaea)!important;border-color:#f7c6c6!important}
+.staff-summary-absent b{color:#b91c1c!important}
+.staff-summary-out{background:linear-gradient(145deg,#fff,#f4edff)!important;border-color:#dbc9ff!important}
+.staff-summary-out b{color:#7c3aed!important}
+.staff-summary-card small,.staff-summary-card em{color:#5b6b7f!important}
+
+/* Staff profile page */
+.profile-hero-v84{background:linear-gradient(135deg,#ffffff,#e6f0ff)!important;border-color:#c3d4ff!important}
+.profile-hero-v84 p{color:#0f766e!important;font-weight:800}
+.profile-avatar-v84{background:#dbe6ff;color:#1d4ed8}
+.profile-actions-v89 button:nth-child(1){background:#0f766e;color:#fff;border:0}
+.profile-actions-v89 button:nth-child(2){background:#eaf0ff;color:#1d4ed8;border:1px solid #c3d4ff}
+.profile-actions-v89 button:nth-child(3){background:#e7f9ee;color:#15803d;border:1px solid #b7e6c8}
+.profile-actions-v89 button:nth-child(4){background:#fff4e0;color:#b45309;border:1px solid #f2d8a2}
+.profile-actions-v89 button:nth-child(5){background:#f4edff;color:#7c3aed;border:1px solid #dbc9ff}
+.profile-actions-v89 button:nth-child(6){background:#ffeaea;color:#b91c1c;border:1px solid #f7c6c6}
+.profile-today-grid-v89>div:nth-child(1){background:#eaf0ff;border-color:#c3d4ff}
+.profile-today-grid-v89>div:nth-child(1) b{color:#1d4ed8}
+.profile-today-grid-v89>div:nth-child(2){background:#e7f9ee;border-color:#b7e6c8}
+.profile-today-grid-v89>div:nth-child(2) b{color:#15803d}
+.profile-today-grid-v89>div:nth-child(3){background:#f4edff;border-color:#dbc9ff}
+.profile-today-grid-v89>div:nth-child(3) b{color:#7c3aed}
+.profile-today-grid-v89>div:nth-child(4){background:#ffeaea;border-color:#f7c6c6}
+.profile-today-grid-v89>div:nth-child(4) b{color:#b91c1c}
+.profile-today-grid-v89>div:nth-child(5){background:#fff4e0;border-color:#f2d8a2}
+.profile-today-grid-v89>div:nth-child(5) b{color:#b45309}
+.profile-today-grid-v89>div:nth-child(6){background:#e6f8f5;border-color:#a7ddd6}
+.profile-today-grid-v89>div:nth-child(6) b{color:#0f766e}
+.profile-kpis-v84>div:nth-child(1){background:#eaf0ff;border-color:#c3d4ff}
+.profile-kpis-v84>div:nth-child(1) strong{color:#1d4ed8}
+.profile-kpis-v84>div:nth-child(2){background:#e7f9ee;border-color:#b7e6c8}
+.profile-kpis-v84>div:nth-child(2) strong{color:#15803d}
+.profile-kpis-v84>div:nth-child(3){background:#fff4e0;border-color:#f2d8a2}
+.profile-kpis-v84>div:nth-child(3) strong{color:#b45309}
+.profile-kpis-v84>div:nth-child(4){background:#ffeaea;border-color:#f7c6c6}
+.profile-kpis-v84>div:nth-child(4) strong{color:#b91c1c}
+.profile-kpis-v84>div:nth-child(5){background:#f4edff;border-color:#dbc9ff}
+.profile-kpis-v84>div:nth-child(5) strong{color:#7c3aed}
+.profile-kpis-v84>div:nth-child(6){background:#e6f8f5;border-color:#a7ddd6}
+.profile-kpis-v84>div:nth-child(6) strong{color:#0f766e}
+.profile-kpis-v84>div small{color:#5b6b7f!important}
+
+/* Staff cards list */
+.staff-card-v84{background:linear-gradient(150deg,#fff,#eef5ff)!important;border-color:#c9dbf7!important}
+.staff-card-v84 h4{color:#0b5a86}
+.staff-card-v84 span{color:#4b6b86}
+
+.sync-now-btn-v91{width:100%;margin:0 0 12px;border:1px solid #cce8e5;background:#eef8f6;color:#0f766e;font-weight:1000;font-size:15px;padding:12px;border-radius:13px}
+.sync-now-btn-v91:active{background:#0f766e;color:#fff}
 </style>
 
 </body></html>

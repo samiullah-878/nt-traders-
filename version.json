@@ -1,6 +1,6 @@
 {
-  "version": "v90",
+  "version": "v92",
   "variant": "Production",
   "buildDate": "2026-09-09",
-  "notes": "Staff dashboard: top category buttons + search bar, full staff panel (edit, hazri, timetable, reports)"
+  "notes": "Manual Sync/Update button on login and header; colourful staff theme"
 }
