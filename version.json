@@ -1,6 +1,6 @@
 {
-  "version": "v94",
+  "version": "v96",
   "variant": "Production",
   "buildDate": "2026-09-09",
-  "notes": "Screen kholte hi seedha content par scroll"
+  "notes": "Back button ab modal band karta hai, app band nahi hoti"
 }
