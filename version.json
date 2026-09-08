@@ -1,6 +1,6 @@
 {
-  "version": "v99",
+  "version": "v100",
   "variant": "Production",
   "buildDate": "2026-09-09",
-  "notes": "Kaam system: malik kaam de, mulazim 5 tasveerein bheje, malik points de; PDF mein points aur tasveerein"
+  "notes": "Sab staff cloud par bhejne ka button (login accounts fix)"
 }

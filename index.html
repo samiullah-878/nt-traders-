@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-<title>Noor Traders Hisab v99</title>
+<title>Noor Traders Hisab v100</title>
 <style>
 :root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#6b7280;--brand:#0f766e;--brand2:#115e59;--red:#b91c1c;--line:#dce3ec;--gold:#b7791f;--blue:#1d4ed8}*{box-sizing:border-box}body{margin:0;font-family:system-ui,"Noto Nastaliq Urdu","Noto Sans Arabic",sans-serif;background:var(--bg);color:var(--ink)}button,input,select,textarea{font:inherit}.app{max-width:1280px;margin:auto;padding:12px}.top{background:linear-gradient(135deg,#134e4a,#0f766e);color:#fff;border-radius:22px;padding:18px;display:flex;gap:12px;align-items:center;justify-content:space-between;box-shadow:0 10px 30px #0f766e30}.top h1{margin:0;font-size:clamp(24px,5vw,40px)}.top small{opacity:.9}.nav{display:flex;gap:8px;overflow:auto;padding:12px 0;position:sticky;top:0;z-index:5;background:var(--bg)}.nav button{white-space:nowrap;border:1px solid var(--line);background:#fff;padding:10px 14px;border-radius:13px;font-weight:700}.nav button.active{background:var(--brand);color:#fff;border-color:var(--brand)}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 4px 16px #1720330a}.span12{grid-column:span 12}.span8{grid-column:span 8}.span6{grid-column:span 6}.span4{grid-column:span 4}.span3{grid-column:span 3}.kpi{font-size:13px;color:var(--muted)}.kpi strong{display:block;font-size:24px;color:var(--ink);margin-top:4px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.form{display:grid;grid-template-columns:repeat(12,1fr);gap:8px}.f2{grid-column:span 2}.f3{grid-column:span 3}.f4{grid-column:span 4}.f5{grid-column:span 5}.f6{grid-column:span 6}.f8{grid-column:span 8}.f12{grid-column:span 12}label{font-size:13px;color:var(--muted)}input,select,textarea{width:100%;border:1px solid #ccd5e0;border-radius:11px;padding:10px;background:#fff}button.primary{background:var(--brand);color:#fff;border:0;border-radius:11px;padding:10px 15px;font-weight:800}button.danger{background:#fff1f2;color:var(--red);border:1px solid #fecdd3;border-radius:10px;padding:8px 11px}button.soft{background:#eef7f6;color:var(--brand2);border:1px solid #cce8e5;border-radius:10px;padding:8px 11px}table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:9px 7px;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle}th{color:var(--muted);font-size:12px}.amt{font-weight:800;font-variant-numeric:tabular-nums}.muted{color:var(--muted)}.tab{display:none}.tab.active{display:block}.badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:12px;background:#eef2ff;color:#3730a3}.photo{width:52px;height:52px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}.stocktable input{min-width:80px;padding:7px}.pos{color:#15803d;font-weight:800}.neg{color:#b91c1c;font-weight:800}.notice{padding:10px 12px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;margin:10px 0}.footer{padding:20px;text-align:center;color:var(--muted)}@media(max-width:800px){.span8,.span6,.span4,.span3{grid-column:span 12}.f2,.f3,.f4,.f5,.f6,.f8{grid-column:span 12}.top{align-items:flex-start;flex-direction:column}table{font-size:12px}.card{padding:11px}}
 
@@ -1148,7 +1148,7 @@ th,td{font-size:16px;line-height:1.55}
 </div></div>
 
 <section id="staffAccounts" class="tab app-screen">
-  <div class="screen-head"><div><div class="eyebrow">STAFF • ACCOUNTS</div><h2>Staff Accounts</h2><p>Name، Address، Phone/Password اور Profile management</p></div><button class="primary" onclick="toggleStaffCreateV84(true)">+ New Staff</button></div>
+  <div class="screen-head"><div><div class="eyebrow">STAFF • ACCOUNTS</div><h2>Staff Accounts</h2><p>Name، Address، Phone/Password اور Profile management</p></div><div class="screen-actions"><button class="soft" onclick="pushAllStaffToCloudV100()">☁️ Sab Staff Cloud par bhejein</button><button class="primary" onclick="toggleStaffCreateV84(true)">+ New Staff</button></div></div>
   <div class="staff-accounts-grid"><div id="staffCreateV84" class="pro-card staff-create-v84"><div class="pro-card-head"><h3>New Staff Account</h3><button class="icon-close" onclick="toggleStaffCreateV84(false)">×</button></div><form id="staffFormV84" class="vertical-form"><div class="profile-upload-v84"><div id="staffPhotoPreviewV84" class="account-avatar">👤</div><label class="soft photo-label-v84">Photo<input id="staffPhotoV84" type="file" accept="image/*" capture="user" hidden></label></div><label>1. Name</label><input id="staffNameV84" required><label>2. Role</label><input id="staffRoleV84" placeholder="Sales / Driver / Manager"><label>3. Address</label><textarea id="staffAddressV84" rows="3" required></textarea><label>4. Phone Number / Login ID</label><input id="staffPhoneV84" inputmode="tel" required placeholder="03XXXXXXXXX"><div class="password-auto-box"><span>Password</span><b id="staffPasswordV84">Phone Number</b></div><label class="staff-login-toggle"><input id="staffLoginEnabledV84" type="checkbox" checked> Staff login enabled</label><button class="primary">Save Account</button></form></div><div class="pro-card staff-list-card-v84"><div class="pro-card-head"><div><h3>All Staff</h3><small id="staffCountV84">0 accounts</small></div><input id="staffSearchV84" placeholder="Search name / phone"></div><div id="staffCardsV84" class="staff-cards-v84"></div></div></div>
 </section>
 
@@ -1410,6 +1410,24 @@ function goScreen(id,fromHistory=false){
   setTimeout(cleanEmptyBoxesV92,60);
 }
 window.goScreen=goScreen;
+async function pushAllStaffToCloudV100(){
+  // Har staff ko staffAccounts (cloud) mein likh deta hai — isi se unka login banta hai.
+  const list=db.staff||[];
+  if(!list.length)return alert('Koi staff mojood nahi');
+  let ok=0,fail=0,last='';
+  toastV97?.('☁️ '+list.length+' staff cloud par bheje ja rahe hain…',0);
+  for(const s of list){
+    const phone=normPhoneV84(s.phone||s.id);
+    if(!phone||phone.length<10){fail++;continue}
+    try{
+      await window.noorStaffSystem?.upsertAccount({...s,phone,id:phone,active:s.active!==false,loginEnabled:s.loginEnabled!==false});
+      ok++;
+    }catch(e){fail++;last=e?.code||e?.message||'error';console.error(e)}
+  }
+  toastV97?.(fail? `⚠️ ${ok} kamyab, ${fail} nakaam ${last?'('+last+')':''}` : `✅ ${ok} staff cloud par mehfooz ho gaye. Ab unka login chalega.`,6000);
+  renderStaffAccountsV84();
+}
+window.pushAllStaffToCloudV100=pushAllStaffToCloudV100;
 /* ===== KAAM / TASK SYSTEM (v99) ===== */
 function tasksV99(phone){return window.noorStaffSystem?.getTasks?.(phone)||[]}
 function taskPhotosV99(id){return window.noorStaffSystem?.getTaskPhotos?.(id)||[]}
@@ -1953,7 +1971,7 @@ window.applyPolicyV84=applyPolicyV84;
 restoreFileV84.onchange=async()=>{try{const x=JSON.parse(await restoreFileV84.files[0].text());if(!x.data)throw Error();if(confirm('Backup restore کرنے سے موجود data replace ہوگا۔ جاری رکھیں؟')){db=x.data;save()}}catch{alert('درست backup file نہیں')}};
 
 
-const APP_VERSION_V85='v99';
+const APP_VERSION_V85='v100';
 let currentPdfHtmlV85='';
 
 /* ===== AUTO UPDATE (v88) =====
