@@ -875,13 +875,13 @@ th,td{font-size:16px;line-height:1.55}
         </div>
         <form id="loginForm">
           <label>Login ID</label>
-          <input id="loginEmail" type="text" autocomplete="username" required placeholder="Admin یا موبائل نمبر">
+          <input id="loginEmail" type="text" autocomplete="username" required placeholder="admin (malik) ya mobile number (mulazim)">
           <label>Password</label>
           <input id="loginPassword" type="password" autocomplete="current-password" required placeholder="••••••••">
           <button id="loginBtn" class="primary auth-submit" type="submit">Login</button>
         </form>
         <div id="loginMessage" class="login-message"></div>
-        <div class="security-note">مالک کا اصل password Firebase میں محفوظ رہتا ہے؛ public GitHub code میں hard-code نہیں کیا جاتا۔</div>
+        <div class="security-note">Malik: Login ID <b>admin</b> &bull; Mulazim: Login ID aur Password dono uska <b>mobile number</b> hai.</div>
       </div>
 
     </div>
@@ -1716,7 +1716,7 @@ window.applyPolicyV84=applyPolicyV84;
 restoreFileV84.onchange=async()=>{try{const x=JSON.parse(await restoreFileV84.files[0].text());if(!x.data)throw Error();if(confirm('Backup restore کرنے سے موجود data replace ہوگا۔ جاری رکھیں؟')){db=x.data;save()}}catch{alert('درست backup file نہیں')}};
 
 
-const APP_VERSION_V85='v85';
+const APP_VERSION_V85='v86';
 let currentPdfHtmlV85='';
 
 async function checkAppUpdateV85(auto=false){
@@ -1833,7 +1833,7 @@ setupDates();renderNavigation(location.hash.slice(1)||'dashboard');goScreen(loca
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 import {
-  getAuth, signInWithEmailAndPassword, signInAnonymously, signOut, onAuthStateChanged,
+  getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously, signOut, onAuthStateChanged,
   setPersistence, browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 import {
@@ -2110,8 +2110,12 @@ async function loadStaffSession(user,phoneFromLogin=""){
     }
   }
   if(!phone)return false;
-  const acc=await getDoc(doc(staffAccountsCol,phone));
-  if(!acc.exists()||acc.data().active===false||acc.data().loginEnabled===false)return false;
+  let acc=null;
+  for(let attempt=0;attempt<3&&!acc;attempt++){
+    try{acc=await getDoc(doc(staffAccountsCol,phone))}
+    catch(e){console.warn(e);await new Promise(r=>setTimeout(r,400))}
+  }
+  if(!acc||!acc.exists()||acc.data().active===false||acc.data().loginEnabled===false)return false;
   currentStaff={...acc.data(),phone};currentStaffPhone=phone;
   localStorage.setItem(STAFF_SESSION_KEY,phone);
   renderStaffProfile();
@@ -2202,20 +2206,80 @@ staffPdfBtn?.addEventListener("click",()=>{
   const w=window.open("","_blank");w.document.write(`<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>My Attendance Report</title><style>body{font-family:Arial;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px}</style></head><body><h1>Noor Traders Gulyana</h1><h3>${currentStaff?.name||""} • ${currentStaffPhone}</h3><table><thead><tr><th>Date</th><th>Check-In</th><th>Check-Out</th><th>Distance</th></tr></thead><tbody>${rows}</tbody></table><script>setTimeout(()=>window.print(),350)<\/script></body></html>`);w.document.close();
 });
 
+/* ===== LOGIN SETTINGS =====
+   MALIK  : Login ID = admin      Password = OWNER_PASSWORD (niche likha hua)
+   MULAZIM: Login ID = mobile no. Password = wohi mobile number
+   Password badalna ho to sirf OWNER_PASSWORD ki line change karein,
+   aur Firebase Console > Authentication > Users mein bhi wohi password rakhein. */
 const ADMIN_AUTH_EMAIL="admin@nt-traders.firebaseapp.com";
-loginForm?.addEventListener("submit",async e=>{
-  e.preventDefault();loginMessage.textContent="";loginBtn.disabled=true;
-  const loginId=loginEmail.value.trim(),normalized=normalizePhone(loginId),isAdmin=loginId.toLowerCase()==="admin";
+const OWNER_LOGIN_ID="admin";
+const OWNER_PASSWORD="123456";
+let manualLoginBusy=false;
+
+function setLoginMessage(text,ok=false){
+  loginMessage.className=ok?"login-message ok":"login-message";
+  loginMessage.textContent=text;
+}
+async function ownerSignIn(pass){
   try{
-    if(isAdmin){await signInWithEmailAndPassword(auth,ADMIN_AUTH_EMAIL,loginPassword.value)}
-    else if(normalized){
-      const cred=await signInAnonymously(auth),acc=await getDoc(doc(staffAccountsCol,normalized));
-      if(!acc.exists()||acc.data().active===false||acc.data().loginEnabled===false||normalizePhone(loginPassword.value)!==normalized){await signOut(auth);throw new Error("staff-login")}
-      localStorage.setItem(STAFF_SESSION_KEY,normalized);
-      await setDoc(doc(staffSessionsCol,cred.user.uid),{phone:normalized,createdAt:Date.now()});await loadStaffSession(cred.user,normalized);
+    await signInWithEmailAndPassword(auth,ADMIN_AUTH_EMAIL,pass);
+  }catch(err){
+    // Pehli dafa: agar admin user Firebase mein banaya hi nahi gaya to yahan khud ban jayega.
+    if(err.code==="auth/user-not-found"||err.code==="auth/invalid-credential"||err.code==="auth/invalid-login-credentials"){
+      try{
+        await createUserWithEmailAndPassword(auth,ADMIN_AUTH_EMAIL,pass);
+      }catch(e2){
+        if(e2.code==="auth/email-already-in-use"||e2.code==="auth/weak-password")throw new Error("owner-firebase");
+        throw e2;
+      }
+    }else throw err;
+  }
+}
+async function staffSignIn(phone,pass){
+  if(normalizePhone(pass)!==phone)throw new Error("staff-login");
+  localStorage.setItem(STAFF_SESSION_KEY,phone);
+  const cred=await signInAnonymously(auth);
+  let acc=null;
+  try{acc=await getDoc(doc(staffAccountsCol,phone))}
+  catch(e){localStorage.removeItem(STAFF_SESSION_KEY);await signOut(auth);throw e}
+  if(!acc.exists()||acc.data().active===false||acc.data().loginEnabled===false){
+    localStorage.removeItem(STAFF_SESSION_KEY);await signOut(auth);throw new Error("staff-login");
+  }
+  await setDoc(doc(staffSessionsCol,cred.user.uid),{phone,createdAt:Date.now()});
+  const ok=await loadStaffSession(cred.user,phone);
+  if(!ok){localStorage.removeItem(STAFF_SESSION_KEY);await signOut(auth);throw new Error("staff-login")}
+  loginGate.classList.add("hidden");ownerApp.style.display="none";staffPortal.hidden=false;userBar.hidden=true;
+}
+loginForm?.addEventListener("submit",async e=>{
+  e.preventDefault();setLoginMessage("");loginBtn.disabled=true;manualLoginBusy=true;
+  const loginId=loginEmail.value.trim(),pass=loginPassword.value.trim();
+  const normalized=normalizePhone(loginId);
+  const isAdmin=loginId.toLowerCase()===OWNER_LOGIN_ID||loginId.toLowerCase()===ADMIN_AUTH_EMAIL;
+  try{
+    if(isAdmin){
+      if(pass!==OWNER_PASSWORD)throw new Error("owner-password");
+      await ownerSignIn(pass);
+      loginPassword.value="";
+    }else if(normalized.length>=10){
+      await staffSignIn(normalized,pass);
+      loginPassword.value="";
     }else{throw new Error("login-id")}
-  }catch(err){console.error(err);loginMessage.textContent=err.code==="auth/invalid-credential"?(isAdmin?"Admin login کے لیے Firebase user admin@nt-traders.firebaseapp.com کو Email/Password provider میں provision کریں۔":"Login ID یا Password درست نہیں۔"):err.code==="auth/operation-not-allowed"?"Staff login کے لیے Firebase Authentication میں Anonymous provider enable کریں۔":err.code==="permission-denied"?"Staff account access denied — Firestore Rules اور account status check کریں۔":err.message==="staff-login"?"Staff mobile یا default password درست نہیں۔":"Login نہیں ہوا۔ Firebase Authentication اور Firestore Rules check کریں۔"}
-  finally{loginBtn.disabled=false}
+  }catch(err){
+    console.error(err);
+    const m=
+      err.message==="owner-password"?"Malik ka password ghalat hai.":
+      err.message==="owner-firebase"?"Firebase mein admin ka password alag hai. Firebase Console > Authentication > Users > admin@nt-traders.firebaseapp.com ka password 123456 kar dein.":
+      err.message==="staff-login"?"Mulazim ka mobile number ya password ghalat hai (password = wohi mobile number).":
+      err.message==="login-id"?"Login ID mein 'admin' ya poora mobile number likhein.":
+      err.code==="auth/operation-not-allowed"?"Firebase Authentication mein Email/Password aur Anonymous provider enable karein.":
+      err.code==="auth/network-request-failed"?"Internet connection check karein.":
+      err.code==="auth/too-many-requests"?"Bohat zyada koshishein. Thori der baad dobara try karein.":
+      err.code==="permission-denied"?"Account access denied — Firestore Rules aur account status check karein.":
+      "Login nahi hua. Internet aur Firebase settings check karein.";
+    setLoginMessage(m);
+    loginGate.classList.remove("hidden");
+  }
+  finally{manualLoginBusy=false;loginBtn.disabled=false}
 });
 logoutBtn?.addEventListener("click",()=>signOut(auth));
 staffLogoutBtn?.addEventListener("click",()=>signOut(auth));
@@ -2233,9 +2297,17 @@ onAuthStateChanged(auth,async user=>{
   loginGate.classList.add("hidden");
   if(user.isAnonymous){
     stopListeners();window.noorFirebaseSync.ready=false;
-    ownerApp.style.display="none";staffPortal.hidden=false;
+    ownerApp.style.display="none";staffPortal.hidden=false;userBar.hidden=true;
+    // Agar abhi login form khud session bana raha hai to yahan kuch na karein,
+    // warna session banne se pehle hi logout ho kar app band ho jati thi.
+    if(manualLoginBusy)return;
     const loaded=await loadStaffSession(user);
-    if(!loaded){await signOut(auth);return}
+    if(!loaded){
+      if(manualLoginBusy)return;
+      await signOut(auth);
+      setLoginMessage("Session khatam ho gaya. Dobara mobile number se login karein.");
+      return;
+    }
   }else{
     staffPortal.hidden=true;ownerApp.style.display="";
     userBar.hidden=false;userEmail.textContent="ADMIN • "+(user.email||"Owner");

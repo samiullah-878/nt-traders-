@@ -1,6 +1,6 @@
 {
-  "version": "v85",
+  "version": "v86",
   "variant": "Production",
-  "buildDate": "2026-09-04",
-  "notes": "Approved mobile-first multi-screen owner/staff build with scoring, advanced reports, staff edit modal and auto-update"
+  "buildDate": "2026-09-09",
+  "notes": "Login fix: admin/123456 owner login, staff phone login, auto-logout race removed"
 }
