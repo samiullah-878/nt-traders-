@@ -1061,21 +1061,20 @@ th,td{font-size:16px;line-height:1.55}
     <div><div class="eyebrow">PEOPLE OPERATIONS</div><h2>Staff Dashboard</h2><p>ملازمین، حاضری، location اور performance ایک ہی جگہ</p></div>
     <div class="screen-actions"><button class="primary" onclick="goScreen('staffAccounts');toggleStaffCreateV84(true)">＋ Add Staff</button><button class="soft" onclick="goScreen('attendanceToday')">Open Attendance</button></div>
   </div>
-  <div class="staff-summary-cards">
-    <div class="staff-summary-card staff-summary-total"><span class="summary-icon">👥</span><div><small>Total Staff</small><b id="staffCenterTotal">0</b><em>Active accounts</em></div></div>
-    <div class="staff-summary-card staff-summary-present"><span class="summary-icon">✓</span><div><small>Present Today</small><b id="staffCenterPresent">0</b><em>Checked in</em></div></div>
-    <div class="staff-summary-card staff-summary-absent"><span class="summary-icon">○</span><div><small>Absent Today</small><b id="staffCenterAbsent">0</b><em>Needs attention</em></div></div>
-    <div class="staff-summary-card staff-summary-out"><span class="summary-icon">↗</span><div><small>Checked Out</small><b id="staffCenterOut">0</b><em>Shift completed</em></div></div>
-  </div>
-  <div class="staff-center-summary pro-card staff-live-summary"><div class="pro-card-head"><div><div class="eyebrow">LIVE SNAPSHOT</div><h3>آج کی Staff Activity</h3></div><button class="soft" onclick="goScreen('attendanceToday')">Refresh</button></div><div class="staff-center-stats"><div><small>Total Staff</small><b id="staffCenterCount">0 accounts</b></div><div><small>Present</small><b id="staffCenterPresentMirror">0</b></div><div><small>Absent</small><b id="staffCenterAbsentMirror">0</b></div><div><small>Late</small><b id="staffCenterLate">0</b></div><div><small>Checked Out</small><b id="staffCenterOutMirror">0</b></div></div></div>
-  <div class="staff-cat-tabs-v87" id="staffCatTabsV87">
+<div class="staff-cat-tabs-v87" id="staffCatTabsV87">
     <button class="staff-cat-chip-v87 active" data-cat="all" onclick="filterStaffCatV87('all')">📋 Sab</button>
     <button class="staff-cat-chip-v87" data-cat="staff" onclick="filterStaffCatV87('staff')">👥 Staff</button>
     <button class="staff-cat-chip-v87" data-cat="hazri" onclick="filterStaffCatV87('hazri')">✓ Hazri</button>
     <button class="staff-cat-chip-v87" data-cat="performance" onclick="filterStaffCatV87('performance')">🏆 Performance</button>
     <button class="staff-cat-chip-v87" data-cat="reports" onclick="filterStaffCatV87('reports')">📊 Reports</button>
   </div>
-  <div class="staff-feature-grid" id="staffFeatureGridV87">
+    <div class="staff-search-v89">
+    <span>🔍</span>
+    <input id="staffQuickSearchV89" type="search" placeholder="Mulazim ka naam ya mobile number likhein" oninput="renderStaffQuickSearchV89()">
+    <button type="button" class="soft" onclick="staffQuickSearchV89.value='';renderStaffQuickSearchV89()">✕</button>
+  </div>
+  <div id="staffQuickResultsV89" class="staff-search-results-v89"></div>
+<div class="staff-feature-grid" id="staffFeatureGridV87">
     <button class="staff-feature-card staff-feature-primary" data-cat="staff" onclick="goScreen('staffAccounts')"><span class="feature-icon">👥</span><span><b>Staff List</b><small>Profiles, phone, address and account status</small></span><strong>→</strong></button>
     <button class="staff-feature-card" data-cat="staff" onclick="goScreen('staffAccounts');toggleStaffCreateV84(true)"><span class="feature-icon">＋</span><span><b>Add Staff</b><small>Create a new employee account and profile</small></span><strong>→</strong></button>
     <button class="staff-feature-card" data-cat="staff" onclick="goScreen('staffProfile')"><span class="feature-icon">◎</span><span><b>Staff Profile</b><small>View profile, edit details or manage photo</small></span><strong>→</strong></button>
@@ -1088,7 +1087,14 @@ th,td{font-size:16px;line-height:1.55}
     <button class="staff-feature-card" data-cat="reports" onclick="goScreen('attendanceHistory');printHistoryReportV84()"><span class="feature-icon">▣</span><span><b>Reports & Summary</b><small>Daily/monthly staff reports and exports</small></span><strong>→</strong></button>
   </div>
   </div>
-</section>
+<div class="staff-summary-cards">
+    <div class="staff-summary-card staff-summary-total"><span class="summary-icon">👥</span><div><small>Total Staff</small><b id="staffCenterTotal">0</b><em>Active accounts</em></div></div>
+    <div class="staff-summary-card staff-summary-present"><span class="summary-icon">✓</span><div><small>Present Today</small><b id="staffCenterPresent">0</b><em>Checked in</em></div></div>
+    <div class="staff-summary-card staff-summary-absent"><span class="summary-icon">○</span><div><small>Absent Today</small><b id="staffCenterAbsent">0</b><em>Needs attention</em></div></div>
+    <div class="staff-summary-card staff-summary-out"><span class="summary-icon">↗</span><div><small>Checked Out</small><b id="staffCenterOut">0</b><em>Shift completed</em></div></div>
+  </div>
+  <div class="staff-center-summary pro-card staff-live-summary"><div class="pro-card-head"><div><div class="eyebrow">LIVE SNAPSHOT</div><h3>آج کی Staff Activity</h3></div><button class="soft" onclick="goScreen('attendanceToday')">Refresh</button></div><div class="staff-center-stats"><div><small>Total Staff</small><b id="staffCenterCount">0 accounts</b></div><div><small>Present</small><b id="staffCenterPresentMirror">0</b></div><div><small>Absent</small><b id="staffCenterAbsentMirror">0</b></div><div><small>Late</small><b id="staffCenterLate">0</b></div><div><small>Checked Out</small><b id="staffCenterOutMirror">0</b></div></div></div>
+  </section>
 
 <section id="staffAccounts" class="tab app-screen">
   <div class="screen-head"><div><div class="eyebrow">STAFF • ACCOUNTS</div><h2>Staff Accounts</h2><p>Name، Address، Phone/Password اور Profile management</p></div><button class="primary" onclick="toggleStaffCreateV84(true)">+ New Staff</button></div>
@@ -1360,6 +1366,19 @@ function filterStaffCatV87(cat){
   try{sessionStorage.setItem('nt_staff_cat',cat)}catch(e){}
 }
 window.filterStaffCatV87=filterStaffCatV87;
+function renderStaffQuickSearchV89(){
+  const box=document.getElementById('staffQuickResultsV89'),inp=document.getElementById('staffQuickSearchV89');
+  if(!box||!inp)return;
+  const q=(inp.value||'').trim().toLowerCase();
+  if(!q){box.innerHTML='';return}
+  const list=(db.staff||[]).filter(s=>`${s.name||''} ${s.role||''} ${normPhoneV84(s.phone||s.id)}`.toLowerCase().includes(q)).slice(0,12);
+  box.innerHTML=list.map(s=>{
+    const p=normPhoneV84(s.phone||s.id);
+    const pic=s.photo?`<img src="${s.photo}">`:esc((s.name||'?')[0].toUpperCase());
+    return `<button type="button" class="staff-search-row-v89" onclick="openStaffProfileV84('${p}')"><span class="ssr-pic">${pic}</span><span class="ssr-txt"><b>${esc(s.name||'Staff')}</b><small>${esc(s.role||'Staff')} • ${esc(p)}</small></span><strong>→</strong></button>`;
+  }).join('')||'<div class="staff-search-empty-v89">Koi mulazim nahi mila</div>';
+}
+window.renderStaffQuickSearchV89=renderStaffQuickSearchV89;
 nav.onclick=e=>{const b=e.target.closest('[data-tab]');if(b){goScreen(b.dataset.tab);return}const toggle=e.target.closest('[data-category-toggle]');if(toggle){toggle.closest('.nav-category')?.classList.toggle('expanded');return}if(e.target.closest('[data-back]')){if(history.length>1)history.back();else goScreen('dashboard')}};
 window.addEventListener('popstate',()=>goScreen(location.hash.slice(1)||'dashboard',true));
 
@@ -1737,7 +1756,7 @@ window.applyPolicyV84=applyPolicyV84;
 restoreFileV84.onchange=async()=>{try{const x=JSON.parse(await restoreFileV84.files[0].text());if(!x.data)throw Error();if(confirm('Backup restore کرنے سے موجود data replace ہوگا۔ جاری رکھیں؟')){db=x.data;save()}}catch{alert('درست backup file نہیں')}};
 
 
-const APP_VERSION_V85='v89';
+const APP_VERSION_V85='v90';
 let currentPdfHtmlV85='';
 
 /* ===== AUTO UPDATE (v88) =====
@@ -1856,12 +1875,57 @@ function currentMonthStaffStatsV85(s,rows){
 }
 function renderStaffProfileV84(){
   if(!currentProfilePhoneV84)return;
-  const s=staffForPhoneV84(currentProfilePhoneV84);
-  const rows=(window.noorStaffSystem?.getAttendanceBetween('0000-00-00','9999-99-99')||[]).filter(a=>normPhoneV84(a.phone)===currentProfilePhoneV84).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const phone=currentProfilePhoneV84;
+  const s=staffForPhoneV84(phone);
+  const rows=(window.noorStaffSystem?.getAttendanceBetween('0000-00-00','9999-99-99')||[]).filter(a=>normPhoneV84(a.phone)===phone).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const scores=rows.map(attScoreV84).filter(x=>x!=null),late=rows.filter(a=>(a.minutesLate||0)>10).length,ms=currentMonthStaffStatsV85(s,rows);
-  profileTitleV84.textContent=s.name||currentProfilePhoneV84;
-  staffProfileBodyV84.innerHTML=`<div class="profile-hero-v84"><div class="profile-avatar-v84">${s.photo?`<img src="${s.photo}">`:esc((s.name||'?')[0])}</div><div><h3>${esc(s.name||'Staff')}</h3><p>📱 ${esc(currentProfilePhoneV84)} • 📍 ${esc(s.address||'—')}</p><small>${s.active===false?'Inactive Account':'Active Account'}</small></div><button class="soft" onclick="printIndividualStaffV84('${currentProfilePhoneV84}')">📄 Advanced PDF</button></div><div class="profile-kpis-v84"><div><small>This Month Attendance</small><strong>${ms.pct}%</strong></div><div><small>Present / Absent</small><strong>${ms.present} / ${ms.absent}</strong></div><div><small>Avg Score</small><strong>${scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—'}</strong></div><div><small>Late Days</small><strong>${late}</strong></div></div><div class="pro-card"><div class="pro-card-head"><h3>Complete Attendance History</h3><small>${rows.length} records</small></div><div class="table-scroll"><table><thead><tr><th>Date</th><th>Check-In</th><th>Late</th><th>Auto</th><th>Final</th><th>Check-Out</th><th>Distance</th><th>Edited</th></tr></thead><tbody>${rows.map(a=>`<tr><td>${esc(a.date||'')}</td><td>${esc(a.checkIn||'—')}</td><td>${Math.max(0,Math.round(a.minutesLate||0))}m</td><td>${a.autoScore??'—'}</td><td><b>${attScoreV84(a)??'—'}</b></td><td>${esc(a.checkOut||'—')}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+'m':'—'}</td><td>${a.editedAt?'Yes':'No'}</td></tr>`).join('')}</tbody></table></div></div>`;
+  const d=today(),ta=rows.find(a=>a.date===d)||{},st=attendanceStatusV84(ta);
+  const shift=policyV84.shiftStart||'09:00',shiftEnd=policyV84.shiftEnd||'—';
+  const khanaDaily=Number(s.mealAmount||s.khanaAmount||0);
+  profileTitleV84.textContent=s.name||phone;
+  staffProfileBodyV84.innerHTML=`
+  <div class="profile-hero-v84">
+    <div class="profile-avatar-v84">${s.photo?`<img src="${s.photo}">`:esc((s.name||'?')[0])}</div>
+    <div><h3>${esc(s.name||'Staff')}</h3><p>📱 ${esc(phone)} • 🔐 Password = ${esc(phone)}</p><p>📍 ${esc(s.address||'—')}</p><small>${esc(s.role||'Staff')} • ${s.active===false?'Inactive Account':'Active Account'}</small></div>
+  </div>
+  <div class="profile-actions-v89">
+    <button class="primary" onclick="openAttendanceEditV84('${d}_${phone}','${phone}')">✓ Hazri lagayein / theek karein</button>
+    <button class="soft" onclick="editStaffV84('${phone}')">✏️ Edit</button>
+    <button class="soft" onclick="openStaffHistoryV89('${phone}')">📅 Attendance History</button>
+    <button class="soft" onclick="printIndividualStaffV84('${phone}')">📄 PDF Report</button>
+    <button class="soft" onclick="resetStaffPasswordV85('${phone}')">🔐 Password Reset</button>
+    <button class="danger" onclick="deleteStaffV84('${phone}')">🗑 Delete</button>
+  </div>
+  <div class="pro-card profile-today-v89">
+    <div class="pro-card-head"><div><div class="eyebrow">AAJ KA TIME TABLE</div><h3>${esc(d)}</h3></div><span class="status-v84 ${st.toLowerCase().replaceAll(' ','-')}">${st}</span></div>
+    <div class="profile-today-grid-v89">
+      <div><small>Shift Time</small><b>${esc(shift)} — ${esc(shiftEnd)}</b></div>
+      <div><small>Check-In</small><b>${esc(ta.checkIn||'—')}</b></div>
+      <div><small>Check-Out</small><b>${esc(ta.checkOut||'—')}</b></div>
+      <div><small>Late</small><b>${ta.checkIn?Math.max(0,Math.round(ta.minutesLate||0))+' min':'—'}</b></div>
+      <div><small>Aaj ka Score</small><b>${attScoreV84(ta)??'—'}</b></div>
+      <div><small>Distance</small><b>${ta.checkInDistance!=null?Math.round(ta.checkInDistance)+'m':'—'}</b></div>
+    </div>
+  </div>
+  <div class="profile-kpis-v84">
+    <div><small>Is Mahine Hazri</small><strong>${ms.pct}%</strong></div>
+    <div><small>Hazir / Ghair-hazir</small><strong>${ms.present} / ${ms.absent}</strong></div>
+    <div><small>Average Score</small><strong>${scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—'}</strong></div>
+    <div><small>Late Din</small><strong>${late}</strong></div>
+    <div><small>Khana (rozana)</small><strong>${money(khanaDaily)}</strong></div>
+    <div><small>Khana (is mahine)</small><strong>${money(khanaDaily*ms.present)}</strong></div>
+  </div>
+  <div class="pro-card">
+    <div class="pro-card-head"><h3>Poori Attendance History</h3><small>${rows.length} records</small></div>
+    <div class="table-scroll"><table><thead><tr><th>Date</th><th>Check-In</th><th>Late</th><th>Score</th><th>Check-Out</th><th>Distance</th><th></th></tr></thead><tbody>${rows.map(a=>`<tr><td>${esc(a.date||'')}</td><td>${esc(a.checkIn||'—')}</td><td>${Math.max(0,Math.round(a.minutesLate||0))}m</td><td><b>${attScoreV84(a)??'—'}</b></td><td>${esc(a.checkOut||'—')}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+'m':'—'}</td><td><button class="soft" onclick="openAttendanceEditV84('${a.id||`${a.date}_${phone}`}','${phone}')">Edit</button></td></tr>`).join('')||'<tr><td colspan="7">Koi record nahi</td></tr>'}</tbody></table></div>
+  </div>`;
 }
+function openStaffHistoryV89(phone){
+  goScreen('attendanceHistory');
+  const sel=document.getElementById('histStaffV84');
+  if(sel){sel.value=normPhoneV84(phone);renderAttendanceHistoryV84()}
+}
+window.openStaffHistoryV89=openStaffHistoryV89;
 function printIndividualStaffV84(phone){
   const s=staffForPhoneV84(phone),data=(window.noorStaffSystem?.getAttendanceBetween('0000-00-00','9999-99-99')||[]).filter(a=>normPhoneV84(a.phone)===normPhoneV84(phone)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
   const scores=data.map(attScoreV84).filter(x=>x!=null),ms=currentMonthStaffStatsV85(s,data),late=data.filter(a=>(a.minutesLate||0)>10).length,perfect=data.filter(a=>attScoreV84(a)===10).length;
@@ -2392,6 +2456,28 @@ window.addEventListener("load", function(){
 :root{--font-ui:"Noto Sans Arabic","Noto Sans Urdu","Segoe UI",sans-serif;--staff-teal:#0f766e;--staff-blue:#2563eb;--staff-gold:#b7791f;--staff-purple:#7c3aed}
 body{font-family:var(--font-ui);letter-spacing:0}
 button,input,select,textarea{font-family:var(--font-ui)}
+.staff-search-v89{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #d7e2ea;border-radius:16px;padding:6px 12px;margin-bottom:10px;box-shadow:0 6px 16px rgba(15,23,42,.06)}
+.staff-search-v89 span{font-size:18px}
+.staff-search-v89 input{flex:1;border:0!important;outline:0;background:transparent;font-size:16px;padding:10px 0}
+.staff-search-v89 button{padding:7px 11px;border-radius:10px}
+.staff-search-results-v89{display:grid;gap:8px;margin-bottom:12px}
+.staff-search-row-v89{display:flex;align-items:center;gap:11px;width:100%;background:#fff;border:1px solid #dfe7ee;border-radius:14px;padding:11px 13px;text-align:start;box-shadow:0 4px 12px rgba(15,23,42,.05)}
+.staff-search-row-v89 .ssr-pic{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:#dff5f1;color:#0f766e;font-weight:1000;overflow:hidden;flex:0 0 42px}
+.staff-search-row-v89 .ssr-pic img{width:100%;height:100%;object-fit:cover}
+.staff-search-row-v89 .ssr-txt{flex:1}
+.staff-search-row-v89 b,.staff-search-row-v89 small{display:block}
+.staff-search-row-v89 small{color:#64748b;font-size:11px;margin-top:2px}
+.staff-search-row-v89 strong{color:#0f766e;font-size:19px}
+.staff-search-empty-v89{text-align:center;color:#64748b;padding:14px;background:#fff;border-radius:14px;border:1px solid #dfe7ee}
+.profile-actions-v89{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 12px}
+.profile-actions-v89 button{padding:13px 10px;border-radius:14px;font-size:13px;font-weight:900}
+.profile-actions-v89 button:first-child{grid-column:1/-1;font-size:15px}
+.profile-today-v89{margin-bottom:10px}
+.profile-today-grid-v89{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.profile-today-grid-v89>div{background:#f8fafc;border:1px solid #e2e8f0;border-radius:13px;padding:11px}
+.profile-today-grid-v89 small{display:block;color:#64748b;font-size:10px;font-weight:800}
+.profile-today-grid-v89 b{display:block;margin-top:4px;font-size:15px}
+@media(max-width:520px){.profile-actions-v89{grid-template-columns:1fr 1fr}.profile-today-grid-v89{grid-template-columns:1fr 1fr}}
 .update-banner-v88{position:fixed;left:12px;right:12px;bottom:16px;z-index:10001;display:none;align-items:center;justify-content:space-between;gap:12px;background:#0f766e;color:#fff;border-radius:16px;padding:13px 16px;font-size:14px;font-weight:800;box-shadow:0 14px 34px rgba(15,23,42,.35)}
 .update-banner-v88.show{display:flex}
 .update-banner-v88 button{border:0;background:#fff;color:#0f766e;font-weight:1000;border-radius:11px;padding:9px 16px;font-size:14px}

@@ -1,6 +1,6 @@
 {
-  "version": "v89",
+  "version": "v90",
   "variant": "Production",
   "buildDate": "2026-09-09",
-  "notes": "Reliable auto-update: cache+service worker reset, Update button; staff dashboard category tabs"
+  "notes": "Staff dashboard: top category buttons + search bar, full staff panel (edit, hazri, timetable, reports)"
 }
