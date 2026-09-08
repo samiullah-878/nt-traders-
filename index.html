@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-<title>Noor Traders Hisab v98</title>
+<title>Noor Traders Hisab v99</title>
 <style>
 :root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#6b7280;--brand:#0f766e;--brand2:#115e59;--red:#b91c1c;--line:#dce3ec;--gold:#b7791f;--blue:#1d4ed8}*{box-sizing:border-box}body{margin:0;font-family:system-ui,"Noto Nastaliq Urdu","Noto Sans Arabic",sans-serif;background:var(--bg);color:var(--ink)}button,input,select,textarea{font:inherit}.app{max-width:1280px;margin:auto;padding:12px}.top{background:linear-gradient(135deg,#134e4a,#0f766e);color:#fff;border-radius:22px;padding:18px;display:flex;gap:12px;align-items:center;justify-content:space-between;box-shadow:0 10px 30px #0f766e30}.top h1{margin:0;font-size:clamp(24px,5vw,40px)}.top small{opacity:.9}.nav{display:flex;gap:8px;overflow:auto;padding:12px 0;position:sticky;top:0;z-index:5;background:var(--bg)}.nav button{white-space:nowrap;border:1px solid var(--line);background:#fff;padding:10px 14px;border-radius:13px;font-weight:700}.nav button.active{background:var(--brand);color:#fff;border-color:var(--brand)}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 4px 16px #1720330a}.span12{grid-column:span 12}.span8{grid-column:span 8}.span6{grid-column:span 6}.span4{grid-column:span 4}.span3{grid-column:span 3}.kpi{font-size:13px;color:var(--muted)}.kpi strong{display:block;font-size:24px;color:var(--ink);margin-top:4px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.form{display:grid;grid-template-columns:repeat(12,1fr);gap:8px}.f2{grid-column:span 2}.f3{grid-column:span 3}.f4{grid-column:span 4}.f5{grid-column:span 5}.f6{grid-column:span 6}.f8{grid-column:span 8}.f12{grid-column:span 12}label{font-size:13px;color:var(--muted)}input,select,textarea{width:100%;border:1px solid #ccd5e0;border-radius:11px;padding:10px;background:#fff}button.primary{background:var(--brand);color:#fff;border:0;border-radius:11px;padding:10px 15px;font-weight:800}button.danger{background:#fff1f2;color:var(--red);border:1px solid #fecdd3;border-radius:10px;padding:8px 11px}button.soft{background:#eef7f6;color:var(--brand2);border:1px solid #cce8e5;border-radius:10px;padding:8px 11px}table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:9px 7px;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle}th{color:var(--muted);font-size:12px}.amt{font-weight:800;font-variant-numeric:tabular-nums}.muted{color:var(--muted)}.tab{display:none}.tab.active{display:block}.badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:12px;background:#eef2ff;color:#3730a3}.photo{width:52px;height:52px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}.stocktable input{min-width:80px;padding:7px}.pos{color:#15803d;font-weight:800}.neg{color:#b91c1c;font-weight:800}.notice{padding:10px 12px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;margin:10px 0}.footer{padding:20px;text-align:center;color:var(--muted)}@media(max-width:800px){.span8,.span6,.span4,.span3{grid-column:span 12}.f2,.f3,.f4,.f5,.f6,.f8{grid-column:span 12}.top{align-items:flex-start;flex-direction:column}table{font-size:12px}.card{padding:11px}}
 
@@ -972,6 +972,11 @@ th,td{font-size:16px;line-height:1.55}
       </div>
     </section>
 
+    <section class="portal-card staff-tasks-card-v99">
+      <div class="portal-card-head"><div><small>MY WORK</small><h3>میرے کام / Mere Kaam</h3></div><span>🧰</span></div>
+      <div id="staffTaskListV99" class="staff-task-list-v99"></div>
+    </section>
+
     <section class="portal-card staff-history-card">
       <div class="portal-card-head history-head">
         <div><small>MY REPORT</small><h3>میری Attendance History</h3></div>
@@ -1077,6 +1082,7 @@ th,td{font-size:16px;line-height:1.55}
     <button class="staff-cat-chip-v87" data-cat="staff" onclick="filterStaffCatV87('staff')">👥 Staff</button>
     <button class="staff-cat-chip-v87" data-cat="hazri" onclick="filterStaffCatV87('hazri')">✓ Hazri</button>
     <button class="staff-cat-chip-v87" data-cat="performance" onclick="filterStaffCatV87('performance')">🏆 Performance</button>
+    <button class="staff-cat-chip-v87" data-cat="kaam" onclick="filterStaffCatV87('kaam')">🧰 Kaam</button>
     <button class="staff-cat-chip-v87" data-cat="reports" onclick="filterStaffCatV87('reports')">📊 Reports</button>
   </div>
     <div class="staff-search-v89">
@@ -1094,6 +1100,8 @@ th,td{font-size:16px;line-height:1.55}
     <button class="staff-feature-card" data-cat="hazri" onclick="goScreen('attendanceHistory')"><span class="feature-icon">📅</span><span><b>Attendance History</b><small>Date selection, calendar-style records and PDF</small></span><strong>→</strong></button>
     <button class="staff-feature-card" data-cat="performance" onclick="goScreen('scores')"><span class="feature-icon">🏆</span><span><b>Scores & Ranking</b><small>Performance, punctuality and monthly scores</small></span><strong>→</strong></button>
     <button class="staff-feature-card" data-cat="performance" onclick="goScreen('staffKhana')"><span class="feature-icon">🍽</span><span><b>Khana Allowance</b><small>Daily and monthly meal allowance totals</small></span><strong>→</strong></button>
+    <button class="staff-feature-card" data-cat="kaam" onclick="goScreen('tasks')"><span class="feature-icon">🧰</span><span><b>Kaam / Approval</b><small>Kaam dein, tasveerein dekhein aur points dein</small></span><strong>→</strong></button>
+    <button class="staff-feature-card" data-cat="kaam" onclick="openTaskFormV99()"><span class="feature-icon">＋</span><span><b>Naya Kaam Dein</b><small>Kisi bhi mulazim ko naya kaam saunpein</small></span><strong>→</strong></button>
     <button class="staff-feature-card" data-cat="reports" onclick="goScreen('staffReports')"><span class="feature-icon">▤</span><span><b>Staff Reports</b><small>Date range reports for all staff</small></span><strong>→</strong></button>
     <button class="staff-feature-card" data-cat="reports" onclick="goScreen('attendanceHistory');printHistoryReportV84()"><span class="feature-icon">▣</span><span><b>Reports & Summary</b><small>Daily/monthly staff reports and exports</small></span><strong>→</strong></button>
   </div>
@@ -1106,6 +1114,38 @@ th,td{font-size:16px;line-height:1.55}
   </div>
   <div class="staff-center-summary pro-card staff-live-summary"><div class="pro-card-head"><div><div class="eyebrow">LIVE SNAPSHOT</div><h3>آج کی Staff Activity</h3></div><button class="soft" onclick="goScreen('attendanceToday')">Refresh</button></div><div class="staff-center-stats"><div><small>Total Staff</small><b id="staffCenterCount">0 accounts</b></div><div><small>Present</small><b id="staffCenterPresentMirror">0</b></div><div><small>Absent</small><b id="staffCenterAbsentMirror">0</b></div><div><small>Late</small><b id="staffCenterLate">0</b></div><div><small>Checked Out</small><b id="staffCenterOutMirror">0</b></div></div></div>
   </section>
+
+<section id="tasks" class="tab app-screen">
+  <div class="screen-head"><div><div class="eyebrow">STAFF • KAAM</div><h2>Kaam / Approval</h2><p>Kaam dein • tasveerein dekhein • points dein</p></div>
+    <div class="screen-actions">
+      <select id="taskFilterV99" onchange="renderTasksV99()">
+        <option value="pending">Approval ka intezar</option>
+        <option value="all">Sab kaam</option>
+        <option value="assigned">Diye gaye</option>
+        <option value="approved">Manzoor shuda</option>
+        <option value="returned">Wapis bheje gaye</option>
+      </select>
+      <button class="primary" onclick="openTaskFormV99()">＋ Naya Kaam</button>
+      <button class="soft" onclick="printTasksReportV99()">📄 PDF (tasveeron ke sath)</button>
+    </div>
+  </div>
+  <div id="taskKpisV99" class="task-kpis-v99"></div>
+  <div id="taskListV99" class="task-list-v99"></div>
+</section>
+
+<div id="taskModalV99" class="modal-v84" hidden><div class="modal-card-v84">
+  <div class="modal-head-v84"><div><div class="eyebrow">NAYA KAAM</div><h3>Mulazim ko kaam dein</h3></div><button type="button" onclick="closeTaskFormV99()">×</button></div>
+  <form id="taskFormV99" class="vertical-form">
+    <label>Mulazim</label><select id="taskStaffV99" required></select>
+    <label>Kaam ka naam</label><input id="taskTitleV99" required placeholder="Maslan: Dukan ki safai">
+    <label>Tafseel</label><textarea id="taskDetailV99" rows="3" placeholder="Kya karna hai"></textarea>
+    <div class="two-col-v84">
+      <label>Tareekh<input id="taskDateV99" type="date"></label>
+      <label>Zyada se zyada Points (0-10)<input id="taskPointsV99" type="number" min="0" max="10" value="10"></label>
+    </div>
+    <button class="primary">Kaam Save karein</button>
+  </form>
+</div></div>
 
 <section id="staffAccounts" class="tab app-screen">
   <div class="screen-head"><div><div class="eyebrow">STAFF • ACCOUNTS</div><h2>Staff Accounts</h2><p>Name، Address، Phone/Password اور Profile management</p></div><button class="primary" onclick="toggleStaffCreateV84(true)">+ New Staff</button></div>
@@ -1336,7 +1376,7 @@ const money=n=>'Rs '+Number(n||0).toLocaleString('en-PK',{maximumFractionDigits:
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const navCategories=[
   {id:'accounts',label:'💼 Accounts',items:[['dashboard','Overview'],['sales','Sale'],['collections','Wasooli'],['expenses','Expenses'],['cashScreen','Cash / Change'],['accountIncoming','Accounts Incoming'],['purchases','Purchase / Bills']]},
-  {id:'staff',label:'👥 Staff',items:[['staffCenter','Staff Control'],['staffAccounts','Staff Accounts'],['attendanceToday','Today Attendance'],['scores','Scores / Ranking'],['staffKhana','Khana Allowance'],['attendanceHistory','Attendance History'],['staffReports','Staff Reports']]},
+  {id:'staff',label:'👥 Staff',items:[['staffCenter','Staff Control'],['staffAccounts','Staff Accounts'],['attendanceToday','Today Attendance'],['scores','Scores / Ranking'],['staffKhana','Khana Allowance'],['attendanceHistory','Attendance History'],['tasks','Kaam / Approval'],['staffReports','Staff Reports']]},
   {id:'stock',label:'📦 Stock / Purchase',items:[['stock','Stock Audit']]},
   {id:'production',label:'🏭 Production',items:[['manufacturing','Batch Cost']]},
   {id:'reports',label:'📊 Reports',items:[['completeReport','Complete System Report'],['reports','Report Center'],['salesReports','Sales Reports'],['staffReports','Staff Reports'],['stock','Stock / Purchase Reports'],['manufacturing','Production Reports']]},
@@ -1366,10 +1406,108 @@ function goScreen(id,fromHistory=false){
     }
   }
   if(!fromHistory)history.pushState({screen:id},'',`#${id}`);
-  if(id==='dashboard')renderV84Dashboard();if(id==='staffCenter')renderStaffCenterV84();if(id==='staffAccounts')renderStaffAccountsV84();if(id==='attendanceToday')renderTodayAttendanceV84();if(id==='attendanceHistory')renderAttendanceHistoryV84();if(id==='scores')renderScoresV84();if(id==='staffKhana')renderKhanaAllowanceV85();if(id==='staffProfile')renderStaffProfileV84();if(id==='staffReports')renderStaffReportsV84();if(id==='salesReports')renderSalesReportsV84();if(id==='completeReport')renderCompleteReportScreenV84();
+  if(id==='dashboard')renderV84Dashboard();if(id==='staffCenter')renderStaffCenterV84();if(id==='staffAccounts')renderStaffAccountsV84();if(id==='attendanceToday')renderTodayAttendanceV84();if(id==='attendanceHistory')renderAttendanceHistoryV84();if(id==='scores')renderScoresV84();if(id==='staffKhana')renderKhanaAllowanceV85();if(id==='staffProfile')renderStaffProfileV84();if(id==='staffReports')renderStaffReportsV84();if(id==='salesReports')renderSalesReportsV84();if(id==='tasks')renderTasksV99();if(id==='completeReport')renderCompleteReportScreenV84();
   setTimeout(cleanEmptyBoxesV92,60);
 }
 window.goScreen=goScreen;
+/* ===== KAAM / TASK SYSTEM (v99) ===== */
+function tasksV99(phone){return window.noorStaffSystem?.getTasks?.(phone)||[]}
+function taskPhotosV99(id){return window.noorStaffSystem?.getTaskPhotos?.(id)||[]}
+function taskStatusChipV99(t){
+  const map={assigned:['🆕 Diya gaya','assigned'],submitted:['⏳ Approval chahiye','submitted'],approved:['✅ Manzoor','approved'],returned:['↩️ Wapis bheja','returned']};
+  const x=map[t.status||'assigned']||map.assigned;
+  return `<span class="task-chip-v99 tc-${x[1]}">${x[0]}</span>`;
+}
+function openTaskFormV99(phone){
+  const sel=document.getElementById('taskStaffV99');
+  sel.innerHTML=db.staff.map(x=>{const p=normPhoneV84(x.phone||x.id);return `<option value="${p}">${esc(x.name||'Staff')} • ${esc(p)}</option>`}).join('');
+  if(phone)sel.value=normPhoneV84(phone);
+  taskTitleV99.value='';taskDetailV99.value='';taskDateV99.value=today();taskPointsV99.value=10;
+  taskModalV99.hidden=false;
+}
+function closeTaskFormV99(){taskModalV99.hidden=true}
+window.openTaskFormV99=openTaskFormV99;window.closeTaskFormV99=closeTaskFormV99;
+taskFormV99.onsubmit=async e=>{
+  e.preventDefault();
+  const phone=normPhoneV84(taskStaffV99.value);
+  if(!phone)return alert('Mulazim chunein');
+  const s=staffForPhoneV84(phone);
+  const task={id:'T'+Date.now(),phone,staffName:s.name||phone,title:taskTitleV99.value.trim(),detail:taskDetailV99.value.trim(),
+    dueDate:taskDateV99.value||today(),maxPoints:Math.min(10,Math.max(0,+taskPointsV99.value||10)),
+    status:'assigned',points:null,ownerNote:'',createdAt:Date.now()};
+  if(!task.title)return alert('Kaam ka naam likhein');
+  await window.noorStaffSystem?.saveTask(task);
+  closeTaskFormV99();renderTasksV99();
+  alert('Kaam bhej diya gaya: '+task.staffName);
+};
+function renderTasksV99(){
+  const box=document.getElementById('taskListV99');if(!box)return;
+  const f=(document.getElementById('taskFilterV99')||{}).value||'pending';
+  let list=tasksV99();
+  const kpi=document.getElementById('taskKpisV99');
+  if(kpi){
+    const pend=list.filter(t=>t.status==='submitted').length,ok=list.filter(t=>t.status==='approved').length;
+    const pts=list.filter(t=>t.status==='approved').reduce((a,b)=>a+(+b.points||0),0);
+    kpi.innerHTML=`<div><small>Kul Kaam</small><strong>${list.length}</strong></div><div><small>Approval chahiye</small><strong>${pend}</strong></div><div><small>Manzoor shuda</small><strong>${ok}</strong></div><div><small>Kul Points</small><strong>${pts}</strong></div>`;
+  }
+  if(f==='pending')list=list.filter(t=>t.status==='submitted');
+  else if(f!=='all')list=list.filter(t=>(t.status||'assigned')===f);
+  box.innerHTML=list.map(t=>{
+    const pics=taskPhotosV99(t.id);
+    const st=staffForPhoneV84(t.phone);
+    return `<article class="task-card-v99">
+      <div class="task-head-v99"><div><b>${esc(t.title||'Kaam')}</b><small>👤 ${esc(st.name||t.staffName||t.phone)} • ${esc(normPhoneV84(t.phone))}</small></div>${taskStatusChipV99(t)}</div>
+      ${t.detail?`<p>${esc(t.detail)}</p>`:''}
+      <small class="task-meta-v99">📅 ${esc(t.dueDate||'')} • Max ${t.maxPoints??10} points${t.points!=null?` • Diye gaye: <b>${t.points}</b>`:''}</small>
+      ${pics.length?`<div class="task-photos-v99">${pics.map(ph=>`<img src="${ph.data}" onclick="viewTaskPhotoV99('${ph.id}')">`).join('')}</div>`:'<div class="task-nopic-v99">Abhi tasveer nahi aayi</div>'}
+      ${t.ownerNote?`<div class="task-note-v99">📝 ${esc(t.ownerNote)}</div>`:''}
+      <div class="task-actions-v99">
+        ${t.status==='submitted'?`<input type="number" min="0" max="${t.maxPoints??10}" value="${t.maxPoints??10}" id="pts_${t.id}" class="task-points-in-v99">
+          <button class="primary" onclick="approveTaskV99('${t.id}')">✅ Manzoor + Points</button>
+          <button class="soft" onclick="returnTaskV99('${t.id}')">↩️ Wapis bhejein</button>`:''}
+        ${t.status==='approved'?`<button class="soft" onclick="reopenTaskV99('${t.id}')">Dobara kholain</button>`:''}
+        <button class="danger" onclick="deleteTaskV99Ui('${t.id}')">🗑 Delete</button>
+      </div>
+    </article>`;
+  }).join('')||'<div class="empty-state-v84">Is filter mein koi kaam nahi</div>';
+}
+window.renderTasksV99=renderTasksV99;
+function viewTaskPhotoV99(photoId){
+  const ph=taskPhotosV99('').find(x=>x.id===photoId)||(window.noorStaffSystem?.getTaskPhotos?.(photoId.split('_')[0])||[]).find(x=>x.id===photoId);
+  if(!ph)return;
+  const w=window.open('','_blank');w.document.write(`<img src="${ph.data}" style="max-width:100%">`);w.document.close();
+}
+window.viewTaskPhotoV99=viewTaskPhotoV99;
+async function approveTaskV99(id){
+  const t=tasksV99().find(x=>x.id===id);if(!t)return;
+  const inp=document.getElementById('pts_'+id);
+  let pts=Math.min(+(t.maxPoints??10),Math.max(0,+(inp?.value||0)));
+  await window.noorStaffSystem?.saveTask({id,status:'approved',points:pts,approvedAt:Date.now(),ownerNote:''});
+  renderTasksV99();
+}
+async function returnTaskV99(id){
+  const note=prompt('Wapis bhejne ki wajah likhein:','Kaam mukammal nahi');
+  if(note===null)return;
+  await window.noorStaffSystem?.saveTask({id,status:'returned',ownerNote:note,points:null});
+  renderTasksV99();
+}
+async function reopenTaskV99(id){await window.noorStaffSystem?.saveTask({id,status:'assigned',points:null});renderTasksV99()}
+async function deleteTaskV99Ui(id){if(confirm('Yeh kaam delete karein?')){await window.noorStaffSystem?.deleteTask(id);renderTasksV99()}}
+window.approveTaskV99=approveTaskV99;window.returnTaskV99=returnTaskV99;window.reopenTaskV99=reopenTaskV99;window.deleteTaskV99Ui=deleteTaskV99Ui;
+function printTasksReportV99(phone){
+  const list=tasksV99(phone);
+  const rows=list.map(t=>{
+    const pics=taskPhotosV99(t.id).map(p=>`<img src="${p.data}" style="width:120px;height:120px;object-fit:cover;border-radius:8px;margin:3px">`).join('')||'—';
+    const st=staffForPhoneV84(t.phone);
+    return `<tr><td>${esc(t.dueDate||'')}</td><td>${esc(st.name||t.staffName||t.phone)}</td><td>${esc(t.title||'')}<br><small>${esc(t.detail||'')}</small></td><td>${esc(t.status||'')}</td><td><b>${t.points??'—'}</b>/${t.maxPoints??10}</td><td>${pics}</td></tr>`;
+  }).join('')||'<tr><td colspan="6">Koi kaam nahi</td></tr>';
+  const total=list.filter(t=>t.status==='approved').reduce((a,b)=>a+(+b.points||0),0);
+  const w=window.open('','_blank');
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Kaam Report</title><style>body{font-family:Arial;padding:22px;color:#142033}h1{color:#0f766e;margin:0}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #d5dee6;padding:7px;font-size:11px;vertical-align:top}th{background:#eef5f4;color:#0f5f59}</style></head><body><h1>Noor Traders Gulyana</h1><p>Kaam / Task Report • Kul Points: <b>${total}</b> • ${new Date().toLocaleString('en-PK')}</p><table><thead><tr><th>Date</th><th>Mulazim</th><th>Kaam</th><th>Status</th><th>Points</th><th>Tasveerein</th></tr></thead><tbody>${rows}</tbody></table><script>setTimeout(()=>window.print(),600)<\/script></body></html>`);
+  w.document.close();
+}
+window.printTasksReportV99=printTasksReportV99;
+window.refreshStaffProfileV99=()=>{if(document.getElementById('staffProfile')?.classList.contains('active'))renderStaffProfileV84()};
 // "More" menu: bahar tap karte hi band ho jaye, aur page khulte waqt hamesha band ho.
 document.addEventListener('click',e=>{
   const nav=document.getElementById('nav');
@@ -1802,7 +1940,7 @@ attendanceEditFormV84.onsubmit=async e=>{
   closeAttendanceEditV84();renderTodayAttendanceV84();renderAttendanceHistoryV84();renderScoresV84();
 };
 
-function printWindowV84(title,subtitle,summary,headers,rows){const w=window.open('','_blank');w.document.write(`<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{font-family:Arial,sans-serif;padding:28px;color:#142033}.brand{border-bottom:3px solid #0f766e;padding-bottom:14px}.brand h1{margin:0;color:#0f766e}.brand p{margin:5px 0;color:#64748b}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:18px 0}.summary div{border:1px solid #dce5ec;border-radius:10px;padding:10px}.summary span{font-size:10px;color:#64748b;display:block}.summary b{font-size:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #d5dee6;padding:7px;text-align:right;font-size:10px}th{background:#eef5f4;color:#0f5f59}.foot{margin-top:18px;font-size:9px;color:#64748b}@media print{body{padding:10px}}</style></head><body><div class="brand"><h1>Noor Traders Gulyana</h1><p>${esc(title)} • ${esc(subtitle)}</p></div><div class="summary">${summary}</div><table><thead><tr>${headers.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table><div class="foot">Generated from Noor Traders Hisab ${V84_VERSION} • ${V84_VARIANT}</div><script>setTimeout(()=>window.print(),450)<\/script></body></html>`);w.document.close()}
+function printWindowV84(title,subtitle,summary,headers,rows){const w=window.open('','_blank');w.document.write(`<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{font-family:Arial,sans-serif;padding:28px;color:#142033}.brand{border-bottom:3px solid #0f766e;padding-bottom:14px}.brand h1{margin:0;color:#0f766e}.brand p{margin:5px 0;color:#64748b}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:18px 0}.summary div{border:1px solid #dce5ec;border-radius:10px;padding:10px}.summary span{font-size:10px;color:#64748b;display:block}.summary b{font-size:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #d5dee6;padding:7px;text-align:right;font-size:10px}th{background:#eef5f4;color:#0f5f59}.foot{margin-top:18px;font-size:9px;color:#64748b}@media print{body{padding:10px}}</style></head><body><div class="brand"><h1>Noor Traders Gulyana</h1><p>${esc(title)} • ${esc(subtitle)}</p></div><div class="summary">${summary}</div><table><thead><tr>${headers.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>${window.__taskExtraV99||''}<div class="foot">Generated from Noor Traders Hisab ${V84_VERSION} • ${V84_VARIANT}</div><script>setTimeout(()=>window.print(),450)<\/script></body></html>`);w.document.close();window.__taskExtraV99=''}
 function dailyReportDataV84(d){const m=attMapV84(d),list=db.staff.map(s=>{const p=normPhoneV84(s.phone||s.id),a=m.get(p)||{};return{s,p,a}});const present=list.filter(x=>x.a.checkIn).length,late=list.filter(x=>(x.a.minutesLate||0)>10).length,out=list.filter(x=>x.a.checkOut).length,scores=list.map(x=>attScoreV84(x.a)).filter(x=>x!=null);return{list,present,absent:db.staff.length-present,late,out,avg:scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—'}}
 function printDailyAttendanceV84(){const d=todayAttDateV84.value||today(),r=dailyReportDataV84(d),summary=`<div><span>Total Staff</span><b>${db.staff.length}</b></div><div><span>Present</span><b>${r.present}</b></div><div><span>Absent</span><b>${r.absent}</b></div><div><span>Late / Avg Score</span><b>${r.late} / ${r.avg}</b></div>`,rows=r.list.map(x=>`<tr><td>${x.s.photo?`<img src="${x.s.photo}" style="width:34px;height:34px;object-fit:cover;border-radius:6px">`:'—'}</td><td>${esc(x.s.name)}</td><td>${esc(x.s.role||'Staff')}</td><td>${esc(x.p)}</td><td>${attendanceStatusV84(x.a)}</td><td>${esc(x.a.checkIn||'—')}</td><td>${esc(x.a.checkOut||'—')}</td><td>${x.a.selfie?`<img src="${x.a.selfie}" style="width:34px;height:34px;object-fit:cover;border-radius:6px">`:'—'}</td><td>${attScoreV84(x.a)??'—'}</td><td>${esc(x.a.ownerNote||'—')}</td></tr>`).join('');printWindowV84('Daily Attendance Report',d,summary,['Profile','Name','Role','Phone','Status','Check-In','Check-Out','Selfie','Score','Notes'],rows)}
 function printHistoryReportV84(){const from=histFromV84.value||today(),to=histToV84.value||today(),phone=histStaffV84.value;let data=(window.noorStaffSystem?.getAttendanceBetween(from,to)||[]).filter(a=>!phone||normPhoneV84(a.phone)===phone);const scores=data.map(attScoreV84).filter(x=>x!=null),summary=`<div><span>Records</span><b>${data.length}</b></div><div><span>Late</span><b>${data.filter(a=>(a.minutesLate||0)>10).length}</b></div><div><span>Avg Score</span><b>${scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—'}</b></div><div><span>Period</span><b>${from} → ${to}</b></div>`,rows=data.map(a=>`<tr><td>${a.date}</td><td>${esc(staffForPhoneV84(a.phone).name||a.name||a.phone)}</td><td>${a.checkIn||'—'}</td><td>${Math.max(0,Math.round(a.minutesLate||0))}</td><td>${attScoreV84(a)??'—'}</td><td>${a.checkOut||'—'}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+'m':'—'}</td></tr>`).join('');printWindowV84('Attendance History Report',`${from} to ${to}`,summary,['Date','Staff','Check-In','Late','Score','Check-Out','Distance'],rows)}
@@ -1815,7 +1953,7 @@ window.applyPolicyV84=applyPolicyV84;
 restoreFileV84.onchange=async()=>{try{const x=JSON.parse(await restoreFileV84.files[0].text());if(!x.data)throw Error();if(confirm('Backup restore کرنے سے موجود data replace ہوگا۔ جاری رکھیں؟')){db=x.data;save()}}catch{alert('درست backup file نہیں')}};
 
 
-const APP_VERSION_V85='v98';
+const APP_VERSION_V85='v99';
 let currentPdfHtmlV85='';
 
 /* ===== AUTO UPDATE (v88) =====
@@ -2019,6 +2157,7 @@ function renderStaffProfileV84(){
   const rows=(window.noorStaffSystem?.getAttendanceBetween('0000-00-00','9999-99-99')||[]).filter(a=>normPhoneV84(a.phone)===phone).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const scores=rows.map(attScoreV84).filter(x=>x!=null),late=rows.filter(a=>(a.minutesLate||0)>10).length,ms=currentMonthStaffStatsV85(s,rows);
   const d=today(),ta=rows.find(a=>a.date===d)||{},st=attendanceStatusV84(ta);
+  const myTasks=tasksV99(phone);
   const shift=policyV84.shiftStart||'09:00',shiftEnd=policyV84.shiftEnd||'—';
   const khanaDaily=Number(s.mealAmount||s.khanaAmount||0);
   profileTitleV84.textContent=s.name||phone;
@@ -2031,6 +2170,7 @@ function renderStaffProfileV84(){
     <button class="primary" onclick="openAttendanceEditV84('${d}_${phone}','${phone}')">✓ Hazri lagayein / theek karein</button>
     <button class="soft" onclick="editStaffV84('${phone}')">✏️ Edit</button>
     <button class="soft" onclick="openStaffHistoryV89('${phone}')">📅 Attendance History</button>
+    <button class="soft" onclick="openTaskFormV99('${phone}')">🧰 Naya Kaam Dein</button>
     <button class="soft" onclick="printIndividualStaffV84('${phone}')">📄 PDF Report</button>
     <button class="soft" onclick="resetStaffPasswordV85('${phone}')">🔐 Password Reset</button>
     <button class="danger" onclick="deleteStaffV84('${phone}')">🗑 Delete</button>
@@ -2053,6 +2193,15 @@ function renderStaffProfileV84(){
     <div><small>Late Din</small><strong>${late}</strong></div>
     <div><small>Khana (rozana)</small><strong>${money(khanaDaily)}</strong></div>
     <div><small>Khana (is mahine)</small><strong>${money(khanaDaily*ms.present)}</strong></div>
+    <div><small>Kaam ke Points</small><strong>${myTasks.filter(t=>t.status==='approved').reduce((a,b)=>a+(+b.points||0),0)}</strong></div>
+    <div><small>Kaam (mukammal/kul)</small><strong>${myTasks.filter(t=>t.status==='approved').length} / ${myTasks.length}</strong></div>
+  </div>
+  <div class="pro-card">
+    <div class="pro-card-head"><div><div class="eyebrow">KAAM</div><h3>Is mulazim ke kaam</h3></div><button class="soft" onclick="printTasksReportV99('${phone}')">📄 Kaam PDF</button></div>
+    <div class="task-list-v99">${myTasks.map(t=>{
+      const pics=taskPhotosV99(t.id);
+      return `<article class="task-card-v99"><div class="task-head-v99"><div><b>${esc(t.title||'Kaam')}</b><small>📅 ${esc(t.dueDate||'')}</small></div>${taskStatusChipV99(t)}</div>${pics.length?`<div class="task-photos-v99">${pics.map(ph=>`<img src="${ph.data}">`).join('')}</div>`:''}<small class="task-meta-v99">Points: <b>${t.points??'—'}</b>/${t.maxPoints??10}</small>${t.status==='submitted'?`<div class="task-actions-v99"><input type="number" min="0" max="${t.maxPoints??10}" value="${t.maxPoints??10}" id="pts_${t.id}" class="task-points-in-v99"><button class="primary" onclick="approveTaskV99('${t.id}')">✅ Manzoor</button><button class="soft" onclick="returnTaskV99('${t.id}')">↩️ Wapis</button></div>`:''}</article>`;
+    }).join('')||'<div class="empty-state-v84">Koi kaam nahi diya gaya</div>'}</div>
   </div>
   <div class="pro-card">
     <div class="pro-card-head"><h3>Poori Attendance History</h3><small>${rows.length} records</small></div>
@@ -2080,6 +2229,14 @@ document.querySelectorAll('#mobileDockV84 [data-go]').forEach(b=>b.onclick=()=>g
 
 window.addEventListener('online',()=>{document.body.classList.remove('offline-v84')});window.addEventListener('offline',()=>{document.body.classList.add('offline-v84')});
 
+
+/* Individual PDF mein kaam aur points bhi shamil karein (yeh sab se aakhri definition hai) */
+const __printIndivV99=printIndividualStaffV84;
+window.printIndividualStaffV84=function(phone){
+  const tks=tasksV99(phone),tpts=tks.filter(t=>t.status==='approved').reduce((a,b)=>a+(+b.points||0),0);
+  window.__taskExtraV99=`<h3 style="color:#0f766e;margin-top:20px">Kaam aur Points (Kul: ${tpts})</h3><table><thead><tr><th>Date</th><th>Kaam</th><th>Status</th><th>Points</th></tr></thead><tbody>${tks.map(t=>`<tr><td>${esc(t.dueDate||'')}</td><td>${esc(t.title||'')}</td><td>${esc(t.status||'')}</td><td>${t.points??'—'}/${t.maxPoints??10}</td></tr>`).join('')||'<tr><td colspan="4">Koi kaam nahi</td></tr>'}</tbody></table>`;
+  return __printIndivV99(phone);
+};
 setupDates();renderNavigation(location.hash.slice(1)||'dashboard');goScreen(location.hash.slice(1)||'dashboard',true);renderAll();setTimeout(renderQuickEntryV85,0);
 
 </script>
@@ -2271,6 +2428,9 @@ async function saveStateNow(state){
 function saveState(state){clearTimeout(saveTimer);saveTimer=setTimeout(()=>saveStateNow(state),350)}
 window.noorFirebaseSync={ready:false,saveState};
 
+const staffTasksCol=collection(fs,"businesses",BUSINESS_ID,"staffTasks");
+const taskPhotosCol=collection(fs,"businesses",BUSINESS_ID,"taskPhotos");
+let ownerTasks=new Map(),ownerTaskPhotos=new Map();
 const staffAccountsCol=collection(fs,"businesses",BUSINESS_ID,"staffAccounts");
 const staffAttendanceCol=collection(fs,"businesses",BUSINESS_ID,"staffAttendance");
 const staffSessionsCol=collection(fs,"businesses",BUSINESS_ID,"staffSessions");
@@ -2319,6 +2479,14 @@ function startOwnerStaffListeners(){
     ownerStaffAttendance=new Map();s.forEach(d=>ownerStaffAttendance.set(d.id,{id:d.id,...clean(d.data())}));
     window.renderAttendance?.();
   }));
+  staffUnsubs.push(onSnapshot(staffTasksCol,s=>{
+    ownerTasks=new Map();s.forEach(d=>ownerTasks.set(d.id,{id:d.id,...clean(d.data())}));
+    window.renderTasksV99?.();window.refreshStaffProfileV99?.();
+  },e=>console.warn(e)));
+  staffUnsubs.push(onSnapshot(taskPhotosCol,s=>{
+    ownerTaskPhotos=new Map();s.forEach(d=>ownerTaskPhotos.set(d.id,{id:d.id,...clean(d.data())}));
+    window.renderTasksV99?.();
+  },e=>console.warn(e)));
 }
 function getAttendanceForDate(date){
   const m=new Map();
@@ -2332,7 +2500,19 @@ async function saveConfig(cfg){staffConfig={...staffConfig,...clean(cfg),scores:
 function getAttendanceById(id){return ownerStaffAttendance.get(id)||null}
 async function updateAttendance(id,patch){await setDoc(doc(staffAttendanceCol,id),patch,{merge:true})}
 async function deleteAttendance(id){await deleteDoc(doc(staffAttendanceCol,id))}
-window.noorStaffSystem={upsertAccount,deleteAccount,migrateStaffPhone,getAttendanceForDate,getAttendanceBetween,getAttendanceById,updateAttendance,deleteAttendance,saveConfig,shop:SHOP};
+function getTasksV99(phone){
+  const list=[...ownerTasks.values()].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  return phone?list.filter(t=>normalizePhone(t.phone)===normalizePhone(phone)):list;
+}
+function getTaskPhotosV99(taskId){
+  return [...ownerTaskPhotos.values()].filter(p=>p.taskId===taskId).sort((a,b)=>(a.index||0)-(b.index||0));
+}
+async function saveTaskV99(task){await setDoc(doc(staffTasksCol,String(task.id)),clean(task),{merge:true})}
+async function deleteTaskV99(id){
+  for(const ph of getTaskPhotosV99(id)){try{await deleteDoc(doc(taskPhotosCol,ph.id))}catch(e){}}
+  await deleteDoc(doc(staffTasksCol,String(id)));
+}
+window.noorStaffSystem={upsertAccount,deleteAccount,migrateStaffPhone,getAttendanceForDate,getAttendanceBetween,getAttendanceById,updateAttendance,deleteAttendance,saveConfig,shop:SHOP,getTasks:getTasksV99,getTaskPhotos:getTaskPhotosV99,saveTask:saveTaskV99,deleteTask:deleteTaskV99};
 
 function haversine(lat1,lon1,lat2,lon2){
   const R=6371000,toRad=x=>x*Math.PI/180;
@@ -2386,6 +2566,12 @@ let ownAttendanceUnsub=null;
 function startStaffOwnListener(){
   staffUnsubs.push(onSnapshot(staffConfigDoc,s=>{if(s.exists()){staffConfig={...staffConfig,...clean(s.data()),scores:{...staffConfig.scores,...(s.data().scores||{})}};const radius=staffConfig.radius||SHOP.radius;staffRuleText.textContent=`Selfie لازمی + Noor Traders سے زیادہ سے زیادہ ${radius}m`;staffInstructionText.textContent=staffConfig.instruction||staffInstructionText.textContent;staffVersionLabel.textContent=staffConfig.version||'v85'}}));
   if(ownAttendanceUnsub)try{ownAttendanceUnsub()}catch{}
+  const tq=query(staffTasksCol,where("phone","==",currentStaffPhone));
+  staffUnsubs.push(onSnapshot(tq,s=>{
+    const rows=[];s.forEach(d=>rows.push({id:d.id,...clean(d.data())}));
+    rows.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    window.__myTasks=rows;renderStaffTasksV99();
+  },e=>{console.warn(e)}));
   const q=query(staffAttendanceCol,where("phone","==",currentStaffPhone));
   ownAttendanceUnsub=onSnapshot(q,s=>{
     const rows=[];s.forEach(d=>rows.push(clean(d.data())));
@@ -2406,6 +2592,60 @@ function renderStaffHistory(){
   const rows=(window.__myAttendance||[]).filter(x=>x.date>=from&&x.date<=to);
   staffHistoryRows.innerHTML=rows.map(a=>`<tr><td>${a.date||""}</td><td>${a.checkIn||"—"}</td><td>${a.checkOut||"—"}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+"m":"—"}</td><td>${a.checkOut?"Checked Out":a.checkIn?"Present":"—"}</td></tr>`).join("")||'<tr><td colspan="5">No records</td></tr>';
 }
+function taskStatusLabelV99(t){
+  return t.status==='approved'?'✅ Manzoor ('+(t.points??0)+'/'+(t.maxPoints??10)+')'
+    :t.status==='submitted'?'⏳ Malik ke paas'
+    :t.status==='returned'?'↩️ Wapis aaya'
+    :'🆕 Naya kaam';
+}
+function renderStaffTasksV99(){
+  const box=document.getElementById('staffTaskListV99');
+  if(!box)return;
+  const rows=window.__myTasks||[];
+  box.innerHTML=rows.map(t=>{
+    const canSend=t.status!=='approved'&&t.status!=='submitted';
+    return `<article class="staff-task-v99 st-${t.status||'assigned'}">
+      <div class="stask-head-v99"><b>${escHtmlV99(t.title||'Kaam')}</b><span>${taskStatusLabelV99(t)}</span></div>
+      ${t.detail?`<p>${escHtmlV99(t.detail)}</p>`:''}
+      ${t.dueDate?`<small>📅 ${escHtmlV99(t.dueDate)}</small>`:''}
+      ${t.ownerNote?`<div class="stask-note-v99">📝 ${escHtmlV99(t.ownerNote)}</div>`:''}
+      ${canSend?`<label class="stask-upload-v99">📷 Tasveerein chunein (5 tak)<input type="file" accept="image/*" multiple data-task="${t.id}" onchange="pickTaskPhotosV99(this)" hidden></label>
+      <div class="stask-preview-v99" id="pv_${t.id}"></div>
+      <button type="button" class="portal-checkin" onclick="submitTaskV99('${t.id}')">✓ Kaam Mukammal — bhejein</button>
+      <div class="stask-msg-v99" id="msg_${t.id}"></div>`:''}
+    </article>`;
+  }).join('')||'<div class="stask-empty-v99">Abhi koi kaam nahi mila</div>';
+}
+function escHtmlV99(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+const taskPhotoBufferV99={};
+async function pickTaskPhotosV99(input){
+  const id=input.dataset.task,files=[...(input.files||[])].slice(0,5);
+  const msg=document.getElementById('msg_'+id);if(msg)msg.textContent='Tasveerein taiyar ho rahi hain…';
+  const out=[];
+  for(const f of files){try{out.push(await fileToData(f,520))}catch(e){}}
+  taskPhotoBufferV99[id]=out;
+  const pv=document.getElementById('pv_'+id);
+  if(pv)pv.innerHTML=out.map(d=>`<img src="${d}">`).join('');
+  if(msg)msg.textContent=out.length+' tasveerein taiyar hain';
+}
+window.pickTaskPhotosV99=pickTaskPhotosV99;
+async function submitTaskV99(id){
+  const msg=document.getElementById('msg_'+id);
+  const pics=taskPhotoBufferV99[id]||[];
+  if(!pics.length){if(msg)msg.textContent='Pehle kam az kam ek tasveer lagayein.';return}
+  if(msg)msg.textContent='Bheja ja raha hai…';
+  try{
+    for(let i=0;i<pics.length;i++){
+      await setDoc(doc(taskPhotosCol,`${id}_${i}`),{taskId:id,index:i,phone:currentStaffPhone,data:pics[i],createdAt:Date.now()});
+    }
+    await setDoc(doc(staffTasksCol,id),{status:'submitted',submittedAt:Date.now(),photoCount:pics.length,ownerNote:''},{merge:true});
+    delete taskPhotoBufferV99[id];
+    if(msg)msg.textContent='✅ Malik ko bhej diya gaya.';
+  }catch(e){console.error(e);if(msg)msg.textContent='Nahi bheja gaya — internet ya rules check karein.'}
+}
+window.submitTaskV99=submitTaskV99;
+window.renderStaffTasksV99=renderStaffTasksV99;
+
 async function fileToData(file,max=500){
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const c=document.createElement("canvas"),sc=Math.min(1,max/Math.max(im.width,im.height));c.width=im.width*sc;c.height=im.height*sc;c.getContext("2d").drawImage(im,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",.7))};im.onerror=rej;im.src=r.result};r.onerror=rej;r.readAsDataURL(file)});
 }
@@ -2456,7 +2696,9 @@ staffCheckOutBtn?.addEventListener("click",async()=>{
 staffHistoryRefresh?.addEventListener("click",renderStaffHistory);
 staffPdfBtn?.addEventListener("click",()=>{
   const rows=(window.__myAttendance||[]).filter(x=>x.date>=(staffHistoryFrom.value||"0000-00-00")&&x.date<=(staffHistoryTo.value||"9999-99-99")).map(a=>`<tr><td>${a.date}</td><td>${a.checkIn||"—"}</td><td>${a.checkOut||"—"}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+" m":"—"}</td></tr>`).join("");
-  const w=window.open("","_blank");w.document.write(`<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>My Attendance Report</title><style>body{font-family:Arial;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px}</style></head><body><h1>Noor Traders Gulyana</h1><h3>${currentStaff?.name||""} • ${currentStaffPhone}</h3><table><thead><tr><th>Date</th><th>Check-In</th><th>Check-Out</th><th>Distance</th></tr></thead><tbody>${rows}</tbody></table><script>setTimeout(()=>window.print(),350)<\/script></body></html>`);w.document.close();
+  const tks=(window.__myTasks||[]),tdone=tks.filter(t=>t.status==='approved'),tpts=tdone.reduce((a,b)=>a+(+b.points||0),0);
+  const taskRows=tks.map(t=>`<tr><td>${t.dueDate||''}</td><td>${(t.title||'').replace(/[<>]/g,'')}</td><td>${t.status||''}</td><td>${t.points??'—'}/${t.maxPoints??10}</td></tr>`).join('')||'<tr><td colspan="4">Koi kaam nahi</td></tr>';
+  const w=window.open("","_blank");w.document.write(`<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>My Attendance Report</title><style>body{font-family:Arial;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px}</style></head><body><h1>Noor Traders Gulyana</h1><h3>${currentStaff?.name||""} • ${currentStaffPhone}</h3><table><thead><tr><th>Date</th><th>Check-In</th><th>Check-Out</th><th>Distance</th></tr></thead><tbody>${rows}</tbody></table><h3>Mere Kaam aur Points (Kul: ${tpts})</h3><table><thead><tr><th>Date</th><th>Kaam</th><th>Status</th><th>Points</th></tr></thead><tbody>${taskRows}</tbody></table><script>setTimeout(()=>window.print(),350)<\/script></body></html>`);w.document.close();
 });
 
 /* ===== LOGIN SETTINGS =====
@@ -2761,6 +3003,43 @@ td b,td strong{color:#0f766e}
 .modal-v84{overscroll-behavior:contain}
 .toast-v97{position:fixed;left:14px;right:14px;bottom:78px;z-index:100001;display:none;background:#0f3d3a;color:#fff;border-radius:14px;padding:13px 16px;font-size:14px;font-weight:800;text-align:center;box-shadow:0 14px 34px rgba(15,23,42,.35)}
 .toast-v97.show{display:block}
+/* ===== KAAM / TASK SYSTEM ===== */
+.task-kpis-v99{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:12px}
+.task-kpis-v99>div{background:#fff;border:1px solid #cfe0f5;border-radius:15px;padding:12px}
+.task-kpis-v99 small{display:block;color:#5b6b7f;font-size:10px;font-weight:800}
+.task-kpis-v99 strong{display:block;font-size:22px;color:#1d4ed8;margin-top:4px}
+.task-list-v99{display:grid;gap:11px}
+.task-card-v99{background:linear-gradient(150deg,#fff,#eef5ff);border:1px solid #cbdcf6;border-radius:17px;padding:14px;box-shadow:0 6px 18px rgba(15,23,42,.06)}
+.task-head-v99{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.task-head-v99 b{color:#0b5a86;font-size:16px;display:block}
+.task-head-v99 small{color:#5b6b7f;font-size:11px;display:block;margin-top:3px}
+.task-card-v99 p{margin:8px 0 4px;color:#33475b;font-size:13px}
+.task-meta-v99{display:block;color:#5b6b7f;font-size:11px;margin-top:6px}
+.task-chip-v99{font-size:10px;font-weight:900;padding:6px 9px;border-radius:999px;white-space:nowrap}
+.tc-assigned{background:#eaf0ff;color:#1d4ed8}
+.tc-submitted{background:#fff4e0;color:#b45309}
+.tc-approved{background:#e7f9ee;color:#15803d}
+.tc-returned{background:#ffeaea;color:#b91c1c}
+.task-photos-v99{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.task-photos-v99 img{width:76px;height:76px;object-fit:cover;border-radius:11px;border:1px solid #cbdcf6}
+.task-nopic-v99{margin-top:8px;font-size:11px;color:#94a3b8}
+.task-note-v99{margin-top:8px;background:#fff7e6;border:1px solid #f3ddb0;border-radius:11px;padding:9px;font-size:12px;color:#8a5a08}
+.task-actions-v99{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.task-points-in-v99{width:74px!important;text-align:center;font-weight:900;color:#15803d}
+.staff-task-list-v99{display:grid;gap:11px}
+.staff-task-v99{border:1px solid #dfe8ef;border-radius:16px;padding:13px;background:#fff}
+.stask-head-v99{display:flex;justify-content:space-between;gap:9px;align-items:flex-start}
+.stask-head-v99 b{font-size:16px;color:#0b5a86}
+.stask-head-v99 span{font-size:11px;font-weight:900;white-space:nowrap;color:#0f766e}
+.staff-task-v99 p{margin:7px 0;color:#475569;font-size:13px}
+.staff-task-v99 small{color:#64748b;font-size:11px}
+.stask-note-v99{margin-top:7px;background:#fff1f1;border:1px solid #f6cccc;border-radius:10px;padding:8px;font-size:12px;color:#b91c1c}
+.stask-upload-v99{display:block;margin-top:10px;text-align:center;border:1px dashed #9fd3cb;background:#eefaf7;color:#0f766e;font-weight:900;border-radius:12px;padding:12px;cursor:pointer}
+.stask-preview-v99{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.stask-preview-v99 img{width:64px;height:64px;object-fit:cover;border-radius:10px}
+.stask-msg-v99{font-size:12px;color:#0f766e;margin-top:6px;font-weight:800}
+.stask-empty-v99{text-align:center;color:#64748b;padding:18px}
+@media(max-width:600px){.task-kpis-v99{grid-template-columns:1fr 1fr}.task-photos-v99 img{width:64px;height:64px}}
 </style>
 
 </body></html>
