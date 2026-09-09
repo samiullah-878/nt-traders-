@@ -941,7 +941,7 @@ th,td{font-size:16px;line-height:1.55}
       </div>
     </section>
 
-<div class="nt-staff-nav" aria-label="Staff sections"><button type="button" data-staff-section="staffTaskPanelV99">📷 میرے کام</button><button type="button" data-staff-section="staffAttendancePanelV100">✓ حاضری</button><button type="button" data-staff-section="staffHistoryPanelV100">▤ میری رپورٹ</button></div><section class="nt-tasks nt-staff-panel" id="staffTaskPanelV99"><div class="nt-toolbar"><div><h2>میرے کام اور تصویری رپورٹ</h2><small>اپنا کام منتخب کریں ← گیلری یا کیمرے سے تصاویر لگائیں ← تصاویر مالک کو بھیجیں۔</small></div><div class="nt-actions"><button id="ntQuickUpload" class="nt-primary nt-upload-main" type="button" data-task-upload disabled>📷 کام کی تصاویر بھیجیں</button><button type="button" data-task-report>📄 میری پوائنٹس PDF</button><button type="button" data-task-retry>Refresh</button></div></div><div id="ntStaffTaskState" class="nt-msg" role="status"></div><div id="ntStaffTaskNotice" class="nt-msg" role="status"></div><div id="ntStaffTaskStats"></div><small>اوپر تمام تاریخوں کے ٹاسک پوائنٹس ہیں۔ PDF کے لیے نیچے حاضری رپورٹ کی تاریخیں منتخب کریں۔</small><div id="ntStaffTaskList" class="nt-cards"></div></section>
+<div class="nt-staff-nav" aria-label="Staff sections"><button type="button" data-staff-section="staffTaskPanelV99">📷 میرے کام</button><button type="button" data-staff-section="staffAttendancePanelV100">✓ حاضری</button><button type="button" data-staff-section="staffHistoryPanelV100">▤ میری رپورٹ</button><button type="button" data-staff-section="staffSalaryPanelV101">₨ میری تنخواہ</button></div><section class="nt-tasks nt-staff-panel" id="staffTaskPanelV99"><div class="nt-toolbar"><div><h2>میرے کام اور تصویری رپورٹ</h2><small>اپنا کام منتخب کریں ← گیلری یا کیمرے سے تصاویر لگائیں ← تصاویر مالک کو بھیجیں۔</small></div><div class="nt-actions"><button id="ntQuickUpload" class="nt-primary nt-upload-main" type="button" data-task-upload disabled>📷 کام کی تصاویر بھیجیں</button><button type="button" data-task-report>📄 میری پوائنٹس PDF</button><button type="button" data-task-retry>Refresh</button></div></div><div id="ntStaffTaskState" class="nt-msg" role="status"></div><div id="ntStaffTaskNotice" class="nt-msg" role="status"></div><div id="ntStaffTaskStats"></div><small>اوپر تمام تاریخوں کے ٹاسک پوائنٹس ہیں۔ PDF کے لیے نیچے حاضری رپورٹ کی تاریخیں منتخب کریں۔</small><div id="ntStaffTaskList" class="nt-cards"></div></section>
     <section class="staff-status-grid">
       <div class="portal-stat"><span>آج</span><strong id="staffTodayStatus">Not Checked In</strong></div>
       <div class="portal-stat"><span>Check-In</span><strong id="staffTodayIn">—</strong></div>
@@ -999,6 +999,15 @@ th,td{font-size:16px;line-height:1.55}
           <tbody id="staffHistoryRows"></tbody>
         </table>
       </div>
+    </section>
+
+    <section class="portal-card staff-salary-card-v101" id="staffSalaryPanelV101">
+      <div class="portal-card-head history-head">
+        <div><small>MY SALARY</small><h3>میری تنخواہ</h3></div>
+        <input id="staffSalaryMonthV101" type="month">
+      </div>
+      <div id="staffSalaryBodyV101" class="staff-salary-body-v101"></div>
+      <p class="staff-salary-note-v101">یہ حساب آپ کے Check-In / Check-Out، پوائنٹس اور مالک کی درج کردہ رقوم سے خود بنتا ہے۔ اسے صرف مالک تبدیل کر سکتا ہے۔</p>
     </section>
   </main>
 </div>
@@ -3232,6 +3241,7 @@ function startOwnerStaffListeners(){
   staffUnsubs.push(onSnapshot(staffAttendanceCol,s=>{
     ownerStaffAttendance=new Map();s.forEach(d=>ownerStaffAttendance.set(d.id,{id:d.id,...clean(d.data())}));
     window.renderAttendance?.();
+    window.renderSalaryV101?.();   /* checkout hote hi hours/overtime/salary update */
   }));
 }
 function getAttendanceForDate(date){
@@ -3281,7 +3291,7 @@ function startStaffOwnListener(){
   ownAttendanceUnsub=onSnapshot(q,s=>{
     const rows=[];s.forEach(d=>rows.push(clean(d.data())));
     rows.sort((a,b)=>(b.date||"").localeCompare(a.date||""));
-    window.__myAttendance=rows;renderStaffToday();renderStaffHistory();
+    window.__myAttendance=rows;renderStaffToday();renderStaffHistory();window.renderStaffSalaryV101?.();
   },e=>{console.error(e);staffActionMessage.textContent="Attendance data load نہیں ہوا۔ Rules check کریں۔"});
 }
 function renderStaffToday(){
@@ -3386,6 +3396,7 @@ const authController=createAuthController({
     loginPassword.value='';staffLoginPassword.value='';
     if(session.role==='staff'){
       currentStaff={...session.account,phone:session.phone};currentStaffPhone=session.phone;
+      window.currentStaffAccountV101=currentStaff;   /* staff ka apna salary view isi se parhta hai */
       ownerApp.hidden=true;ownerApp.style.display='none';userBar.hidden=true;
       renderStaffProfile();startStaffOwnListener();staffPortal.hidden=false;
     }else{
@@ -3799,6 +3810,18 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
   .salary-grid-v101{grid-template-columns:1fr}
   .salary-add-v101{grid-template-columns:1fr 1fr}
 }
+/* V101: staff ka apna salary view */
+.staff-salary-card-v101 .history-head input[type=month]{padding:9px;border:1px solid #cfe0d8;border-radius:10px;min-height:42px}
+.staff-salary-grid-v101{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.staff-salary-grid-v101 div{background:#f2f9f6;border:1px solid #dceae4;border-radius:12px;padding:11px}
+.staff-salary-grid-v101 small{display:block;font-size:11px;color:#5d7369}
+.staff-salary-grid-v101 b{display:block;font-size:18px;color:#0f5f59;margin:3px 0}
+.staff-salary-grid-v101 span{font-size:11px;color:#71857c}
+.staff-salary-grid-v101 .staff-salary-final-v101{background:#0f766e;border-color:#0f766e}
+.staff-salary-grid-v101 .staff-salary-final-v101 small,.staff-salary-grid-v101 .staff-salary-final-v101 span{color:#c9ece4}
+.staff-salary-grid-v101 .staff-salary-final-v101 b{color:#fff;font-size:21px}
+.staff-salary-note-v101{font-size:12px;color:#63786f;margin-top:10px}
+@media(max-width:760px){.staff-salary-grid-v101{grid-template-columns:1fr 1fr}}
 
 </style>
 <script>
@@ -3945,7 +3968,18 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
   function saveCfg(phone,patch){
     db.salaryConfig??={};
     db.salaryConfig[phone]={...cfgFor(phone),...patch};
+    mirrorToStaff(phone);
     save();
+  }
+  /* Salary settings aur entries staff ke apne account record par bhi likhte hain,
+     taake staff apne login se sirf DEKH sake (edit ka koi raasta nahi). */
+  function mirrorToStaff(phone){
+    try{
+      const idx=(db.staff||[]).findIndex(x=>normPhoneV84(x.phone||x.id)===phone);
+      if(idx<0)return;
+      db.staff[idx]={...db.staff[idx],salary:cfgFor(phone),salaryExtras:((db.salaryExtras||{})[phone]||[])};
+      window.noorStaffSystem?.upsertAccount?.(db.staff[idx]);
+    }catch(e){console.error('salary mirror',e)}
   }
 
   /* ---------- calculation ---------- */
@@ -4123,6 +4157,7 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
       amount, note:$('salExtraNoteV101').value.trim(),
       date:$('salExtraDateV101').value||today(), by:'Malik / admin', at:Date.now()
     });
+    mirrorToStaff(currentSalaryPhone);
     save();
     renderDetail();
   };
@@ -4130,6 +4165,7 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
     if(!currentSalaryPhone)return;
     if(!confirm('یہ اندراج delete کریں؟'))return;
     db.salaryExtras[currentSalaryPhone]=(db.salaryExtras[currentSalaryPhone]||[]).filter(x=>String(x.id)!==String(id));
+    mirrorToStaff(currentSalaryPhone);
     save();
     renderDetail();
   };
@@ -4143,7 +4179,61 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
       ['Name','Base','Normal Hours','OT Hours','OT Amount','Points','Points Rs','Bonus','Advance','Final'],html);
   };
 
+  /* ---------- staff ka apna (read-only) salary view ---------- */
+  function staffCalc(month){
+    const acc=window.currentStaffAccountV101||null;
+    const cfg={monthlySalary:Number(acc?.salary?.monthlySalary||0),dutyHours:Number(acc?.salary?.dutyHours||10),
+               workingDays:Number(acc?.salary?.workingDays||30),overtimeRate:Number(acc?.salary?.overtimeRate||0),
+               pointRate:Number(acc?.salary?.pointRate||0)};
+    const {from,to}=monthRange(month);
+    const recs=(window.__myAttendance||[]).filter(a=>a.date>=from&&a.date<=to);
+    const dutyMin=Math.max(0,Math.round(cfg.dutyHours*60));
+    let normalMin=0,otMin=0,daysWorked=0,attPoints=0;
+    for(const a of recs){
+      const sc=Number(a.finalScore??a.autoScore); if(Number.isFinite(sc))attPoints+=sc;
+      const w=window.ntWorkMinutesV101?window.ntWorkMinutesV101(a):null;
+      if(w==null)continue;
+      daysWorked++;
+      normalMin+=dutyMin?Math.min(w,dutyMin):w;
+      otMin+=dutyMin?Math.max(0,w-dutyMin):0;
+    }
+    const expectedHours=cfg.dutyHours*cfg.workingDays;
+    const hourly=expectedHours>0?cfg.monthlySalary/expectedHours:0;
+    const otRate=cfg.overtimeRate>0?cfg.overtimeRate:hourly;
+    let taskPoints=0;
+    try{taskPoints=Number(window.noorTasks?.totals(String(acc?.phone||''),{from,to})?.points||0)}catch(e){}
+    const points=attPoints+taskPoints;
+    const extras=(acc?.salaryExtras||[]).filter(x=>x.month===month);
+    const sum=k=>extras.filter(x=>x.kind===k).reduce((n,x)=>n+Number(x.amount||0),0);
+    const bonus=sum('bonus'),advance=sum('advance');
+    const normalSalary=(normalMin/60)*hourly,overtimeAmount=(otMin/60)*otRate,pointsAmount=points*cfg.pointRate;
+    return {...cfg,expectedHours,hourly,otRate,daysWorked,normalMin,otMin,normalSalary,overtimeAmount,
+            attPoints,taskPoints,points,pointsAmount,extras,bonus,advance,
+            final:normalSalary+overtimeAmount+pointsAmount+bonus-advance};
+  }
+  window.renderStaffSalaryV101=function(){
+    const box=$('staffSalaryBodyV101'); if(!box)return;
+    const mEl=$('staffSalaryMonthV101'); if(mEl&&!mEl.value)mEl.value=curMonth();
+    const month=mEl?.value||curMonth();
+    const r=staffCalc(month);
+    if(!r.monthlySalary){
+      box.innerHTML='<p class="muted">آپ کی تنخواہ ابھی مالک نے مقرر نہیں کی۔ مقرر ہوتے ہی یہاں خود آ جائے گی۔</p>';
+      return;
+    }
+    box.innerHTML=`
+      <div class="staff-salary-grid-v101">
+        <div><small>Working Hours</small><b>${hm(r.normalMin)}</b><span>${r.daysWorked} دن • ضرورت ${r.expectedHours}h</span></div>
+        <div><small>Overtime</small><b>${hm(r.otMin)}</b><span>${money(r.overtimeAmount)}</span></div>
+        <div><small>Points</small><b>${r.points}</b><span>${money(r.pointsAmount)}</span></div>
+        <div><small>Bonus</small><b>${money(r.bonus)}</b><span>مالک کی طرف سے</span></div>
+        <div><small>Advance</small><b>− ${money(r.advance)}</b><span>پیشگی / کٹوتی</span></div>
+        <div class="staff-salary-final-v101"><small>Estimated Salary</small><b>${money(r.final)}</b><span>${monthLabel(month)}</span></div>
+      </div>`;
+  };
+
   document.addEventListener('DOMContentLoaded',()=>{
+    const sm=$('staffSalaryMonthV101');
+    if(sm){sm.value=curMonth();sm.addEventListener('change',()=>window.renderStaffSalaryV101())}
     const m=$('salaryMonthV101');
     if(m){m.value=curMonth();m.addEventListener('change',()=>{renderSalary();if(currentSalaryPhone)renderDetail()})}
     renderSalary();
