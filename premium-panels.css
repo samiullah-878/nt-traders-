@@ -102,3 +102,46 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
 .wh-cell-v101{white-space:nowrap;font-variant-numeric:tabular-nums}
 .nt-draft-note-v101{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin:0 0 12px;padding:10px 12px;border:1px solid #f0d9a6;background:#fff8e8;color:#7a5510;border-radius:12px;font-size:13px;direction:rtl;text-align:right}
 .nt-draft-note-v101 button{border:1px solid #e3c68b;background:#fff;color:#7a5510;border-radius:9px;padding:7px 11px;font-size:12px;cursor:pointer;min-height:38px}
+
+/* ===== V101: Salary module ===== */
+.salary-head-actions-v101{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.salary-head-actions-v101 input[type=month]{padding:9px;border:1px solid #cfe0d8;border-radius:10px;min-height:42px}
+.salary-summary-v101{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0}
+.salary-summary-v101 div{background:#eef7f3;border:1px solid #d9e9e1;border-radius:12px;padding:10px}
+.salary-summary-v101 small{display:block;font-size:11px;color:#5a7268}
+.salary-summary-v101 b{font-size:16px;color:#0f5f59}
+.salary-summary-v101 .salary-final-v101{background:#0f766e;border-color:#0f766e}
+.salary-summary-v101 .salary-final-v101 small{color:#c9ece4}
+.salary-summary-v101 .salary-final-v101 b{color:#fff}
+.salary-table-v101 td,.salary-table-v101 th{white-space:nowrap}
+.salary-unset-v101{color:#a4762a;font-size:12px}
+.salary-note-v101{font-size:12px;margin-top:10px}
+.salary-grid-v101{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.salary-panel-v101{background:#fff;border:1px solid #dbe8e2;border-radius:14px;padding:14px;margin:12px 0}
+.salary-panel-v101 h4{margin:0 0 10px;color:#0f5f59;font-size:16px}
+.salary-panel-v101 label{display:block;font-size:13px;margin-bottom:10px}
+.salary-panel-v101 label input{width:100%;margin-top:4px;padding:10px;border:1px solid #cfe0d8;border-radius:9px;min-height:44px}
+.salary-break-v101{width:100%;border-collapse:collapse}
+.salary-break-v101 td{border-bottom:1px solid #eaf1ee;padding:7px 4px;font-size:13px}
+.salary-break-v101 td:last-child{text-align:left;font-weight:700;white-space:nowrap}
+.salary-sub-v101 td{background:#f4faf7}
+.salary-total-v101 td{background:#0f766e;color:#fff;font-size:15px;font-weight:800}
+.salary-add-v101{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.salary-add-v101 input,.salary-add-v101 select{padding:10px;border:1px solid #cfe0d8;border-radius:9px;min-height:44px;width:100%}
+@media(max-width:860px){
+  .salary-summary-v101{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .salary-grid-v101{grid-template-columns:1fr}
+  .salary-add-v101{grid-template-columns:1fr 1fr}
+}
+/* V101: staff ka apna salary view */
+.staff-salary-card-v101 .history-head input[type=month]{padding:9px;border:1px solid #cfe0d8;border-radius:10px;min-height:42px}
+.staff-salary-grid-v101{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.staff-salary-grid-v101 div{background:#f2f9f6;border:1px solid #dceae4;border-radius:12px;padding:11px}
+.staff-salary-grid-v101 small{display:block;font-size:11px;color:#5d7369}
+.staff-salary-grid-v101 b{display:block;font-size:18px;color:#0f5f59;margin:3px 0}
+.staff-salary-grid-v101 span{font-size:11px;color:#71857c}
+.staff-salary-grid-v101 .staff-salary-final-v101{background:#0f766e;border-color:#0f766e}
+.staff-salary-grid-v101 .staff-salary-final-v101 small,.staff-salary-grid-v101 .staff-salary-final-v101 span{color:#c9ece4}
+.staff-salary-grid-v101 .staff-salary-final-v101 b{color:#fff;font-size:21px}
+.staff-salary-note-v101{font-size:12px;color:#63786f;margin-top:10px}
+@media(max-width:760px){.staff-salary-grid-v101{grid-template-columns:1fr 1fr}}

@@ -133,7 +133,7 @@ export function installTaskUI({service,getStaff,getAttendance,getCurrentStaff,do
     stop(){epoch++;notifications.stop();unsub?.();unsub=null;session=null;tasks=[];ready=false;loadError='';closeDialog();closeReport();closeImage();for(const id of ['ntOwnerTaskList','ntStaffTaskList','ntOwnerTaskStats','ntStaffTaskStats','ownerProfileTasksV99'])if($(id))$(id).innerHTML=''},
     assign,open,report,
     profile(phone){profilePhone=phone;renderProfile()},
-    totals(phone){return taskTotals(selectTasks(tasks,{phone}))},
+    totals(phone,range={}){return taskTotals(selectTasks(tasks,{phone,from:range.from||'',to:range.to||''}))},
     refresh:render
   };
   return api;
