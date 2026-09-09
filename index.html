@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-<title>Noor Traders Hisab v100</title>
+<title>Noor Traders Hisab v104</title>
 <style>
 :root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#6b7280;--brand:#0f766e;--brand2:#115e59;--red:#b91c1c;--line:#dce3ec;--gold:#b7791f;--blue:#1d4ed8}*{box-sizing:border-box}body{margin:0;font-family:system-ui,"Noto Nastaliq Urdu","Noto Sans Arabic",sans-serif;background:var(--bg);color:var(--ink)}button,input,select,textarea{font:inherit}.app{max-width:1280px;margin:auto;padding:12px}.top{background:linear-gradient(135deg,#134e4a,#0f766e);color:#fff;border-radius:22px;padding:18px;display:flex;gap:12px;align-items:center;justify-content:space-between;box-shadow:0 10px 30px #0f766e30}.top h1{margin:0;font-size:clamp(24px,5vw,40px)}.top small{opacity:.9}.nav{display:flex;gap:8px;overflow:auto;padding:12px 0;position:sticky;top:0;z-index:5;background:var(--bg)}.nav button{white-space:nowrap;border:1px solid var(--line);background:#fff;padding:10px 14px;border-radius:13px;font-weight:700}.nav button.active{background:var(--brand);color:#fff;border-color:var(--brand)}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 4px 16px #1720330a}.span12{grid-column:span 12}.span8{grid-column:span 8}.span6{grid-column:span 6}.span4{grid-column:span 4}.span3{grid-column:span 3}.kpi{font-size:13px;color:var(--muted)}.kpi strong{display:block;font-size:24px;color:var(--ink);margin-top:4px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.form{display:grid;grid-template-columns:repeat(12,1fr);gap:8px}.f2{grid-column:span 2}.f3{grid-column:span 3}.f4{grid-column:span 4}.f5{grid-column:span 5}.f6{grid-column:span 6}.f8{grid-column:span 8}.f12{grid-column:span 12}label{font-size:13px;color:var(--muted)}input,select,textarea{width:100%;border:1px solid #ccd5e0;border-radius:11px;padding:10px;background:#fff}button.primary{background:var(--brand);color:#fff;border:0;border-radius:11px;padding:10px 15px;font-weight:800}button.danger{background:#fff1f2;color:var(--red);border:1px solid #fecdd3;border-radius:10px;padding:8px 11px}button.soft{background:#eef7f6;color:var(--brand2);border:1px solid #cce8e5;border-radius:10px;padding:8px 11px}table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:9px 7px;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle}th{color:var(--muted);font-size:12px}.amt{font-weight:800;font-variant-numeric:tabular-nums}.muted{color:var(--muted)}.tab{display:none}.tab.active{display:block}.badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:12px;background:#eef2ff;color:#3730a3}.photo{width:52px;height:52px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}.stocktable input{min-width:80px;padding:7px}.pos{color:#15803d;font-weight:800}.neg{color:#b91c1c;font-weight:800}.notice{padding:10px 12px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;margin:10px 0}.footer{padding:20px;text-align:center;color:var(--muted)}@media(max-width:800px){.span8,.span6,.span4,.span3{grid-column:span 12}.f2,.f3,.f4,.f5,.f6,.f8{grid-column:span 12}.top{align-items:flex-start;flex-direction:column}table{font-size:12px}.card{padding:11px}}
 
@@ -880,7 +880,7 @@ th,td{font-size:16px;line-height:1.55}
 
     <div class="auth-card">
       <div class="login-card-title"><span class="brand-mark mini">NT</span><div><h2>Noor Traders Hisab</h2><p>Business & Staff System</p></div></div>
-      <div class="login-build-strip"><span class="variant-badge">Production</span><span>Version: <b id="loginVersionLabel">v100</b></span><span id="loginUpdateStatus" class="sync-state"><i class="status-dot"></i>Syncing...</span></div>
+      <div class="login-build-strip"><span class="variant-badge">Production</span><span>Version: <b id="loginVersionLabel">v99</b></span><span id="loginUpdateStatus" class="sync-state"><i class="status-dot"></i>Syncing...</span></div>
       <button type="button" class="sync-now-btn-v91" onclick="forceAppUpdateV85()">🔄 Sync / Update Now</button>
       <div class="auth-role-tabs" role="tablist" aria-label="اکاؤنٹ منتخب کریں">
         <button id="ownerLoginTab" class="auth-role active" type="button" role="tab" aria-selected="true" aria-controls="ownerLoginPane" data-auth-role="owner">مالک</button>
@@ -923,20 +923,20 @@ th,td{font-size:16px;line-height:1.55}
   <div class="staff-topbar">
     <div class="staff-brand-mini">
       <span class="brand-mark mini">NT</span>
-      <div><b>اسٹاف</b><small>NOOR TRADERS • GULYANA</small></div>
+      <div><b>اسٹاف</b><small>NOOR TRADERS • STAFF PANEL</small></div>
     </div>
     <button id="staffLogoutBtn" class="staff-logout">Logout</button>
   </div>
 
-  <main class="staff-portal-main"><div class="staff-build-banner"><span>Version <b id="staffVersionLabel">v100</b> • Production</span><span id="staffUpdateState">Latest</span></div>
+  <main class="staff-portal-main"><div class="staff-build-banner"><span>Version <b id="staffVersionLabel">v99</b> • Production</span><span id="staffUpdateState">Latest</span></div>
     <section class="staff-profile-hero">
       <div class="staff-profile-left">
         <div id="staffPortalAvatar" class="portal-avatar">👤</div>
         <div>
-          <div class="portal-kicker">میرا اسٹاف اکاؤنٹ</div>
+          <div class="portal-kicker">EMPLOYEE ACCOUNT</div>
           <h2 id="staffPortalName">Staff</h2>
           <p id="staffPortalAddress">—</p>
-          <div class="portal-contact"><span>📱 <b id="staffPortalPhone">—</b></span><span>کام • تصاویر • پوائنٹس</span></div>
+          <div class="portal-contact"><span>📱 <b id="staffPortalPhone">—</b></span><span>🔐 Password: Phone Number</span></div>
         </div>
       </div>
       <div class="store-location-card">
@@ -944,12 +944,11 @@ th,td{font-size:16px;line-height:1.55}
         <div>
           <small>CHECK-IN LOCATION</small>
           <b>Noor Traders Gulyana</b>
-          <span>QXX4+5Q9, Guliana • 200m radius</span><a class="nt-shop-map" href="https://www.google.com/maps/search/?api=1&amp;query=32.7979125%2C73.956984375" target="_blank" rel="noopener noreferrer">نقشے پر دکان دیکھیں ↗</a>
+          <span>674F+9C7, Gulyana • 200m radius</span>
         </div>
       </div>
     </section>
 
-<div class="nt-staff-nav" aria-label="Staff sections"><button type="button" data-staff-section="staffTaskPanelV99">📷 میرے کام</button><button type="button" data-staff-section="staffAttendancePanelV100">✓ حاضری</button><button type="button" data-staff-section="staffHistoryPanelV100">▤ میری رپورٹ</button></div><section class="nt-tasks nt-staff-panel" id="staffTaskPanelV99"><div class="nt-toolbar"><div><h2>میرے کام اور تصویری رپورٹ</h2><small>اپنا کام منتخب کریں ← گیلری یا کیمرے سے تصاویر لگائیں ← تصاویر مالک کو بھیجیں۔</small></div><div class="nt-actions"><button id="ntQuickUpload" class="nt-primary nt-upload-main" type="button" data-task-upload disabled>📷 کام کی تصاویر بھیجیں</button><button type="button" data-task-report>📄 میری پوائنٹس PDF</button><button type="button" data-task-retry>Refresh</button></div></div><div id="ntStaffTaskState" class="nt-msg" role="status"></div><div id="ntStaffTaskNotice" class="nt-msg" role="status"></div><div id="ntStaffTaskStats"></div><small>اوپر تمام تاریخوں کے ٹاسک پوائنٹس ہیں۔ PDF کے لیے نیچے حاضری رپورٹ کی تاریخیں منتخب کریں۔</small><div id="ntStaffTaskList" class="nt-cards"></div></section>
     <section class="staff-status-grid">
       <div class="portal-stat"><span>آج</span><strong id="staffTodayStatus">Not Checked In</strong></div>
       <div class="portal-stat"><span>Check-In</span><strong id="staffTodayIn">—</strong></div>
@@ -957,7 +956,7 @@ th,td{font-size:16px;line-height:1.55}
       <div class="portal-stat"><span>Shop Distance</span><strong id="staffDistance">—</strong></div>
     </section>
 
-    <section class="staff-action-layout" id="staffAttendancePanelV100">
+    <section class="staff-action-layout">
       <div class="portal-card selfie-card">
         <div class="portal-card-head"><div><small>STEP 1</small><h3>Live Selfie</h3></div><span>📷</span></div>
         <div class="selfie-stage">
@@ -989,8 +988,8 @@ th,td{font-size:16px;line-height:1.55}
       </div>
     </section>
 
-
-    <section class="portal-card staff-history-card" id="staffHistoryPanelV100">
+<section class="nt-tasks nt-staff-panel" id="staffTaskPanelV99"><div class="nt-toolbar"><div><h2>میرے کام اور تصویری رپورٹ</h2><small>کام مکمل کرکے تصاویر بھیجیں۔ مالک کی منظوری کے بعد پوائنٹس ملیں گے۔</small></div><div class="nt-actions"><button type="button" data-task-report>📄 میری پوائنٹس PDF</button><button type="button" data-task-retry>Refresh</button></div></div><div id="ntStaffTaskState" class="nt-msg" role="status"></div><div id="ntStaffTaskNotice" class="nt-msg" role="status"></div><div id="ntStaffTaskStats"></div><small>اوپر تمام تاریخوں کے ٹاسک پوائنٹس ہیں۔ PDF کے لیے نیچے حاضری رپورٹ کی تاریخیں منتخب کریں۔</small><div id="ntStaffTaskList" class="nt-cards"></div></section>
+    <section class="portal-card staff-history-card">
       <div class="portal-card-head history-head">
         <div><small>MY REPORT</small><h3>میری Attendance History</h3></div>
         <div class="history-actions">
@@ -1012,7 +1011,7 @@ th,td{font-size:16px;line-height:1.55}
 
 <div class="app" id="ownerApp" hidden style="display:none">
 <div class="top">
-  <div><div class="nt-role-label">NOOR TRADERS • مالک کا پینل</div><h1>Noor Traders Hisab</h1><small>Gulyana • <b id="headerVersionLabel">v100</b> • کاروبار آپ کی نظر میں</small></div>
+  <div><h1>Noor Traders Hisab</h1><small>Gulyana • <b id="headerVersionLabel">v99</b> • Production • Advanced Business Software</small></div>
   <div class="cloud-box">
     <b id="todayLabel"></b><br>
     <small id="cloudStatus">Firebase سے رابطہ ہو رہا ہے…</small>
@@ -1106,7 +1105,7 @@ th,td{font-size:16px;line-height:1.55}
 <section id="staffCenter" class="tab app-screen staff-center-screen">
   <div class="screen-head staff-dashboard-heading">
     <div><div class="eyebrow">PEOPLE OPERATIONS</div><h2>Staff Dashboard</h2><p>ملازمین، حاضری، location اور performance ایک ہی جگہ</p></div>
-    <div class="screen-actions"><button class="primary" onclick="goScreen('staffAccounts');toggleStaffCreateV84(true)">＋ Add Staff</button><button class="soft" onclick="goScreen('attendanceToday')">Open Attendance</button></div>
+    <div class="screen-actions"><button class="primary" onclick="goScreen('staffAccounts');toggleStaffCreateV84(true)">＋ Add Staff</button><button class="soft" onclick="goScreen('attendanceToday')">Open Attendance</button><button class="soft" onclick="openStaffReportV104()">📄 PDF Report</button></div>
   </div>
 
     <div class="staff-search-v89">
@@ -1258,8 +1257,8 @@ th,td{font-size:16px;line-height:1.55}
         <div class="shop-geofence-box">
           <div class="geofence-title"><span>📍</span><div><b>Noor Traders Gulyana</b><small>Check-In Geofence</small></div></div>
           <div class="geofence-row"><span>Radius</span><b>200 meters</b></div>
-          <div class="geofence-row"><span>Map Code</span><b>QXX4+5Q9</b></div>
-          <div class="geofence-row"><span>GPS</span><b>32.797913, 73.956984</b></div>
+          <div class="geofence-row"><span>Map Code</span><b>674F+9C7</b></div>
+          <div class="geofence-row"><span>GPS</span><b>33.205913, 73.273547</b></div>
         </div>
       </aside>
 
@@ -1331,7 +1330,7 @@ th,td{font-size:16px;line-height:1.55}
 <div id="pdfPreviewModal" class="pdf-preview-modal" hidden><div class="pdf-preview-shell"><div class="pdf-preview-head"><div><span class="eyebrow">NOOR TRADERS HISAB</span><h2 id="pdfPreviewTitle">Report Preview</h2></div><button class="icon-close" type="button" onclick="closePdfPreviewV85()" aria-label="Close preview">×</button></div><iframe id="pdfPreviewFrame" title="PDF preview"></iframe><div class="pdf-preview-actions"><button class="primary" type="button" onclick="downloadPdfV85()">Download PDF</button><button class="soft" type="button" onclick="sharePdfV85()">Share / Send</button><button class="soft" type="button" onclick="printPdfPreviewV85()">Print</button><button class="soft" type="button" onclick="closePdfPreviewV85()">Close</button></div></div></div>
 <div id="entryEditModalV85" class="entry-edit-modal-v85" hidden><div class="entry-edit-card-v85"><div class="pro-card-head"><div><div class="eyebrow">EDIT ENTRY</div><h3>Update Transaction</h3></div><button type="button" class="icon-close" onclick="closeEntryEditV85()">×</button></div><form id="entryEditFormV85" class="entry-edit-form"><input type="date" id="editEntryDateV85"><input id="editEntryDetailV85" placeholder="Detail / Name"><select id="editEntryTypeV85"></select><select id="editEntrySubCategoryV85"></select><input id="editEntryAmountV85" type="number" min="0.01" step="0.01" required><input id="editEntryPhotoV85" type="file" accept="image/*" capture="environment"><div id="editEntryPhotoPreviewV85" class="quick-photo-preview" hidden></div><div class="row"><button class="primary" type="submit">Save Changes</button><button class="soft" type="button" onclick="closeEntryEditV85()">Cancel</button></div></form></div></div>
 
-<section id="settings" class="tab app-screen"><div class="grid"><div class="card span6"><h3>Full Migration Backup</h3><p class="muted">مکمل JSON backup download کریں یا restore کریں۔ Restore ہونے پر online data بھی sync ہوگا۔</p><div class="row"><button class="primary" onclick="backupAll()">Full Migration Backup Download</button><label class="soft" style="cursor:pointer">Backup Restore<input type="file" id="restoreFile" accept="application/json" style="display:none"></label></div></div><div class="card span6"><h3>Expense Categories</h3><div class="row"><input id="newCat" placeholder="نئی category"><button class="soft" onclick="addCategory()">Add</button></div><div id="catList" style="margin-top:10px"></div></div><div class="card span12"><h3>Attendance Policy & Version</h3><div class="form"><div class="f3"><label>Shift Start</label><input id="policyShiftStartV84" type="time" value="09:00"></div><div class="f3"><label>Shift End (optional)</label><input id="policyShiftEndV84" type="time"></div><div class="f3"><label>Geofence Radius (m)</label><input id="policyRadiusV84" type="number" value="200"></div><div class="f3"><label>Variant</label><input id="policyVariantV84" value="Production"></div><div class="f12"><label>Check-In Instruction</label><input id="policyInstructionV84" value="سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔"></div><div class="f12 score-policy-editor"><label>Score Rules (minutes late → score)</label><div class="score-policy-grid"><span>≤10 min <input id="score10V84" type="number" value="10" min="0" max="10"></span><span>≤20 min <input id="score20V84" type="number" value="8" min="0" max="10"></span><span>≤30 min <input id="score30V84" type="number" value="6" min="0" max="10"></span><span>≤45 min <input id="score45V84" type="number" value="4" min="0" max="10"></span><span>Later <input id="scoreLateV84" type="number" value="2" min="0" max="10"></span></div></div><div class="f12"><button class="primary" type="button" onclick="saveAttendancePolicyV84()">Save Attendance Policy</button></div></div><div class="version-panel-v84"><span>Current Version <b id="settingsVersionV84">v100</b></span><span>Variant <b id="settingsVariantV84">Production</b></span><span id="settingsUpdateV84">Up to date</span><button class="soft update-now-v85" type="button" onclick="forceAppUpdateV85()">Check / Update Now</button></div></div><div class="card span6"><h3>مالک کا پاس ورڈ</h3><p class="muted">یوزر نیم: <b>admin</b></p><form id="ownerPasswordForm" class="vertical-form"><label for="ownerOldPassword">موجودہ پاس ورڈ</label><input id="ownerOldPassword" type="password" autocomplete="current-password" required><label for="ownerNewPassword">نیا پاس ورڈ — کم از کم 6 حروف</label><input id="ownerNewPassword" type="password" autocomplete="new-password" minlength="6" required><label for="ownerConfirmPassword">نیا پاس ورڈ دوبارہ درج کریں</label><input id="ownerConfirmPassword" type="password" autocomplete="new-password" minlength="6" required><button id="ownerPasswordBtn" class="primary" type="submit">پاس ورڈ تبدیل کریں</button><div id="ownerPasswordMessage" class="login-message" role="status" aria-live="polite"></div></form></div><div class="card span12"><h3>Storage</h3><p>یہ version <b>Firebase Firestore</b> کے ساتھ online sync کرتا ہے اور browser <b>localStorage</b> کو offline/local cache کے طور پر رکھتا ہے۔</p><button class="danger" onclick="resetAll()">صرف اس Browser کا Local Cache صاف کریں</button></div></div></section>
+<section id="settings" class="tab app-screen"><div class="grid"><div class="card span6"><h3>Full Migration Backup</h3><p class="muted">مکمل JSON backup download کریں یا restore کریں۔ Restore ہونے پر online data بھی sync ہوگا۔</p><div class="row"><button class="primary" onclick="backupAll()">Full Migration Backup Download</button><label class="soft" style="cursor:pointer">Backup Restore<input type="file" id="restoreFile" accept="application/json" style="display:none"></label></div></div><div class="card span6"><h3>Expense Categories</h3><div class="row"><input id="newCat" placeholder="نئی category"><button class="soft" onclick="addCategory()">Add</button></div><div id="catList" style="margin-top:10px"></div></div><div class="card span12"><h3>Attendance Policy & Version</h3><div class="form"><div class="f3"><label>Shift Start</label><input id="policyShiftStartV84" type="time" value="09:00"></div><div class="f3"><label>Shift End (optional)</label><input id="policyShiftEndV84" type="time"></div><div class="f3"><label>Geofence Radius (m)</label><input id="policyRadiusV84" type="number" value="200"></div><div class="f3"><label>Variant</label><input id="policyVariantV84" value="Production"></div><div class="f12"><label>Check-In Instruction</label><input id="policyInstructionV84" value="سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔"></div><div class="f12 score-policy-editor"><label>Score Rules (minutes late → score)</label><div class="score-policy-grid"><span>≤10 min <input id="score10V84" type="number" value="10" min="0" max="10"></span><span>≤20 min <input id="score20V84" type="number" value="8" min="0" max="10"></span><span>≤30 min <input id="score30V84" type="number" value="6" min="0" max="10"></span><span>≤45 min <input id="score45V84" type="number" value="4" min="0" max="10"></span><span>Later <input id="scoreLateV84" type="number" value="2" min="0" max="10"></span></div></div><div class="f12"><button class="primary" type="button" onclick="saveAttendancePolicyV84()">Save Attendance Policy</button></div></div><div class="version-panel-v84"><span>Current Version <b id="settingsVersionV84">v99</b></span><span>Variant <b id="settingsVariantV84">Production</b></span><span id="settingsUpdateV84">Up to date</span><button class="soft update-now-v85" type="button" onclick="forceAppUpdateV85()">Check / Update Now</button></div></div><div class="card span6"><h3>مالک کا پاس ورڈ</h3><p class="muted">یوزر نیم: <b>admin</b></p><form id="ownerPasswordForm" class="vertical-form"><label for="ownerOldPassword">موجودہ پاس ورڈ</label><input id="ownerOldPassword" type="password" autocomplete="current-password" required><label for="ownerNewPassword">نیا پاس ورڈ — کم از کم 6 حروف</label><input id="ownerNewPassword" type="password" autocomplete="new-password" minlength="6" required><label for="ownerConfirmPassword">نیا پاس ورڈ دوبارہ درج کریں</label><input id="ownerConfirmPassword" type="password" autocomplete="new-password" minlength="6" required><button id="ownerPasswordBtn" class="primary" type="submit">پاس ورڈ تبدیل کریں</button><div id="ownerPasswordMessage" class="login-message" role="status" aria-live="polite"></div></form></div><div class="card span12"><h3>Storage</h3><p>یہ version <b>Firebase Firestore</b> کے ساتھ online sync کرتا ہے اور browser <b>localStorage</b> کو offline/local cache کے طور پر رکھتا ہے۔</p><button class="danger" onclick="resetAll()">صرف اس Browser کا Local Cache صاف کریں</button></div></div></section>
 
 <div class="footer">Noor Traders Hisab — Standalone HTML conversion from v79 source</div></div>
 <script>
@@ -1397,6 +1396,79 @@ function goScreen(id,fromHistory=false){
   setTimeout(cleanEmptyBoxesV92,60);
 }
 window.goScreen=goScreen;
+
+/* ===== STAFF PDF REPORT (v104) ===== */
+function openStaffReportV104(){
+  const m=document.getElementById('staffReportModalV104');if(!m)return;
+  if(!repFromV104.value)repFromV104.value=today();
+  if(!repToV104.value)repToV104.value=today();
+  m.hidden=false;buildStaffReportV104();
+}
+function closeStaffReportV104(){const m=document.getElementById('staffReportModalV104');if(m)m.hidden=true}
+function setStaffReportTodayV104(){repFromV104.value=today();repToV104.value=today();buildStaffReportV104()}
+window.openStaffReportV104=openStaffReportV104;window.closeStaffReportV104=closeStaffReportV104;window.setStaffReportTodayV104=setStaffReportTodayV104;
+
+function staffReportHtmlV104(){
+  const from=repFromV104.value||today(),to=repToV104.value||from;
+  const att=(window.noorStaffSystem?.getAttendanceBetween(from,to)||[]);
+  const tasks=(window.__ntTasksV104||[]).filter(t=>{const d=t.date||'';return (!from||d>=from)&&(!to||d<=to)});
+  const staff=db.staff||[];
+  const rows=[];
+  let present=0,absent=0;
+  staff.forEach(sf=>{
+    const phone=normPhoneV84(sf.phone||sf.id);
+    const mine=att.filter(a=>normPhoneV84(a.phone)===phone);
+    const myTasks=tasks.filter(t=>normPhoneV84(t.phone)===phone);
+    const tPts=myTasks.filter(t=>t.status==='approved').reduce((a,b)=>a+(+b.points||0),0);
+    const tDone=myTasks.filter(t=>t.status==='approved').length;
+    if(!mine.length){
+      absent++;
+      rows.push(`<tr><td>${esc(sf.name||'')}</td><td>${esc(phone)}</td><td>${esc(sf.address||'—')}</td><td>—</td><td style="color:#b91c1c">Absent</td><td>—</td><td>—</td><td>—</td><td>—</td><td>${tDone}</td><td><b>${tPts}</b></td></tr>`);
+    }else{
+      mine.sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach((a,idx)=>{
+        if(idx===0)present++;
+        const late=Math.max(0,Math.round(a.minutesLate||0));
+        rows.push(`<tr><td>${esc(sf.name||'')}</td><td>${esc(phone)}</td><td>${esc(sf.address||'—')}</td><td>${esc(a.date||'')}</td><td style="color:#15803d">Present</td><td>${esc(a.checkIn||a.checkInTime||'—')}</td><td>${esc(a.checkOut||a.checkOutTime||'—')}</td><td>${late} min</td><td>${attScoreV84(a)??'—'}</td><td>${idx===0?tDone:''}</td><td>${idx===0?'<b>'+tPts+'</b>':''}</td></tr>`);
+      });
+    }
+  });
+  const totalPts=tasks.filter(t=>t.status==='approved').reduce((a,b)=>a+(+b.points||0),0);
+  const taskRows=tasks.map(t=>{
+    const pics=(t.photoIds||[]).length;
+    return `<tr><td>${esc(t.date||'')}</td><td>${esc(t.staffName||t.phone||'')}</td><td>${esc(t.title||'')}</td><td>${esc(t.status||'')}</td><td>${t.status==='approved'?Number(t.points||0):0} / ${Number(t.maxPoints||10)}</td><td>${pics}</td></tr>`;
+  }).join('')||'<tr><td colspan="6">No tasks</td></tr>';
+  return `
+  <h2 style="color:#0f766e;margin:0">Noor Traders Gulyana — Staff Report</h2>
+  <p style="color:#64748b;margin:4px 0 12px">${esc(from)} to ${esc(to)} • Generated ${new Date().toLocaleString('en-PK')}</p>
+  <div class="rep-kpis-v104">
+    <div><small>Total Staff</small><b>${staff.length}</b></div>
+    <div><small>Present</small><b>${present}</b></div>
+    <div><small>Absent</small><b>${absent}</b></div>
+    <div><small>Task Points</small><b>${totalPts}</b></div>
+  </div>
+  <h3>Attendance Detail</h3>
+  <table><thead><tr><th>Name</th><th>Mobile</th><th>Address</th><th>Date</th><th>Status</th><th>Check In</th><th>Check Out</th><th>Late</th><th>Score</th><th>Tasks Done</th><th>Task Points</th></tr></thead><tbody>${rows.join('')||'<tr><td colspan="11">No staff</td></tr>'}</tbody></table>
+  <h3>Task Summary</h3>
+  <table><thead><tr><th>Date</th><th>Staff</th><th>Task</th><th>Status</th><th>Points</th><th>Photos</th></tr></thead><tbody>${taskRows}</tbody></table>`;
+}
+function buildStaffReportV104(){
+  const box=document.getElementById('staffReportBodyV104');
+  if(box)box.innerHTML=staffReportHtmlV104();
+}
+window.buildStaffReportV104=buildStaffReportV104;
+function staffReportWindowV104(){
+  const w=window.open('','_blank');
+  w.document.write(`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Noor Traders Staff Report</title><style>@page{size:A4 landscape;margin:10mm}body{font-family:Arial,sans-serif;padding:18px;color:#142033;font-size:11px}h2{margin:0;color:#0f766e}h3{color:#0f766e;margin:16px 0 6px}table{width:100%;border-collapse:collapse;font-size:10px}th,td{border:1px solid #d5dee6;padding:5px;text-align:left}th{background:#eef5f4;color:#0f5f59}.rep-kpis-v104{display:flex;gap:10px;margin:10px 0}.rep-kpis-v104 div{border:1px solid #dbe7ee;border-radius:8px;padding:7px 12px}.rep-kpis-v104 small{display:block;font-size:9px;color:#64748b}.rep-kpis-v104 b{font-size:16px;color:#0f766e}</style></head><body>${staffReportHtmlV104()}</body></html>`);
+  w.document.close();
+  return w;
+}
+function printStaffReportV104(){const w=staffReportWindowV104();setTimeout(()=>{try{w.focus();w.print()}catch(e){}},600)}
+function saveStaffReportPdfV104(){
+  const w=staffReportWindowV104();
+  setTimeout(()=>{try{w.focus();w.print()}catch(e){}},600);
+  alert('Report nayi window mein khul gayi. PDF ke liye "Save as PDF" chunein.');
+}
+window.printStaffReportV104=printStaffReportV104;window.saveStaffReportPdfV104=saveStaffReportPdfV104;
 // "More" menu: bahar tap karte hi band ho jaye, aur page khulte waqt hamesha band ho.
 document.addEventListener('click',e=>{
   const nav=document.getElementById('nav');
@@ -1684,7 +1756,27 @@ function reportRowsV84(rows,cols){return rows.length?rows.map(r=>`<tr>${r.map(v=
 function reportPeriodV84(){const mode=systemReportFilterV84.value||'today',now=today();if(mode==='all')return{from:'',to:'',label:'All available history'};if(mode==='month'){const m=systemReportMonthV84.value||now.slice(0,7);return{from:`${m}-01`,to:`${m}-31`,label:m}}if(mode==='range')return{from:systemReportFromV84.value||now,to:systemReportToV84.value||now,label:`${systemReportFromV84.value||now} → ${systemReportToV84.value||now}`};const d=mode==='date'?(systemReportDateV84.value||now):now;return{from:d,to:d,label:d}}
 function renderSalesReportsV84(){const m=reportMonthSalesV84.value||today().slice(0,7),rows=db.entries.filter(x=>x.date.startsWith(m)),types=[['Sale','sale'],['Wasooli','collection'],['Expenses','expense'],['Accounts Incoming','account'],['Cash / Change','cash'],['Cash Out','cash_out'],['Shop Goods','shop_goods']];salesReportBoxV84.innerHTML=`<h2>${m} Sales & Accounts Summary</h2><div class="summary-grid-v84">${types.map(([label,type])=>`<div><small>${label}</small><b>${money(sum(rows,type))}</b></div>`).join('')}</div><table><thead><tr><th>Date</th><th>Type</th><th>Detail</th><th>Amount</th></tr></thead><tbody>${reportRowsV84(rows.map(x=>[x.date,labelType(x.type),x.note,money(x.amount)]),4)}</tbody></table>`}
 function renderStaffReportsV84(){const from=staffReportFromV84.value||today(),to=staffReportToV84.value||from,rows=window.noorStaffSystem?.getAttendanceBetween(from,to)||[],present=new Set(rows.filter(x=>x.checkIn||x.checkInTime).map(x=>normPhoneV84(x.phone))),scores=rows.map(attScoreV84).filter(x=>x!=null);staffReportBoxV84.innerHTML=`<h2>${from} → ${to} Staff Summary</h2><div class="summary-grid-v84"><div><small>Total Staff</small><b>${db.staff.length}</b></div><div><small>Present Records</small><b>${present.size}</b></div><div><small>Absent Estimate</small><b>${Math.max(db.staff.length-present.size,0)}</b></div><div><small>Average Score</small><b>${scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—'}</b></div></div><table><thead><tr><th>Date</th><th>Staff</th><th>Check-In</th><th>Check-Out</th><th>Score</th><th>Distance</th></tr></thead><tbody>${reportRowsV84(rows.map(x=>[x.date,staffForPhoneV84(x.phone).name||x.name||x.phone,x.checkIn||x.checkInTime,x.checkOut||x.checkOutTime,attScoreV84(x)??'—',x.checkInDistance!=null?Math.round(x.checkInDistance)+'m':'—']),6)}</tbody></table>`}
-function reportDocumentV85(title,body){return `<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{font-family:Inter,Arial,sans-serif;padding:28px;color:#172235;font-size:12px}h1{color:#075e59;margin:0}h2{color:#075e59;border-bottom:2px solid #dce8e7;padding-bottom:7px}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #dce4ec;padding:7px;text-align:right}th{background:#eef7f6;color:#075e59}.report-meta{color:#64748b;margin:5px 0 20px}@media print{body{padding:10px}}</style></head><body><h1>Noor Traders Hisab</h1><p class="report-meta">${esc(title)} • Generated ${new Date().toLocaleString()}</p>${body}</body></html>`}
+function reportDocumentV85(title,body){return `<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{font-family:Inter,Arial,sans-serif;padding:28px;color:#172235;font-size:12px}h1{color:#075e59;margin:0}h2{color:#075e59;border-bottom:2px solid #dce8e7;padding-bottom:7px}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #dce4ec;padding:7px;text-align:right}th{background:#eef7f6;color:#075e59}.report-meta{color:#64748b;margin:5px 0 20px}@media print{body{padding:10px}}</style></head><body><h1>Noor Traders Hisab</h1><p class="report-meta">${esc(title)} • Generated ${new Date().toLocaleString()}</p>${body}
+<div id="staffReportModalV104" class="report-modal-v104" hidden>
+  <div class="report-card-v104">
+    <div class="report-head-v104">
+      <b>📄 Staff Report</b>
+      <button type="button" onclick="closeStaffReportV104()">✕</button>
+    </div>
+    <div class="report-controls-v104">
+      <label>Se<input id="repFromV104" type="date"></label>
+      <label>Tak<input id="repToV104" type="date"></label>
+      <button type="button" class="soft" onclick="setStaffReportTodayV104()">Aaj</button>
+      <button type="button" class="primary" onclick="buildStaffReportV104()">Report banayein</button>
+    </div>
+    <div id="staffReportBodyV104" class="report-body-v104"></div>
+    <div class="report-foot-v104">
+      <button type="button" class="primary" onclick="saveStaffReportPdfV104()">⬇ PDF banayein / Save</button>
+      <button type="button" class="soft" onclick="printStaffReportV104()">🖨 Print</button>
+    </div>
+  </div>
+</div>
+</body></html>`}
 function openPdfPreviewV85(html,title){currentPdfHtmlV85=html;pdfPreviewTitle.textContent=title;pdfPreviewFrame.srcdoc=html;pdfPreviewModal.hidden=false}
 function closePdfPreviewV85(){pdfPreviewModal.hidden=true;pdfPreviewFrame.srcdoc='';currentPdfHtmlV85=''}
 function printPdfPreviewV85(){pdfPreviewFrame.contentWindow?.focus();pdfPreviewFrame.contentWindow?.print()}
@@ -1842,7 +1934,7 @@ window.applyPolicyV84=applyPolicyV84;
 restoreFileV84.onchange=async()=>{try{const x=JSON.parse(await restoreFileV84.files[0].text());if(!x.data)throw Error();if(confirm('Backup restore کرنے سے موجود data replace ہوگا۔ جاری رکھیں؟')){db=x.data;save()}}catch{alert('درست backup file نہیں')}};
 
 
-const APP_VERSION_V85='v100';
+const APP_VERSION_V85='v104';
 let currentPdfHtmlV85='';
 
 /* ===== AUTO UPDATE (v88) =====
@@ -2325,27 +2417,6 @@ function validDate(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value+'T00:00:00Z')) && new Date(value+'T00:00:00Z').toISOString().slice(0,10)===value;
 }
 function validPhoto(data) { return typeof data==='string' && data.length<=MAX_PHOTO_CHARS && /^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(data); }
-function taskMillis(value) {
-  if(value&&typeof value.toMillis==='function')value=value.toMillis();
-  else if(value&&typeof value==='object'&&Number.isFinite(value.seconds))value=value.seconds*1000;
-  else if(value instanceof Date)value=value.getTime();
-  else if(typeof value==='string')value=Date.parse(value);
-  return Number.isFinite(value)&&value>=0&&value<=8640000000000000?value:0;
-}
-// Older tasks can omit date/revision/status. Keep them usable without overwriting
-// their assignment or inventing a work date. Normalize at both read and write boundaries.
-function normalizeTask(value,id='') {
-  const t=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
-  const text=(...values)=>values.find(v=>typeof v==='string'&&v.trim())?.trim()||'';
-  const assignedAt=taskMillis(t.assignedAt||t.createdAt),candidate=text(t.date,t.workDate,t.dueDate);
-  const date=validDate(candidate)?candidate:assignedAt?new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Karachi'}).format(new Date(assignedAt)):'';
-  const maxPoints=Number.isInteger(Number(t.maxPoints))&&Number(t.maxPoints)>=0?Number(t.maxPoints):10;
-  return {...t,id:text(id,t.id),phone:text(t.phone),staffName:text(t.staffName,t.name,t.phone),title:text(t.title,t.taskName,t.task)||'دکان کا کام',details:text(t.details,t.description),date,
-    status:text(t.status)||'assigned',assignedAt,maxPoints,revision:Number.isInteger(t.revision)&&t.revision>=0?t.revision:0,
-    submissionId:text(t.submissionId),submittedAt:taskMillis(t.submittedAt),points:Number.isFinite(Number(t.points))?Number(t.points):0,
-    photoIds:Array.isArray(t.photoIds)?t.photoIds.filter(v=>typeof v==='string'&&v&&!v.includes('/')):[],staffNote:text(t.staffNote),ownerNote:text(t.ownerNote)};
-}
-function normalizeTasks(value) { return (Array.isArray(value)?value:[]).filter(t=>t&&typeof t==='object'&&!Array.isArray(t)).map(t=>normalizeTask(t)); }
 function createTask(input, actor, id, now=Date.now()) {
   requireValue(actor?.role==='owner','صرف مالک نیا کام دے سکتا ہے۔');
   const title=String(input.title||'').trim(),details=String(input.details||'').trim(),maxPoints=Number(input.maxPoints);
@@ -2378,14 +2449,12 @@ function reviewPatch(task, actor, input, now=Date.now()) {
 }
 function selectTasks(tasks,{phone='',from='',to='',status=''}={}) {
   requireValue(!from||!to||from<=to,'شروع کی تاریخ آخری تاریخ سے پہلے ہونی چاہیے۔');
-  return normalizeTasks(tasks).filter(t=>(!phone||t.phone===phone)&&(!from||(t.date&&t.date>=from))&&(!to||(t.date&&t.date<=to))&&(!status||t.status===status)).sort((a,b)=>b.date.localeCompare(a.date)||b.assignedAt-a.assignedAt||a.id.localeCompare(b.id));
+  return tasks.filter(t=>(!phone||t.phone===phone)&&(!from||t.date>=from)&&(!to||t.date<=to)&&(!status||t.status===status)).sort((a,b)=>b.date.localeCompare(a.date)||b.assignedAt-a.assignedAt);
 }
 function taskTotals(tasks) {
-  tasks=normalizeTasks(tasks);
   return {total:tasks.length,approved:tasks.filter(t=>t.status==='approved').length,pending:tasks.filter(t=>t.status==='submitted').length,points:tasks.reduce((n,t)=>n+(t.status==='approved'?Number(t.points)||0:0),0),possible:tasks.reduce((n,t)=>n+Number(t.maxPoints||0),0)};
 }
 function reportDocument({tasks,photos=new Map(),title='Staff Picture & Points Report',subtitle='',attendance=[],includePhotos=false}) {
-  tasks=normalizeTasks(tasks);
   const e=escapeHtml,totals=taskTotals(tasks),attendancePoints=attendance.reduce((n,a)=>n+Number(a.finalScore??a.autoScore??0),0);
   const people=[...new Set(tasks.map(t=>t.phone))].map(phone=>{const own=tasks.filter(t=>t.phone===phone),s=taskTotals(own);return `<tr><td>${e(own[0].staffName)} • ${e(phone)}</td><td>${s.total}</td><td>${s.approved}</td><td>${s.points}</td></tr>`}).join('');
   const evidence=tasks.map(t=>`<article><h3>${e(t.title)}</h3><p>${e(t.staffName)} • ${e(t.phone)} • ${e(t.date)}</p><p class="note">${e(t.details)}</p><p><b>${e(STATUS[t.status]||t.status)}</b> • پوائنٹس: <b>${t.status==='approved'?Number(t.points):0} / ${Number(t.maxPoints)}</b></p><p class="note">ملازم: ${e(t.staffNote||'—')}<br>مالک: ${e(t.ownerNote||'—')}</p>${includePhotos?`<div class="photos">${(t.photoIds||[]).map((id,i)=>{const data=photos.get(t.id+'/'+id);requireValue(validPhoto(data),'رپورٹ کی تمام تصاویر ابھی لوڈ نہیں ہوئیں۔ دوبارہ کوشش کریں۔');return `<figure><img src="${data}" alt="${e(t.title)} — ${i+1}"><figcaption>${e(t.staffName)} — تصویر ${i+1}</figcaption></figure>`}).join('')}</div>`:''}</article>`).join('');
@@ -2395,10 +2464,10 @@ function reportDocument({tasks,photos=new Map(),title='Staff Picture & Points Re
   return `<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>${e(title)}</title><style>@page{size:A4;margin:13mm}body{font:14px/1.65 Arial,sans-serif;color:#17302d;padding:12px}h1{font-size:24px;color:#0f766e}h2{font-size:19px}h3{margin:0;font-size:17px}table{width:100%;border-collapse:collapse;margin:14px 0}th,td{border:1px solid #d2dedb;padding:8px;text-align:right}th{background:#eaf4f0}article{border-top:2px solid #b8d9ce;padding:15px 0;break-inside:auto}article h3{break-after:avoid}p{margin:6px 0}.note{white-space:pre-wrap;overflow-wrap:anywhere}.totals{background:#eaf4f0;padding:14px}.photos{display:block}figure{display:inline-block;vertical-align:top;width:46%;margin:8px 1%;break-inside:avoid}img{display:block;width:100%;max-height:95mm;object-fit:contain}figcaption{font-size:12px;text-align:center}thead{display:table-header-group}.attendance{font-size:11px}.attendance th,.attendance td{padding:5px;overflow-wrap:anywhere}@media print{body{padding:0}article{box-shadow:none}}</style></head><body><h1>Noor Traders Gulyana</h1><h2>${e(title)}</h2><p>${e(subtitle)}</p><div class="totals">کل کام: ${totals.total} • منظور شدہ: ${totals.approved} • منظوری باقی: ${totals.pending}<br><b>منظور شدہ ٹاسک پوائنٹس: ${totals.points}</b> / مقررہ ${totals.possible}<br>صرف منظور شدہ کام کے پوائنٹس جمع کیے گئے ہیں۔ تاریخ کا حساب کام کی مقررہ تاریخ سے ہے۔</div><table><thead><tr><th>ملازم</th><th>کام</th><th>منظور</th><th>ٹاسک پوائنٹس</th></tr></thead><tbody>${people||'<tr><td colspan="4">اس مدت میں کوئی کام نہیں۔</td></tr>'}</tbody></table>${evidence}${att}</body></html>`;
 }
 
-return {MAX_PHOTOS,MAX_PHOTO_CHARS,STATUS,escapeHtml,requireValue,workDate,validDate,validPhoto,taskMillis,normalizeTask,normalizeTasks,createTask,submissionPatch,reviewPatch,selectTasks,taskTotals,reportDocument};
+return {MAX_PHOTOS,MAX_PHOTO_CHARS,STATUS,escapeHtml,requireValue,workDate,validDate,validPhoto,createTask,submissionPatch,reviewPatch,selectTasks,taskTotals,reportDocument};
 })();
 const TaskServiceV99=(()=>{
-const {createTask,submissionPatch,reviewPatch,validPhoto,requireValue,normalizeTask}=TaskModelV99;const {isOwnerUser}=AuthV99;
+const {createTask,submissionPatch,reviewPatch,validPhoto,requireValue}=TaskModelV99;const {isOwnerUser}=AuthV99;
 
 
 
@@ -2417,18 +2486,7 @@ function createTaskService({fs,auth,sdk,getStaffPhone,businessId='noor-traders'}
     actor,
     listen(next,error) {
       const a=actor(),ref=a.role==='owner'?tasks:query(tasks,where('phone','==',a.phone));
-      return onSnapshot(ref,{includeMetadataChanges:true},s=>{try{unchanged(a);const list=[];s.forEach(d=>list.push(normalizeTask(d.data(),d.id)));next(list,!!s.metadata?.fromCache)}catch(e){error(e)}},error);
-    },
-    listenNotificationReads(next,error) {
-      const a=actor();requireValue(a.role==='owner','یہ اطلاعات صرف مالک کے لیے ہیں۔');
-      const ref=doc(fs,'businesses',businessId,'staffTaskNotificationReads',a.uid);
-      return onSnapshot(ref,s=>{try{unchanged(a);next(s.exists()&&Array.isArray(s.data().seen)?s.data().seen.filter(x=>typeof x==='string'):[])}catch(e){error(e)}},error);
-    },
-    async markNotificationsRead(keys) {
-      const a=actor();requireValue(a.role==='owner','یہ اطلاعات صرف مالک کے لیے ہیں۔');
-      requireValue(Array.isArray(keys)&&keys.length<=100&&keys.every(k=>typeof k==='string'&&k.length<=250),'درست اطلاع منتخب کریں۔');
-      const ref=doc(fs,'businesses',businessId,'staffTaskNotificationReads',a.uid);
-      await runTransaction(fs,async tx=>{const s=await tx.get(ref);unchanged(a);const old=s.exists()&&Array.isArray(s.data().seen)?s.data().seen:[];tx.set(ref,{seen:[...new Set([...old,...keys])].slice(-1000),updatedAt:Date.now()})});
+      return onSnapshot(ref,{includeMetadataChanges:true},s=>{try{unchanged(a);const list=[];s.forEach(d=>list.push({...d.data(),id:d.id}));next(list,!!s.metadata?.fromCache)}catch(e){error(e)}},error);
     },
     async assign(input) {
       const a=actor(),ref=doc(tasks),task=createTask(input,a,ref.id);
@@ -2443,7 +2501,7 @@ function createTaskService({fs,auth,sdk,getStaffPhone,businessId='noor-traders'}
       const a=actor(),ref=doc(tasks,id);
       await runTransaction(fs,async tx=>{
         const s=await tx.get(ref);unchanged(a);requireValue(s.exists(),'کام دستیاب نہیں رہا۔');
-        const patch=submissionPatch(normalizeTask(s.data(),id),a,input);
+        const patch=submissionPatch(s.data(),a,input);
         tx.update(ref,patch);
         input.photos.forEach((dataUrl,i)=>tx.set(doc(ref,'taskPhotos',patch.photoIds[i]),{taskId:id,submissionId:patch.submissionId,dataUrl,uploadedBy:a.uid,createdAt:patch.submittedAt}));
       });
@@ -2461,7 +2519,7 @@ function createTaskService({fs,auth,sdk,getStaffPhone,businessId='noor-traders'}
       const a=actor(),ref=doc(tasks,id);
       await runTransaction(fs,async tx=>{
         const s=await tx.get(ref);unchanged(a);requireValue(s.exists(),'کام دستیاب نہیں رہا۔');
-        tx.update(ref,reviewPatch(normalizeTask(s.data(),id),a,input));
+        tx.update(ref,reviewPatch(s.data(),a,input));
       });
     },
     async migratePhone(oldPhone,newPhone,name) {
@@ -2476,103 +2534,8 @@ function createTaskService({fs,auth,sdk,getStaffPhone,businessId='noor-traders'}
 
 return {createTaskService};
 })();
-const TaskNoticeV100=(()=>{
-const {normalizeTasks,escapeHtml:e}=TaskModelV99;
-
-
-function notificationKey(task) { return task.id+'::'+task.submissionId; }
-function submissionNotices(tasks) {
-  return normalizeTasks(tasks).filter(t=>t.id&&t.submissionId&&t.photoIds.length).sort((a,b)=>b.submittedAt-a.submittedAt||a.id.localeCompare(b.id)).slice(0,100);
-}
-function createNotificationFeed() {
-  let baseline=false,known=new Set();
-  return {
-    update(tasks,fromCache=false){
-      const notices=submissionNotices(tasks),keys=new Set(notices.map(notificationKey));let added=[];
-      // Reopening the app restores the inbox without replaying old phone alarms.
-      if(!fromCache){if(baseline)added=notices.filter(t=>!known.has(notificationKey(t)));known=keys;baseline=true}
-      return {notices,added};
-    },
-    reset(){baseline=false;known=new Set()}
-  };
-}
-
-function installTaskNotifications({service,onOpen,document:doc=document}) {
-  const win=doc.defaultView,nav=win.navigator,feed=createNotificationFeed();
-  let session=null,epoch=0,unsub=null,seen=new Set(),notices=[],enabled=false,pendingOpen=null,toastTask='',lastFocus=null;
-  const modal=doc.createElement('div');modal.id='ntNoticeDialog';modal.className='nt-tasks nt-dialog';modal.hidden=true;modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-label','تصویری رپورٹ کی اطلاعات');doc.body.appendChild(modal);
-  const toast=doc.createElement('div');toast.id='ntNoticeToast';toast.className='nt-tasks nt-notice-toast';toast.hidden=true;toast.setAttribute('role','status');toast.setAttribute('aria-live','polite');doc.body.appendChild(toast);
-  for(const target of [doc.getElementById('userBar'),doc.querySelector('#staffTasks .nt-toolbar')])if(target){const b=doc.createElement('button');b.type='button';b.className='nt-notice-bell';b.setAttribute('data-notice-open','');b.innerHTML='🔔 اطلاعات <span data-notice-count>0</span>';target.appendChild(b)}
-  const preference=uid=>'nt-task-phone-alerts:'+uid;
-  function unread(t){return !seen.has(notificationKey(t))}
-  function isOwner(){return session?.role==='owner'}
-  function setText(text){const el=modal.querySelector('[data-notice-state]');if(el)el.textContent=text}
-  function close(){modal.hidden=true;lastFocus?.focus?.()}
-  function render(){
-    const count=notices.filter(unread).length;
-    doc.querySelectorAll('[data-notice-count]').forEach(el=>{el.textContent=String(count);el.classList.toggle('has-unread',count>0)});
-    if(modal.hidden||!isOwner())return;
-    const list=modal.querySelector('[data-notice-list]');
-    list.innerHTML=notices.map(t=>`<article class="nt-notice-row ${unread(t)?'unread':''}"><h3>${e(t.staffName||t.phone)} نے ${t.photoIds.length} تصاویر بھیجی ہیں</h3><p>${e(t.title)}</p><small>${t.submittedAt?e(new Date(t.submittedAt).toLocaleString('ur-PK',{timeZone:'Asia/Karachi'})):'تازہ تصویری رپورٹ'} • ${unread(t)?'نئی اطلاع':'دیکھی گئی'}</small><div class="nt-actions"><button type="button" class="nt-primary" data-notice-task="${e(t.id)}">تصاویر کھولیں</button></div></article>`).join('')||'<p class="nt-empty">جب ملازم کام کی تصاویر جمع کرے گا تو اس کا نام اور اطلاع یہاں آئے گی۔</p>';
-    const toggle=modal.querySelector('[data-notice-enable]');toggle.textContent=enabled?'فون الرٹ بند کریں':'فون پر الرٹ چالو کریں';
-  }
-  function show(){if(!isOwner())return;lastFocus=doc.activeElement;modal.innerHTML=`<div class="nt-dialog-card"><div class="nt-toolbar"><h3>🔔 تصویری رپورٹ کی اطلاعات</h3><button type="button" class="nt-close" data-notice-close aria-label="بند کریں">×</button></div><div class="nt-actions"><button type="button" data-notice-enable></button><button type="button" data-notice-read-all>سب دیکھی گئیں</button></div><p class="nt-notice-help">ایپ کھلی اور انٹرنیٹ سے منسلک ہو تو نئی تصاویر کی اطلاع فوراً آتی ہے۔ فون الرٹ کے لیے Allow کریں۔ مکمل بند ایپ میں فون الرٹ نہیں آئے گا؛ دوبارہ کھولنے پر رپورٹ یہاں مل جائے گی۔</p><p data-notice-state class="nt-msg" role="status"></p><div data-notice-list></div><small>ہر کام کی تازہ جمع شدہ رپورٹ، آخری 100 اطلاعات۔</small></div>`;modal.hidden=false;render();modal.querySelector('[data-notice-close]').focus()}
-  async function toggle(){
-    if(!isOwner())return;const ticket=epoch;
-    if(enabled){enabled=false;try{win.localStorage.removeItem(preference(session.uid))}catch{}render();setText('فون الرٹ بند ہیں؛ ایپ کی اطلاعات آتی رہیں گی۔');return}
-    if(!win.Notification||!nav.serviceWorker){setText('اس براؤزر میں فون الرٹ دستیاب نہیں۔ ایپ کے اندر اطلاع آتی رہے گی۔');return}
-    const button=modal.querySelector('[data-notice-enable]');button.disabled=true;
-    try{
-      // Permission is requested only by this explicit owner button.
-      const permission=await win.Notification.requestPermission();if(ticket!==epoch)return;
-      if(permission!=='granted'){setText('فون الرٹ کی اجازت نہیں ملی۔ Chrome کی Site settings میں Notifications کو Allow کریں۔');return}
-      const registration=await nav.serviceWorker.getRegistration();if(ticket!==epoch)return;
-      if(!registration?.active){setText('پہلے Sync / Update Now کرکے ایپ دوبارہ کھولیں، پھر فون الرٹ چالو کریں۔');return}
-      enabled=true;try{win.localStorage.setItem(preference(session.uid),'1')}catch{}
-      render();setText('فون الرٹ چالو ہیں۔ مالک کی ایپ کھلی اور انٹرنیٹ سے منسلک رکھیں۔');
-    }catch{if(ticket===epoch)setText('فون الرٹ چالو نہیں ہو سکے۔ ایپ کے اندر اطلاع آتی رہے گی۔')}
-    finally{if(ticket===epoch)button.disabled=false}
-  }
-  async function signal(added){
-    if(!isOwner()||!added.length)return;const ticket=epoch,ownerUid=session.uid,t=added[0];toastTask=t.id;
-    const body=`${t.staffName||t.phone} نے ${t.photoIds.length} تصاویر بھیجی ہیں — ${t.title}`;
-    toast.innerHTML=`<div><b>📷 نئی تصویری رپورٹ</b><p>${e(body)}${added.length>1?` • ${added.length} نئی رپورٹس`:''}</p></div><button type="button" data-notice-toast-open>دیکھیں</button><button type="button" data-notice-toast-close aria-label="بند کریں">×</button>`;toast.hidden=false;
-    if(!enabled||win.Notification?.permission!=='granted'||!nav.serviceWorker)return;
-    try{
-      const registration=await nav.serviceWorker.getRegistration();if(ticket!==epoch||!isOwner()||!registration?.active)return;
-      await registration.showNotification('Noor Traders — نئی تصویری رپورٹ',{body,tag:'nt-task:'+ownerUid+':'+notificationKey(t),dir:'rtl',lang:'ur',renotify:false,data:{type:'NT_TASK_NOTIFICATION',taskId:t.id,ownerUid,submissionId:t.submissionId}});
-    }catch{if(ticket===epoch)setText('فون پر الرٹ نہیں دکھ سکا؛ نئی اطلاع ایپ میں موجود ہے۔')}
-  }
-  async function markTasksRead(rows){
-    if(!isOwner())return;const ticket=epoch,keys=rows.filter(t=>t.submissionId).map(notificationKey).filter(k=>!seen.has(k));if(!keys.length)return;
-    try{await service.markNotificationsRead(keys);if(ticket!==epoch)return;keys.forEach(k=>seen.add(k));render()}
-    catch{if(ticket===epoch)setText('اطلاع کی پڑھی ہوئی حالت محفوظ نہیں ہوئی۔ دوبارہ کوشش کریں۔')}
-  }
-  async function openTask(id){if(!isOwner())return;close();toast.hidden=true;await onOpen(id)}
-  function checkPending(){if(pendingOpen&&isOwner()&&pendingOpen.ownerUid===session.uid&&notices.some(t=>t.id===pendingOpen.taskId)){const id=pendingOpen.taskId;pendingOpen=null;void openTask(id)}}
-  const params=new URL(win.location.href).searchParams;
-  if(params.get('noticeTask')&&params.get('noticeOwner')){
-    pendingOpen={taskId:params.get('noticeTask'),ownerUid:params.get('noticeOwner')};
-    const url=new URL(win.location.href);url.searchParams.delete('noticeTask');url.searchParams.delete('noticeOwner');win.history.replaceState(win.history.state,'',url);
-  }
-  nav.serviceWorker?.addEventListener('message',event=>{const d=event.data;if(d?.type==='NT_TASK_NOTIFICATION'&&typeof d.taskId==='string'&&typeof d.ownerUid==='string'){pendingOpen={taskId:d.taskId,ownerUid:d.ownerUid};checkPending()}});
-  doc.addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b)return;if(b.hasAttribute('data-notice-open'))show();else if(b.hasAttribute('data-notice-close'))close();else if(b.hasAttribute('data-notice-enable'))void toggle();else if(b.hasAttribute('data-notice-read-all'))void markTasksRead(notices);else if(b.dataset.noticeTask)void openTask(b.dataset.noticeTask);else if(b.hasAttribute('data-notice-toast-open'))void openTask(toastTask);else if(b.hasAttribute('data-notice-toast-close'))toast.hidden=true});
-  doc.addEventListener('keydown',ev=>{if(modal.hidden)return;if(ev.key==='Escape')close();if(ev.key==='Tab'){const buttons=[...modal.querySelectorAll('button:not([disabled])')],first=buttons[0],last=buttons.at(-1);if(ev.shiftKey&&doc.activeElement===first){ev.preventDefault();last.focus()}else if(!ev.shiftKey&&doc.activeElement===last){ev.preventDefault();first.focus()}}});
-  const api={
-    start(next){api.stop();if(next.role!=='owner')return;session={role:'owner',uid:next.uid||next.user?.uid};const ticket=epoch;try{enabled=win.localStorage.getItem(preference(session.uid))==='1'}catch{}try{unsub=service.listenNotificationReads(keys=>{if(ticket!==epoch)return;seen=new Set(keys);render()},()=>{if(ticket===epoch)setText('اطلاعات کی پڑھی ہوئی حالت لوڈ نہیں ہوئی۔ Refresh کرکے دوبارہ کوشش کریں۔')})}catch{setText('اطلاعات کا رابطہ نہیں ہوا۔ Refresh کریں۔')}render()},
-    update(rows,fromCache=false){if(!isOwner())return;const result=feed.update(rows,fromCache);notices=result.notices;render();const added=result.added.filter(unread);if(added.length)void signal(added);checkPending()},
-    markTaskRead(task){return markTasksRead([task])},
-    stop(){const oldUid=session?.uid;epoch++;unsub?.();unsub=null;session=null;notices=[];seen=new Set();enabled=false;feed.reset();modal.hidden=true;modal.innerHTML='';toast.hidden=true;toast.innerHTML='';render();if(oldUid&&nav.serviceWorker)void nav.serviceWorker.getRegistration().then(r=>r?.getNotifications?.()).then(list=>(list||[]).filter(n=>n.data?.ownerUid===oldUid).forEach(n=>n.close())).catch(()=>{})},
-    show
-  };
-  return api;
-}
-
-return {notificationKey,submissionNotices,createNotificationFeed,installTaskNotifications};
-})();
 const TaskUIV99=(()=>{
-const {installTaskNotifications}=TaskNoticeV100;const {MAX_PHOTOS,MAX_PHOTO_CHARS,STATUS,escapeHtml:e,workDate,selectTasks,taskTotals,reportDocument,requireValue}=TaskModelV99;
-
+const {MAX_PHOTOS,MAX_PHOTO_CHARS,STATUS,escapeHtml:e,workDate,selectTasks,taskTotals,reportDocument,requireValue}=TaskModelV99;
 
 
 async function compressTaskPhoto(file) {
@@ -2596,7 +2559,6 @@ async function compressTaskPhoto(file) {
 function installTaskUI({service,getStaff,getAttendance,getCurrentStaff,document:doc=document,compress=compressTaskPhoto}) {
   let session=null,tasks=[],unsub=null,epoch=0,ready=false,fromCache=false,loadError='',profilePhone='',dialogEpoch=0,reportEpoch=0;
   const $=id=>doc.getElementById(id);
-  const notifications=installTaskNotifications({service,document:doc,onOpen:async id=>{doc.defaultView.goScreen?.('staffTasks');return open(id)}});
   const mainModal=doc.createElement('div');mainModal.id='ntTaskDialog';mainModal.className='nt-tasks nt-dialog';mainModal.hidden=true;mainModal.setAttribute('role','dialog');mainModal.setAttribute('aria-modal','true');mainModal.setAttribute('aria-label','Task details');doc.body.appendChild(mainModal);
   const reportModal=doc.createElement('div');reportModal.id='ntTaskReport';reportModal.className='nt-tasks nt-dialog';reportModal.hidden=true;reportModal.setAttribute('role','dialog');reportModal.setAttribute('aria-modal','true');reportModal.setAttribute('aria-label','PDF report');doc.body.appendChild(reportModal);
   const imageModal=doc.createElement('div');imageModal.id='ntTaskImage';imageModal.className='nt-tasks nt-dialog';imageModal.style.zIndex='100003';imageModal.hidden=true;imageModal.setAttribute('role','dialog');imageModal.setAttribute('aria-modal','true');imageModal.setAttribute('aria-label','Picture');doc.body.appendChild(imageModal);
@@ -2610,8 +2572,8 @@ function installTaskUI({service,getStaff,getAttendance,getCurrentStaff,document:
   function errorText(err){return ['permission-denied','unauthenticated'].includes(err?.code)?'اجازت نہیں ملی۔ مالک سے اکاؤنٹ اور نئی Firestore Rules چیک کروائیں۔':['unavailable','failed-precondition'].includes(err?.code)?'انٹرنیٹ سے رابطہ کرکے دوبارہ کوشش کریں۔':err?.message||'کام محفوظ نہیں ہوا۔ دوبارہ کوشش کریں۔'}
   function notice(text,error=false){const id=session?.role==='owner'?'ntOwnerTaskNotice':'ntStaffTaskNotice';if($(id)){$(id).textContent=text;$(id).className='nt-msg '+(error?'error':'success')}}
   function ensureReady(){requireValue(session&&ready&&!loadError,'کام ابھی لوڈ نہیں ہوئے۔ انٹرنیٹ چیک کرکے دوبارہ کوشش کریں۔')}
-  const stats=rows=>{const s=taskTotals(rows);return `<div class="nt-stats"><div>کل کام<b>${s.total}</b></div><div>منظوری باقی<b>${s.pending}</b></div><div>منظور شدہ پوائنٹس<b>${s.points}</b></div></div><div class="nt-progress-line"><span>منظور شدہ کام</span><b>${s.approved} / ${s.total}</b></div><div class="nt-progress-track" role="progressbar" aria-label="منظور شدہ کام" aria-valuenow="${s.approved}" aria-valuemin="0" aria-valuemax="${Math.max(1,s.total)}"><span style="width:${s.total?Math.round(s.approved/s.total*100):0}%"></span></div>`};
-  function cards(rows){return rows.map(t=>`<article class="nt-card"><span class="nt-state ${e(t.status)}">${e(STATUS[t.status]||t.status)}</span><h3>${e(t.title)}</h3><small>${e(t.staffName)} • ${e(t.date||'تاریخ مقرر نہیں')}</small><p>${e(t.details)}</p>${t.ownerNote?`<p class="nt-note">مالک: ${e(t.ownerNote)}</p>`:''}<p><b>پوائنٹس: ${t.status==='approved'?Number(t.points):0} / ${Number(t.maxPoints)}</b> • ${t.photoIds?.length||0} تصاویر</p><button type="button" class="${session.role==='staff'&&['assigned','changes_requested'].includes(t.status)?'nt-primary':''}" data-task-open="${e(t.id)}">${session.role==='staff'&&['assigned','changes_requested'].includes(t.status)?'📷 کام / تصاویر جمع کریں':session.role==='owner'&&t.status==='submitted'?'تصاویر دیکھیں اور OK کریں':'تفصیل اور تصاویر'}</button></article>`).join('')||(session.role==='staff'?'<p class="nt-empty">ابھی کوئی کام نہیں۔ مالک پہلے Staff List میں آپ کی پروفائل کھول کر نیا کام دے، پھر یہاں تصاویر بھیجنے کا بٹن آئے گا۔</p>':'<p class="nt-empty">ابھی کوئی کام نہیں۔ اوپر نیا کام دیں، یا ملازم کی پروفائل سے کام شامل کریں۔</p>')}
+  const stats=rows=>{const s=taskTotals(rows);return `<div class="nt-stats"><div>کل کام<b>${s.total}</b></div><div>منظوری باقی<b>${s.pending}</b></div><div>منظور شدہ پوائنٹس<b>${s.points}</b></div></div>`};
+  function cards(rows){return rows.map(t=>`<article class="nt-card"><span class="nt-state ${e(t.status)}">${e(STATUS[t.status]||t.status)}</span><h3>${e(t.title)}</h3><small>${e(t.staffName)} • ${e(t.date)}</small><p>${e(t.details)}</p>${t.ownerNote?`<p class="nt-note">مالک: ${e(t.ownerNote)}</p>`:''}<p><b>پوائنٹس: ${t.status==='approved'?Number(t.points):0} / ${Number(t.maxPoints)}</b> • ${t.photoIds?.length||0} تصاویر</p><button type="button" class="${session.role==='staff'&&['assigned','changes_requested'].includes(t.status)?'nt-primary':''}" data-task-open="${e(t.id)}">${session.role==='staff'&&['assigned','changes_requested'].includes(t.status)?'📷 کام / تصاویر جمع کریں':session.role==='owner'&&t.status==='submitted'?'تصاویر دیکھیں اور OK کریں':'تفصیل اور تصاویر'}</button></article>`).join('')||'<p class="nt-empty">ابھی کوئی کام نہیں۔</p>'}
   function filter(){return {phone:$('ntTaskStaffFilter')?.value||'',status:$('ntTaskStatusFilter')?.value||'',from:$('ntTaskFrom')?.value||'',to:$('ntTaskTo')?.value||''}}
   function render(){
     if(!session)return;
@@ -2622,8 +2584,6 @@ function installTaskUI({service,getStaff,getAttendance,getCurrentStaff,document:
       try{const rows=selectTasks(tasks,filter());if($('ntOwnerTaskStats'))$('ntOwnerTaskStats').innerHTML=stats(rows);if($('ntOwnerTaskList'))$('ntOwnerTaskList').innerHTML=cards(rows)}catch(err){notice(errorText(err),true)}
       renderProfile();
     }else{
-      if($('ntQuickUpload'))$('ntQuickUpload').disabled=!ready||!!loadError;
-      if(!ready){if($('ntStaffTaskStats'))$('ntStaffTaskStats').innerHTML='';if($('ntStaffTaskList'))$('ntStaffTaskList').innerHTML='';return;}
       if($('ntStaffTaskStats'))$('ntStaffTaskStats').innerHTML=stats(tasks);
       if($('ntStaffTaskList'))$('ntStaffTaskList').innerHTML=cards(selectTasks(tasks));
     }
@@ -2640,31 +2600,22 @@ function installTaskUI({service,getStaff,getAttendance,getCurrentStaff,document:
       $('ntAssignForm').onsubmit=async ev=>{ev.preventDefault();const form=ev.currentTarget,btn=form.querySelector('[type=submit]');btn.disabled=true;message('کام محفوظ ہو رہا ہے…');try{const input=Object.fromEntries(new FormData(form));await service.assign(input);if(token!==dialogEpoch)return;closeDialog();notice('نیا کام ملازم کے پینل پر بھیج دیا گیا۔')}catch(err){if(token===dialogEpoch)message(errorText(err),true)}finally{if(token===dialogEpoch)btn.disabled=false}};
     }catch(err){notice(errorText(err),true)}
   }
-  function quickUpload(){
-    try{ensureReady();requireValue(session.role==='staff','یہ بٹن اسٹاف کے لیے ہے۔');const available=selectTasks(tasks).filter(t=>['assigned','changes_requested'].includes(t.status));
-      if(available.length===1){void open(available[0].id);return}
-      if(!available.length){notice(tasks.length?'آپ کے کام جمع یا منظور ہو چکے ہیں۔ مزید تصاویر کے لیے مالک سے نیا کام یا دوبارہ جمع کرنے کی اجازت لیں۔':'مالک پہلے آپ کی پروفائل سے نیا کام دے۔ اس کے بعد یہاں تصاویر لگا سکیں گے۔');return}
-      dialog('کس کام کی تصاویر بھیجنی ہیں؟','<p>نیچے اپنا کام منتخب کریں۔</p><div class="nt-cards">'+cards(available)+'</div>');
-    }catch(err){notice(errorText(err),true)}
-  }
   async function open(id) {
     try{
       ensureReady();const task=structuredClone(tasks.find(t=>t.id===id));requireValue(task,'کام نہیں ملا۔');
       const canSubmit=session.role==='staff'&&['assigned','changes_requested'].includes(task.status),canReview=session.role==='owner'&&task.status==='submitted';
-      const token=dialog(task.title,`<p>${e(task.staffName)} • ${e(task.date||'تاریخ مقرر نہیں')}</p><p class="nt-note">${e(task.details)}</p><p><span class="nt-state ${e(task.status)}">${e(STATUS[task.status])}</span> • پوائنٹس: ${task.status==='approved'?Number(task.points):0} / ${Number(task.maxPoints)}</p><p class="nt-note">ملازم: ${e(task.staffNote||'—')}<br>مالک: ${e(task.ownerNote||'—')}</p><div id="ntSavedPhotos" class="nt-photos"></div>${canSubmit?`<form id="ntSubmitForm"><p>کام مکمل کرکے 1 سے ${MAX_PHOTOS} تصاویر شامل کریں۔ ہر تصویر الگ کھول کر دیکھی جا سکتی ہے۔</p><div class="nt-actions"><label>گیلری سے متعدد تصاویر<input id="ntGalleryPhotos" type="file" accept="image/*" multiple></label><label>نئی تصویر لیں<input id="ntCameraPhoto" type="file" accept="image/*" capture="environment"></label></div><div id="ntDraftPhotos" class="nt-photos"></div><small id="ntPhotoCount">0 / ${MAX_PHOTOS} تصاویر</small><label>کام کے بارے میں نوٹ<textarea id="ntStaffNote" maxlength="2000" rows="3"></textarea></label><button class="nt-primary" type="submit" id="ntSubmitPhotos" disabled>تصاویر مالک کو بھیجیں</button></form>`:canReview?`<form id="ntReviewForm"><label>دینے والے پوائنٹس (0–${Number(task.maxPoints)})<input id="ntReviewPoints" type="number" min="0" max="${Number(task.maxPoints)}" step="1" value="${Number(task.maxPoints)}" required></label><label>مالک کا نوٹ<textarea id="ntOwnerNote" rows="3" maxlength="2000"></textarea></label><div class="nt-actions"><button type="submit" class="nt-primary" disabled>✓ OK — منظور کریں</button><button type="button" id="ntRequestChanges" disabled>دوبارہ کام / تصاویر مانگیں</button></div></form>`:''}`);
+      const token=dialog(task.title,`<p>${e(task.staffName)} • ${e(task.date)}</p><p class="nt-note">${e(task.details)}</p><p><span class="nt-state ${e(task.status)}">${e(STATUS[task.status])}</span> • پوائنٹس: ${task.status==='approved'?Number(task.points):0} / ${Number(task.maxPoints)}</p><p class="nt-note">ملازم: ${e(task.staffNote||'—')}<br>مالک: ${e(task.ownerNote||'—')}</p><div id="ntSavedPhotos" class="nt-photos"></div>${canSubmit?`<form id="ntSubmitForm"><p>کام مکمل کرکے 1 سے ${MAX_PHOTOS} تصاویر شامل کریں۔ ہر تصویر الگ کھول کر دیکھی جا سکتی ہے۔</p><div class="nt-actions"><label class="nt-camera-btn">📷 Camera kholein — tasveer lein<input id="ntCameraPhoto" type="file" accept="image/*" capture="environment" hidden></label></div><div id="ntDraftPhotos" class="nt-photos"></div><small id="ntPhotoCount">0 / ${MAX_PHOTOS} تصاویر</small><label>کام کے بارے میں نوٹ<textarea id="ntStaffNote" maxlength="2000" rows="3"></textarea></label><button class="nt-primary" type="submit" id="ntSubmitPhotos" disabled>تصاویر مالک کو بھیجیں</button></form>`:canReview?`<form id="ntReviewForm"><label>دینے والے پوائنٹس (0–${Number(task.maxPoints)})<input id="ntReviewPoints" type="number" min="0" max="${Number(task.maxPoints)}" step="1" value="${Number(task.maxPoints)}" required></label><label>مالک کا نوٹ<textarea id="ntOwnerNote" rows="3" maxlength="2000"></textarea></label><div class="nt-actions"><button type="submit" class="nt-primary" disabled>✓ OK — منظور کریں</button><button type="button" id="ntRequestChanges" disabled>دوبارہ کام / تصاویر مانگیں</button></div></form>`:''}`);
       if(task.photoIds?.length){message('تصاویر لوڈ ہو رہی ہیں…');const photos=await service.photos(task);if(token!==dialogEpoch)return;$('ntSavedPhotos').innerHTML=[...photos.values()].map((src,i)=>`<div class="nt-photo"><img src="${src}" data-task-image alt="کام کی تصویر ${i+1}" tabindex="0" role="button"></div>`).join('');message('')}
       if(token!==dialogEpoch)return;
       if(canSubmit)wireSubmission(task,token);
       if(canReview)wireReview(task,token);
-      if(session?.role==='owner')void notifications.markTaskRead(task);
-      return true;
-    }catch(err){message(errorText(err),true);return false}
+    }catch(err){message(errorText(err),true)}
   }
   function wireSubmission(task,token){
     const photos=[];let preparing=false,saving=false;
-    const refresh=()=>{if(token!==dialogEpoch)return;$('ntPhotoCount').textContent=`${photos.length} / ${MAX_PHOTOS} تصاویر`;$('ntDraftPhotos').innerHTML=photos.map((src,i)=>`<div class="nt-photo"><img src="${src}" data-task-image alt="نئی تصویر ${i+1}" tabindex="0" role="button"><button type="button" data-remove-photo="${i}">ہٹائیں</button></div>`).join('');$('ntSubmitPhotos').disabled=!photos.length||preparing||saving;$('ntGalleryPhotos').disabled=preparing||saving;$('ntCameraPhoto').disabled=preparing||saving};
+    const refresh=()=>{if(token!==dialogEpoch)return;$('ntPhotoCount').textContent=`${photos.length} / ${MAX_PHOTOS} تصاویر`;$('ntDraftPhotos').innerHTML=photos.map((src,i)=>`<div class="nt-photo"><img src="${src}" data-task-image alt="نئی تصویر ${i+1}" tabindex="0" role="button"><button type="button" data-remove-photo="${i}">ہٹائیں</button></div>`).join('');$('ntSubmitPhotos').disabled=!photos.length||preparing||saving;$('ntCameraPhoto').disabled=preparing||saving};
     const add=async ev=>{const files=[...ev.target.files];ev.target.value='';if(preparing||saving)return;preparing=true;refresh();message('تصاویر تیار ہو رہی ہیں…');try{requireValue(photos.length+files.length<=MAX_PHOTOS,`زیادہ سے زیادہ ${MAX_PHOTOS} تصاویر شامل کریں۔`);for(const file of files){const data=await compress(file);if(token!==dialogEpoch)return;photos.push(data)}message('تصاویر تیار ہیں۔ بھیجنے سے پہلے دیکھ لیں۔')}catch(err){if(token===dialogEpoch)message(errorText(err),true)}finally{preparing=false;refresh()}};
-    $('ntGalleryPhotos').onchange=add;$('ntCameraPhoto').onchange=add;
+    $('ntCameraPhoto').onchange=add;
     $('ntDraftPhotos').onclick=ev=>{const b=ev.target.closest('[data-remove-photo]');if(b&&!preparing&&!saving){photos.splice(Number(b.dataset.removePhoto),1);refresh()}};
     $('ntSubmitForm').onsubmit=async ev=>{ev.preventDefault();if(preparing||saving)return;saving=true;refresh();message('تصاویر اور کام محفوظ ہو رہے ہیں…');const input={photos:[...photos],staffNote:$('ntStaffNote').value,submissionId:crypto.randomUUID(),expectedRevision:task.revision};try{await service.submit(task.id,input);if(token!==dialogEpoch)return;closeDialog();notice('تصاویر جمع ہو گئیں۔ مالک کی منظوری کے بعد پوائنٹس ملیں گے۔')}catch(err){if(token===dialogEpoch)message(errorText(err),true)}finally{saving=false;refresh()}};
   }
@@ -2694,7 +2645,7 @@ function installTaskUI({service,getStaff,getAttendance,getCurrentStaff,document:
   }
   doc.addEventListener('click',ev=>{
     const b=ev.target.closest('button,img');if(!b)return;
-    if(b.dataset.staffSection&&session?.role==='staff'){const target=$(b.dataset.staffSection);target?.scrollIntoView({behavior:doc.defaultView.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});}else if(b.matches('[data-close-task]'))closeDialog();else if(b.matches('[data-close-report]'))closeReport();else if(b.matches('[data-close-image]'))closeImage();else if(b.matches('[data-task-image]'))showImage(b.src);else if(b.hasAttribute('data-task-upload'))quickUpload();else if(b.hasAttribute('data-task-edit-assign'))assign($('staffEditOldPhoneV85').value);else if(b.hasAttribute('data-task-assign'))assign(b.dataset.taskAssign);else if(b.dataset.taskOpen)void open(b.dataset.taskOpen);else if(b.dataset.taskProfileReport)void report({phone:b.dataset.taskProfileReport,individual:true});else if(b.matches('[data-task-report]'))void report(session?.role==='owner'?filter():{phone:session?.phone,from:$('staffHistoryFrom')?.value,to:$('staffHistoryTo')?.value,individual:true});else if(b.matches('[data-task-retry]')&&session)api.start(session);
+    if(b.matches('[data-close-task]'))closeDialog();else if(b.matches('[data-close-report]'))closeReport();else if(b.matches('[data-close-image]'))closeImage();else if(b.matches('[data-task-image]'))showImage(b.src);else if(b.hasAttribute('data-task-edit-assign'))assign($('staffEditOldPhoneV85').value);else if(b.hasAttribute('data-task-assign'))assign(b.dataset.taskAssign);else if(b.dataset.taskOpen)void open(b.dataset.taskOpen);else if(b.dataset.taskProfileReport)void report({phone:b.dataset.taskProfileReport,individual:true});else if(b.matches('[data-task-report]'))void report(session?.role==='owner'?filter():{phone:session?.phone,from:$('staffHistoryFrom')?.value,to:$('staffHistoryTo')?.value,individual:true});else if(b.matches('[data-task-retry]')&&session)api.start(session);
   });
   doc.addEventListener('keydown',ev=>{
     if(ev.key==='Escape'){if(!imageModal.hidden)closeImage();else if(!reportModal.hidden)closeReport();else if(!mainModal.hidden)closeDialog()}
@@ -2703,8 +2654,8 @@ function installTaskUI({service,getStaff,getAttendance,getCurrentStaff,document:
   });
   ['ntTaskStaffFilter','ntTaskStatusFilter','ntTaskFrom','ntTaskTo'].forEach(id=>$(id)?.addEventListener('change',()=>{notice('');render()}));
   const api={
-    start(next){api.stop();session={...next};notifications.start(next);const ticket=epoch;render();try{unsub=service.listen((rows,cached)=>{if(ticket!==epoch)return;tasks=rows;ready=true;fromCache=cached;loadError='';render();notifications.update(tasks,cached)},err=>{if(ticket!==epoch)return;ready=false;tasks=[];loadError=err;render()})}catch(err){loadError=err;render()}},
-    stop(){epoch++;notifications.stop();unsub?.();unsub=null;session=null;tasks=[];ready=false;loadError='';closeDialog();closeReport();closeImage();for(const id of ['ntOwnerTaskList','ntStaffTaskList','ntOwnerTaskStats','ntStaffTaskStats','ownerProfileTasksV99'])if($(id))$(id).innerHTML=''},
+    start(next){api.stop();session={...next};const ticket=epoch;render();try{unsub=service.listen((rows,cached)=>{if(ticket!==epoch)return;tasks=rows;window.__ntTasksV104=rows;ready=true;fromCache=cached;loadError='';render()},err=>{if(ticket!==epoch)return;ready=false;tasks=[];loadError=err;render()})}catch(err){loadError=err;render()}},
+    stop(){epoch++;unsub?.();unsub=null;session=null;tasks=[];ready=false;loadError='';closeDialog();closeReport();closeImage();for(const id of ['ntOwnerTaskList','ntStaffTaskList','ntOwnerTaskStats','ntStaffTaskStats','ownerProfileTasksV99'])if($(id))$(id).innerHTML=''},
     assign,open,report,
     profile(phone){profilePhone=phone;renderProfile()},
     totals(phone){return taskTotals(selectTasks(tasks,{phone}))},
@@ -2742,9 +2693,9 @@ const firebaseConfig = {
 const BUSINESS_ID="noor-traders";
 const SHOP={
   name:"Noor Traders Gulyana",
-  plusCode:"QXX4+5Q9, Guliana, Pakistan",
-  lat:32.7979125,
-  lng:73.956984375,
+  plusCode:"QXX4+5Q9, Guliana, Gujrat, Pakistan",
+  lat:32.7978773,
+  lng:73.9568781,
   radius:200
 };
 
@@ -2915,7 +2866,7 @@ const staffAttendanceCol=collection(fs,"businesses",BUSINESS_ID,"staffAttendance
 const staffSessionsCol=collection(fs,"businesses",BUSINESS_ID,"staffSessions");
 const STAFF_SESSION_KEY="noor-traders-staff-session";
 const staffConfigDoc=doc(fs,"businesses",BUSINESS_ID,"staffConfig","main");
-let staffConfig={shiftStart:'09:00',shiftEnd:'',radius:200,variant:'Production',instruction:'سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔',scores:{m10:10,m20:8,m30:6,m45:4,late:2},version:'v100'};
+let staffConfig={shiftStart:'09:00',shiftEnd:'',radius:200,variant:'Production',instruction:'سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔',scores:{m10:10,m20:8,m30:6,m45:4,late:2},version:'v99'};
 
 async function upsertAccount(account){
   const phone=normalizePhone(account.phone||account.id);
@@ -2968,7 +2919,7 @@ function getAttendanceForDate(date){
 function getAttendanceBetween(from,to){
   return [...ownerStaffAttendance.values()].filter(a=>(!from||a.date>=from)&&(!to||a.date<=to)).sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.checkInTs||0)-(b.checkInTs||0));
 }
-async function saveConfig(cfg){staffConfig={...staffConfig,...clean(cfg),scores:{...staffConfig.scores,...(cfg.scores||{})},version:'v100'};await setDoc(staffConfigDoc,staffConfig,{merge:true});window.applyPolicyV84?.(staffConfig)}
+async function saveConfig(cfg){staffConfig={...staffConfig,...clean(cfg),scores:{...staffConfig.scores,...(cfg.scores||{})},version:'v99'};await setDoc(staffConfigDoc,staffConfig,{merge:true});window.applyPolicyV84?.(staffConfig)}
 function getAttendanceById(id){return ownerStaffAttendance.get(id)||null}
 async function updateAttendance(id,patch){await setDoc(doc(staffAttendanceCol,id),patch,{merge:true})}
 async function deleteAttendance(id){await deleteDoc(doc(staffAttendanceCol,id))}
@@ -3001,7 +2952,7 @@ function renderStaffProfile(){
 }
 let ownAttendanceUnsub=null;
 function startStaffOwnListener(){
-  staffUnsubs.push(onSnapshot(staffConfigDoc,s=>{if(s.exists()){staffConfig={...staffConfig,...clean(s.data()),scores:{...staffConfig.scores,...(s.data().scores||{})}};const radius=staffConfig.radius||SHOP.radius;staffRuleText.textContent=`Selfie لازمی + Noor Traders سے زیادہ سے زیادہ ${radius}m`;staffInstructionText.textContent=staffConfig.instruction||staffInstructionText.textContent;staffVersionLabel.textContent='v100'}}));
+  staffUnsubs.push(onSnapshot(staffConfigDoc,s=>{if(s.exists()){staffConfig={...staffConfig,...clean(s.data()),scores:{...staffConfig.scores,...(s.data().scores||{})}};const radius=staffConfig.radius||SHOP.radius;staffRuleText.textContent=`Selfie لازمی + Noor Traders سے زیادہ سے زیادہ ${radius}m`;staffInstructionText.textContent=staffConfig.instruction||staffInstructionText.textContent;staffVersionLabel.textContent='v99'}}));
   if(ownAttendanceUnsub)try{ownAttendanceUnsub()}catch{}
   const q=query(staffAttendanceCol,where("phone","==",currentStaffPhone));
   ownAttendanceUnsub=onSnapshot(q,s=>{
@@ -3035,9 +2986,9 @@ staffGpsBtn?.addEventListener("click",async()=>{
   staffGpsMessage.textContent="GPS check ہو رہا ہے…";
   try{
     lastStaffGps=await getGps();
-    const m=Math.round(lastStaffGps.distance);staffGpsMeters.textContent=String(m);staffDistance.textContent=m+" m";
-    const radius=+(staffConfig.radius||SHOP.radius);staffGpsRing.classList.toggle("ok",m<=radius);staffGpsRing.classList.toggle("bad",m>radius);
-    staffGpsMessage.textContent=m<=radius?`آپ دکان کے ${m}m اندر ہیں۔ Check-In allowed ہے۔`:`آپ دکان سے ${m}m دور ہیں۔ ${radius}m کے باہر Check-In نہیں ہوگا۔`;
+    const m=Math.round(lastStaffGps.distance);staffGpsMeters.textContent=m;staffDistance.textContent=m+" m";
+    staffGpsRing.classList.toggle("ok",m<=SHOP.radius);staffGpsRing.classList.toggle("bad",m>SHOP.radius);
+    staffGpsMessage.textContent=m<=SHOP.radius?`آپ دکان کے ${m}m اندر ہیں۔ Check-In allowed ہے۔`:`آپ دکان سے ${m}m دور ہیں۔ 200m کے باہر Check-In نہیں ہوگا۔`;
   }catch(e){staffGpsMessage.textContent="GPS permission یا location دستیاب نہیں۔"}
 });
 function localMinutesFromTimeV84(t){const m=String(t||'09:00').split(':');return (+m[0]||0)*60+(+m[1]||0)}
@@ -3048,7 +2999,7 @@ staffCheckInBtn?.addEventListener("click",async()=>{
   if(!staffSelfieData){staffActionMessage.textContent="پہلے live selfie لیں۔";return}
   let gps;
   try{gps=await getGps()}catch(e){staffActionMessage.textContent="GPS location حاصل نہیں ہوئی۔";return}
-  const meters=Math.round(gps.distance);staffGpsMeters.textContent=String(meters);staffDistance.textContent=meters+" m";
+  const meters=Math.round(gps.distance);staffGpsMeters.textContent=meters;staffDistance.textContent=meters+" m";
   const radius=+(staffConfig.radius||SHOP.radius);if(gps.distance>radius){staffGpsRing.className="gps-ring bad";staffActionMessage.textContent=`Check-In blocked: آپ ${meters}m دور ہیں۔ حد ${radius}m ہے۔`;return}
   const date=pkDate(),id=`${date}_${currentStaffPhone}`,minutesLate=Math.max(0,currentPkMinutesV84()-localMinutesFromTimeV84(staffConfig.shiftStart||'09:00')),autoScore=scoreForLateV84(minutesLate);
   await setDoc(doc(staffAttendanceCol,id),{
@@ -3377,101 +3328,33 @@ td b,td strong{color:#0f766e}
 .nt-report-card{width:min(1060px,100%)}.nt-report-card iframe{width:100%;height:70dvh;border:1px solid #ceddd3;background:#fff}.nt-profile-tasks{margin:16px 0}.nt-staff-panel{margin:18px 0;padding:18px;background:#fff;border:1px solid #d9e9e0;border-radius:18px}
 .nt-tasks button:focus-visible,.nt-tasks input:focus-visible,.nt-tasks select:focus-visible,.nt-tasks textarea:focus-visible{outline:3px solid #e3b348;outline-offset:2px}
 @media(max-width:760px){#staffFeatureGridV87{grid-template-columns:repeat(3,minmax(0,1fr))!important}.nt-cards{grid-template-columns:1fr}.nt-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.nt-dialog{padding:8px}.nt-dialog-card{padding:15px;max-height:95dvh}.nt-dialog-card .nt-toolbar{top:-15px}.nt-staff-panel{padding:14px}.nt-stats div{padding:10px 7px}.nt-stats b{font-size:21px}}
-.nt-upload-main{width:100%;font-size:17px!important;font-weight:750;padding:14px!important}
-.nt-notice-bell{border:1px solid #c9dfd5!important;background:#e9f6ef!important;color:#155944!important;border-radius:10px;padding:9px 12px!important;cursor:pointer}
-.nt-notice-bell span{background:#d1e8dc;border-radius:20px;padding:2px 7px}.nt-notice-bell .has-unread{background:#c84132;color:#fff}
-#ntNoticeDialog{z-index:100004}.nt-notice-row{padding:15px;margin:10px 0;border:1px solid #d4e4dc;border-radius:12px;background:#fff}.nt-notice-row.unread{background:#eff9f3;border-right:4px solid #0f766e}.nt-notice-row .nt-actions{margin-top:10px}.nt-notice-help{font-size:13px!important;line-height:1.9;margin-top:15px!important}
-.nt-notice-toast{position:fixed;top:12px;left:12px;right:12px;max-width:640px;margin:auto;z-index:100005;background:#eaf8ef;color:#124c35;border:2px solid #39a979;border-radius:14px;padding:14px;box-shadow:0 8px 30px #103e3033;display:flex;align-items:center;gap:10px;font-size:14px}.nt-notice-toast div{flex:1}.nt-notice-toast p{font-size:13px;margin:5px 0!important}.nt-notice-toast button{padding:7px 10px!important;flex-shrink:0}
 
-</style>
-<style id="premiumPanelsV100">
-/* Premium panels: compact hierarchy, evergreen brand, warm gold details. */
-:root{--nt-forest:#103f35;--nt-emerald:#147d64;--nt-gold:#d4b46e;--nt-surface:#fff;--nt-line:#dce7df;--nt-muted:#60736a;--nt-shadow:0 8px 26px #133d2a09}
-body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8% 5%,#e0eee4 0,transparent 55%)!important;color:#203b30}
-#ownerApp,#staffPortal{font-family:var(--font-ui,"Segoe UI",sans-serif);font-size:15px;line-height:1.7}
-#ownerApp * ,#staffPortal *{box-sizing:border-box}
-#ownerApp .top{background:linear-gradient(120deg,#103f35,#185745)!important;color:#fff!important;border:1px solid #2b6653!important;border-radius:22px!important;padding:22px 24px!important;box-shadow:0 12px 32px #123c2920!important;gap:18px}
-#ownerApp .top h1{font-size:29px!important;color:#fff!important;line-height:1.35!important;font-weight:750!important;letter-spacing:-.5px;margin:4px 0!important}
-#ownerApp .top small{color:#d6e7db!important;font-size:12px!important}#ownerApp .top .nt-role-label{color:#efdaab!important;text-transform:uppercase;font-size:10px!important;letter-spacing:2px;font-weight:700}
-#ownerApp .cloud-box{background:#ffffff0a!important;border:1px solid #ffffff17!important;border-radius:14px!important;padding:12px 15px!important;min-width:0}
-#ownerApp #todayLabel{font-size:13px;color:#f0e5cc}#ownerApp #cloudStatus{font-size:11px!important}#ownerApp .user-bar{flex-wrap:wrap;gap:7px!important}#ownerApp #userEmail{font-size:11px;color:#e1eee3}
-#ownerApp .top-logout{background:#ffffff10!important;border:1px solid #ffffff29!important;color:#fff!important;border-radius:9px!important;font-size:12px!important;padding:8px 11px!important}
-#ownerApp .software-strip{background:transparent;border:0;box-shadow:none;padding:12px 4px;color:#587164}#ownerApp .software-strip strong{font-size:13px;color:#1b5742}
-#ownerApp .screen-head{border:1px solid var(--nt-line)!important;border-radius:17px!important;background:#fff!important;padding:18px 20px!important;box-shadow:var(--nt-shadow)!important}
-#ownerApp .screen-head h2{font-size:23px!important;line-height:1.45!important;color:#193f30!important;font-weight:750!important;margin:3px 0!important}
-#ownerApp .screen-head p{font-size:13px!important;line-height:1.8!important;color:var(--nt-muted)!important}
-#ownerApp .eyebrow{font-size:9px!important;letter-spacing:1.7px!important;color:#8c702e!important;font-weight:750!important}
-#ownerApp .pro-card,#ownerApp .card,#ownerApp .quick-entry-workspace{background:#fff!important;border:1px solid var(--nt-line)!important;border-radius:17px!important;box-shadow:var(--nt-shadow)!important}
-#ownerApp .pro-card-head h3,#ownerApp .card h3{color:#234632!important;font-size:18px!important;line-height:1.5!important}
-#ownerApp input,#ownerApp select,#ownerApp textarea{background:#fafcf9;border-color:#d5e3d9;border-radius:10px;min-height:42px;font-size:14px!important}
-#ownerApp .primary,#ownerApp .nt-primary{background:#147d64!important;border:1px solid #126a55!important;color:#fff!important;box-shadow:0 4px 12px #147d6416}
-#ownerApp button{font-size:13px;line-height:1.5}#ownerApp .soft{background:#f2f7f2;border:1px solid #d7e5da;color:#285640;border-radius:10px}#ownerApp .danger{background:#fff0eb;border:1px solid #f1d1c5;color:#a3372c}
-#ownerApp th,#staffPortal th{background:#eff5ef!important;color:#476655!important;font-weight:700!important;font-size:11px!important;text-transform:none;padding:12px 10px}
-#ownerApp td,#staffPortal td{font-size:13px!important;border-color:#edf2eb}#ownerApp tbody tr:hover{background:#f7faf6}
-#ownerApp .profile-hero-v84,#ownerApp .staff-card-v84{background:linear-gradient(120deg,#fff,#f0f7ee)!important;border-color:#dbe6d8!important}
-#ownerApp .profile-hero-v84 p{font-size:12px!important;color:#5a735f!important;font-weight:500!important}
-#ownerApp .staff-summary-card{border-radius:15px!important;box-shadow:none!important;padding:16px!important}#ownerApp .staff-summary-card b{font-size:30px!important}
-#ownerApp .staff-summary-total{background:#edf4fa!important;border-color:#d7e4ef!important}#ownerApp .staff-summary-present{background:#e9f6ed!important;border-color:#cfe6d5!important}#ownerApp .staff-summary-absent{background:#fbefeb!important;border-color:#f0dad1!important}#ownerApp .staff-summary-out{background:#f3f0fa!important;border-color:#e3dcf2!important}
-#ownerApp .staff-summary-card small{font-size:11px!important}#ownerApp .staff-summary-card em{font-size:10px!important}
-#staffTopNavV99{background:#fff!important;border:1px solid var(--nt-line)!important;border-radius:18px!important;box-shadow:var(--nt-shadow);padding:12px!important}
-#staffTopNavV99 .staff-cat-tabs-v87{background:transparent!important;border:0!important;padding:0 0 10px!important;position:static!important;gap:6px!important}
-#staffTopNavV99 .staff-cat-chip-v87{font-size:11px!important;font-weight:650!important;padding:7px 11px!important;border-radius:9px!important;box-shadow:none!important;min-height:34px;background:#f4f7f2!important;color:#4d6759!important;border-color:#e0e9df!important}
-#staffTopNavV99 .staff-cat-chip-v87.active{background:#184f3d!important;color:#fff!important;border-color:#184f3d!important}
-#staffFeatureGridV87 .staff-feature-card{transition:background .15s,border-color .15s;min-height:68px!important;border-radius:11px!important;box-shadow:none!important}
-#staffFeatureGridV87 .staff-feature-card:hover{border-color:#6aa68c!important}#staffFeatureGridV87 .staff-feature-card b{font-weight:650!important;font-size:11px!important}
-#staffFeatureGridV87 .staff-feature-card[aria-current="page"]{background:#e9f5ec!important;outline:2px solid #398565;outline-offset:0}
-#ownerApp #mobileDockV84{background:#103f35!important;border:1px solid #2c614c!important;border-radius:18px!important;box-shadow:0 7px 26px #173d3230!important}
-#ownerApp #mobileDockV84 button{color:#edf3e9!important;border-radius:12px!important}#ownerApp #mobileDockV84 button span{font-size:10px!important}
-#staffPortal{min-height:100vh;background:transparent!important}
-#staffPortal .staff-topbar{background:#103f35!important;color:#fff!important;padding:14px max(18px,calc((100vw - 1100px)/2))!important;border-bottom:1px solid #30634e;box-shadow:0 5px 22px #103f3515;position:relative}
-#staffPortal .brand-mark{background:#e8d49f;color:#244834;border:0;width:42px;height:42px;border-radius:13px;font-size:16px;box-shadow:none}
-#staffPortal .staff-brand-mini b{font-size:15px!important;color:#fff}#staffPortal .staff-brand-mini small{font-size:9px!important;letter-spacing:1.5px;color:#c3d7c8}
-#staffPortal .staff-logout{font-size:12px!important;padding:8px 14px!important;border-radius:10px;background:#ffffff0c;border-color:#ffffff30}
-#staffPortal .staff-portal-main{max-width:1136px!important;padding:20px 18px 44px!important}
-#staffPortal .staff-build-banner{font-size:10px!important;background:transparent!important;border:0!important;padding:2px 4px 12px!important;color:#698272;box-shadow:none!important}
-#staffPortal .staff-profile-hero{position:relative;overflow:hidden;background:linear-gradient(120deg,#194e3e,#276449)!important;border:1px solid #37735a!important;border-radius:22px!important;box-shadow:0 10px 30px #14392715;padding:24px!important;color:#fff}
-#staffPortal .staff-profile-hero:after{content:'NT';position:absolute;left:24px;bottom:-24px;font:900 100px/1 "Segoe UI",sans-serif;opacity:.045;pointer-events:none}
-#staffPortal .portal-avatar{width:68px!important;height:68px!important;border-radius:18px!important;border:3px solid #d3c690!important;background-color:#f1efda!important;color:#28533d;box-shadow:0 6px 14px #00000015;flex-shrink:0}
-#staffPortal .portal-kicker{font-size:9px!important;color:#e1d6ae!important;letter-spacing:1.8px;font-weight:650}
-#staffPortal #staffPortalName{font-size:27px!important;color:#fff!important;line-height:1.45;margin:3px 0 5px!important;font-weight:700!important}
-#staffPortal #staffPortalAddress{font-size:12px!important;color:#d3e4d6!important;margin:0 0 8px!important;line-height:1.7}
-#staffPortal .portal-contact{flex-direction:row!important;flex-wrap:wrap;gap:8px;font-size:11px!important;color:#e4efe2}#staffPortal .portal-contact span{background:#ffffff0d;border:1px solid #ffffff19;padding:4px 8px;border-radius:7px;font-size:11px!important}
-#staffPortal .store-location-card{background:#ffffff09!important;border:1px solid #ffffff20!important;border-radius:13px;color:#e0ecd9;padding:12px!important;min-width:0!important}
-#staffPortal .store-location-card b{font-size:12px!important;color:#fff}#staffPortal .store-location-card small,#staffPortal .store-location-card span{font-size:10px!important;color:#c9dccb}
-.nt-staff-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;background:#e6eee5;border:1px solid #dce7d9;padding:5px;border-radius:13px;margin:15px 0}
-#staffPortal .nt-staff-nav button{font-size:12px!important;font-weight:650;color:#41634d;background:transparent;border:0;border-radius:9px;padding:11px 5px!important;min-height:43px;cursor:pointer}
-#staffPortal .nt-staff-nav button:first-child{background:#fff;color:#14553b;box-shadow:0 3px 8px #254d3810}
-#staffPortal .nt-staff-panel{margin:14px 0 20px!important;background:#fff!important;border:1px solid #dce7db!important;border-radius:21px!important;padding:22px!important;box-shadow:var(--nt-shadow)}
-#staffPortal .nt-toolbar h2{font-size:23px!important;color:#244532!important;line-height:1.5!important;margin:0 0 7px!important;font-weight:750}
-#staffPortal .nt-toolbar small{font-size:12px!important;line-height:1.8!important;color:#677b6b!important}
-#staffPortal .nt-actions{width:100%;gap:8px}#staffPortal .nt-actions button{font-size:13px!important;line-height:1.5!important;border-radius:11px;padding:10px 14px!important}
-#staffPortal #ntQuickUpload{font-size:16px!important;padding:15px!important;background:#147d64!important;border-color:#147d64;color:#fff;min-height:54px;box-shadow:0 6px 16px #147d641c}
-#staffPortal .nt-actions button[data-task-report]{flex:1;background:#f4f7f2;color:#496149;border-color:#dce5d9}
-#staffPortal .nt-stats,#ownerApp .nt-stats{gap:9px;margin:18px 0 14px}
-#staffPortal .nt-stats>div,#ownerApp .nt-stats>div{border:1px solid #e0e8df;border-radius:13px;background:#f2f6ef;padding:14px 12px;font-size:11px!important;line-height:1.7}
-#staffPortal .nt-stats>div:nth-child(2),#ownerApp .nt-stats>div:nth-child(2){background:#fcf6e7;border-color:#eee3c6}
-#staffPortal .nt-stats>div:nth-child(3),#ownerApp .nt-stats>div:nth-child(3){background:#eaf6ee;border-color:#d2e9da}
-#staffPortal .nt-stats b,#ownerApp .nt-stats b{font-size:31px!important;line-height:1.4!important;color:#17533d!important;font-weight:750!important;margin-top:5px}
-.nt-progress-line{display:flex;align-items:center;justify-content:space-between;color:#6b806b;font-size:11px;gap:10px;margin:6px 0}.nt-progress-track{height:5px;background:#edf3e9;border-radius:10px;overflow:hidden;margin-bottom:16px}.nt-progress-track span{display:block;height:100%;background:#9ac296;border-radius:10px}
-#staffPortal .nt-card,#ownerApp .nt-card{border:1px solid #e0e8dc;border-radius:15px;box-shadow:none;background:#fbfcf9;padding:16px}
-#staffPortal .nt-card h3,#ownerApp .nt-card h3{font-size:17px!important;color:#284830!important;line-height:1.5!important}#staffPortal .nt-card p,#ownerApp .nt-card p{font-size:13px!important;line-height:1.8!important;color:#526c56}
-#staffPortal .nt-card button{width:100%;font-size:13px!important;border-radius:10px;padding:12px!important}
-#staffPortal .nt-state{font-size:10px!important;padding:5px 9px!important;border-radius:7px;line-height:1.6}
-#staffPortal .nt-staff-panel>small{display:block;font-size:11px!important;color:#71826e;line-height:1.8;margin-bottom:16px}
-#staffPortal .nt-msg,#staffPortal .nt-empty{font-size:13px!important;line-height:1.8;padding:12px 0}#staffPortal .nt-msg.error{color:#a53d32}
-#staffPortal .staff-status-grid{gap:10px;margin:18px 0 12px}#staffPortal .portal-stat{padding:15px;border-radius:14px;border-color:#dce6d9;background:#fbfdf9;box-shadow:none}#staffPortal .portal-stat span{font-size:11px!important;color:#6a806d}#staffPortal .portal-stat strong{font-size:20px!important;line-height:1.5!important;color:#385c3e}
-#staffPortal .portal-card{background:#fff;border:1px solid #dee7dc;border-radius:18px;padding:18px;box-shadow:var(--nt-shadow)}#staffPortal .portal-card-head h3{font-size:17px!important;color:#38543d!important;line-height:1.5}#staffPortal .portal-card-head small{font-size:9px!important;letter-spacing:1.4px;color:#8b793c}
-#staffPortal .selfie-stage{height:170px;border-color:#cadbc9;background:#f6faf3;border-radius:13px}#staffPortal .selfie-stage b{font-size:15px!important}#staffPortal .selfie-stage small{font-size:11px!important}
-#staffPortal .selfie-button,#staffPortal .portal-checkin{background:#147d64!important;color:#fff!important;border-color:#147d64!important;font-size:14px!important;border-radius:11px!important;padding:12px!important}
-#staffPortal .portal-checkout,#staffPortal .portal-secondary{font-size:13px!important;padding:11px!important;border-radius:10px!important;border-color:#e0e6d8;color:#5a7354;background:#f3f7ee}
-#staffPortal .attendance-instruction,#staffPortal .attendance-rule{font-size:12px!important;line-height:1.9!important;background:#f8f6ed;border-color:#e9e3cd;color:#726542}#staffPortal .attendance-instruction span,#staffPortal .attendance-rule span{font-size:12px!important}
-#staffPortal .portal-message,#staffPortal .gps-message{font-size:12px!important;line-height:1.8!important}#staffPortal .gps-ring{width:118px;height:118px;font-size:24px;border-width:8px}#staffPortal .gps-ring small{font-size:10px}
-#staffPortal .history-actions input{font-size:12px!important;min-height:42px;border-radius:9px;background:#f9fbf7;border:1px solid #dfe6d9;max-width:160px}#staffPortal .history-actions button{font-size:12px!important}
-.nt-tasks.nt-dialog .nt-dialog-card{background:#fffefa;border-color:#e2e8d9;border-radius:20px;box-shadow:0 20px 80px #102f283d}.nt-tasks.nt-dialog .nt-toolbar{background:#fffefa}.nt-tasks.nt-dialog h3{font-size:19px;line-height:1.6;color:#2c4933}.nt-tasks.nt-dialog p{font-size:14px;line-height:1.8}.nt-tasks.nt-dialog label{font-size:13px}.nt-tasks.nt-dialog .nt-primary{background:#147d64;color:#fff;border-color:#147d64}
-#staffTaskPanelV99,#staffAttendancePanelV100,#staffHistoryPanelV100{scroll-margin-top:14px}
-@media(max-width:800px){#ownerApp{padding:10px 10px 90px!important;min-width:0!important}#ownerApp .top{padding:17px!important;gap:12px!important;border-radius:19px!important;flex-direction:column;align-items:stretch!important}#ownerApp .top h1{font-size:24px!important}#ownerApp .cloud-box{padding:10px 12px!important}#ownerApp .screen-head{padding:16px!important;flex-wrap:wrap}#ownerApp .screen-head h2{font-size:21px!important}#ownerApp .screen-head p{font-size:12px!important}#ownerApp .nav.mobile-open{background:#fcfdf9!important;border-color:#d4e3d1!important}#ownerApp .nav button{border-radius:9px;color:#3c664c}#ownerApp .nav button.active{background:#e4f2e4!important;color:#155136!important}#staffPortal .staff-portal-main{padding:12px 12px 32px!important}#staffPortal .staff-profile-hero{padding:18px!important;gap:14px!important}#staffPortal #staffPortalName{font-size:24px!important}#staffPortal .portal-avatar{width:60px!important;height:60px!important}#staffPortal .store-location-card{padding:10px!important}#staffPortal .nt-staff-panel{padding:17px!important}#staffPortal .nt-toolbar h2{font-size:21px!important}#staffPortal .nt-stats>div,#ownerApp .nt-stats>div{font-size:10px!important;padding:12px 9px}#staffPortal .nt-stats b,#ownerApp .nt-stats b{font-size:27px!important}#staffPortal .staff-action-layout{gap:13px}.nt-notice-toast{top:8px;left:8px;right:8px;padding:11px;gap:7px}.nt-notice-toast button{font-size:12px!important}}
-@media(prefers-reduced-motion:reduce){#ownerApp *,#staffPortal *{scroll-behavior:auto!important;transition:none!important}}
-#staffPortal .nt-shop-map{display:inline-block;margin-top:6px;color:#e8dba5;text-decoration:underline;text-underline-offset:3px;font-size:11px;font-weight:600}
 
+.report-modal-v104{position:fixed;inset:0;z-index:9998;background:rgba(8,25,30,.55);display:flex;align-items:flex-end;justify-content:center}
+.report-modal-v104[hidden]{display:none}
+.report-card-v104{background:#fff;width:100%;max-width:900px;max-height:94vh;border-radius:20px 20px 0 0;display:flex;flex-direction:column;overflow:hidden}
+.report-head-v104{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#0f766e;color:#fff;font-size:17px}
+.report-head-v104 button{background:#ffffff22;border:0;color:#fff;font-size:20px;border-radius:10px;width:38px;height:38px}
+.report-controls-v104{display:flex;gap:8px;flex-wrap:wrap;align-items:end;padding:12px 14px;border-bottom:1px solid #e2e8f0}
+.report-controls-v104 label{display:grid;gap:4px;font-size:11px;font-weight:800;color:#475569}
+.report-controls-v104 input{border:1px solid #cbd5e1;border-radius:10px;padding:9px}
+.report-controls-v104 button{padding:10px 14px;border-radius:11px;font-weight:900;border:1px solid #cbd5e1;background:#fff}
+.report-controls-v104 .primary{background:#0f766e;color:#fff;border-color:#0f766e}
+.report-body-v104{overflow:auto;padding:14px;flex:1;direction:ltr;text-align:left}
+.report-body-v104 h3{margin:16px 0 8px;color:#0f766e;font-size:15px}
+.report-body-v104 table{width:100%;border-collapse:collapse;font-size:11px}
+.report-body-v104 th,.report-body-v104 td{border:1px solid #d5dee6;padding:6px;text-align:left}
+.report-body-v104 th{background:#eef5f4;color:#0f5f59}
+.rep-kpis-v104{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.rep-kpis-v104 div{border:1px solid #dbe7ee;border-radius:12px;padding:9px;background:#f8fbff}
+.rep-kpis-v104 small{display:block;font-size:10px;color:#64748b;font-weight:800}
+.rep-kpis-v104 b{font-size:19px;color:#0f766e}
+.rep-photos-v104{display:flex;gap:6px;flex-wrap:wrap}
+.rep-photos-v104 img{width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid #cbd5e1}
+.report-foot-v104{display:flex;gap:8px;padding:12px 14px;border-top:1px solid #e2e8f0}
+.report-foot-v104 button{flex:1;padding:13px;border-radius:12px;font-weight:900;border:1px solid #cbd5e1;background:#fff}
+.report-foot-v104 .primary{background:#0f766e;color:#fff;border-color:#0f766e}
+.nt-camera-btn{display:block;text-align:center;background:#0f766e;color:#fff;font-weight:900;padding:15px;border-radius:14px;font-size:16px;cursor:pointer}
+@media(max-width:600px){.rep-kpis-v104{grid-template-columns:1fr 1fr}}
 </style>
 </body></html>
