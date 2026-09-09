@@ -85,3 +85,20 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
 @media(max-width:800px){#ownerApp{padding:10px 10px 90px!important;min-width:0!important}#ownerApp .top{padding:17px!important;gap:12px!important;border-radius:19px!important;flex-direction:column;align-items:stretch!important}#ownerApp .top h1{font-size:24px!important}#ownerApp .cloud-box{padding:10px 12px!important}#ownerApp .screen-head{padding:16px!important;flex-wrap:wrap}#ownerApp .screen-head h2{font-size:21px!important}#ownerApp .screen-head p{font-size:12px!important}#ownerApp .nav.mobile-open{background:#fcfdf9!important;border-color:#d4e3d1!important}#ownerApp .nav button{border-radius:9px;color:#3c664c}#ownerApp .nav button.active{background:#e4f2e4!important;color:#155136!important}#staffPortal .staff-portal-main{padding:12px 12px 32px!important}#staffPortal .staff-profile-hero{padding:18px!important;gap:14px!important}#staffPortal #staffPortalName{font-size:24px!important}#staffPortal .portal-avatar{width:60px!important;height:60px!important}#staffPortal .store-location-card{padding:10px!important}#staffPortal .nt-staff-panel{padding:17px!important}#staffPortal .nt-toolbar h2{font-size:21px!important}#staffPortal .nt-stats>div,#ownerApp .nt-stats>div{font-size:10px!important;padding:12px 9px}#staffPortal .nt-stats b,#ownerApp .nt-stats b{font-size:27px!important}#staffPortal .staff-action-layout{gap:13px}.nt-notice-toast{top:8px;left:8px;right:8px;padding:11px;gap:7px}.nt-notice-toast button{font-size:12px!important}}
 @media(prefers-reduced-motion:reduce){#ownerApp *,#staffPortal *{scroll-behavior:auto!important;transition:none!important}}
 #staffPortal .nt-shop-map{display:inline-block;margin-top:6px;color:#e8dba5;text-decoration:underline;text-underline-offset:3px;font-size:11px;font-weight:600}
+
+/* ===== V101: live camera modal, working-hours cells, draft notice ===== */
+.nt-cam-v101{position:fixed;inset:0;z-index:100010;background:#0d2a2299;display:flex;align-items:center;justify-content:center;padding:14px}
+.nt-cam-card-v101{width:min(520px,100%);background:#fff;border-radius:18px;padding:16px;box-shadow:0 18px 60px #0b2a2255;direction:rtl;text-align:right}
+.nt-cam-head-v101{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;font-size:17px}
+.nt-cam-head-v101 button{border:1px solid #cfe2da;background:#eff8f4;border-radius:10px;min-width:42px;min-height:42px;font-size:18px;cursor:pointer}
+.nt-cam-stage-v101{position:relative;background:#0f1f1b;border-radius:14px;overflow:hidden;aspect-ratio:1;display:flex;align-items:center;justify-content:center}
+.nt-cam-stage-v101 video,.nt-cam-stage-v101 img{width:100%;height:100%;object-fit:cover;display:block}
+.nt-cam-msg-v101{margin:10px 0 6px;font-size:13px;color:#3c584f}
+.nt-cam-msg-v101.bad{color:#a42620;font-weight:700}
+.nt-cam-actions-v101{display:flex;flex-wrap:wrap;gap:8px}
+.nt-cam-actions-v101 button{flex:1 1 44%;min-height:48px;border:1px solid #c6ddd3;background:#eff8f3;color:#175440;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer}
+.nt-cam-actions-v101 .nt-cam-primary-v101{background:#0f766e;border-color:#0f766e;color:#fff}
+.nt-cam-note-v101{display:block;margin-top:10px;font-size:12px;color:#63786f}
+.wh-cell-v101{white-space:nowrap;font-variant-numeric:tabular-nums}
+.nt-draft-note-v101{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin:0 0 12px;padding:10px 12px;border:1px solid #f0d9a6;background:#fff8e8;color:#7a5510;border-radius:12px;font-size:13px;direction:rtl;text-align:right}
+.nt-draft-note-v101 button{border:1px solid #e3c68b;background:#fff;color:#7a5510;border-radius:9px;padding:7px 11px;font-size:12px;cursor:pointer;min-height:38px}

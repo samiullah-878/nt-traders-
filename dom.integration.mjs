@@ -56,7 +56,7 @@ form.querySelector('[name=date]').value='2026-09-08';form.querySelector('[name=m
 let task=[...f.records.entries()].find(([k])=>k.startsWith(base+'/staffTasks/'))?.[1];assert.equal(task.title,'Clean shelf <one>');
 w.closeStaffEditV85();w.logoutBtn.click();await delay();w.staffLoginTab.click();w.staffLoginPhone.value='admin';w.staffLoginPassword.value=phone;submit(w.staffLoginForm);await delay();
 assert.equal(w.staffPortal.hidden,false);assert.equal(w.ownerApp.hidden,true);assert.ok(w.document.getElementById('ntStaffTaskList').textContent.includes('Clean shelf <one>'));
-w.document.getElementById('ntQuickUpload').click();await delay();const input=w.document.getElementById('ntGalleryPhotos');
+w.document.getElementById('ntQuickUpload').click();await delay();const input=w.document.getElementById('ntCameraPhoto');
 Object.defineProperty(input,'files',{value:[new w.File(['one'],'one.jpg',{type:'image/jpeg'}),new w.File(['two'],'two.jpg',{type:'image/jpeg'})],configurable:true});
 input.dispatchEvent(new w.Event('change',{bubbles:true}));await delay();assert.equal(w.document.querySelectorAll('#ntDraftPhotos img').length,2);assert.equal(w.document.getElementById('ntSubmitPhotos').disabled,false);
 submit(w.document.getElementById('ntSubmitForm'));await delay();task=f.records.get(base+'/staffTasks/'+task.id);assert.equal(task.status,'submitted');assert.equal(task.photoIds.length,2);assert.equal(w.noorTasks.totals(phone).points,0);
@@ -74,7 +74,7 @@ assert.deepEqual(errors,[]);console.log('PASS full UI: profile assignment → 2 
  const {w,errors}=await boot('staff',[[base+'/staffTasks/sparse-a',{phone,title:'First old task'}],[base+'/staffTasks/sparse-b',{phone,title:'Second old task',date:null}]]);
  assert.deepEqual(errors,[]);assert.equal(w.document.querySelectorAll('#ntStaffTaskList .nt-card').length,2);
  w.document.getElementById('ntQuickUpload').click();await delay();assert.equal(w.document.querySelectorAll('#ntTaskDialog [data-task-open]').length,2);
- w.document.querySelector('#ntTaskDialog [data-task-open]').click();await delay();assert.ok(w.document.getElementById('ntGalleryPhotos'));
+ w.document.querySelector('#ntTaskDialog [data-task-open]').click();await delay();assert.ok(w.document.getElementById('ntCameraPhoto'));assert.ok(!w.document.getElementById('ntGalleryPhotos'));
  assert.ok(w.staffTaskPanelV99.compareDocumentPosition(w.staffAttendancePanelV100)&w.Node.DOCUMENT_POSITION_FOLLOWING);
  Object.defineProperty(w.navigator,'geolocation',{configurable:true,value:{getCurrentPosition:fn=>fn({coords:{latitude:32.7979125,longitude:73.956984375,accuracy:5}})}});
  w.staffGpsBtn.click();await delay();assert.equal(w.staffGpsMeters.textContent,'0');assert.ok(w.staffGpsMessage.textContent.includes('allowed'));
