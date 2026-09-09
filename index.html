@@ -847,15 +847,7 @@ th,td{font-size:16px;line-height:1.55}
 </style>
 </head>
 <body>
-<div id="bootGateV95" class="boot-gate-v95">
-  <div class="boot-card-v95">
-    <div class="boot-mark-v95">NT</div>
-    <b>Noor Traders Hisab</b>
-    <span class="boot-msg-v95" id="bootMsgV95">Version check ho raha hai…</span>
-    <div class="boot-bar-v95"><i></i></div>
-    <div class="boot-actions-v95" id="bootActionsV95" hidden></div>
-  </div>
-</div>
+<!-- v101: startup blocker hata diya gaya. App hamesha foran khulti hai; version check background mein. -->
 
 
 
@@ -880,7 +872,7 @@ th,td{font-size:16px;line-height:1.55}
 
     <div class="auth-card">
       <div class="login-card-title"><span class="brand-mark mini">NT</span><div><h2>Noor Traders Hisab</h2><p>Business & Staff System</p></div></div>
-      <div class="login-build-strip"><span class="variant-badge">Production</span><span>Version: <b id="loginVersionLabel">v100</b></span><span id="loginUpdateStatus" class="sync-state"><i class="status-dot"></i>Syncing...</span></div>
+      <div class="login-build-strip"><span class="variant-badge">Production</span><span>Version: <b id="loginVersionLabel">v101</b></span><span id="loginUpdateStatus" class="sync-state"><i class="status-dot"></i>Syncing...</span></div>
       <button type="button" class="sync-now-btn-v91" onclick="forceAppUpdateV85()">🔄 Sync / Update Now</button>
       <div class="auth-role-tabs" role="tablist" aria-label="اکاؤنٹ منتخب کریں">
         <button id="ownerLoginTab" class="auth-role active" type="button" role="tab" aria-selected="true" aria-controls="ownerLoginPane" data-auth-role="owner">مالک</button>
@@ -928,7 +920,7 @@ th,td{font-size:16px;line-height:1.55}
     <button id="staffLogoutBtn" class="staff-logout">Logout</button>
   </div>
 
-  <main class="staff-portal-main"><div class="staff-build-banner"><span>Version <b id="staffVersionLabel">v100</b> • Production</span><span id="staffUpdateState">Latest</span></div>
+  <main class="staff-portal-main"><div class="staff-build-banner"><span>Version <b id="staffVersionLabel">v101</b> • Production</span><span id="staffUpdateState">Latest</span></div>
     <section class="staff-profile-hero">
       <div class="staff-profile-left">
         <div id="staffPortalAvatar" class="portal-avatar">👤</div>
@@ -1013,7 +1005,7 @@ th,td{font-size:16px;line-height:1.55}
 
 <div class="app" id="ownerApp" hidden style="display:none">
 <div class="top">
-  <div><div class="nt-role-label">NOOR TRADERS • مالک کا پینل</div><h1>Noor Traders Hisab</h1><small>Gulyana • <b id="headerVersionLabel">v100</b> • کاروبار آپ کی نظر میں</small></div>
+  <div><div class="nt-role-label">NOOR TRADERS • مالک کا پینل</div><h1>Noor Traders Hisab</h1><small>Gulyana • <b id="headerVersionLabel">v101</b> • کاروبار آپ کی نظر میں</small></div>
   <div class="cloud-box">
     <b id="todayLabel"></b><br>
     <small id="cloudStatus">Firebase سے رابطہ ہو رہا ہے…</small>
@@ -1333,7 +1325,39 @@ th,td{font-size:16px;line-height:1.55}
 <div id="pdfPreviewModal" class="pdf-preview-modal" hidden><div class="pdf-preview-shell"><div class="pdf-preview-head"><div><span class="eyebrow">NOOR TRADERS HISAB</span><h2 id="pdfPreviewTitle">Report Preview</h2></div><button class="icon-close" type="button" onclick="closePdfPreviewV85()" aria-label="Close preview">×</button></div><iframe id="pdfPreviewFrame" title="PDF preview"></iframe><div class="pdf-preview-actions"><button class="primary" type="button" onclick="downloadPdfV85()">Download PDF</button><button class="soft" type="button" onclick="sharePdfV85()">Share / Send</button><button class="soft" type="button" onclick="printPdfPreviewV85()">Print</button><button class="soft" type="button" onclick="closePdfPreviewV85()">Close</button></div></div></div>
 <div id="entryEditModalV85" class="entry-edit-modal-v85" hidden><div class="entry-edit-card-v85"><div class="pro-card-head"><div><div class="eyebrow">EDIT ENTRY</div><h3>Update Transaction</h3></div><button type="button" class="icon-close" onclick="closeEntryEditV85()">×</button></div><form id="entryEditFormV85" class="entry-edit-form"><input type="date" id="editEntryDateV85"><input id="editEntryDetailV85" placeholder="Detail / Name"><select id="editEntryTypeV85"></select><select id="editEntrySubCategoryV85"></select><input id="editEntryAmountV85" type="number" min="0.01" step="0.01" required><input id="editEntryPhotoV85" type="file" accept="image/*" capture="environment"><div id="editEntryPhotoPreviewV85" class="quick-photo-preview" hidden></div><div class="row"><button class="primary" type="submit">Save Changes</button><button class="soft" type="button" onclick="closeEntryEditV85()">Cancel</button></div></form></div></div>
 
-<section id="settings" class="tab app-screen"><div class="grid"><div class="card span6"><h3>Full Migration Backup</h3><p class="muted">مکمل JSON backup download کریں یا restore کریں۔ Restore ہونے پر online data بھی sync ہوگا۔</p><div class="row"><button class="primary" onclick="backupAll()">Full Migration Backup Download</button><label class="soft" style="cursor:pointer">Backup Restore<input type="file" id="restoreFile" accept="application/json" style="display:none"></label></div></div><div class="card span6"><h3>Expense Categories</h3><div class="row"><input id="newCat" placeholder="نئی category"><button class="soft" onclick="addCategory()">Add</button></div><div id="catList" style="margin-top:10px"></div></div><div class="card span12"><h3>Attendance Policy & Version</h3><div class="form"><div class="f3"><label>Shift Start</label><input id="policyShiftStartV84" type="time" value="09:00"></div><div class="f3"><label>Shift End (optional)</label><input id="policyShiftEndV84" type="time"></div><div class="f3"><label>Geofence Radius (m)</label><input id="policyRadiusV84" type="number" value="200"></div><div class="f3"><label>Variant</label><input id="policyVariantV84" value="Production"></div><div class="f12"><label>Check-In Instruction</label><input id="policyInstructionV84" value="سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔"></div><div class="f12 score-policy-editor"><label>Score Rules (minutes late → score)</label><div class="score-policy-grid"><span>≤10 min <input id="score10V84" type="number" value="10" min="0" max="10"></span><span>≤20 min <input id="score20V84" type="number" value="8" min="0" max="10"></span><span>≤30 min <input id="score30V84" type="number" value="6" min="0" max="10"></span><span>≤45 min <input id="score45V84" type="number" value="4" min="0" max="10"></span><span>Later <input id="scoreLateV84" type="number" value="2" min="0" max="10"></span></div></div><div class="f12"><button class="primary" type="button" onclick="saveAttendancePolicyV84()">Save Attendance Policy</button></div></div><div class="version-panel-v84"><span>Current Version <b id="settingsVersionV84">v100</b></span><span>Variant <b id="settingsVariantV84">Production</b></span><span id="settingsUpdateV84">Up to date</span><button class="soft update-now-v85" type="button" onclick="forceAppUpdateV85()">Check / Update Now</button></div></div><div class="card span6"><h3>مالک کا پاس ورڈ</h3><p class="muted">یوزر نیم: <b>admin</b></p><form id="ownerPasswordForm" class="vertical-form"><label for="ownerOldPassword">موجودہ پاس ورڈ</label><input id="ownerOldPassword" type="password" autocomplete="current-password" required><label for="ownerNewPassword">نیا پاس ورڈ — کم از کم 6 حروف</label><input id="ownerNewPassword" type="password" autocomplete="new-password" minlength="6" required><label for="ownerConfirmPassword">نیا پاس ورڈ دوبارہ درج کریں</label><input id="ownerConfirmPassword" type="password" autocomplete="new-password" minlength="6" required><button id="ownerPasswordBtn" class="primary" type="submit">پاس ورڈ تبدیل کریں</button><div id="ownerPasswordMessage" class="login-message" role="status" aria-live="polite"></div></form></div><div class="card span12"><h3>Storage</h3><p>یہ version <b>Firebase Firestore</b> کے ساتھ online sync کرتا ہے اور browser <b>localStorage</b> کو offline/local cache کے طور پر رکھتا ہے۔</p><button class="danger" onclick="resetAll()">صرف اس Browser کا Local Cache صاف کریں</button></div></div></section>
+<section id="settings" class="tab app-screen"><div class="grid"><div class="card span6"><h3>Full Migration Backup</h3><p class="muted">مکمل JSON backup download کریں یا restore کریں۔ Restore ہونے پر online data بھی sync ہوگا۔</p><div class="row"><button class="primary" onclick="backupAll()">Full Migration Backup Download</button><label class="soft" style="cursor:pointer">Backup Restore<input type="file" id="restoreFile" accept="application/json" style="display:none"></label></div></div><div class="card span6"><h3>Expense Categories</h3><div class="row"><input id="newCat" placeholder="نئی category"><button class="soft" onclick="addCategory()">Add</button></div><div id="catList" style="margin-top:10px"></div></div><div class="card span12"><h3>Attendance Policy & Version</h3><div class="form"><div class="f3"><label>Shift Start</label><input id="policyShiftStartV84" type="time" value="09:00"></div><div class="f3"><label>Shift End (optional)</label><input id="policyShiftEndV84" type="time"></div><div class="f3"><label>Geofence Radius (m)</label><input id="policyRadiusV84" type="number" value="200"></div><div class="f3"><label>Variant</label><input id="policyVariantV84" value="Production"></div><div class="f12"><label>Check-In Instruction</label><input id="policyInstructionV84" value="سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔"></div><div class="f12 score-policy-editor"><label>Score Rules (minutes late → score)</label><div class="score-policy-grid"><span>≤10 min <input id="score10V84" type="number" value="10" min="0" max="10"></span><span>≤20 min <input id="score20V84" type="number" value="8" min="0" max="10"></span><span>≤30 min <input id="score30V84" type="number" value="6" min="0" max="10"></span><span>≤45 min <input id="score45V84" type="number" value="4" min="0" max="10"></span><span>Later <input id="scoreLateV84" type="number" value="2" min="0" max="10"></span></div></div><div class="f12"><button class="primary" type="button" onclick="saveAttendancePolicyV84()">Save Attendance Policy</button></div></div><div class="version-panel-v84"><span>Current Version <b id="settingsVersionV84">v101</b></span><span>Variant <b id="settingsVariantV84">Production</b></span><span id="settingsUpdateV84">Up to date</span><button class="soft update-now-v85" type="button" onclick="forceAppUpdateV85()">Check / Update Now</button></div></div><div class="card span6"><h3>مالک کا پاس ورڈ</h3><p class="muted">یوزر نیم: <b>admin</b></p><form id="ownerPasswordForm" class="vertical-form"><label for="ownerOldPassword">موجودہ پاس ورڈ</label><input id="ownerOldPassword" type="password" autocomplete="current-password" required><label for="ownerNewPassword">نیا پاس ورڈ — کم از کم 6 حروف</label><input id="ownerNewPassword" type="password" autocomplete="new-password" minlength="6" required><label for="ownerConfirmPassword">نیا پاس ورڈ دوبارہ درج کریں</label><input id="ownerConfirmPassword" type="password" autocomplete="new-password" minlength="6" required><button id="ownerPasswordBtn" class="primary" type="submit">پاس ورڈ تبدیل کریں</button><div id="ownerPasswordMessage" class="login-message" role="status" aria-live="polite"></div></form></div><div class="card span12"><h3>Storage</h3><p>یہ version <b>Firebase Firestore</b> کے ساتھ online sync کرتا ہے اور browser <b>localStorage</b> کو offline/local cache کے طور پر رکھتا ہے۔</p><button class="danger" onclick="resetAll()">صرف اس Browser کا Local Cache صاف کریں</button></div></div></section>
+<section id="staffSalary" class="tab app-screen">
+  <div class="pro-card">
+    <div class="pro-card-head">
+      <div><div class="eyebrow">SALARY</div><h3>Salary / تنخواہ</h3><small id="salaryMonthLabelV101">—</small></div>
+      <div class="salary-head-actions-v101">
+        <input id="salaryMonthV101" type="month">
+        <button class="soft" type="button" onclick="printSalarySheetV101()">📄 PDF</button>
+      </div>
+    </div>
+    <div class="salary-summary-v101" id="salarySummaryV101"></div>
+    <div class="table-scroll">
+      <table class="salary-table-v101">
+        <thead><tr>
+          <th>#</th><th>Name</th><th>Monthly Salary</th><th>Working Hours</th><th>Overtime</th>
+          <th>Points</th><th>Bonus</th><th>Advance</th><th>Final Salary</th><th></th>
+        </tr></thead>
+        <tbody id="salaryRowsV101"></tbody>
+      </table>
+    </div>
+    <p class="muted salary-note-v101">Working hours اور Overtime staff کے Check-In / Check-Out سے خود بخود نکالے جاتے ہیں۔ Points موجودہ Attendance Score اور منظور شدہ Task points سے آتے ہیں۔</p>
+  </div>
+</section>
+
+<section id="staffSalaryDetail" class="tab app-screen">
+  <div class="pro-card">
+    <div class="pro-card-head">
+      <div><div class="eyebrow">SALARY DETAIL</div><h3 id="salaryDetailTitleV101">—</h3><small id="salaryDetailMonthV101">—</small></div>
+      <button class="soft" type="button" onclick="goScreen('staffSalary')">← Salary List</button>
+    </div>
+    <div id="salaryDetailBodyV101"></div>
+  </div>
+</section>
 
 <div class="footer">Noor Traders Hisab — Standalone HTML conversion from v79 source</div></div>
 <script>
@@ -1549,6 +1573,8 @@ const KEY='noor-traders-v79-standalone';
 const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Karachi'}).format(new Date());
 const defaults={entries:[],categories:['بجلی کا بل','گیس / پانی','کرایہ','تنخواہ','چائے / کھانا','ٹرانسپورٹ','مرمت','موبائل / انٹرنیٹ','گھر کا خرچ','قرض / ادائیگی','فیس / ٹیکس','پیکنگ','دیگر'],subCategories:{sale:['Cash Sale','Credit Sale','Retail','Wholesale','Other'],collection:['Customer Wasooli','Account Recovery','Other'],expense:['Shop Expense','Salary','Transport','Electricity','Food','Other'],account:['Bank Transfer','Account Deposit','Other'],cash_out:['Supplier Payment','Cash Given','Other']},stockItems:['صوفی گھی','صوفی آئل','صوفی آئل کی بڑی بوتل','صوفی آئل کی چھوٹی بوتل','مومن آئل کی بوتل','مومن آئل','مجاہد آئل کا پیکٹ','چینی','چاول بابا','چاول سپر','چاول سٹیم','سیلا چاول','دال ماش','گڑ','شکر','مجاہد گھی','شفیع گھی','ڈالڈا گھی','ڈالڈا آئل','بادام','لپٹن پتی','سپرِیم پتی','لائف شیمپو'].map((name,i)=>({id:i+1,name,unit:['چینی','چاول بابا','چاول سپر','چاول سٹیم','سیلا چاول','دال ماش','گڑ','شکر','بادام'].includes(name)?'کلو':'عدد',rate:0})),stockRecords:{},staff:[],attendance:{},purchases:[],batches:[]};
 defaults.customCategories=[];
+defaults.salaryConfig={};   /* per-staff salary settings, key = phone */
+defaults.salaryExtras={};   /* per-staff bonus / advance entries, key = phone */
 let db=load();
 function load(){try{return Object.assign(structuredClone(defaults),JSON.parse(localStorage.getItem(KEY)||'{}'))}catch{return structuredClone(defaults)}}
 function save(){
@@ -1570,7 +1596,7 @@ const money=n=>'Rs '+Number(n||0).toLocaleString('en-PK',{maximumFractionDigits:
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const navCategories=[
   {id:'accounts',label:'💼 Accounts',items:[['dashboard','Overview'],['sales','Sale'],['collections','Wasooli'],['expenses','Expenses'],['cashScreen','Cash / Change'],['accountIncoming','Accounts Incoming'],['purchases','Purchase / Bills']]},
-  {id:'staff',label:'👥 Staff',items:[['staffCenter','Staff Control'],['staffAccounts','Staff Accounts'],['staffTasks','Tasks / Picture Reports'],['attendanceToday','Today Attendance'],['scores','Scores / Ranking'],['staffKhana','Khana Allowance'],['attendanceHistory','Attendance History'],['staffReports','Staff Reports']]},
+  {id:'staff',label:'👥 Staff',items:[['staffCenter','Staff Control'],['staffAccounts','Staff Accounts'],['staffTasks','Tasks / Picture Reports'],['attendanceToday','Today Attendance'],['scores','Scores / Ranking'],['staffKhana','Khana Allowance'],['attendanceHistory','Attendance History'],['staffSalary','Salary / تنخواہ'],['staffReports','Staff Reports']]},
   {id:'stock',label:'📦 Stock / Purchase',items:[['stock','Stock Audit']]},
   {id:'production',label:'🏭 Production',items:[['manufacturing','Batch Cost']]},
   {id:'reports',label:'📊 Reports',items:[['completeReport','Complete System Report'],['reports','Report Center'],['salesReports','Sales Reports'],['staffReports','Staff Reports'],['stock','Stock / Purchase Reports'],['manufacturing','Production Reports']]},
@@ -1588,7 +1614,7 @@ function goScreen(id,fromHistory=false){
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('#nav [data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));
   const el=document.getElementById(id);el.classList.add('active');
-  const staffBar=document.getElementById('staffTopNavV99'),staffScreens=['staffCenter','staffAccounts','staffProfile','attendanceToday','attendanceHistory','scores','staffKhana','staffReports','staffTasks'];
+  const staffBar=document.getElementById('staffTopNavV99'),staffScreens=['staffCenter','staffAccounts','staffProfile','attendanceToday','attendanceHistory','scores','staffKhana','staffReports','staffTasks','staffSalary','staffSalaryDetail'];
   if(staffBar){staffBar.hidden=!staffScreens.includes(id);if(!staffBar.hidden){el.before(staffBar);staffBar.querySelectorAll('[data-screen]').forEach(b=>{if(b.dataset.screen===id)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')})}}
   scrollToScreenV94(staffBar&&!staffBar.hidden?staffBar:el);
   document.getElementById('nav')?.classList.remove('mobile-open');
@@ -1915,7 +1941,7 @@ function resetAll(){
     location.reload();
   }
 }
-function renderAll(){renderCategories();renderLedger();renderStock();renderAttendance();renderPurchases();renderBatches();renderReport()}
+function renderAll(){renderCategories();renderLedger();renderStock();renderAttendance();renderPurchases();renderBatches();renderReport();try{window.renderSalaryV101&&window.renderSalaryV101()}catch(e){console.error('salary render',e)}}
 
 const V84_VERSION='v85';
 const V84_VARIANT='Production';
@@ -2053,7 +2079,33 @@ window.applyPolicyV84=applyPolicyV84;
 restoreFileV84.onchange=async()=>{try{const x=JSON.parse(await restoreFileV84.files[0].text());if(!x.data)throw Error();if(confirm('Backup restore کرنے سے موجود data replace ہوگا۔ جاری رکھیں؟')){db=x.data;save()}}catch{alert('درست backup file نہیں')}};
 
 
-const APP_VERSION_V85='v100';
+/* ---- V101: numeric version compare (v9 < v10 < v99 < v100 < v101) ---- */
+function ntVerNumV101(value){
+  const parts=String(value==null?'':value).match(/\d+/g);
+  if(!parts||!parts.length)return null;
+  return parts.slice(0,4).reduce((n,x,i)=>n+Number(x)*Math.pow(1000,3-i),0);
+}
+function ntIsNewerV101(latest,current){
+  const a=ntVerNumV101(latest),b=ntVerNumV101(current);
+  if(a==null||b==null)return false;
+  return a>b;                      /* barabar ya purani = kabhi update nahi */
+}
+window.ntVerNumV101=ntVerNumV101;window.ntIsNewerV101=ntIsNewerV101;
+function ntSetVersionStatusV101(latest){
+  const newer=ntIsNewerV101(latest,APP_VERSION_V85);
+  const text=newer?`Version ${latest} Ready — tap Update`:`✓ App is up to date — ${APP_VERSION_V85}`;
+  ['loginUpdateStatus','settingsUpdateV84','staffUpdateState'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.textContent=text;el.classList.toggle('ok',!newer);el.classList.toggle('bad',false);
+  });
+  ['loginVersionLabel','headerVersionLabel','settingsVersionV84','staffVersionLabel'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.textContent=newer?`${APP_VERSION_V85} → ${latest}`:APP_VERSION_V85;
+  });
+  return newer;
+}
+const APP_VERSION_V85='v101';
 let currentPdfHtmlV85='';
 
 /* ===== AUTO UPDATE (v88) =====
@@ -2067,7 +2119,20 @@ async function clearAppCachesV88(){
   try{if('serviceWorker' in navigator){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()))}}catch(e){}
 }
 async function applyUpdateV88(ver){
-  if(updatingV88)return;updatingV88=true;
+  if(updatingV88)return;
+  /* Loop guard: ek version ke liye sirf EK reload. Doosri baar par app waise hi chalti hai. */
+  const rk='nt_reloaded_for';
+  try{
+    if(localStorage.getItem(rk)===String(ver)){
+      localStorage.removeItem(rk);
+      hideUpdateBannerV88();
+      console.error('Update resource failed:',location.href,'nayi version load hone ke baad bhi effect nahi hui');
+      toastV97('⚠️ Update load nahi hui, current version use ho rahi hai.');
+      return;
+    }
+    localStorage.setItem(rk,String(ver));
+  }catch(e){}
+  updatingV88=true;
   showUpdateBannerV88(ver,true);
   await clearAppCachesV88();
   const base=location.href.split('?')[0].split('#')[0];
@@ -2088,37 +2153,15 @@ function bootActionsV95(html){
   if(!box)return;box.innerHTML=html;box.hidden=false;
 }
 async function bootVersionGateV95(){
-  // App tab tak nahi khulti jab tak sab se nayi version na aa jaye.
-  let v=null;
-  try{
-    const r=await Promise.race([
-      fetch('./version.json?t='+Date.now(),{cache:'reload'}),
-      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),3500))
-    ]);
-    if(r&&r.ok)v=await r.json();
-  }catch(e){}
-  if(!v||!v.version){ // internet nahi — offline kaam chalta rahe
-    bootMsgV95('Internet nahi mila — offline chal rahi hai');
-    setTimeout(closeBootGateV95,900);return;
-  }
-  latestVersionV88=v.version;
-  if(v.version===APP_VERSION_V85){
-    try{Object.keys(localStorage).filter(k=>k.startsWith('nt_boot_try_')||k.startsWith('nt_update_try_')).forEach(k=>localStorage.removeItem(k))}catch(e){}
-    closeBootGateV95();return;
-  }
-  const k='nt_boot_try_'+v.version;
-  let tries=0;try{tries=+(localStorage.getItem(k)||0)}catch(e){}
-  if(tries>=3){
-    bootMsgV95('Nayi version '+v.version+' server par hai lekin load nahi ho rahi.');
-    bootActionsV95('<button type="button" onclick="localStorage.removeItem(\'nt_boot_try_'+v.version+'\');location.reload()">Dobara koshish</button><button type="button" class="ghost" onclick="closeBootGateV95()">Purani se kaam chalayein</button>');
-    return;
-  }
-  try{localStorage.setItem(k,String(tries+1))}catch(e){}
-  bootMsgV95('Nayi version '+v.version+' load ho rahi hai…');
-  await applyUpdateV88(v.version);
+  /* v101: startup par app kabhi block nahi hoti. Sirf background version check. */
+  closeBootGateV95();
+  try{Object.keys(localStorage).filter(k=>k.startsWith('nt_boot_try_')).forEach(k=>localStorage.removeItem(k))}catch(e){}
+  await checkAppUpdateV85(false);
 }
 window.closeBootGateV95=closeBootGateV95;
 function showUpdateBannerV88(ver,busy=false){
+  /* Guard: sirf sach-much nayi version par banner. Purani/barabar par kabhi nahi. */
+  if(!busy&&!ntIsNewerV101(ver,APP_VERSION_V85)){hideUpdateBannerV88();return}
   let bar=document.getElementById('updateBannerV88');
   if(!bar){
     bar=document.createElement('div');bar.id='updateBannerV88';bar.className='update-banner-v88';
@@ -2146,7 +2189,7 @@ async function forceAppUpdateV85(){
   let v=null;
   try{
     const r=await Promise.race([
-      fetch('./version.json?t='+Date.now(),{cache:'reload'}),
+      fetch('./version.json?t='+Date.now(),{cache:'no-store'}),
       new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),4000))
     ]);
     if(r&&r.ok)v=await r.json();
@@ -2156,10 +2199,15 @@ async function forceAppUpdateV85(){
     return;
   }
   latestVersionV88=v.version;
-  if(v.version===APP_VERSION_V85){
+  console.log('Current Version:',APP_VERSION_V85);
+  console.log('Latest Version:',v.version);
+  console.log('Update Available:',ntIsNewerV101(v.version,APP_VERSION_V85));
+  ntSetVersionStatusV101(v.version);
+  try{window.ntRefreshSyncV101&&window.ntRefreshSyncV101()}catch(e){}
+  if(!ntIsNewerV101(v.version,APP_VERSION_V85)){
     try{Object.keys(localStorage).filter(k=>k.startsWith('nt_boot_try_')||k.startsWith('nt_update_try_')).forEach(k=>localStorage.removeItem(k))}catch(e){}
     hideUpdateBannerV88();
-    toastV97('✅ Aap ka system pehle se update hai <b>('+v.version+')</b>');
+    toastV97('✅ App is up to date — <b>'+APP_VERSION_V85+'</b>');
     return;
   }
   toastV97('⬇️ Nayi version <b>'+v.version+'</b> aa rahi hai…',0);
@@ -2170,28 +2218,21 @@ async function forceAppUpdateV85(){
 window.forceAppUpdateV85=forceAppUpdateV85;
 
 async function checkAppUpdateV85(auto=false){
+  const versionUrl='./version.json?t='+Date.now();
   try{
-    const r=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
-    if(!r.ok)return;
+    const r=await fetch(versionUrl,{cache:'no-store'});
+    if(!r.ok){console.error('Update resource failed:',versionUrl,'HTTP '+r.status);return}
     const v=await r.json();
-    const different=!!(v.version&&v.version!==APP_VERSION_V85);
+    console.log('Version URL:',versionUrl);
     latestVersionV88=v.version||APP_VERSION_V85;
-    ['loginUpdateStatus','settingsUpdateV84','staffUpdateState'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el){el.textContent=different?`Version ${v.version} Ready — tap Update`:'✓ Up to date';el.classList.toggle('ok',!different);el.classList.toggle('bad',false)}
-    });
-    ['loginVersionLabel','headerVersionLabel','settingsVersionV84','staffVersionLabel'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=different?`${APP_VERSION_V85} → ${v.version}`:(v.version||APP_VERSION_V85)});
-    if(!different){hideUpdateBannerV88();try{localStorage.removeItem('nt_update_try_'+APP_VERSION_V85)}catch(e){}return}
+    console.log('Current Version:',APP_VERSION_V85);
+    console.log('Latest Version:',latestVersionV88);
+    const different=ntIsNewerV101(v.version,APP_VERSION_V85);
+    console.log('Update Available:',different);
+    ntSetVersionStatusV101(latestVersionV88);
+    if(!different){hideUpdateBannerV88();try{localStorage.removeItem('nt_update_try_'+APP_VERSION_V85);localStorage.removeItem('nt_reloaded_for')}catch(e){}return}
+    /* v101: auto-reload bilkul nahi. Sirf chhota Update button. */
     showUpdateBannerV88(v.version);
-    if(auto){
-      // Do baar khud koshish; phir bhi na chale to user Update button daba sakta hai.
-      const k='nt_update_try_'+v.version;
-      let tries=0;try{tries=+(localStorage.getItem(k)||0)}catch(e){}
-      if(tries<2){
-        try{localStorage.setItem(k,String(tries+1))}catch(e){}
-        await applyUpdateV88(v.version);
-      }
-    }
   }catch(e){}
 }
 async function registerAutoUpdateV85(){
@@ -2921,7 +2962,7 @@ function installTaskUI({service,getStaff,getAttendance,getCurrentStaff,document:
     stop(){epoch++;notifications.stop();unsub?.();unsub=null;session=null;tasks=[];ready=false;loadError='';closeDialog();closeReport();closeImage();for(const id of ['ntOwnerTaskList','ntStaffTaskList','ntOwnerTaskStats','ntStaffTaskStats','ownerProfileTasksV99'])if($(id))$(id).innerHTML=''},
     assign,open,report,
     profile(phone){profilePhone=phone;renderProfile()},
-    totals(phone){return taskTotals(selectTasks(tasks,{phone}))},
+    totals(phone,range={}){return taskTotals(selectTasks(tasks,{phone,from:range.from||'',to:range.to||''}))},
     refresh:render
   };
   return api;
@@ -3017,7 +3058,7 @@ function mapPictures(state){
 }
 function stripPictures(state){
   return {
-    settings:{categories:clean(state.categories||[]),stockItems:clean(state.stockItems||[]),subCategories:clean(state.subCategories||{}),customCategories:clean(state.customCategories||[])},
+    settings:{categories:clean(state.categories||[]),stockItems:clean(state.stockItems||[]),subCategories:clean(state.subCategories||{}),customCategories:clean(state.customCategories||[]),salaryConfig:clean(state.salaryConfig||{}),salaryExtras:clean(state.salaryExtras||{})},
     entries:mapById((state.entries||[]).map(({picture,...x})=>x)),
     staff:mapById(state.staff||[]),
     purchases:mapById((state.purchases||[]).map(({pictures,...x})=>x)),
@@ -3035,13 +3076,30 @@ let unsubscribers=[],staffUnsubs=[],initialResolved=false,lastPushed=null,saveTi
 let ownerStaffAccounts=new Map(),ownerStaffAttendance=new Map();
 let currentStaff=null,currentStaffPhone="",staffSelfieData="",lastStaffGps=null;
 
+let cloudWatchdogV101=null,lastCloudTypeV101="warn";
 function setCloud(text,type="warn"){
-  if(!cloudStatus)return;
-  cloudStatus.textContent=text;
-  cloudStatus.className=type==="ok"?"sync-ok":type==="bad"?"sync-bad":"sync-warn";
+  lastCloudTypeV101=type;
+  if(cloudStatus){
+    cloudStatus.textContent=text;
+    cloudStatus.className=type==="ok"?"sync-ok":type==="bad"?"sync-bad":"sync-warn";
+  }
   const state=document.getElementById("loginUpdateStatus");
   if(state){state.textContent=type==="ok"?"✓ Synced":type==="bad"?"⚠ Sync Failed":"◌ Syncing...";state.classList.toggle("ok",type==="ok");state.classList.toggle("bad",type==="bad")}
+  /* Watchdog: Syncing par hamesha ke liye atka na rahe. */
+  clearTimeout(cloudWatchdogV101);
+  if(type==="warn"){
+    cloudWatchdogV101=setTimeout(()=>{
+      if(lastCloudTypeV101==="warn")setCloud("Sync مکمل نہیں ہوا — Internet check کرکے دوبارہ کوشش کریں","bad");
+    },25000);
+  }
 }
+/* "Check / Update Now" is se sync status bhi refresh karta hai. */
+window.ntRefreshSyncV101=function(){
+  try{
+    if(window.noorFirebaseSync&&window.noorFirebaseSync.ready)setCloud("Online sync ہو گیا","ok");
+    else setCloud("Firebase data load ہو رہا ہے…");
+  }catch(e){}
+};
 function buildRemoteState(){
   const defaults=window.getNoorDefaults?window.getNoorDefaults():{};
   const state=Object.assign({},defaults);
@@ -3049,6 +3107,8 @@ function buildRemoteState(){
   state.stockItems=clean(remote.settings?.stockItems||defaults.stockItems||[]);
   state.subCategories=clean(remote.settings?.subCategories||defaults.subCategories||{});
   state.customCategories=clean(remote.settings?.customCategories||defaults.customCategories||[]);
+  state.salaryConfig=clean(remote.settings?.salaryConfig||defaults.salaryConfig||{});
+  state.salaryExtras=clean(remote.settings?.salaryExtras||defaults.salaryExtras||{});
   state.entries=[...remote.entries.values()].map(x=>({...clean(x),picture:remote.entryPictures.get(String(x.id))?.data||""}));
   state.staff=[...remote.staff.values()].map(clean);
   const picsByPurchase=new Map();
@@ -3129,7 +3189,7 @@ const staffAttendanceCol=collection(fs,"businesses",BUSINESS_ID,"staffAttendance
 const staffSessionsCol=collection(fs,"businesses",BUSINESS_ID,"staffSessions");
 const STAFF_SESSION_KEY="noor-traders-staff-session";
 const staffConfigDoc=doc(fs,"businesses",BUSINESS_ID,"staffConfig","main");
-let staffConfig={shiftStart:'09:00',shiftEnd:'',radius:200,variant:'Production',instruction:'سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔',scores:{m10:10,m20:8,m30:6,m45:4,late:2},version:'v100'};
+let staffConfig={shiftStart:'09:00',shiftEnd:'',radius:200,variant:'Production',instruction:'سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔',scores:{m10:10,m20:8,m30:6,m45:4,late:2},version:'v101'};
 
 async function upsertAccount(account){
   const phone=normalizePhone(account.phone||account.id);
@@ -3182,7 +3242,7 @@ function getAttendanceForDate(date){
 function getAttendanceBetween(from,to){
   return [...ownerStaffAttendance.values()].filter(a=>(!from||a.date>=from)&&(!to||a.date<=to)).sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.checkInTs||0)-(b.checkInTs||0));
 }
-async function saveConfig(cfg){staffConfig={...staffConfig,...clean(cfg),scores:{...staffConfig.scores,...(cfg.scores||{})},version:'v100'};await setDoc(staffConfigDoc,staffConfig,{merge:true});window.applyPolicyV84?.(staffConfig)}
+async function saveConfig(cfg){staffConfig={...staffConfig,...clean(cfg),scores:{...staffConfig.scores,...(cfg.scores||{})},version:'v101'};await setDoc(staffConfigDoc,staffConfig,{merge:true});window.applyPolicyV84?.(staffConfig)}
 function getAttendanceById(id){return ownerStaffAttendance.get(id)||null}
 async function updateAttendance(id,patch){await setDoc(doc(staffAttendanceCol,id),patch,{merge:true})}
 async function deleteAttendance(id){await deleteDoc(doc(staffAttendanceCol,id))}
@@ -3215,7 +3275,7 @@ function renderStaffProfile(){
 }
 let ownAttendanceUnsub=null;
 function startStaffOwnListener(){
-  staffUnsubs.push(onSnapshot(staffConfigDoc,s=>{if(s.exists()){staffConfig={...staffConfig,...clean(s.data()),scores:{...staffConfig.scores,...(s.data().scores||{})}};const radius=staffConfig.radius||SHOP.radius;staffRuleText.textContent=`Selfie لازمی + Noor Traders سے زیادہ سے زیادہ ${radius}m`;staffInstructionText.textContent=staffConfig.instruction||staffInstructionText.textContent;staffVersionLabel.textContent='v100'}}));
+  staffUnsubs.push(onSnapshot(staffConfigDoc,s=>{if(s.exists()){staffConfig={...staffConfig,...clean(s.data()),scores:{...staffConfig.scores,...(s.data().scores||{})}};const radius=staffConfig.radius||SHOP.radius;staffRuleText.textContent=`Selfie لازمی + Noor Traders سے زیادہ سے زیادہ ${radius}m`;staffInstructionText.textContent=staffConfig.instruction||staffInstructionText.textContent;staffVersionLabel.textContent='v101'}}));
   if(ownAttendanceUnsub)try{ownAttendanceUnsub()}catch{}
   const q=query(staffAttendanceCol,where("phone","==",currentStaffPhone));
   ownAttendanceUnsub=onSnapshot(q,s=>{
@@ -3709,6 +3769,37 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
 .nt-draft-note-v101{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin:0 0 12px;padding:10px 12px;border:1px solid #f0d9a6;background:#fff8e8;color:#7a5510;border-radius:12px;font-size:13px;direction:rtl;text-align:right}
 .nt-draft-note-v101 button{border:1px solid #e3c68b;background:#fff;color:#7a5510;border-radius:9px;padding:7px 11px;font-size:12px;cursor:pointer;min-height:38px}
 
+/* ===== V101: Salary module ===== */
+.salary-head-actions-v101{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.salary-head-actions-v101 input[type=month]{padding:9px;border:1px solid #cfe0d8;border-radius:10px;min-height:42px}
+.salary-summary-v101{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0}
+.salary-summary-v101 div{background:#eef7f3;border:1px solid #d9e9e1;border-radius:12px;padding:10px}
+.salary-summary-v101 small{display:block;font-size:11px;color:#5a7268}
+.salary-summary-v101 b{font-size:16px;color:#0f5f59}
+.salary-summary-v101 .salary-final-v101{background:#0f766e;border-color:#0f766e}
+.salary-summary-v101 .salary-final-v101 small{color:#c9ece4}
+.salary-summary-v101 .salary-final-v101 b{color:#fff}
+.salary-table-v101 td,.salary-table-v101 th{white-space:nowrap}
+.salary-unset-v101{color:#a4762a;font-size:12px}
+.salary-note-v101{font-size:12px;margin-top:10px}
+.salary-grid-v101{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.salary-panel-v101{background:#fff;border:1px solid #dbe8e2;border-radius:14px;padding:14px;margin:12px 0}
+.salary-panel-v101 h4{margin:0 0 10px;color:#0f5f59;font-size:16px}
+.salary-panel-v101 label{display:block;font-size:13px;margin-bottom:10px}
+.salary-panel-v101 label input{width:100%;margin-top:4px;padding:10px;border:1px solid #cfe0d8;border-radius:9px;min-height:44px}
+.salary-break-v101{width:100%;border-collapse:collapse}
+.salary-break-v101 td{border-bottom:1px solid #eaf1ee;padding:7px 4px;font-size:13px}
+.salary-break-v101 td:last-child{text-align:left;font-weight:700;white-space:nowrap}
+.salary-sub-v101 td{background:#f4faf7}
+.salary-total-v101 td{background:#0f766e;color:#fff;font-size:15px;font-weight:800}
+.salary-add-v101{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.salary-add-v101 input,.salary-add-v101 select{padding:10px;border:1px solid #cfe0d8;border-radius:9px;min-height:44px;width:100%}
+@media(max-width:860px){
+  .salary-summary-v101{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .salary-grid-v101{grid-template-columns:1fr}
+  .salary-add-v101{grid-template-columns:1fr 1fr}
+}
+
 </style>
 <script>
 /* ========== NOOR TRADERS V101 WIRING ==========
@@ -3817,6 +3908,245 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
       window.NTOwnerDraftsV101[cfg.key]=g;
       setTimeout(function(){ g.restore() },1200);   /* app init ke baad restore */
     });
+  });
+})();
+</script>
+<script>
+/* ================= NOOR TRADERS V101 — SALARY MODULE =================
+   Attendance (Check-In/Check-Out), existing Points aur Malik ke manual
+   amounts se salary khud calculate karta hai. Koi purana data delete nahi hota. */
+(function(){
+  const $=id=>document.getElementById(id);
+  const pad=n=>String(n).padStart(2,'0');
+  function curMonth(){const t=today();return t.slice(0,7)}
+  function monthRange(m){
+    const [y,mo]=String(m||curMonth()).split('-').map(Number);
+    const last=new Date(Date.UTC(y,mo,0)).getUTCDate();
+    return {from:`${y}-${pad(mo)}-01`,to:`${y}-${pad(mo)}-${pad(last)}`};
+  }
+  function monthLabel(m){
+    const [y,mo]=String(m||curMonth()).split('-').map(Number);
+    return new Date(Date.UTC(y,mo-1,1)).toLocaleDateString('en-GB',{month:'long',year:'numeric',timeZone:'UTC'});
+  }
+  const hm=min=>{const m=Math.max(0,Math.round(min||0));return Math.floor(m/60)+'h '+pad(m%60)+'m'};
+  const hrs=min=>Number(((min||0)/60).toFixed(2));
+
+  /* ---------- settings ---------- */
+  function cfgFor(phone){
+    const d=(db.salaryConfig||{})[phone]||{};
+    return {
+      monthlySalary:Number(d.monthlySalary||0),
+      dutyHours:Number(d.dutyHours||10),
+      workingDays:Number(d.workingDays||30),
+      overtimeRate:Number(d.overtimeRate||0),   /* 0 = hourly rate hi lagega */
+      pointRate:Number(d.pointRate||0)
+    };
+  }
+  function saveCfg(phone,patch){
+    db.salaryConfig??={};
+    db.salaryConfig[phone]={...cfgFor(phone),...patch};
+    save();
+  }
+
+  /* ---------- calculation ---------- */
+  function calc(phone,month){
+    const cfg=cfgFor(phone),{from,to}=monthRange(month);
+    const recs=(window.noorStaffSystem?.getAttendanceBetween(from,to)||[]).filter(a=>normPhoneV84(a.phone)===phone);
+    const dutyMin=Math.max(0,Math.round(cfg.dutyHours*60));
+    let normalMin=0,otMin=0,daysWorked=0,attPoints=0,openDays=0;
+    for(const a of recs){
+      const sc=attScoreV84(a); if(sc!=null)attPoints+=Number(sc);
+      const w=window.ntWorkMinutesV101?window.ntWorkMinutesV101(a):null;
+      if(w==null){ if(a.checkIn&&!a.checkOut)openDays++; continue }
+      daysWorked++;
+      normalMin+=dutyMin?Math.min(w,dutyMin):w;
+      otMin+=dutyMin?Math.max(0,w-dutyMin):0;
+    }
+    const expectedHours=cfg.dutyHours*cfg.workingDays;
+    const hourly=expectedHours>0?cfg.monthlySalary/expectedHours:0;
+    const otRate=cfg.overtimeRate>0?cfg.overtimeRate:hourly;
+    const normalSalary=(normalMin/60)*hourly;
+    const overtimeAmount=(otMin/60)*otRate;
+    let taskPoints=0;
+    try{taskPoints=Number(window.noorTasks?.totals(phone,{from,to})?.points||0)}catch(e){}
+    const points=attPoints+taskPoints;
+    const pointsAmount=points*cfg.pointRate;
+    const extras=((db.salaryExtras||{})[phone]||[]).filter(x=>x.month===month);
+    const sum=k=>extras.filter(x=>x.kind===k).reduce((n,x)=>n+Number(x.amount||0),0);
+    const bonus=sum('bonus'),advance=sum('advance');
+    const final=normalSalary+overtimeAmount+pointsAmount+bonus-advance;
+    return {phone,month,from,to,...cfg,expectedHours,hourly,otRate,recs,daysWorked,openDays,
+            normalMin,otMin,normalSalary,overtimeAmount,attPoints,taskPoints,points,pointsAmount,
+            extras,bonus,advance,final};
+  }
+  window.salaryCalcV101=calc;
+
+  /* ---------- list screen ---------- */
+  function activeStaff(){return (db.staff||[]).filter(s=>s.active!==false)}
+  function renderSalary(){
+    const monthEl=$('salaryMonthV101'); if(!monthEl)return;
+    if(!monthEl.value)monthEl.value=curMonth();
+    const month=monthEl.value;
+    const lbl=$('salaryMonthLabelV101'); if(lbl)lbl.textContent=monthLabel(month);
+    const rows=activeStaff().map(s=>({s,phone:normPhoneV84(s.phone||s.id)})).map(x=>({...x,r:calc(x.phone,month)}));
+    const t=rows.reduce((a,x)=>({base:a.base+x.r.monthlySalary,ot:a.ot+x.r.overtimeAmount,pts:a.pts+x.r.pointsAmount,
+      bonus:a.bonus+x.r.bonus,adv:a.adv+x.r.advance,final:a.final+x.r.final}),{base:0,ot:0,pts:0,bonus:0,adv:0,final:0});
+    const sum=$('salarySummaryV101');
+    if(sum)sum.innerHTML=`
+      <div><small>Staff</small><b>${rows.length}</b></div>
+      <div><small>Base Salary</small><b>${money(t.base)}</b></div>
+      <div><small>Overtime</small><b>${money(t.ot)}</b></div>
+      <div><small>Points</small><b>${money(t.pts)}</b></div>
+      <div><small>Bonus</small><b>${money(t.bonus)}</b></div>
+      <div><small>Advance</small><b>${money(t.adv)}</b></div>
+      <div class="salary-final-v101"><small>Total Payable</small><b>${money(t.final)}</b></div>`;
+    const body=$('salaryRowsV101');
+    if(body)body.innerHTML=rows.map(({s,phone,r},i)=>`<tr>
+      <td>${i+1}</td>
+      <td><b>${esc(s.name||'Staff')}</b><small class="muted"> ${esc(phone)}</small></td>
+      <td>${r.monthlySalary?money(r.monthlySalary):'<span class="salary-unset-v101">مقرر نہیں</span>'}</td>
+      <td>${hm(r.normalMin)}<small class="muted"> / ${r.expectedHours}h</small></td>
+      <td>${r.otMin?hm(r.otMin)+' • '+money(r.overtimeAmount):'—'}</td>
+      <td>${r.points?r.points+' • '+money(r.pointsAmount):'—'}</td>
+      <td>${r.bonus?money(r.bonus):'—'}</td>
+      <td>${r.advance?money(r.advance):'—'}</td>
+      <td><b>${money(r.final)}</b></td>
+      <td><button class="soft" type="button" onclick="openSalaryDetailV101('${phone}')">Detail</button></td>
+    </tr>`).join('')||'<tr><td colspan="10">کوئی active ملازم نہیں</td></tr>';
+    if(currentSalaryPhone&&document.getElementById('staffSalaryDetail')?.classList.contains('active'))renderDetail();
+  }
+  window.renderSalaryV101=renderSalary;
+
+  /* ---------- detail screen ---------- */
+  let currentSalaryPhone='';
+  function openDetail(phone){
+    currentSalaryPhone=normPhoneV84(phone);
+    goScreen('staffSalaryDetail');
+    renderDetail();
+  }
+  window.openSalaryDetailV101=openDetail;
+
+  function historyMonths(n=12){
+    const out=[],[y,m]=curMonth().split('-').map(Number);
+    for(let i=0;i<n;i++){const d=new Date(Date.UTC(y,m-1-i,1));out.push(`${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}`)}
+    return out;
+  }
+  function renderDetail(){
+    const box=$('salaryDetailBodyV101'); if(!box)return;
+    const phone=currentSalaryPhone,s=staffForPhoneV84(phone);
+    const month=$('salaryMonthV101')?.value||curMonth();
+    const r=calc(phone,month);
+    $('salaryDetailTitleV101').textContent=(s.name||phone);
+    $('salaryDetailMonthV101').textContent=`${monthLabel(month)} • ${esc(phone)}`;
+    const extrasRows=r.extras.map(x=>`<tr>
+        <td>${esc(x.date||'')}</td>
+        <td>${x.kind==='advance'?'Advance / Deduction':'Bonus / Added'}</td>
+        <td>${money(x.amount)}</td>
+        <td>${esc(x.note||'—')}</td>
+        <td>${esc(x.by||'Malik')}</td>
+        <td><button class="danger" type="button" onclick="deleteSalaryExtraV101('${esc(x.id)}')">Delete</button></td>
+      </tr>`).join('')||'<tr><td colspan="6">اس مہینے کوئی اندراج نہیں</td></tr>';
+    const hist=historyMonths(12).map(m=>{const h=calc(phone,m);
+      return `<tr><td>${monthLabel(m)}</td><td>${hm(h.normalMin)}</td><td>${hm(h.otMin)}</td><td>${h.points}</td><td>${money(h.bonus)}</td><td>${money(h.advance)}</td><td><b>${money(h.final)}</b></td></tr>`}).join('');
+    box.innerHTML=`
+    <div class="salary-grid-v101">
+      <div class="salary-panel-v101">
+        <h4>Monthly Settings</h4>
+        <label>Monthly Salary (Rs)<input id="salCfgSalaryV101" type="number" min="0" step="1" value="${r.monthlySalary||''}"></label>
+        <label>Daily Duty Hours<input id="salCfgDutyV101" type="number" min="1" max="24" step="0.5" value="${r.dutyHours}"></label>
+        <label>Monthly Working Days<input id="salCfgDaysV101" type="number" min="1" max="31" step="1" value="${r.workingDays}"></label>
+        <label>Overtime Rate (Rs/hour) <small>خالی = عام hourly rate</small><input id="salCfgOtV101" type="number" min="0" step="1" value="${r.overtimeRate||''}"></label>
+        <label>Per Point Rate (Rs)<input id="salCfgPointV101" type="number" min="0" step="1" value="${r.pointRate||''}"></label>
+        <button class="primary" type="button" onclick="saveSalaryCfgV101()">Save Settings</button>
+      </div>
+      <div class="salary-panel-v101">
+        <h4>Breakdown — ${monthLabel(month)}</h4>
+        <table class="salary-break-v101"><tbody>
+          <tr><td>Monthly Base Salary</td><td>${money(r.monthlySalary)}</td></tr>
+          <tr><td>Required Working Hours</td><td>${r.expectedHours} h <small class="muted">(${r.dutyHours} × ${r.workingDays})</small></td></tr>
+          <tr><td>Actual Normal Working Hours</td><td>${hm(r.normalMin)} <small class="muted">(${r.daysWorked} din)</small></td></tr>
+          <tr><td>Hourly Rate</td><td>${money(r.hourly)}</td></tr>
+          <tr class="salary-sub-v101"><td>Normal Working Salary</td><td>${money(r.normalSalary)}</td></tr>
+          <tr><td>Overtime Hours</td><td>${hm(r.otMin)}</td></tr>
+          <tr><td>Overtime Rate</td><td>${money(r.otRate)} /h${r.overtimeRate>0?'':' <small class="muted">(hourly)</small>'}</td></tr>
+          <tr class="salary-sub-v101"><td>Overtime Amount</td><td>+ ${money(r.overtimeAmount)}</td></tr>
+          <tr><td>Total Points</td><td>${r.points} <small class="muted">(Attendance ${r.attPoints} + Tasks ${r.taskPoints})</small></td></tr>
+          <tr><td>Per Point Rate</td><td>${money(r.pointRate)}</td></tr>
+          <tr class="salary-sub-v101"><td>Points Amount</td><td>+ ${money(r.pointsAmount)}</td></tr>
+          <tr class="salary-sub-v101"><td>Malik Added Amount</td><td>+ ${money(r.bonus)}</td></tr>
+          <tr class="salary-sub-v101"><td>Advance / Deduction</td><td>− ${money(r.advance)}</td></tr>
+          <tr class="salary-total-v101"><td>Final Payable Salary</td><td>${money(r.final)}</td></tr>
+        </tbody></table>
+        ${r.openDays?`<p class="muted">${r.openDays} دن ایسے ہیں جن کا Check-Out نہیں ہوا — وہ گھنٹوں میں شامل نہیں۔</p>`:''}
+      </div>
+    </div>
+
+    <div class="salary-panel-v101">
+      <h4>Bonus / Advance</h4>
+      <div class="salary-add-v101">
+        <select id="salExtraKindV101"><option value="bonus">+ Add Amount (Bonus)</option><option value="advance">Advance / Deduction</option></select>
+        <input id="salExtraAmountV101" type="number" min="1" step="1" placeholder="Amount (Rs)">
+        <input id="salExtraNoteV101" placeholder="Reason / Note">
+        <input id="salExtraDateV101" type="date" value="${today()}">
+        <button class="primary" type="button" onclick="addSalaryExtraV101()">Save</button>
+      </div>
+      <div class="table-scroll"><table><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Reason</th><th>Added By</th><th></th></tr></thead><tbody>${extrasRows}</tbody></table></div>
+    </div>
+
+    <div class="salary-panel-v101">
+      <h4>Month-wise History</h4>
+      <div class="table-scroll"><table><thead><tr><th>Month</th><th>Normal Hours</th><th>Overtime</th><th>Points</th><th>Bonus</th><th>Advance</th><th>Final</th></tr></thead><tbody>${hist}</tbody></table></div>
+    </div>`;
+  }
+
+  window.saveSalaryCfgV101=function(){
+    if(!currentSalaryPhone)return;
+    saveCfg(currentSalaryPhone,{
+      monthlySalary:Number($('salCfgSalaryV101').value||0),
+      dutyHours:Number($('salCfgDutyV101').value||10),
+      workingDays:Number($('salCfgDaysV101').value||30),
+      overtimeRate:Number($('salCfgOtV101').value||0),
+      pointRate:Number($('salCfgPointV101').value||0)
+    });
+    renderDetail();
+    window.toastV97&&toastV97('✅ Salary settings save ho gayi');
+  };
+  window.addSalaryExtraV101=function(){
+    if(!currentSalaryPhone)return;
+    const amount=Number($('salExtraAmountV101').value||0);
+    if(!(amount>0))return alert('Amount درست درج کریں۔');
+    const month=$('salaryMonthV101')?.value||curMonth();
+    db.salaryExtras??={};
+    (db.salaryExtras[currentSalaryPhone]??=[]).push({
+      id:'sx'+Date.now()+Math.random().toString(36).slice(2,6),
+      month, kind:$('salExtraKindV101').value==='advance'?'advance':'bonus',
+      amount, note:$('salExtraNoteV101').value.trim(),
+      date:$('salExtraDateV101').value||today(), by:'Malik / admin', at:Date.now()
+    });
+    save();
+    renderDetail();
+  };
+  window.deleteSalaryExtraV101=function(id){
+    if(!currentSalaryPhone)return;
+    if(!confirm('یہ اندراج delete کریں؟'))return;
+    db.salaryExtras[currentSalaryPhone]=(db.salaryExtras[currentSalaryPhone]||[]).filter(x=>String(x.id)!==String(id));
+    save();
+    renderDetail();
+  };
+  window.printSalarySheetV101=function(){
+    const month=$('salaryMonthV101')?.value||curMonth();
+    const rows=activeStaff().map(s=>({s,r:calc(normPhoneV84(s.phone||s.id),month)}));
+    const total=rows.reduce((n,x)=>n+x.r.final,0);
+    const html=rows.map(({s,r})=>`<tr><td>${esc(s.name||'')}</td><td>${money(r.monthlySalary)}</td><td>${hm(r.normalMin)}</td><td>${hm(r.otMin)}</td><td>${money(r.overtimeAmount)}</td><td>${r.points}</td><td>${money(r.pointsAmount)}</td><td>${money(r.bonus)}</td><td>${money(r.advance)}</td><td><b>${money(r.final)}</b></td></tr>`).join('');
+    printWindowV84('Salary Sheet',monthLabel(month),
+      `<div><span>Staff</span><b>${rows.length}</b></div><div><span>Total Payable</span><b>${money(total)}</b></div><div><span>Month</span><b>${monthLabel(month)}</b></div><div><span>Generated</span><b>${today()}</b></div>`,
+      ['Name','Base','Normal Hours','OT Hours','OT Amount','Points','Points Rs','Bonus','Advance','Final'],html);
+  };
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    const m=$('salaryMonthV101');
+    if(m){m.value=curMonth();m.addEventListener('change',()=>{renderSalary();if(currentSalaryPhone)renderDetail()})}
+    renderSalary();
   });
 })();
 </script>
