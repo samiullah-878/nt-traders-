@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-<title>Noor Traders Hisab v100</title>
+<title>Noor Traders Hisab v101</title>
 <style>
 :root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#6b7280;--brand:#0f766e;--brand2:#115e59;--red:#b91c1c;--line:#dce3ec;--gold:#b7791f;--blue:#1d4ed8}*{box-sizing:border-box}body{margin:0;font-family:system-ui,"Noto Nastaliq Urdu","Noto Sans Arabic",sans-serif;background:var(--bg);color:var(--ink)}button,input,select,textarea{font:inherit}.app{max-width:1280px;margin:auto;padding:12px}.top{background:linear-gradient(135deg,#134e4a,#0f766e);color:#fff;border-radius:22px;padding:18px;display:flex;gap:12px;align-items:center;justify-content:space-between;box-shadow:0 10px 30px #0f766e30}.top h1{margin:0;font-size:clamp(24px,5vw,40px)}.top small{opacity:.9}.nav{display:flex;gap:8px;overflow:auto;padding:12px 0;position:sticky;top:0;z-index:5;background:var(--bg)}.nav button{white-space:nowrap;border:1px solid var(--line);background:#fff;padding:10px 14px;border-radius:13px;font-weight:700}.nav button.active{background:var(--brand);color:#fff;border-color:var(--brand)}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 4px 16px #1720330a}.span12{grid-column:span 12}.span8{grid-column:span 8}.span6{grid-column:span 6}.span4{grid-column:span 4}.span3{grid-column:span 3}.kpi{font-size:13px;color:var(--muted)}.kpi strong{display:block;font-size:24px;color:var(--ink);margin-top:4px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.form{display:grid;grid-template-columns:repeat(12,1fr);gap:8px}.f2{grid-column:span 2}.f3{grid-column:span 3}.f4{grid-column:span 4}.f5{grid-column:span 5}.f6{grid-column:span 6}.f8{grid-column:span 8}.f12{grid-column:span 12}label{font-size:13px;color:var(--muted)}input,select,textarea{width:100%;border:1px solid #ccd5e0;border-radius:11px;padding:10px;background:#fff}button.primary{background:var(--brand);color:#fff;border:0;border-radius:11px;padding:10px 15px;font-weight:800}button.danger{background:#fff1f2;color:var(--red);border:1px solid #fecdd3;border-radius:10px;padding:8px 11px}button.soft{background:#eef7f6;color:var(--brand2);border:1px solid #cce8e5;border-radius:10px;padding:8px 11px}table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:9px 7px;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle}th{color:var(--muted);font-size:12px}.amt{font-weight:800;font-variant-numeric:tabular-nums}.muted{color:var(--muted)}.tab{display:none}.tab.active{display:block}.badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:12px;background:#eef2ff;color:#3730a3}.photo{width:52px;height:52px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}.stocktable input{min-width:80px;padding:7px}.pos{color:#15803d;font-weight:800}.neg{color:#b91c1c;font-weight:800}.notice{padding:10px 12px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;margin:10px 0}.footer{padding:20px;text-align:center;color:var(--muted)}@media(max-width:800px){.span8,.span6,.span4,.span3{grid-column:span 12}.f2,.f3,.f4,.f5,.f6,.f8{grid-column:span 12}.top{align-items:flex-start;flex-direction:column}table{font-size:12px}.card{padding:11px}}
 
@@ -954,6 +954,7 @@ th,td{font-size:16px;line-height:1.55}
       <div class="portal-stat"><span>آج</span><strong id="staffTodayStatus">Not Checked In</strong></div>
       <div class="portal-stat"><span>Check-In</span><strong id="staffTodayIn">—</strong></div>
       <div class="portal-stat"><span>Check-Out</span><strong id="staffTodayOut">—</strong></div>
+      <div class="portal-stat"><span>کام کے گھنٹے</span><strong id="staffTodayHours">—</strong></div>
       <div class="portal-stat"><span>Shop Distance</span><strong id="staffDistance">—</strong></div>
     </section>
 
@@ -1002,7 +1003,7 @@ th,td{font-size:16px;line-height:1.55}
       </div>
       <div class="portal-table-wrap">
         <table class="portal-table">
-          <thead><tr><th>Date</th><th>Check-In</th><th>Check-Out</th><th>Distance</th><th>Status</th></tr></thead>
+          <thead><tr><th>Date</th><th>Check-In</th><th>Check-Out</th><th>Working Hours / کام کے گھنٹے</th><th>Distance</th><th>Status</th></tr></thead>
           <tbody id="staffHistoryRows"></tbody>
         </table>
       </div>
@@ -1132,18 +1133,18 @@ th,td{font-size:16px;line-height:1.55}
 <div id="ntOwnerTaskState" class="nt-msg" role="status"></div><div id="ntOwnerTaskNotice" class="nt-msg" role="status"></div><div id="ntOwnerTaskStats"></div><div id="ntOwnerTaskList" class="nt-cards"></div></div></section>
 <section id="staffAccounts" class="tab app-screen">
   <div class="screen-head"><div><div class="eyebrow">STAFF • ACCOUNTS</div><h2>Staff Accounts</h2><p>Name، Address، Phone/Password اور Profile management</p></div><button class="primary" onclick="toggleStaffCreateV84(true)">+ New Staff</button></div>
-  <div class="staff-accounts-grid"><div id="staffCreateV84" class="pro-card staff-create-v84"><div class="pro-card-head"><h3>New Staff Account</h3><button class="icon-close" onclick="toggleStaffCreateV84(false)">×</button></div><form id="staffFormV84" class="vertical-form"><div class="profile-upload-v84"><div id="staffPhotoPreviewV84" class="account-avatar">👤</div><label class="soft photo-label-v84">Photo<input id="staffPhotoV84" type="file" accept="image/*" capture="user" hidden></label></div><label>1. Name</label><input id="staffNameV84" required><label>2. Role</label><input id="staffRoleV84" placeholder="Sales / Driver / Manager"><label>3. Address</label><textarea id="staffAddressV84" rows="3" required></textarea><label>4. Phone Number / Login ID</label><input id="staffPhoneV84" inputmode="tel" required placeholder="03XXXXXXXXX"><div class="password-auto-box"><span>Password</span><b id="staffPasswordV84">Phone Number</b></div><label class="staff-login-toggle"><input id="staffLoginEnabledV84" type="checkbox" checked> Staff login enabled</label><button class="primary">Save Account</button></form></div><div class="pro-card staff-list-card-v84"><div class="pro-card-head"><div><h3>All Staff</h3><small id="staffCountV84">0 accounts</small></div><input id="staffSearchV84" placeholder="Search name / phone"></div><div id="staffCardsV84" class="staff-cards-v84"></div></div></div>
+  <div class="staff-accounts-grid"><div id="staffCreateV84" class="pro-card staff-create-v84"><div class="pro-card-head"><h3>New Staff Account</h3><button class="icon-close" onclick="toggleStaffCreateV84(false)">×</button></div><form id="staffFormV84" class="vertical-form"><div class="profile-upload-v84"><div id="staffPhotoPreviewV84" class="account-avatar">👤</div><button type="button" id="staffPhotoBtnV101" class="soft photo-label-v84">📷 لائیو کیمرہ</button><input id="staffPhotoV84" type="file" hidden disabled></div><label>1. Name</label><input id="staffNameV84" required><label>2. Role</label><input id="staffRoleV84" placeholder="Sales / Driver / Manager"><label>3. Address</label><textarea id="staffAddressV84" rows="3" required></textarea><label>4. Phone Number / Login ID</label><input id="staffPhoneV84" inputmode="tel" required placeholder="03XXXXXXXXX"><div class="password-auto-box"><span>Password</span><b id="staffPasswordV84">Phone Number</b></div><label class="staff-login-toggle"><input id="staffLoginEnabledV84" type="checkbox" checked> Staff login enabled</label><button class="primary">Save Account</button></form></div><div class="pro-card staff-list-card-v84"><div class="pro-card-head"><div><h3>All Staff</h3><small id="staffCountV84">0 accounts</small></div><input id="staffSearchV84" placeholder="Search name / phone"></div><div id="staffCardsV84" class="staff-cards-v84"></div></div></div>
 </section>
 
 <section id="attendanceToday" class="tab app-screen">
   <div class="screen-head"><div><div class="eyebrow">ATTENDANCE • TODAY</div><h2>Today Attendance</h2><p>Manual owner attendance, current time, GPS, Selfie, Late status اور Score</p></div><div class="screen-actions"><input id="todayAttDateV84" type="date"><button class="soft" onclick="selectAllAttendanceV85(true)">Select All Present</button><button class="soft" onclick="selectAllAttendanceV85(false)">Clear All</button><button class="primary" onclick="saveAllAttendanceV85()">Save All Attendance</button><button class="soft" onclick="printDailyAttendanceV84()">📄 Daily PDF</button></div></div>
   <div class="attendance-kpi-grid"><div><small>Total</small><strong id="todayTotalV84">0</strong></div><div class="green"><small>Present</small><strong id="todayPresentV84">0</strong></div><div class="red"><small>Absent</small><strong id="todayAbsentV84">0</strong></div><div class="orange"><small>Late</small><strong id="todayLateV84">0</strong></div><div class="blue"><small>Checked Out</small><strong id="todayOutV84">0</strong></div><div class="purple"><small>Avg Score</small><strong id="todayAvgScoreV84">—</strong></div></div>
-  <div class="pro-card"><div class="pro-card-head"><h3>Arrival Order</h3><div class="filter-row"><input id="todayAttSearchV84" placeholder="Search staff"><select id="todayAttFilterV84"><option value="all">All</option><option value="present">Present</option><option value="absent">Absent</option><option value="late">Late</option><option value="out">Checked Out</option></select></div></div><div class="table-scroll"><table class="attendance-table-v84"><thead><tr><th>#</th><th>Staff</th><th>Status</th><th>Check-In</th><th>Check-Out</th><th>Attendance Selfie</th><th>Score / Edit</th></tr></thead><tbody id="todayAttRowsV84"></tbody></table></div></div>
+  <div class="pro-card"><div class="pro-card-head"><h3>Arrival Order</h3><div class="filter-row"><input id="todayAttSearchV84" placeholder="Search staff"><select id="todayAttFilterV84"><option value="all">All</option><option value="present">Present</option><option value="absent">Absent</option><option value="late">Late</option><option value="out">Checked Out</option></select></div></div><div class="table-scroll"><table class="attendance-table-v84"><thead><tr><th>#</th><th>Staff</th><th>Status</th><th>Check-In</th><th>Check-Out</th><th>Working Hours / کام کے گھنٹے</th><th>Attendance Selfie</th><th>Score / Edit</th></tr></thead><tbody id="todayAttRowsV84"></tbody></table></div></div>
 </section>
 
 <section id="attendanceHistory" class="tab app-screen">
   <div class="screen-head"><div><div class="eyebrow">ATTENDANCE • HISTORY</div><h2>Date-wise Attendance History</h2><p>پرانے دن، corrections، late/score اور records</p></div></div>
-  <div class="pro-card"><div class="history-filter-v84"><label>From<input id="histFromV84" type="date"></label><label>To<input id="histToV84" type="date"></label><label>Staff<select id="histStaffV84"><option value="">All Staff</option></select></label><button class="primary" onclick="renderAttendanceHistoryV84()">Load</button><button class="soft" onclick="printHistoryReportV84()">📄 PDF</button></div><div class="history-summary-v84"><span>Records <b id="histRecordsV84">0</b></span><span>Late <b id="histLateV84">0</b></span><span>Avg Score <b id="histAvgV84">—</b></span></div><div class="table-scroll"><table><thead><tr><th>Date</th><th>Staff</th><th>Check-In</th><th>Late</th><th>Score</th><th>Check-Out</th><th>Distance</th><th>Edit</th></tr></thead><tbody id="histRowsV84"></tbody></table></div></div>
+  <div class="pro-card"><div class="history-filter-v84"><label>From<input id="histFromV84" type="date"></label><label>To<input id="histToV84" type="date"></label><label>Staff<select id="histStaffV84"><option value="">All Staff</option></select></label><button class="primary" onclick="renderAttendanceHistoryV84()">Load</button><button class="soft" onclick="printHistoryReportV84()">📄 PDF</button></div><div class="history-summary-v84"><span>Records <b id="histRecordsV84">0</b></span><span>Late <b id="histLateV84">0</b></span><span>Avg Score <b id="histAvgV84">—</b></span></div><div class="table-scroll"><table><thead><tr><th>Date</th><th>Staff</th><th>Check-In</th><th>Late</th><th>Score</th><th>Check-Out</th><th>Working Hours / کام کے گھنٹے</th><th>Distance</th><th>Edit</th></tr></thead><tbody id="histRowsV84"></tbody></table></div></div>
 </section>
 
 <section id="scores" class="tab app-screen">
@@ -1179,7 +1180,7 @@ th,td{font-size:16px;line-height:1.55}
       <input id="staffEditOldPhoneV85" type="hidden">
       <div class="staff-edit-photo-v85">
         <div id="staffEditPhotoPreviewV85" class="account-avatar">👤</div>
-        <label class="soft">Change Photo<input id="staffEditPhotoV85" type="file" accept="image/*" capture="user" hidden></label>
+        <button type="button" id="staffEditPhotoBtnV101" class="soft">📷 لائیو کیمرہ</button><input id="staffEditPhotoV85" type="file" hidden disabled>
       </div>
       <label>Name</label><input id="staffEditNameV85" required>
       <label>Role</label><input id="staffEditRoleV85" placeholder="Sales / Driver / Manager">
@@ -1235,7 +1236,7 @@ th,td{font-size:16px;line-height:1.55}
         <form id="staffForm" class="account-form">
           <div class="account-photo-row">
             <div id="staffPhotoPreview" class="account-avatar">👤</div>
-            <label class="account-photo-btn">📷 Photo<input id="staffPhoto" type="file" accept="image/*" capture="user" hidden></label>
+            <button type="button" id="staffPhotoBtnLegacyV101" class="account-photo-btn">📷 لائیو کیمرہ</button><input id="staffPhoto" type="file" hidden disabled>
           </div>
 
           <label>1. نام</label>
@@ -1297,6 +1298,7 @@ th,td{font-size:16px;line-height:1.55}
                 <th>Status</th>
                 <th>Check-In</th>
                 <th>Check-Out</th>
+                <th>Working Hours</th>
                 <th>GPS / Selfie</th>
                 <th>Action</th>
               </tr>
@@ -1334,6 +1336,214 @@ th,td{font-size:16px;line-height:1.55}
 <section id="settings" class="tab app-screen"><div class="grid"><div class="card span6"><h3>Full Migration Backup</h3><p class="muted">مکمل JSON backup download کریں یا restore کریں۔ Restore ہونے پر online data بھی sync ہوگا۔</p><div class="row"><button class="primary" onclick="backupAll()">Full Migration Backup Download</button><label class="soft" style="cursor:pointer">Backup Restore<input type="file" id="restoreFile" accept="application/json" style="display:none"></label></div></div><div class="card span6"><h3>Expense Categories</h3><div class="row"><input id="newCat" placeholder="نئی category"><button class="soft" onclick="addCategory()">Add</button></div><div id="catList" style="margin-top:10px"></div></div><div class="card span12"><h3>Attendance Policy & Version</h3><div class="form"><div class="f3"><label>Shift Start</label><input id="policyShiftStartV84" type="time" value="09:00"></div><div class="f3"><label>Shift End (optional)</label><input id="policyShiftEndV84" type="time"></div><div class="f3"><label>Geofence Radius (m)</label><input id="policyRadiusV84" type="number" value="200"></div><div class="f3"><label>Variant</label><input id="policyVariantV84" value="Production"></div><div class="f12"><label>Check-In Instruction</label><input id="policyInstructionV84" value="سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔"></div><div class="f12 score-policy-editor"><label>Score Rules (minutes late → score)</label><div class="score-policy-grid"><span>≤10 min <input id="score10V84" type="number" value="10" min="0" max="10"></span><span>≤20 min <input id="score20V84" type="number" value="8" min="0" max="10"></span><span>≤30 min <input id="score30V84" type="number" value="6" min="0" max="10"></span><span>≤45 min <input id="score45V84" type="number" value="4" min="0" max="10"></span><span>Later <input id="scoreLateV84" type="number" value="2" min="0" max="10"></span></div></div><div class="f12"><button class="primary" type="button" onclick="saveAttendancePolicyV84()">Save Attendance Policy</button></div></div><div class="version-panel-v84"><span>Current Version <b id="settingsVersionV84">v100</b></span><span>Variant <b id="settingsVariantV84">Production</b></span><span id="settingsUpdateV84">Up to date</span><button class="soft update-now-v85" type="button" onclick="forceAppUpdateV85()">Check / Update Now</button></div></div><div class="card span6"><h3>مالک کا پاس ورڈ</h3><p class="muted">یوزر نیم: <b>admin</b></p><form id="ownerPasswordForm" class="vertical-form"><label for="ownerOldPassword">موجودہ پاس ورڈ</label><input id="ownerOldPassword" type="password" autocomplete="current-password" required><label for="ownerNewPassword">نیا پاس ورڈ — کم از کم 6 حروف</label><input id="ownerNewPassword" type="password" autocomplete="new-password" minlength="6" required><label for="ownerConfirmPassword">نیا پاس ورڈ دوبارہ درج کریں</label><input id="ownerConfirmPassword" type="password" autocomplete="new-password" minlength="6" required><button id="ownerPasswordBtn" class="primary" type="submit">پاس ورڈ تبدیل کریں</button><div id="ownerPasswordMessage" class="login-message" role="status" aria-live="polite"></div></form></div><div class="card span12"><h3>Storage</h3><p>یہ version <b>Firebase Firestore</b> کے ساتھ online sync کرتا ہے اور browser <b>localStorage</b> کو offline/local cache کے طور پر رکھتا ہے۔</p><button class="danger" onclick="resetAll()">صرف اس Browser کا Local Cache صاف کریں</button></div></div></section>
 
 <div class="footer">Noor Traders Hisab — Standalone HTML conversion from v79 source</div></div>
+<script>
+/* ================= NOOR TRADERS V101 CORE =================
+   1) Working Hours  – hamesha Check-In/Check-Out se calculate hote hain,
+      database mein alag save NAHI hote (purana data bhi chalta hai).
+   2) Live camera    – staff account photo sirf live camera se, gallery band.
+   3) Draft auto-save – adhoora form refresh par zaya na ho.
+   ========================================================== */
+
+/* ---------- 1. WORKING HOURS ---------- */
+function ntMinutesV101(value){
+  var m=String(value==null?'':value).trim().match(/(\d{1,2})[:.](\d{2})(?:[:.]\d{2})?\s*([AaPp])?\.?\s*[Mm]?/);
+  if(!m)return null;
+  var h=Number(m[1]),mi=Number(m[2]),ap=(m[3]||'').toUpperCase();
+  if(!isFinite(h)||!isFinite(mi)||mi>59)return null;
+  if(ap==='P'&&h<12)h+=12;
+  if(ap==='A'&&h===12)h=0;
+  if(h>23)return null;
+  return h*60+mi;
+}
+function ntWorkMinutesV101(rec){
+  if(!rec||typeof rec!=='object')return null;
+  var i=ntMinutesV101(rec.checkIn||rec.checkInTime),o=ntMinutesV101(rec.checkOut||rec.checkOutTime);
+  if(i==null||o==null)return null;
+  var d=o-i;
+  if(d<0)d+=1440;                 /* raat ki shift: aadhi raat ke paar */
+  if(d<=0||d>16*60)return null;   /* ghalat ya na-mumkin duration -> kabhi na dikhao */
+  return d;
+}
+function ntHmV101(mins,style){
+  var h=Math.floor(mins/60),m=mins%60;
+  return style==='short'?(h+'h '+(m<10?'0':'')+m+'m'):(h+' گھنٹے '+m+' منٹ');
+}
+function whTextV101(rec,style){
+  if(!rec||typeof rec!=='object')return '—';
+  if(!(rec.checkIn||rec.checkInTime))return '—';
+  if(!(rec.checkOut||rec.checkOutTime))return 'جاری ہے';
+  var d=ntWorkMinutesV101(rec);
+  return d==null?'—':ntHmV101(d,style);
+}
+function whTotalTextV101(list,style){
+  var t=(list||[]).reduce(function(n,a){var d=ntWorkMinutesV101(a);return n+(d||0)},0);
+  return t?ntHmV101(t,style):'—';
+}
+window.whTextV101=whTextV101;window.whTotalTextV101=whTotalTextV101;window.ntWorkMinutesV101=ntWorkMinutesV101;
+
+/* ---------- 2. LIVE CAMERA (no gallery / no file picker) ---------- */
+var ntCamStreamV101=null;
+function ntStopCamV101(){
+  try{ if(ntCamStreamV101)ntCamStreamV101.getTracks().forEach(function(t){t.stop()}) }catch(e){}
+  ntCamStreamV101=null;
+  var el=document.getElementById('ntCameraModalV101');
+  if(el&&el.parentNode)el.parentNode.removeChild(el);
+}
+function openLiveCameraV101(options){
+  var opt=options||{};
+  return new Promise(function(resolve){
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+      alert('اس براؤزر میں لائیو کیمرہ دستیاب نہیں۔ ایپ Chrome میں https لنک سے کھولیں۔');
+      return resolve('');
+    }
+    ntStopCamV101();
+    var wrap=document.createElement('div');
+    wrap.id='ntCameraModalV101';wrap.className='nt-cam-v101';
+    wrap.innerHTML='<div class="nt-cam-card-v101">'+
+      '<div class="nt-cam-head-v101"><b>'+(opt.title||'لائیو کیمرہ')+'</b><button type="button" data-cam="close">✕</button></div>'+
+      '<div class="nt-cam-stage-v101"><video playsinline autoplay muted></video><img hidden alt="کیمرے سے لی گئی تصویر"><canvas hidden></canvas></div>'+
+      '<p class="nt-cam-msg-v101">کیمرہ تیار ہو رہا ہے…</p>'+
+      '<div class="nt-cam-actions-v101">'+
+        '<button type="button" class="nt-cam-primary-v101" data-cam="shot">📷 تصویر لیں</button>'+
+        '<button type="button" data-cam="retake" hidden>↺ دوبارہ لیں</button>'+
+        '<button type="button" class="nt-cam-primary-v101" data-cam="use" hidden>✓ یہی رکھیں</button>'+
+        '<button type="button" data-cam="flip">🔄 کیمرہ بدلیں</button>'+
+      '</div>'+
+      '<small class="nt-cam-note-v101">گیلری سے تصویر منتخب کرنے کا آپشن بند ہے۔ صرف ابھی لی گئی تصویر قبول ہوگی۔</small>'+
+    '</div>';
+    document.body.appendChild(wrap);
+    var video=wrap.querySelector('video'),img=wrap.querySelector('img'),canvas=wrap.querySelector('canvas'),
+        msg=wrap.querySelector('.nt-cam-msg-v101'),
+        btn=function(n){return wrap.querySelector('[data-cam="'+n+'"]')},
+        facing=opt.facing||'user',shot='',done=false;
+    function finish(v){ if(done)return; done=true; ntStopCamV101(); resolve(v||'') }
+    function fail(text){ msg.textContent=text; msg.className='nt-cam-msg-v101 bad'; btn('shot').hidden=true; btn('flip').hidden=true }
+    function start(){
+      msg.textContent='کیمرہ تیار ہو رہا ہے…';msg.className='nt-cam-msg-v101';
+      try{ if(ntCamStreamV101)ntCamStreamV101.getTracks().forEach(function(t){t.stop()}) }catch(e){}
+      navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:1280}},audio:false})
+        .then(function(stream){
+          ntCamStreamV101=stream;video.srcObject=stream;
+          video.play().catch(function(){});
+          msg.textContent='چہرہ فریم میں رکھیں، پھر «تصویر لیں» دبائیں۔';
+        })
+        .catch(function(err){
+          var name=(err&&err.name)||'';
+          if(name==='NotAllowedError')fail('کیمرے کی اجازت نہیں ملی۔ براؤزر کی Settings میں Camera کو Allow کریں۔');
+          else if(name==='NotFoundError')fail('اس ڈیوائس پر کیمرہ نہیں ملا۔');
+          else fail('کیمرہ نہیں کھل سکا۔ دوسری ایپ بند کرکے دوبارہ کوشش کریں۔');
+        });
+    }
+    btn('shot').onclick=function(){
+      if(!video.videoWidth)return;
+      var max=Number(opt.max||360),w=video.videoWidth,h=video.videoHeight,sc=Math.min(1,max/Math.max(w,h));
+      canvas.width=Math.round(w*sc);canvas.height=Math.round(h*sc);
+      canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
+      shot=canvas.toDataURL('image/jpeg',0.75);
+      img.src=shot;img.hidden=false;video.hidden=true;
+      btn('shot').hidden=true;btn('flip').hidden=true;btn('retake').hidden=false;btn('use').hidden=false;
+      msg.textContent='تصویر لے لی گئی۔ ٹھیک ہے تو «یہی رکھیں» دبائیں۔';
+    };
+    btn('retake').onclick=function(){
+      shot='';img.hidden=true;video.hidden=false;
+      btn('shot').hidden=false;btn('flip').hidden=false;btn('retake').hidden=true;btn('use').hidden=true;
+      msg.textContent='چہرہ فریم میں رکھیں، پھر «تصویر لیں» دبائیں۔';
+    };
+    btn('use').onclick=function(){ finish(shot) };
+    btn('flip').onclick=function(){ facing=facing==='user'?'environment':'user'; start() };
+    btn('close').onclick=function(){ finish('') };
+    wrap.addEventListener('click',function(ev){ if(ev.target===wrap)finish('') });
+    start();
+  });
+}
+window.openLiveCameraV101=openLiveCameraV101;
+
+/* ---------- 3. DRAFT AUTO-SAVE ---------- */
+var NTDraftsV101=(function(){
+  var PREFIX='ntDraftV101:',MAXAGE=24*60*60*1000,DBP=null;
+  function idb(){
+    if(DBP)return DBP;
+    DBP=new Promise(function(res){
+      try{
+        var r=indexedDB.open('ntDraftsV101',1);
+        r.onupgradeneeded=function(){ try{r.result.createObjectStore('photos')}catch(e){} };
+        r.onsuccess=function(){res(r.result)};
+        r.onerror=function(){res(null)};
+      }catch(e){res(null)}
+    });
+    return DBP;
+  }
+  function putPhoto(key,val){
+    return idb().then(function(d){ if(!d)return; try{ d.transaction('photos','readwrite').objectStore('photos').put({value:val,at:Date.now()},key) }catch(e){} });
+  }
+  function getPhoto(key){
+    return idb().then(function(d){
+      if(!d)return '';
+      return new Promise(function(res){
+        try{
+          var rq=d.transaction('photos','readonly').objectStore('photos').get(key);
+          rq.onsuccess=function(){ var v=rq.result; res(v&&v.value&&(Date.now()-(v.at||0))<MAXAGE?v.value:'') };
+          rq.onerror=function(){res('')};
+        }catch(e){res('')}
+      });
+    });
+  }
+  function delPhoto(key){
+    return idb().then(function(d){ if(!d)return; try{ d.transaction('photos','readwrite').objectStore('photos').delete(key) }catch(e){} });
+  }
+  /* password kabhi save nahi hota */
+  function isSecret(el){ return !el||el.type==='password'||/pass/i.test(el.id||'')||/pass/i.test(el.name||'') }
+  function readText(key){
+    try{
+      var raw=localStorage.getItem(PREFIX+key); if(!raw)return null;
+      var obj=JSON.parse(raw);
+      if(!obj||!obj.at||Date.now()-obj.at>MAXAGE){ localStorage.removeItem(PREFIX+key); return null }
+      return obj;
+    }catch(e){return null}
+  }
+  function clear(key){ try{localStorage.removeItem(PREFIX+key)}catch(e){} delPhoto(key) }
+  function guard(cfg){
+    var fields=cfg.fields||[],key=cfg.key,timer=null;
+    function collect(){
+      var v={};
+      fields.forEach(function(id){ var el=document.getElementById(id); if(!el||isSecret(el))return; v[id]=el.type==='checkbox'?!!el.checked:el.value });
+      return v;
+    }
+    function hasContent(v){ return Object.keys(v).some(function(k){ return typeof v[k]==='string'&&v[k].trim() }) }
+    function saveNow(){
+      var v=collect();
+      if(!hasContent(v))return clear(key);
+      try{ localStorage.setItem(PREFIX+key,JSON.stringify({at:Date.now(),tag:cfg.tag?cfg.tag():'',values:v})) }catch(e){}
+    }
+    function schedule(){ clearTimeout(timer); timer=setTimeout(saveNow,350) }
+    fields.forEach(function(id){
+      var el=document.getElementById(id); if(!el)return;
+      el.addEventListener('input',schedule); el.addEventListener('change',schedule);
+    });
+    window.addEventListener('pagehide',saveNow);
+    document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden')saveNow() });
+    return {
+      key:key,
+      saveNow:saveNow,
+      clear:function(){ clear(key) },
+      restore:function(tag){
+        var d=readText(key); if(!d)return false;
+        if(cfg.tag&&String(d.tag||'')!==String(tag==null?cfg.tag():tag))return false;
+        var any=false;
+        fields.forEach(function(id){
+          var el=document.getElementById(id); if(!el||isSecret(el))return;
+          var val=d.values?d.values[id]:undefined; if(val===undefined)return;
+          if(el.type==='checkbox')el.checked=!!val; else el.value=val;
+          if(typeof val==='string'&&val.trim())any=true;
+        });
+        return any;
+      }
+    };
+  }
+  return {guard:guard,clear:clear,putPhoto:putPhoto,getPhoto:getPhoto,delPhoto:delPhoto};
+})();
+window.NTDraftsV101=NTDraftsV101;
+</script>
 <script>
 const KEY='noor-traders-v79-standalone';
 const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Karachi'}).format(new Date());
@@ -1484,7 +1694,7 @@ function setupDates(){
   todayLabel.textContent=new Date().toLocaleString('ur-PK',{timeZone:'Asia/Karachi',dateStyle:'full'});
 }
 
-entryForm.onsubmit=async e=>{e.preventDefault();const pic=await fileData(ePicture.files[0]);db.entries.push({id:Date.now(),date:eDate.value,type:eType.value,note:eNote.value,amount:+eAmount.value||0,category:eCategory.value,picture:pic});eNote.value='';eAmount.value='';ePicture.value='';save()};
+entryForm.onsubmit=async e=>{e.preventDefault();const pic=await fileData(ePicture.files[0]);db.entries.push({id:Date.now(),date:eDate.value,type:eType.value,note:eNote.value,amount:+eAmount.value||0,category:eCategory.value,picture:pic});eNote.value='';eAmount.value='';ePicture.value='';window.NTOwnerDraftsV101&&window.NTOwnerDraftsV101.entryForm&&window.NTOwnerDraftsV101.entryForm.clear();save()};
 function renderLedger(){const d=ledgerDate.value||today(),rows=db.entries.filter(x=>x.date===d).sort((a,b)=>b.id-a.id);ledgerRows.innerHTML=rows.map(x=>`<tr><td>${labelType(x.type)}</td><td>${esc(x.note)}</td><td>${esc(x.category||'')}</td><td class=amt>${money(x.amount)}</td><td>${x.picture?`<img class=photo src="${x.picture}">`:''}</td><td><button class=danger onclick="delEntry(${x.id})">Delete</button></td></tr>`).join('')||'<tr><td colspan=6 class=muted>کوئی entry نہیں</td></tr>';const todays=db.entries.filter(x=>x.date===today());let sale=sum(todays,'sale'),coll=sum(todays,'collection'),exp=sum(todays,'expense')+sum(todays,'shop_goods'),acc=sum(todays,'account'),ct=sum(todays,'change_today'),cy=sum(todays,'change_yesterday'),cash=sum(todays,'cash'),cashout=sum(todays,'cash_out');kpiSale.textContent=money(sale);kpiIn.textContent=money(sale+coll+cy+cash);kpiOut.textContent=money(exp+ct+acc+cashout);kpiBalance.textContent=money(sale+coll+cy+cash-exp-ct-acc-cashout)}
 function labelType(t){return {sale:'سیل',collection:'وصولی',expense:'خرچ',shop_goods:'دکان کا سامان',pending_bill:'واجب الادا Bill',cash:'کل کی Cash',cash_out:'Cash',account:'اکاؤنٹ میں آمد',change_today:'آج کا Change',change_yesterday:'کل کا Change'}[t]||t}
 function sum(a,t){return a.filter(x=>x.type===t).reduce((s,x)=>s+(+x.amount||0),0)}
@@ -1617,10 +1827,11 @@ function renderAttendance(){
       <td>${status}</td>
       <td><b>${esc(a.checkIn||'—')}</b><small class="row-date">${esc(a.date||d)}</small></td>
       <td><b>${esc(a.checkOut||'—')}</b></td>
+      <td><b>${whTextV101(a)}</b></td>
       <td><div class="evidence-cell"><b>📍 ${dist}</b>${a.selfie?`<img class="report-selfie" src="${a.selfie}">`:''}</div></td>
       <td><div class="owner-actions"><button class="soft" onclick="editStaff('${phone}')">Edit</button><button class="danger" onclick="delStaff('${phone}')">Delete</button></div></td>
     </tr>`;
-  }).join('') || '<tr><td colspan="7"><div class="empty-attendance">کوئی Staff account نہیں ملا</div></td></tr>';
+  }).join('') || '<tr><td colspan="8"><div class="empty-attendance">کوئی Staff account نہیں ملا</div></td></tr>';
 
   attSummary.innerHTML = `<span><b>${present}</b> حاضر</span><span><b>${Math.max(0,db.staff.length-present)}</b> غیر حاضر</span><span><b>${out}</b> Checkout</span>`;
 }
@@ -1671,7 +1882,7 @@ function printOwnerAttendanceReport(){
 
 
 
-purchaseForm.onsubmit=async e=>{e.preventDefault();let fs=[...pPics.files].slice(0,5),pics=[];for(const f of fs)pics.push(await fileData(f,700));db.purchases.push({id:Date.now(),date:pDate.value,note:pNote.value,amount:+pAmount.value||0,status:pPending.value,pictures:pics});pNote.value='';pAmount.value='';pPics.value='';save()};
+purchaseForm.onsubmit=async e=>{e.preventDefault();let fs=[...pPics.files].slice(0,5),pics=[];for(const f of fs)pics.push(await fileData(f,700));db.purchases.push({id:Date.now(),date:pDate.value,note:pNote.value,amount:+pAmount.value||0,status:pPending.value,pictures:pics});pNote.value='';pAmount.value='';pPics.value='';window.NTOwnerDraftsV101&&window.NTOwnerDraftsV101.purchaseForm&&window.NTOwnerDraftsV101.purchaseForm.clear();save()};
 function renderPurchases(){purchaseRows.innerHTML=db.purchases.slice().reverse().map(x=>`<tr><td>${x.date}</td><td>${esc(x.note)}</td><td>${money(x.amount)}</td><td>${x.status}</td><td>${x.pictures.map(p=>`<img class=photo src="${p}">`).join(' ')}</td><td><button class=danger onclick="delPurchase(${x.id})">Delete</button></td></tr>`).join('')}
 function delPurchase(id){db.purchases=db.purchases.filter(x=>x.id!==id);save()}
 
@@ -1683,7 +1894,7 @@ function renderReport(){let m=reportMonth.value,es=db.entries.filter(x=>x.date.s
 function reportRowsV84(rows,cols){return rows.length?rows.map(r=>`<tr>${r.map(v=>`<td>${esc(v??'—')}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${cols}">No Data</td></tr>`}
 function reportPeriodV84(){const mode=systemReportFilterV84.value||'today',now=today();if(mode==='all')return{from:'',to:'',label:'All available history'};if(mode==='month'){const m=systemReportMonthV84.value||now.slice(0,7);return{from:`${m}-01`,to:`${m}-31`,label:m}}if(mode==='range')return{from:systemReportFromV84.value||now,to:systemReportToV84.value||now,label:`${systemReportFromV84.value||now} → ${systemReportToV84.value||now}`};const d=mode==='date'?(systemReportDateV84.value||now):now;return{from:d,to:d,label:d}}
 function renderSalesReportsV84(){const m=reportMonthSalesV84.value||today().slice(0,7),rows=db.entries.filter(x=>x.date.startsWith(m)),types=[['Sale','sale'],['Wasooli','collection'],['Expenses','expense'],['Accounts Incoming','account'],['Cash / Change','cash'],['Cash Out','cash_out'],['Shop Goods','shop_goods']];salesReportBoxV84.innerHTML=`<h2>${m} Sales & Accounts Summary</h2><div class="summary-grid-v84">${types.map(([label,type])=>`<div><small>${label}</small><b>${money(sum(rows,type))}</b></div>`).join('')}</div><table><thead><tr><th>Date</th><th>Type</th><th>Detail</th><th>Amount</th></tr></thead><tbody>${reportRowsV84(rows.map(x=>[x.date,labelType(x.type),x.note,money(x.amount)]),4)}</tbody></table>`}
-function renderStaffReportsV84(){const from=staffReportFromV84.value||today(),to=staffReportToV84.value||from,rows=window.noorStaffSystem?.getAttendanceBetween(from,to)||[],present=new Set(rows.filter(x=>x.checkIn||x.checkInTime).map(x=>normPhoneV84(x.phone))),scores=rows.map(attScoreV84).filter(x=>x!=null);staffReportBoxV84.innerHTML=`<h2>${from} → ${to} Staff Summary</h2><div class="summary-grid-v84"><div><small>Total Staff</small><b>${db.staff.length}</b></div><div><small>Present Records</small><b>${present.size}</b></div><div><small>Absent Estimate</small><b>${Math.max(db.staff.length-present.size,0)}</b></div><div><small>Average Score</small><b>${scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—'}</b></div></div><table><thead><tr><th>Date</th><th>Staff</th><th>Check-In</th><th>Check-Out</th><th>Score</th><th>Distance</th></tr></thead><tbody>${reportRowsV84(rows.map(x=>[x.date,staffForPhoneV84(x.phone).name||x.name||x.phone,x.checkIn||x.checkInTime,x.checkOut||x.checkOutTime,attScoreV84(x)??'—',x.checkInDistance!=null?Math.round(x.checkInDistance)+'m':'—']),6)}</tbody></table>`}
+function renderStaffReportsV84(){const from=staffReportFromV84.value||today(),to=staffReportToV84.value||from,rows=window.noorStaffSystem?.getAttendanceBetween(from,to)||[],present=new Set(rows.filter(x=>x.checkIn||x.checkInTime).map(x=>normPhoneV84(x.phone))),scores=rows.map(attScoreV84).filter(x=>x!=null);staffReportBoxV84.innerHTML=`<h2>${from} → ${to} Staff Summary</h2><div class="summary-grid-v84"><div><small>Total Staff</small><b>${db.staff.length}</b></div><div><small>Present Records</small><b>${present.size}</b></div><div><small>Absent Estimate</small><b>${Math.max(db.staff.length-present.size,0)}</b></div><div><small>Average Score</small><b>${scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—'}</b></div></div><table><thead><tr><th>Date</th><th>Staff</th><th>Check-In</th><th>Check-Out</th><th>Working Hours / کام کے گھنٹے</th><th>Score</th><th>Distance</th></tr></thead><tbody>${reportRowsV84(rows.map(x=>[x.date,staffForPhoneV84(x.phone).name||x.name||x.phone,x.checkIn||x.checkInTime,x.checkOut||x.checkOutTime,whTextV101(x),attScoreV84(x)??'—',x.checkInDistance!=null?Math.round(x.checkInDistance)+'m':'—']),7)}</tbody></table>`}
 function reportDocumentV85(title,body){return `<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{font-family:Inter,Arial,sans-serif;padding:28px;color:#172235;font-size:12px}h1{color:#075e59;margin:0}h2{color:#075e59;border-bottom:2px solid #dce8e7;padding-bottom:7px}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #dce4ec;padding:7px;text-align:right}th{background:#eef7f6;color:#075e59}.report-meta{color:#64748b;margin:5px 0 20px}@media print{body{padding:10px}}</style></head><body><h1>Noor Traders Hisab</h1><p class="report-meta">${esc(title)} • Generated ${new Date().toLocaleString()}</p>${body}</body></html>`}
 function openPdfPreviewV85(html,title){currentPdfHtmlV85=html;pdfPreviewTitle.textContent=title;pdfPreviewFrame.srcdoc=html;pdfPreviewModal.hidden=false}
 function closePdfPreviewV85(){pdfPreviewModal.hidden=true;pdfPreviewFrame.srcdoc='';currentPdfHtmlV85=''}
@@ -1692,7 +1903,7 @@ function downloadPdfV85(){printPdfPreviewV85();const status=document.getElementB
 async function sharePdfV85(){const file=new File([currentPdfHtmlV85||''],`Noor-Traders-Report-${today()}.html`,{type:'text/html'});if(navigator.canShare?.({files:[file]})&&navigator.share){try{await navigator.share({title:'Noor Traders Hisab Report',files:[file]});return}catch(e){if(e.name==='AbortError')return}}downloadPdfV85()}
 function previewReportV84(screenId){const source=screenId==='salesReports'?salesReportBoxV84:staffReportBoxV84;openPdfPreviewV85(reportDocumentV85(screenId==='salesReports'?'Sales Reports':'Staff Reports',source.innerHTML),screenId==='salesReports'?'Sales Reports':'Staff Reports')}
 function printReportV84(screenId){previewReportV84(screenId);setTimeout(printPdfPreviewV85,100)}
-function completeSystemReportHtmlV84(){const p=reportPeriodV84(),inRange=x=>(!p.from||x.date>=p.from)&&(!p.to||x.date<=p.to),entries=db.entries.filter(inRange),purchases=db.purchases.filter(inRange),batches=db.batches.filter(inRange),attendance=window.noorStaffSystem?.getAttendanceBetween(p.from,p.to)||[],sales=sum(entries,'sale'),coll=sum(entries,'collection'),exp=sum(entries,'expense'),acc=sum(entries,'account'),cash=sum(entries,'cash')+sum(entries,'change_today')+sum(entries,'change_yesterday'),out=sum(entries,'cash_out'),present=new Set(attendance.filter(x=>x.checkIn||x.checkInTime).map(x=>normPhoneV84(x.phone))),stockDates=Object.keys(db.stockRecords||{}).filter(d=>(!p.from||d>=p.from)&&(!p.to||d<=p.to));const stockRows=[];stockDates.forEach(d=>Object.entries(db.stockRecords[d]||{}).forEach(([id,x])=>{const item=db.stockItems.find(i=>String(i.id)===String(id));if(x.system===''||x.physical==='')return;const diff=+x.physical-+x.system;stockRows.push([d,item?.name||id,item?.unit||'—',diff,money(diff*(+(item?.rate||0)))])}));const net=sales+coll+acc+cash-exp-out;return`<!doctype html><html><head><meta charset="utf-8"><title>Complete System Report</title><style>*{box-sizing:border-box}body{font-family:Inter,Arial,sans-serif;padding:28px;color:#172235;font-size:11px}h1{color:#075e59;font-size:28px}h2{color:#075e59;border-bottom:2px solid #dce8e7;padding-bottom:7px;margin-top:28px}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.stat{border:1px solid #e2e8f0;border-radius:8px;padding:9px;background:#f8fafc}.stat small,.stat b{display:block}.stat small{color:#667085}.stat b{font-size:16px;margin-top:4px}table{width:100%;border-collapse:collapse;margin:8px 0 18px}th,td{border:1px solid #dce4ec;padding:6px;text-align:left}th{background:#eef7f6;color:#075e59}.empty{text-align:center;color:#98a2b3}.page{break-before:page}@media print{body{padding:10px}}@media(max-width:700px){.summary{grid-template-columns:1fr 1fr}}</style></head><body><h1>Noor Traders Hisab</h1><p><b>Complete System Report</b> • Period: ${esc(p.label)} • Generated: ${esc(new Date().toLocaleString('en-PK'))}</p><h2>Executive Summary</h2><div class="summary"><div class="stat"><small>Sale</small><b>${money(sales)}</b></div><div class="stat"><small>Wasooli</small><b>${money(coll)}</b></div><div class="stat"><small>Expenses</small><b>${money(exp)}</b></div><div class="stat"><small>Net / Balance</small><b>${money(net)}</b></div><div class="stat"><small>Total Staff</small><b>${db.staff.length}</b></div><div class="stat"><small>Present</small><b>${present.size}</b></div><div class="stat"><small>Purchases</small><b>${money(purchases.reduce((t,x)=>t+(+x.amount||0),0))}</b></div><div class="stat"><small>Batches</small><b>${batches.length}</b></div></div><section class="page"><h2>Business / Accounts</h2><table><thead><tr><th>Type</th><th>Total</th></tr></thead><tbody>${reportRowsV84([['Sale',money(sales)],['Wasooli',money(coll)],['Accounts Incoming',money(acc)],['Cash / Change',money(cash)],['Expenses',money(exp)],['Cash Out',money(out)]],2)}</tbody></table></section><section class="page"><h2>Staff / Attendance / Scores</h2><table><thead><tr><th>Date</th><th>Staff</th><th>Check-In</th><th>Check-Out</th><th>Score</th></tr></thead><tbody>${reportRowsV84(attendance.map(x=>[x.date,staffForPhoneV84(x.phone).name||x.name||x.phone,x.checkIn||x.checkInTime,x.checkOut||x.checkOutTime,attScoreV84(x)??'—']),5)}</tbody></table></section><section class="page"><h2>Stock / Purchase</h2><table><thead><tr><th>Date</th><th>Item</th><th>Unit</th><th>Difference</th><th>Value</th></tr></thead><tbody>${reportRowsV84(stockRows,5)}</tbody></table><table><thead><tr><th>Date</th><th>Detail</th><th>Amount</th><th>Status</th></tr></thead><tbody>${reportRowsV84(purchases.map(x=>[x.date,x.note,money(x.amount),x.status]),4)}</tbody></table></section><section class="page"><h2>Production / Batch</h2><table><thead><tr><th>Date</th><th>Batch</th><th>Product</th><th>KG</th><th>Total</th><th>Cost/KG</th></tr></thead><tbody>${reportRowsV84(batches.map(x=>[x.date,x.name,x.product,x.kg,money(x.total),money(x.costKg)]),6)}</tbody></table></section><p>Version v85 • Variant Production • Read-only report</p></body></html>`}
+function completeSystemReportHtmlV84(){const p=reportPeriodV84(),inRange=x=>(!p.from||x.date>=p.from)&&(!p.to||x.date<=p.to),entries=db.entries.filter(inRange),purchases=db.purchases.filter(inRange),batches=db.batches.filter(inRange),attendance=window.noorStaffSystem?.getAttendanceBetween(p.from,p.to)||[],sales=sum(entries,'sale'),coll=sum(entries,'collection'),exp=sum(entries,'expense'),acc=sum(entries,'account'),cash=sum(entries,'cash')+sum(entries,'change_today')+sum(entries,'change_yesterday'),out=sum(entries,'cash_out'),present=new Set(attendance.filter(x=>x.checkIn||x.checkInTime).map(x=>normPhoneV84(x.phone))),stockDates=Object.keys(db.stockRecords||{}).filter(d=>(!p.from||d>=p.from)&&(!p.to||d<=p.to));const stockRows=[];stockDates.forEach(d=>Object.entries(db.stockRecords[d]||{}).forEach(([id,x])=>{const item=db.stockItems.find(i=>String(i.id)===String(id));if(x.system===''||x.physical==='')return;const diff=+x.physical-+x.system;stockRows.push([d,item?.name||id,item?.unit||'—',diff,money(diff*(+(item?.rate||0)))])}));const net=sales+coll+acc+cash-exp-out;return`<!doctype html><html><head><meta charset="utf-8"><title>Complete System Report</title><style>*{box-sizing:border-box}body{font-family:Inter,Arial,sans-serif;padding:28px;color:#172235;font-size:11px}h1{color:#075e59;font-size:28px}h2{color:#075e59;border-bottom:2px solid #dce8e7;padding-bottom:7px;margin-top:28px}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.stat{border:1px solid #e2e8f0;border-radius:8px;padding:9px;background:#f8fafc}.stat small,.stat b{display:block}.stat small{color:#667085}.stat b{font-size:16px;margin-top:4px}table{width:100%;border-collapse:collapse;margin:8px 0 18px}th,td{border:1px solid #dce4ec;padding:6px;text-align:left}th{background:#eef7f6;color:#075e59}.empty{text-align:center;color:#98a2b3}.page{break-before:page}@media print{body{padding:10px}}@media(max-width:700px){.summary{grid-template-columns:1fr 1fr}}</style></head><body><h1>Noor Traders Hisab</h1><p><b>Complete System Report</b> • Period: ${esc(p.label)} • Generated: ${esc(new Date().toLocaleString('en-PK'))}</p><h2>Executive Summary</h2><div class="summary"><div class="stat"><small>Sale</small><b>${money(sales)}</b></div><div class="stat"><small>Wasooli</small><b>${money(coll)}</b></div><div class="stat"><small>Expenses</small><b>${money(exp)}</b></div><div class="stat"><small>Net / Balance</small><b>${money(net)}</b></div><div class="stat"><small>Total Staff</small><b>${db.staff.length}</b></div><div class="stat"><small>Present</small><b>${present.size}</b></div><div class="stat"><small>Purchases</small><b>${money(purchases.reduce((t,x)=>t+(+x.amount||0),0))}</b></div><div class="stat"><small>Batches</small><b>${batches.length}</b></div></div><section class="page"><h2>Business / Accounts</h2><table><thead><tr><th>Type</th><th>Total</th></tr></thead><tbody>${reportRowsV84([['Sale',money(sales)],['Wasooli',money(coll)],['Accounts Incoming',money(acc)],['Cash / Change',money(cash)],['Expenses',money(exp)],['Cash Out',money(out)]],2)}</tbody></table></section><section class="page"><h2>Staff / Attendance / Scores</h2><table><thead><tr><th>Date</th><th>Staff</th><th>Check-In</th><th>Check-Out</th><th>Working Hours / کام کے گھنٹے</th><th>Score</th></tr></thead><tbody>${reportRowsV84(attendance.map(x=>[x.date,staffForPhoneV84(x.phone).name||x.name||x.phone,x.checkIn||x.checkInTime,x.checkOut||x.checkOutTime,whTextV101(x),attScoreV84(x)??'—']),6)}</tbody></table></section><section class="page"><h2>Stock / Purchase</h2><table><thead><tr><th>Date</th><th>Item</th><th>Unit</th><th>Difference</th><th>Value</th></tr></thead><tbody>${reportRowsV84(stockRows,5)}</tbody></table><table><thead><tr><th>Date</th><th>Detail</th><th>Amount</th><th>Status</th></tr></thead><tbody>${reportRowsV84(purchases.map(x=>[x.date,x.note,money(x.amount),x.status]),4)}</tbody></table></section><section class="page"><h2>Production / Batch</h2><table><thead><tr><th>Date</th><th>Batch</th><th>Product</th><th>KG</th><th>Total</th><th>Cost/KG</th></tr></thead><tbody>${reportRowsV84(batches.map(x=>[x.date,x.name,x.product,x.kg,money(x.total),money(x.costKg)]),6)}</tbody></table></section><p>Version v85 • Variant Production • Read-only report</p></body></html>`}
 function renderCompleteReportScreenV84(){systemReportFilterV84.onchange=updateSystemReportFilterV84;updateSystemReportFilterV84()}
 function updateSystemReportFilterV84(){const m=systemReportFilterV84.value;systemReportDateWrapV84.hidden=!['today','date'].includes(m);systemReportFromWrapV84.hidden=m!=='range';systemReportToWrapV84.hidden=m!=='range';systemReportMonthWrapV84.hidden=m!=='month'}
 function generateCompleteSystemReportV84(action){const status=completeReportStatusV84;status.textContent='Report تیار ہو رہی ہے…';setTimeout(async()=>{const html=completeSystemReportHtmlV84();openPdfPreviewV85(html,'Complete System Report');status.textContent='Complete System Report تیار ہے۔';if(action==='print')setTimeout(printPdfPreviewV85,100);if(action==='download')setTimeout(downloadPdfV85,100);if(action==='share')setTimeout(sharePdfV85,100)},40)}
@@ -1745,7 +1956,7 @@ function renderEntryScreensV84(){renderEntryRowsV84('sale',saleFilterDateV84.val
 
 saleFormV84.onsubmit=e=>{e.preventDefault();addEntryV84('sale',saleDateV84.value,saleNoteV84.value,saleAmountV84.value);saleNoteV84.value='';saleAmountV84.value=''};
 collectionFormV84.onsubmit=e=>{e.preventDefault();addEntryV84('collection',collectionDateV84.value,collectionNoteV84.value,collectionAmountV84.value);collectionNoteV84.value='';collectionAmountV84.value=''};
-expenseFormV84.onsubmit=async e=>{e.preventDefault();const pic=await fileData(expensePictureV84.files[0]);addEntryV84('expense',expenseDateV84.value,expenseNoteV84.value,expenseAmountV84.value,expenseCategoryV84.value,pic);expenseNoteV84.value='';expenseAmountV84.value='';expensePictureV84.value=''};
+expenseFormV84.onsubmit=async e=>{e.preventDefault();const pic=await fileData(expensePictureV84.files[0]);addEntryV84('expense',expenseDateV84.value,expenseNoteV84.value,expenseAmountV84.value,expenseCategoryV84.value,pic);expenseNoteV84.value='';expenseAmountV84.value='';expensePictureV84.value='';window.NTOwnerDraftsV101&&window.NTOwnerDraftsV101.expenseFormV84&&window.NTOwnerDraftsV101.expenseFormV84.clear()};
 cashFormV84.onsubmit=e=>{e.preventDefault();addEntryV84(cashTypeV84.value,cashDateV84.value,cashNoteV84.value,cashAmountV84.value);cashNoteV84.value='';cashAmountV84.value=''};
 accountFormV84.onsubmit=e=>{e.preventDefault();addEntryV84('account',accountDateV84.value,accountNoteV84.value,accountAmountV84.value);accountNoteV84.value='';accountAmountV84.value=''};
 [saleFilterDateV84,collectionFilterDateV84,expenseFilterDateV84,cashFilterDateV84,accountFilterDateV84].forEach(x=>x.onchange=renderEntryScreensV84);
@@ -1759,7 +1970,7 @@ function renderV84Dashboard(){const d=dashDate.value||today(),es=db.entries.filt
 function toggleStaffCreateV84(show){staffCreateV84.classList.toggle('show',show)}
 staffPhoneV84.oninput=()=>staffPasswordV84.textContent=normPhoneV84(staffPhoneV84.value)||'Phone Number';
 staffPhotoV84.onchange=async()=>{const f=staffPhotoV84.files?.[0];staffPhotoDataV84=f?await fileData(f,360):'';staffPhotoPreviewV84.textContent=staffPhotoDataV84?'':'👤';staffPhotoPreviewV84.style.backgroundImage=staffPhotoDataV84?`url("${staffPhotoDataV84}")`:''};
-staffFormV84.onsubmit=async e=>{e.preventDefault();const phone=normPhoneV84(staffPhoneV84.value);if(phone.length<10)return alert('Phone Number درست درج کریں');if(db.staff.some(s=>normPhoneV84(s.phone||s.id)===phone))return alert('یہ Phone Number پہلے موجود ہے');const s={id:phone,name:staffNameV84.value.trim(),role:staffRoleV84.value.trim(),address:staffAddressV84.value.trim(),phone,photo:staffPhotoDataV84||'',active:true,loginEnabled:staffLoginEnabledV84.checked,createdAt:Date.now()};db.staff.push(s);save();await window.noorStaffSystem?.upsertAccount(s);staffFormV84.reset();staffLoginEnabledV84.checked=true;staffPhotoDataV84='';staffPhotoPreviewV84.textContent='👤';staffPhotoPreviewV84.style.backgroundImage='';toggleStaffCreateV84(false)};
+staffFormV84.onsubmit=async e=>{e.preventDefault();const phone=normPhoneV84(staffPhoneV84.value);if(phone.length<10)return alert('Phone Number درست درج کریں');if(db.staff.some(s=>normPhoneV84(s.phone||s.id)===phone))return alert('یہ Phone Number پہلے موجود ہے');const s={id:phone,name:staffNameV84.value.trim(),role:staffRoleV84.value.trim(),address:staffAddressV84.value.trim(),phone,photo:staffPhotoDataV84||'',active:true,loginEnabled:staffLoginEnabledV84.checked,createdAt:Date.now()};db.staff.push(s);save();await window.noorStaffSystem?.upsertAccount(s);staffFormV84.reset();staffLoginEnabledV84.checked=true;staffPhotoDataV84='';staffPhotoPreviewV84.textContent='👤';staffPhotoPreviewV84.style.backgroundImage='';window.NTStaffCreateDraftV101&&window.NTStaffCreateDraftV101.clear();toggleStaffCreateV84(false)};
 staffSearchV84.oninput=renderStaffAccountsV84;
 function renderStaffCenterV84(){
   const total=db.staff.length;
@@ -1792,7 +2003,7 @@ function attendanceStatusV84(a){if(!a.checkIn)return 'Absent';if(a.checkOut)retu
 function renderTodayAttendanceV84(){const d=todayAttDateV84.value||today(),amap=attMapV84(d),q=(todayAttSearchV84.value||'').toLowerCase(),f=todayAttFilterV84.value;let list=db.staff.map(s=>{const p=normPhoneV84(s.phone||s.id),a=amap.get(p)||{};return{s,p,a}});let present=list.filter(x=>x.a.checkIn).length,out=list.filter(x=>x.a.checkOut).length,late=list.filter(x=>(x.a.minutesLate||0)>10).length,scores=list.map(x=>attScoreV84(x.a)).filter(x=>x!=null);todayTotalV84.textContent=db.staff.length;todayPresentV84.textContent=present;todayAbsentV84.textContent=Math.max(0,db.staff.length-present);todayLateV84.textContent=late;todayOutV84.textContent=out;todayAvgScoreV84.textContent=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—';list=list.filter(x=>{const text=`${x.s.name||''} ${x.p}`.toLowerCase();if(q&&!text.includes(q))return false;const st=attendanceStatusV84(x.a);if(f==='present')return !!x.a.checkIn;if(f==='absent')return !x.a.checkIn;if(f==='late')return (x.a.minutesLate||0)>10;if(f==='out')return !!x.a.checkOut;return true});list.sort((x,y)=>{if(!!x.a.checkIn!==!!y.a.checkIn)return x.a.checkIn?-1:1;return (x.a.checkInTs||9e15)-(y.a.checkInTs||9e15)});todayAttRowsV84.innerHTML=list.map((x,i)=>{const st=attendanceStatusV84(x.a),sc=attScoreV84(x.a);return `<tr><td>${i+1}</td><td><div class="table-staff-v84"><span>${x.s.photo?`<img src="${x.s.photo}">`:esc((x.s.name||'?')[0])}</span><div><b>${esc(x.s.name||'Staff')}</b><small>${esc(x.p)}</small></div></div></td><td><span class="status-v84 ${st.toLowerCase().replaceAll(' ','-')}">${st}</span></td><td>${esc(x.a.checkIn||'—')}</td><td>${x.a.checkIn?`${Math.max(0,Math.round(x.a.minutesLate||0))} min`:'—'}</td><td><b>${sc==null?'—':sc+'/10'}</b></td><td>${esc(x.a.checkOut||'—')}</td><td><div class="gps-proof-v84">${x.a.checkInDistance!=null?`📍 ${Math.round(x.a.checkInDistance)}m`:'—'}${x.a.selfie?`<img src="${x.a.selfie}">`:''}</div></td><td><button class="soft" onclick="openAttendanceEditV84('${x.a.id||`${d}_${x.p}`}','${x.p}')">Edit</button></td></tr>`}).join('')||'<tr><td colspan="9">No staff</td></tr>'}
 function ownerCurrentTimeV85(){return new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'})}
 function ownerAttendanceRowsV85(){const d=todayAttDateV84.value||today(),amap=attMapV84(d);return db.staff.filter(s=>s.active!==false).map(s=>{const phone=normPhoneV84(s.phone||s.id);return{s,phone,a:amap.get(phone)||{}}})}
-function renderTodayAttendanceV85(){const d=todayAttDateV84.value||today(),rows=ownerAttendanceRowsV85(),present=rows.filter(x=>x.a.checkIn).length,out=rows.filter(x=>x.a.checkOut).length,scores=rows.map(x=>attScoreV84(x.a)).filter(x=>x!=null);todayTotalV84.textContent=rows.length;todayPresentV84.textContent=present;todayAbsentV84.textContent=Math.max(0,rows.length-present);todayOutV84.textContent=out;todayAvgScoreV84.textContent=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—';todayAttRowsV84.innerHTML=rows.map(({s,phone,a},i)=>{const checked=!!a.checkIn;const photo=s.photo?`<img src="${s.photo}" alt="">`:esc((s.name||'?')[0]);return `<tr data-owner-phone="${phone}"><td>${i+1}</td><td><div class="table-staff-v84"><span>${photo}</span><div><b>${esc(s.name||'Staff')}</b><small>${esc(s.role||'Staff')} • ${esc(phone)}</small></div></div></td><td><label class="attendance-check"><input class="owner-present-v85" type="checkbox" ${checked?'checked':''}> Present</label><span class="owner-absent-v85">${checked?'':'Absent'}</span></td><td><div class="manual-time-v85"><input class="owner-checkin-v85" type="time" value="${to24hV85(a.checkIn||'')}"><button type="button" class="soft" onclick="setOwnerTimeV85(this,'in')">Use Current Time</button></div></td><td><div class="manual-time-v85"><input class="owner-checkout-v85" type="time" value="${to24hV85(a.checkOut||'')}"><button type="button" class="soft" onclick="setOwnerTimeV85(this,'out')">Use Current Time</button></div></td><td>${a.selfie?`<img class="attendance-selfie" src="${a.selfie}" alt="Attendance selfie">`:'—'}</td><td><input class="owner-score-v85 score-box" type="number" min="0" max="10" value="${attScoreV84(a)??''}"><button type="button" class="soft" onclick="openAttendanceEditV84('${a.id||`${d}_${phone}`}','${phone}')">Edit</button></td></tr>`}).join('')||'<tr><td colspan="7">No active staff</td></tr>'}
+function renderTodayAttendanceV85(){const d=todayAttDateV84.value||today(),rows=ownerAttendanceRowsV85(),present=rows.filter(x=>x.a.checkIn).length,out=rows.filter(x=>x.a.checkOut).length,scores=rows.map(x=>attScoreV84(x.a)).filter(x=>x!=null);todayTotalV84.textContent=rows.length;todayPresentV84.textContent=present;todayAbsentV84.textContent=Math.max(0,rows.length-present);todayOutV84.textContent=out;todayAvgScoreV84.textContent=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—';todayAttRowsV84.innerHTML=rows.map(({s,phone,a},i)=>{const checked=!!a.checkIn;const photo=s.photo?`<img src="${s.photo}" alt="">`:esc((s.name||'?')[0]);return `<tr data-owner-phone="${phone}"><td>${i+1}</td><td><div class="table-staff-v84"><span>${photo}</span><div><b>${esc(s.name||'Staff')}</b><small>${esc(s.role||'Staff')} • ${esc(phone)}</small></div></div></td><td><label class="attendance-check"><input class="owner-present-v85" type="checkbox" ${checked?'checked':''}> Present</label><span class="owner-absent-v85">${checked?'':'Absent'}</span></td><td><div class="manual-time-v85"><input class="owner-checkin-v85" type="time" value="${to24hV85(a.checkIn||'')}"><button type="button" class="soft" onclick="setOwnerTimeV85(this,'in')">Use Current Time</button></div></td><td><div class="manual-time-v85"><input class="owner-checkout-v85" type="time" value="${to24hV85(a.checkOut||'')}"><button type="button" class="soft" onclick="setOwnerTimeV85(this,'out')">Use Current Time</button></div></td><td class="wh-cell-v101">${whTextV101(a)}</td><td>${a.selfie?`<img class="attendance-selfie" src="${a.selfie}" alt="Attendance selfie">`:'—'}</td><td><input class="owner-score-v85 score-box" type="number" min="0" max="10" value="${attScoreV84(a)??''}"><button type="button" class="soft" onclick="openAttendanceEditV84('${a.id||`${d}_${phone}`}','${phone}')">Edit</button></td></tr>`}).join('')||'<tr><td colspan="8">No active staff</td></tr>'}
 function to24hV85(value){const match=String(value||'').match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);if(!match)return'';let h=Number(match[1]);if((match[3]||'').toUpperCase()==='PM'&&h<12)h+=12;if((match[3]||'').toUpperCase()==='AM'&&h===12)h=0;return `${String(h).padStart(2,'0')}:${match[2]}`}
 function setOwnerTimeV85(button,kind){const row=button.closest('tr');const input=row?.querySelector(kind==='in'?'.owner-checkin-v85':'.owner-checkout-v85');if(input)input.value=new Date().toTimeString().slice(0,5)}
 function ownerScoreForLateV85(minutes){const scores=policyV84.scores||{};return minutes<=10?Number(scores.m10??10):minutes<=20?Number(scores.m20??8):minutes<=30?Number(scores.m30??6):minutes<=45?Number(scores.m45??4):Number(scores.late??2)}
@@ -1800,7 +2011,7 @@ function selectAllAttendanceV85(present){document.querySelectorAll('.owner-prese
 async function saveAllAttendanceV85(){const date=todayAttDateV84.value||today(),rows=[...document.querySelectorAll('#todayAttRowsV84 tr[data-owner-phone]')];for(const row of rows){const phone=row.dataset.ownerPhone,a=attMapV84(date).get(phone)||{},present=row.querySelector('.owner-present-v85').checked,checkIn=present?(row.querySelector('.owner-checkin-v85').value||null):null,checkOut=present?(row.querySelector('.owner-checkout-v85').value||null):null,score=row.querySelector('.owner-score-v85').value,minutesLate=checkIn?Math.max(0,(Number(checkIn.slice(0,2))*60+Number(checkIn.slice(3)))-(Number((policyV84.shiftStart||'09:00').slice(0,2))*60+Number((policyV84.shiftStart||'09:00').slice(3)))):0,autoScore=checkIn?ownerScoreForLateV85(minutesLate):null;const id=a.id||`${date}_${phone}`;await window.noorStaffSystem?.updateAttendance(id,{id,date,phone,checkIn,checkOut,minutesLate,autoScore,finalScore:score===''?autoScore:Number(score),attendanceStatus:present?'present':'absent',editedAt:Date.now(),editedBy:'ADMIN'});}renderTodayAttendanceV85();renderAttendanceHistoryV84();renderScoresV84()}
 renderTodayAttendanceV84=renderTodayAttendanceV85;todayAttDateV84.onchange=renderTodayAttendanceV85;todayAttSearchV84.oninput=renderTodayAttendanceV85;todayAttFilterV84.onchange=renderTodayAttendanceV85;
 
-function renderAttendanceHistoryV84(){const from=histFromV84.value||today(),to=histToV84.value||today(),phone=histStaffV84.value;let rows=(window.noorStaffSystem?.getAttendanceBetween(from,to)||[]).filter(a=>!phone||normPhoneV84(a.phone)===phone);histRecordsV84.textContent=rows.length;const late=rows.filter(a=>(a.minutesLate||0)>10).length;histLateV84.textContent=late;const scores=rows.map(attScoreV84).filter(x=>x!=null);histAvgV84.textContent=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—';histRowsV84.innerHTML=rows.map(a=>{const s=staffForPhoneV84(a.phone),sc=attScoreV84(a);return `<tr><td>${esc(a.date||'')}</td><td>${esc(s.name||a.name||a.phone)}</td><td>${esc(a.checkIn||'—')}</td><td>${Math.max(0,Math.round(a.minutesLate||0))} min</td><td>${sc==null?'—':sc+'/10'}</td><td>${esc(a.checkOut||'—')}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+'m':'—'}</td><td><button class="soft" onclick="openAttendanceEditV84('${a.id||`${a.date}_${normPhoneV84(a.phone)}`}','${normPhoneV84(a.phone)}')">Edit</button></td></tr>`}).join('')||'<tr><td colspan="8">No records</td></tr>'}
+function renderAttendanceHistoryV84(){const from=histFromV84.value||today(),to=histToV84.value||today(),phone=histStaffV84.value;let rows=(window.noorStaffSystem?.getAttendanceBetween(from,to)||[]).filter(a=>!phone||normPhoneV84(a.phone)===phone);histRecordsV84.textContent=rows.length;const late=rows.filter(a=>(a.minutesLate||0)>10).length;histLateV84.textContent=late;const scores=rows.map(attScoreV84).filter(x=>x!=null);histAvgV84.textContent=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—';histRowsV84.innerHTML=rows.map(a=>{const s=staffForPhoneV84(a.phone),sc=attScoreV84(a);return `<tr><td>${esc(a.date||'')}</td><td>${esc(s.name||a.name||a.phone)}</td><td>${esc(a.checkIn||'—')}</td><td>${Math.max(0,Math.round(a.minutesLate||0))} min</td><td>${sc==null?'—':sc+'/10'}</td><td>${esc(a.checkOut||'—')}</td><td class="wh-cell-v101">${whTextV101(a)}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+'m':'—'}</td><td><button class="soft" onclick="openAttendanceEditV84('${a.id||`${a.date}_${normPhoneV84(a.phone)}`}','${normPhoneV84(a.phone)}')">Edit</button></td></tr>`}).join('')||'<tr><td colspan="9">No records</td></tr>'}
 histStaffV84.onchange=renderAttendanceHistoryV84;
 function renderScoresV84(){const d=scoreDateV84.value||today(),m=attMapV84(d);let rows=db.staff.map(s=>{const p=normPhoneV84(s.phone||s.id),a=m.get(p)||{};return{s,p,a,score:attScoreV84(a)}}).filter(x=>x.a.checkIn).sort((a,b)=>(b.score??-1)-(a.score??-1)||(a.a.checkInTs||0)-(b.a.checkInTs||0));rankingCardsV84.innerHTML=rows.slice(0,3).map((x,i)=>`<div class="rank-card-v84 rank-${i+1}"><span>#${i+1}</span><b>${esc(x.s.name)}</b><strong>${x.score??'—'}/10</strong><small>${esc(x.a.checkIn||'')}</small></div>`).join('');scoreRowsV84.innerHTML=rows.map((x,i)=>`<tr><td>#${i+1}</td><td>${esc(x.s.name)}</td><td>${esc(x.a.checkIn||'—')}</td><td>${Math.max(0,Math.round(x.a.minutesLate||0))}</td><td>${x.a.autoScore??'—'}</td><td><b>${x.score??'—'}</b></td><td>${attendanceStatusV84(x.a)}</td></tr>`).join('')||'<tr><td colspan="7">No check-ins</td></tr>'}
 scoreDateV84.onchange=renderScoresV84;
@@ -1831,8 +2042,8 @@ attendanceEditFormV84.onsubmit=async e=>{
 
 function printWindowV84(title,subtitle,summary,headers,rows){const w=window.open('','_blank');w.document.write(`<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{font-family:Arial,sans-serif;padding:28px;color:#142033}.brand{border-bottom:3px solid #0f766e;padding-bottom:14px}.brand h1{margin:0;color:#0f766e}.brand p{margin:5px 0;color:#64748b}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:18px 0}.summary div{border:1px solid #dce5ec;border-radius:10px;padding:10px}.summary span{font-size:10px;color:#64748b;display:block}.summary b{font-size:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #d5dee6;padding:7px;text-align:right;font-size:10px}th{background:#eef5f4;color:#0f5f59}.foot{margin-top:18px;font-size:9px;color:#64748b}@media print{body{padding:10px}}</style></head><body><div class="brand"><h1>Noor Traders Gulyana</h1><p>${esc(title)} • ${esc(subtitle)}</p></div><div class="summary">${summary}</div><table><thead><tr>${headers.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table><div class="foot">Generated from Noor Traders Hisab ${V84_VERSION} • ${V84_VARIANT}</div><script>setTimeout(()=>window.print(),450)<\/script></body></html>`);w.document.close()}
 function dailyReportDataV84(d){const m=attMapV84(d),list=db.staff.map(s=>{const p=normPhoneV84(s.phone||s.id),a=m.get(p)||{};return{s,p,a}});const present=list.filter(x=>x.a.checkIn).length,late=list.filter(x=>(x.a.minutesLate||0)>10).length,out=list.filter(x=>x.a.checkOut).length,scores=list.map(x=>attScoreV84(x.a)).filter(x=>x!=null);return{list,present,absent:db.staff.length-present,late,out,avg:scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—'}}
-function printDailyAttendanceV84(){const d=todayAttDateV84.value||today(),r=dailyReportDataV84(d),summary=`<div><span>Total Staff</span><b>${db.staff.length}</b></div><div><span>Present</span><b>${r.present}</b></div><div><span>Absent</span><b>${r.absent}</b></div><div><span>Late / Avg Score</span><b>${r.late} / ${r.avg}</b></div>`,rows=r.list.map(x=>`<tr><td>${x.s.photo?`<img src="${x.s.photo}" style="width:34px;height:34px;object-fit:cover;border-radius:6px">`:'—'}</td><td>${esc(x.s.name)}</td><td>${esc(x.s.role||'Staff')}</td><td>${esc(x.p)}</td><td>${attendanceStatusV84(x.a)}</td><td>${esc(x.a.checkIn||'—')}</td><td>${esc(x.a.checkOut||'—')}</td><td>${x.a.selfie?`<img src="${x.a.selfie}" style="width:34px;height:34px;object-fit:cover;border-radius:6px">`:'—'}</td><td>${attScoreV84(x.a)??'—'}</td><td>${esc(x.a.ownerNote||'—')}</td></tr>`).join('');printWindowV84('Daily Attendance Report',d,summary,['Profile','Name','Role','Phone','Status','Check-In','Check-Out','Selfie','Score','Notes'],rows)}
-function printHistoryReportV84(){const from=histFromV84.value||today(),to=histToV84.value||today(),phone=histStaffV84.value;let data=(window.noorStaffSystem?.getAttendanceBetween(from,to)||[]).filter(a=>!phone||normPhoneV84(a.phone)===phone);const scores=data.map(attScoreV84).filter(x=>x!=null),summary=`<div><span>Records</span><b>${data.length}</b></div><div><span>Late</span><b>${data.filter(a=>(a.minutesLate||0)>10).length}</b></div><div><span>Avg Score</span><b>${scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—'}</b></div><div><span>Period</span><b>${from} → ${to}</b></div>`,rows=data.map(a=>`<tr><td>${a.date}</td><td>${esc(staffForPhoneV84(a.phone).name||a.name||a.phone)}</td><td>${a.checkIn||'—'}</td><td>${Math.max(0,Math.round(a.minutesLate||0))}</td><td>${attScoreV84(a)??'—'}</td><td>${a.checkOut||'—'}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+'m':'—'}</td></tr>`).join('');printWindowV84('Attendance History Report',`${from} to ${to}`,summary,['Date','Staff','Check-In','Late','Score','Check-Out','Distance'],rows)}
+function printDailyAttendanceV84(){const d=todayAttDateV84.value||today(),r=dailyReportDataV84(d),summary=`<div><span>Total Staff</span><b>${db.staff.length}</b></div><div><span>Present</span><b>${r.present}</b></div><div><span>Absent</span><b>${r.absent}</b></div><div><span>Late / Avg Score</span><b>${r.late} / ${r.avg}</b></div>`,rows=r.list.map(x=>`<tr><td>${x.s.photo?`<img src="${x.s.photo}" style="width:34px;height:34px;object-fit:cover;border-radius:6px">`:'—'}</td><td>${esc(x.s.name)}</td><td>${esc(x.s.role||'Staff')}</td><td>${esc(x.p)}</td><td>${attendanceStatusV84(x.a)}</td><td>${esc(x.a.checkIn||'—')}</td><td>${esc(x.a.checkOut||'—')}</td><td>${whTextV101(x.a)}</td><td>${x.a.selfie?`<img src="${x.a.selfie}" style="width:34px;height:34px;object-fit:cover;border-radius:6px">`:'—'}</td><td>${attScoreV84(x.a)??'—'}</td><td>${esc(x.a.ownerNote||'—')}</td></tr>`).join('');printWindowV84('Daily Attendance Report',d,summary,['Profile','Name','Role','Phone','Status','Check-In','Check-Out','Working Hours','Selfie','Score','Notes'],rows)}
+function printHistoryReportV84(){const from=histFromV84.value||today(),to=histToV84.value||today(),phone=histStaffV84.value;let data=(window.noorStaffSystem?.getAttendanceBetween(from,to)||[]).filter(a=>!phone||normPhoneV84(a.phone)===phone);const scores=data.map(attScoreV84).filter(x=>x!=null),summary=`<div><span>Records</span><b>${data.length}</b></div><div><span>Late</span><b>${data.filter(a=>(a.minutesLate||0)>10).length}</b></div><div><span>Avg Score</span><b>${scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—'}</b></div><div><span>Period</span><b>${from} → ${to}</b></div>`,rows=data.map(a=>`<tr><td>${a.date}</td><td>${esc(staffForPhoneV84(a.phone).name||a.name||a.phone)}</td><td>${a.checkIn||'—'}</td><td>${Math.max(0,Math.round(a.minutesLate||0))}</td><td>${attScoreV84(a)??'—'}</td><td>${a.checkOut||'—'}</td><td>${whTextV101(a)}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+'m':'—'}</td></tr>`).join('');printWindowV84('Attendance History Report',`${from} to ${to}`,summary,['Date','Staff','Check-In','Late','Score','Check-Out','Working Hours','Distance'],rows)}
 function printIndividualStaffV84(phone){const s=staffForPhoneV84(phone),data=(window.noorStaffSystem?.getAttendanceBetween('0000-00-00','9999-99-99')||[]).filter(a=>normPhoneV84(a.phone)===normPhoneV84(phone)),scores=data.map(attScoreV84).filter(x=>x!=null),summary=`<div><span>Staff</span><b>${esc(s.name||phone)}</b></div><div><span>Records</span><b>${data.length}</b></div><div><span>Late Days</span><b>${data.filter(a=>(a.minutesLate||0)>10).length}</b></div><div><span>Avg Score</span><b>${scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—'}</b></div>`,rows=data.map(a=>`<tr><td>${a.date}</td><td>${a.checkIn||'—'}</td><td>${Math.max(0,Math.round(a.minutesLate||0))}</td><td>${attScoreV84(a)??'—'}</td><td>${a.checkOut||'—'}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+'m':'—'}</td></tr>`).join('');printWindowV84('Individual Staff Attendance',`${s.name||phone} • ${normPhoneV84(phone)}`,summary,['Date','Check-In','Late','Score','Check-Out','Distance'],rows)}
 
 async function saveAttendancePolicyV84(){policyV84={shiftStart:policyShiftStartV84.value||'09:00',shiftEnd:policyShiftEndV84.value||'',radius:+policyRadiusV84.value||200,variant:policyVariantV84.value||'Production',instruction:policyInstructionV84.value||'',scores:{m10:+score10V84.value||0,m20:+score20V84.value||0,m30:+score30V84.value||0,m45:+score45V84.value||0,late:+scoreLateV84.value||0}};await window.noorStaffSystem?.saveConfig(policyV84);settingsVariantV84.textContent=policyV84.variant;alert('Attendance policy save ہو گئی')}
@@ -2029,7 +2240,7 @@ staffEditFormV85?.addEventListener('submit',async e=>{
   try{if(oldPhone!==newPhone)await window.noorStaffSystem?.migrateStaffPhone?.(oldPhone,newPhone,updated);else await window.noorStaffSystem?.upsertAccount(updated)}catch(error){alert('پروفائل مکمل محفوظ نہیں ہوا۔ انٹرنیٹ چیک کرکے دوبارہ Save کریں۔');return}finally{saveButton.disabled=false}
   const idx=db.staff.findIndex(x=>normPhoneV84(x.phone||x.id)===oldPhone);if(idx>=0)db.staff[idx]=updated;
   if(currentProfilePhoneV84===oldPhone)currentProfilePhoneV84=newPhone;
-  save();closeStaffEditV85();
+  save();window.NTStaffEditDraftV101&&window.NTStaffEditDraftV101.clear();closeStaffEditV85();
 });
 
 function monthBoundsV85(){const t=today(),[y,m]=t.split('-').map(Number);return{first:`${y}-${String(m).padStart(2,'0')}-01`,today:t}}
@@ -2070,6 +2281,7 @@ function renderStaffProfileV84(){
       <div><small>Shift Time</small><b>${esc(shift)} — ${esc(shiftEnd)}</b></div>
       <div><small>Check-In</small><b>${esc(ta.checkIn||'—')}</b></div>
       <div><small>Check-Out</small><b>${esc(ta.checkOut||'—')}</b></div>
+      <div><small>Working Hours / کام کے گھنٹے</small><b>${whTextV101(ta)}</b></div>
       <div><small>Late</small><b>${ta.checkIn?Math.max(0,Math.round(ta.minutesLate||0))+' min':'—'}</b></div>
       <div><small>Aaj ka Score</small><b>${attScoreV84(ta)??'—'}</b></div>
       <div><small>Distance</small><b>${ta.checkInDistance!=null?Math.round(ta.checkInDistance)+'m':'—'}</b></div>
@@ -2085,7 +2297,7 @@ function renderStaffProfileV84(){
   </div>
   <div class="pro-card">
     <div class="pro-card-head"><h3>Poori Attendance History</h3><small>${rows.length} records</small></div>
-    <div class="table-scroll"><table><thead><tr><th>Date</th><th>Check-In</th><th>Late</th><th>Score</th><th>Check-Out</th><th>Distance</th><th></th></tr></thead><tbody>${rows.map(a=>`<tr><td>${esc(a.date||'')}</td><td>${esc(a.checkIn||'—')}</td><td>${Math.max(0,Math.round(a.minutesLate||0))}m</td><td><b>${attScoreV84(a)??'—'}</b></td><td>${esc(a.checkOut||'—')}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+'m':'—'}</td><td><button class="soft" onclick="openAttendanceEditV84('${a.id||`${a.date}_${phone}`}','${phone}')">Edit</button></td></tr>`).join('')||'<tr><td colspan="7">Koi record nahi</td></tr>'}</tbody></table></div>
+    <div class="table-scroll"><table><thead><tr><th>Date</th><th>Check-In</th><th>Late</th><th>Score</th><th>Check-Out</th><th>Working Hours / کام کے گھنٹے</th><th>Distance</th><th></th></tr></thead><tbody>${rows.map(a=>`<tr><td>${esc(a.date||'')}</td><td>${esc(a.checkIn||'—')}</td><td>${Math.max(0,Math.round(a.minutesLate||0))}m</td><td><b>${attScoreV84(a)??'—'}</b></td><td>${esc(a.checkOut||'—')}</td><td class="wh-cell-v101">${whTextV101(a)}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+'m':'—'}</td><td><button class="soft" onclick="openAttendanceEditV84('${a.id||`${a.date}_${phone}`}','${phone}')">Edit</button></td></tr>`).join('')||'<tr><td colspan="8">Koi record nahi</td></tr>'}</tbody></table></div>
   </div>`;
   window.noorTasks?.profile(phone);
 }
@@ -2384,6 +2596,8 @@ function taskTotals(tasks) {
   tasks=normalizeTasks(tasks);
   return {total:tasks.length,approved:tasks.filter(t=>t.status==='approved').length,pending:tasks.filter(t=>t.status==='submitted').length,points:tasks.reduce((n,t)=>n+(t.status==='approved'?Number(t.points)||0:0),0),possible:tasks.reduce((n,t)=>n+Number(t.maxPoints||0),0)};
 }
+const workHoursTextV101=rec=>(typeof globalThis!=='undefined'&&globalThis.whTextV101)?globalThis.whTextV101(rec):'—';
+
 function reportDocument({tasks,photos=new Map(),title='Staff Picture & Points Report',subtitle='',attendance=[],includePhotos=false}) {
   tasks=normalizeTasks(tasks);
   const e=escapeHtml,totals=taskTotals(tasks),attendancePoints=attendance.reduce((n,a)=>n+Number(a.finalScore??a.autoScore??0),0);
@@ -2391,7 +2605,7 @@ function reportDocument({tasks,photos=new Map(),title='Staff Picture & Points Re
   const evidence=tasks.map(t=>`<article><h3>${e(t.title)}</h3><p>${e(t.staffName)} • ${e(t.phone)} • ${e(t.date)}</p><p class="note">${e(t.details)}</p><p><b>${e(STATUS[t.status]||t.status)}</b> • پوائنٹس: <b>${t.status==='approved'?Number(t.points):0} / ${Number(t.maxPoints)}</b></p><p class="note">ملازم: ${e(t.staffNote||'—')}<br>مالک: ${e(t.ownerNote||'—')}</p>${includePhotos?`<div class="photos">${(t.photoIds||[]).map((id,i)=>{const data=photos.get(t.id+'/'+id);requireValue(validPhoto(data),'رپورٹ کی تمام تصاویر ابھی لوڈ نہیں ہوئیں۔ دوبارہ کوشش کریں۔');return `<figure><img src="${data}" alt="${e(t.title)} — ${i+1}"><figcaption>${e(t.staffName)} — تصویر ${i+1}</figcaption></figure>`}).join('')}</div>`:''}</article>`).join('');
   const lateDays=attendance.filter(a=>Number(a.minutesLate||0)>10).length,scored=attendance.filter(a=>a.finalScore!=null||a.autoScore!=null);
   const average=scored.length?(attendancePoints/scored.length).toFixed(1):'—';
-  const att=attendance.length?`<h2>Attendance / حاضری</h2><p>حاضری ریکارڈ: ${attendance.length} • دیر والے دن: ${lateDays} • اوسط اسکور: ${average}</p><p>حاضری کے پوائنٹس: ${attendancePoints} • ٹاسک پوائنٹس: ${totals.points} • مجموعہ: ${attendancePoints+totals.points}</p><table class="attendance"><thead><tr><th>تاریخ</th><th>Check-In</th><th>Late min</th><th>Auto</th><th>حاضری پوائنٹس</th><th>Check-Out</th><th>Distance</th><th>مالک کا نوٹ</th></tr></thead><tbody>${attendance.map(a=>`<tr><td>${e(a.date)}</td><td>${e(a.checkIn||'—')}</td><td>${Math.max(0,Math.round(a.minutesLate||0))}</td><td>${e(a.autoScore??'—')}</td><td>${e(a.finalScore??a.autoScore??'—')}</td><td>${e(a.checkOut||'—')}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+'m':'—'}</td><td>${e(a.ownerNote||'—')}</td></tr>`).join('')}</tbody></table>`:'';
+  const att=attendance.length?`<h2>Attendance / حاضری</h2><p>حاضری ریکارڈ: ${attendance.length} • دیر والے دن: ${lateDays} • اوسط اسکور: ${average}</p><p>حاضری کے پوائنٹس: ${attendancePoints} • ٹاسک پوائنٹس: ${totals.points} • مجموعہ: ${attendancePoints+totals.points}</p><table class="attendance"><thead><tr><th>تاریخ</th><th>Check-In</th><th>Late min</th><th>Auto</th><th>حاضری پوائنٹس</th><th>Check-Out</th><th>کام کے گھنٹے</th><th>Distance</th><th>مالک کا نوٹ</th></tr></thead><tbody>${attendance.map(a=>`<tr><td>${e(a.date)}</td><td>${e(a.checkIn||'—')}</td><td>${Math.max(0,Math.round(a.minutesLate||0))}</td><td>${e(a.autoScore??'—')}</td><td>${e(a.finalScore??a.autoScore??'—')}</td><td>${e(a.checkOut||'—')}</td><td>${e(workHoursTextV101(a))}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+'m':'—'}</td><td>${e(a.ownerNote||'—')}</td></tr>`).join('')}</tbody></table>`:'';
   return `<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>${e(title)}</title><style>@page{size:A4;margin:13mm}body{font:14px/1.65 Arial,sans-serif;color:#17302d;padding:12px}h1{font-size:24px;color:#0f766e}h2{font-size:19px}h3{margin:0;font-size:17px}table{width:100%;border-collapse:collapse;margin:14px 0}th,td{border:1px solid #d2dedb;padding:8px;text-align:right}th{background:#eaf4f0}article{border-top:2px solid #b8d9ce;padding:15px 0;break-inside:auto}article h3{break-after:avoid}p{margin:6px 0}.note{white-space:pre-wrap;overflow-wrap:anywhere}.totals{background:#eaf4f0;padding:14px}.photos{display:block}figure{display:inline-block;vertical-align:top;width:46%;margin:8px 1%;break-inside:avoid}img{display:block;width:100%;max-height:95mm;object-fit:contain}figcaption{font-size:12px;text-align:center}thead{display:table-header-group}.attendance{font-size:11px}.attendance th,.attendance td{padding:5px;overflow-wrap:anywhere}@media print{body{padding:0}article{box-shadow:none}}</style></head><body><h1>Noor Traders Gulyana</h1><h2>${e(title)}</h2><p>${e(subtitle)}</p><div class="totals">کل کام: ${totals.total} • منظور شدہ: ${totals.approved} • منظوری باقی: ${totals.pending}<br><b>منظور شدہ ٹاسک پوائنٹس: ${totals.points}</b> / مقررہ ${totals.possible}<br>صرف منظور شدہ کام کے پوائنٹس جمع کیے گئے ہیں۔ تاریخ کا حساب کام کی مقررہ تاریخ سے ہے۔</div><table><thead><tr><th>ملازم</th><th>کام</th><th>منظور</th><th>ٹاسک پوائنٹس</th></tr></thead><tbody>${people||'<tr><td colspan="4">اس مدت میں کوئی کام نہیں۔</td></tr>'}</tbody></table>${evidence}${att}</body></html>`;
 }
 
@@ -2651,7 +2865,7 @@ function installTaskUI({service,getStaff,getAttendance,getCurrentStaff,document:
     try{
       ensureReady();const task=structuredClone(tasks.find(t=>t.id===id));requireValue(task,'کام نہیں ملا۔');
       const canSubmit=session.role==='staff'&&['assigned','changes_requested'].includes(task.status),canReview=session.role==='owner'&&task.status==='submitted';
-      const token=dialog(task.title,`<p>${e(task.staffName)} • ${e(task.date||'تاریخ مقرر نہیں')}</p><p class="nt-note">${e(task.details)}</p><p><span class="nt-state ${e(task.status)}">${e(STATUS[task.status])}</span> • پوائنٹس: ${task.status==='approved'?Number(task.points):0} / ${Number(task.maxPoints)}</p><p class="nt-note">ملازم: ${e(task.staffNote||'—')}<br>مالک: ${e(task.ownerNote||'—')}</p><div id="ntSavedPhotos" class="nt-photos"></div>${canSubmit?`<form id="ntSubmitForm"><p>کام مکمل کرکے 1 سے ${MAX_PHOTOS} تصاویر شامل کریں۔ ہر تصویر الگ کھول کر دیکھی جا سکتی ہے۔</p><div class="nt-actions"><label>گیلری سے متعدد تصاویر<input id="ntGalleryPhotos" type="file" accept="image/*" multiple></label><label>نئی تصویر لیں<input id="ntCameraPhoto" type="file" accept="image/*" capture="environment"></label></div><div id="ntDraftPhotos" class="nt-photos"></div><small id="ntPhotoCount">0 / ${MAX_PHOTOS} تصاویر</small><label>کام کے بارے میں نوٹ<textarea id="ntStaffNote" maxlength="2000" rows="3"></textarea></label><button class="nt-primary" type="submit" id="ntSubmitPhotos" disabled>تصاویر مالک کو بھیجیں</button></form>`:canReview?`<form id="ntReviewForm"><label>دینے والے پوائنٹس (0–${Number(task.maxPoints)})<input id="ntReviewPoints" type="number" min="0" max="${Number(task.maxPoints)}" step="1" value="${Number(task.maxPoints)}" required></label><label>مالک کا نوٹ<textarea id="ntOwnerNote" rows="3" maxlength="2000"></textarea></label><div class="nt-actions"><button type="submit" class="nt-primary" disabled>✓ OK — منظور کریں</button><button type="button" id="ntRequestChanges" disabled>دوبارہ کام / تصاویر مانگیں</button></div></form>`:''}`);
+      const token=dialog(task.title,`<p>${e(task.staffName)} • ${e(task.date||'تاریخ مقرر نہیں')}</p><p class="nt-note">${e(task.details)}</p><p><span class="nt-state ${e(task.status)}">${e(STATUS[task.status])}</span> • پوائنٹس: ${task.status==='approved'?Number(task.points):0} / ${Number(task.maxPoints)}</p><p class="nt-note">ملازم: ${e(task.staffNote||'—')}<br>مالک: ${e(task.ownerNote||'—')}</p><div id="ntSavedPhotos" class="nt-photos"></div>${canSubmit?`<form id="ntSubmitForm"><p>کام مکمل کرکے کیمرے سے 1 سے ${MAX_PHOTOS} تصاویر لیں۔ گیلری سے تصویر شامل نہیں کی جا سکتی۔ ہر تصویر الگ کھول کر دیکھی جا سکتی ہے۔</p><div class="nt-actions"><label class="nt-camera-btn" id="ntCameraBtn">📷 کیمرہ کھول کر تصویر لیں<input id="ntCameraPhoto" type="file" accept="image/*" capture="environment" hidden></label></div><div id="ntDraftPhotos" class="nt-photos"></div><small id="ntPhotoCount">0 / ${MAX_PHOTOS} تصاویر</small><label>کام کے بارے میں نوٹ<textarea id="ntStaffNote" maxlength="2000" rows="3"></textarea></label><button class="nt-primary" type="submit" id="ntSubmitPhotos" disabled>تصاویر مالک کو بھیجیں</button></form>`:canReview?`<form id="ntReviewForm"><label>دینے والے پوائنٹس (0–${Number(task.maxPoints)})<input id="ntReviewPoints" type="number" min="0" max="${Number(task.maxPoints)}" step="1" value="${Number(task.maxPoints)}" required></label><label>مالک کا نوٹ<textarea id="ntOwnerNote" rows="3" maxlength="2000"></textarea></label><div class="nt-actions"><button type="submit" class="nt-primary" disabled>✓ OK — منظور کریں</button><button type="button" id="ntRequestChanges" disabled>دوبارہ کام / تصاویر مانگیں</button></div></form>`:''}`);
       if(task.photoIds?.length){message('تصاویر لوڈ ہو رہی ہیں…');const photos=await service.photos(task);if(token!==dialogEpoch)return;$('ntSavedPhotos').innerHTML=[...photos.values()].map((src,i)=>`<div class="nt-photo"><img src="${src}" data-task-image alt="کام کی تصویر ${i+1}" tabindex="0" role="button"></div>`).join('');message('')}
       if(token!==dialogEpoch)return;
       if(canSubmit)wireSubmission(task,token);
@@ -2662,9 +2876,9 @@ function installTaskUI({service,getStaff,getAttendance,getCurrentStaff,document:
   }
   function wireSubmission(task,token){
     const photos=[];let preparing=false,saving=false;
-    const refresh=()=>{if(token!==dialogEpoch)return;$('ntPhotoCount').textContent=`${photos.length} / ${MAX_PHOTOS} تصاویر`;$('ntDraftPhotos').innerHTML=photos.map((src,i)=>`<div class="nt-photo"><img src="${src}" data-task-image alt="نئی تصویر ${i+1}" tabindex="0" role="button"><button type="button" data-remove-photo="${i}">ہٹائیں</button></div>`).join('');$('ntSubmitPhotos').disabled=!photos.length||preparing||saving;$('ntGalleryPhotos').disabled=preparing||saving;$('ntCameraPhoto').disabled=preparing||saving};
+    const refresh=()=>{if(token!==dialogEpoch)return;$('ntPhotoCount').textContent=`${photos.length} / ${MAX_PHOTOS} تصاویر`;$('ntDraftPhotos').innerHTML=photos.map((src,i)=>`<div class="nt-photo"><img src="${src}" data-task-image alt="نئی تصویر ${i+1}" tabindex="0" role="button"><button type="button" data-remove-photo="${i}">ہٹائیں</button></div>`).join('');$('ntSubmitPhotos').disabled=!photos.length||preparing||saving;$('ntCameraPhoto').disabled=preparing||saving;$('ntCameraBtn').classList.toggle('is-busy',preparing||saving)};
     const add=async ev=>{const files=[...ev.target.files];ev.target.value='';if(preparing||saving)return;preparing=true;refresh();message('تصاویر تیار ہو رہی ہیں…');try{requireValue(photos.length+files.length<=MAX_PHOTOS,`زیادہ سے زیادہ ${MAX_PHOTOS} تصاویر شامل کریں۔`);for(const file of files){const data=await compress(file);if(token!==dialogEpoch)return;photos.push(data)}message('تصاویر تیار ہیں۔ بھیجنے سے پہلے دیکھ لیں۔')}catch(err){if(token===dialogEpoch)message(errorText(err),true)}finally{preparing=false;refresh()}};
-    $('ntGalleryPhotos').onchange=add;$('ntCameraPhoto').onchange=add;
+    $('ntCameraPhoto').onchange=add;
     $('ntDraftPhotos').onclick=ev=>{const b=ev.target.closest('[data-remove-photo]');if(b&&!preparing&&!saving){photos.splice(Number(b.dataset.removePhoto),1);refresh()}};
     $('ntSubmitForm').onsubmit=async ev=>{ev.preventDefault();if(preparing||saving)return;saving=true;refresh();message('تصاویر اور کام محفوظ ہو رہے ہیں…');const input={photos:[...photos],staffNote:$('ntStaffNote').value,submissionId:crypto.randomUUID(),expectedRevision:task.revision};try{await service.submit(task.id,input);if(token!==dialogEpoch)return;closeDialog();notice('تصاویر جمع ہو گئیں۔ مالک کی منظوری کے بعد پوائنٹس ملیں گے۔')}catch(err){if(token===dialogEpoch)message(errorText(err),true)}finally{saving=false;refresh()}};
   }
@@ -3014,6 +3228,7 @@ function renderStaffToday(){
   const todayRec=(window.__myAttendance||[]).find(x=>x.date===pkDate())||{};
   staffTodayIn.textContent=todayRec.checkIn||"—";
   staffTodayOut.textContent=todayRec.checkOut||"—";
+  if(window.staffTodayHours)staffTodayHours.textContent=whTextV101(todayRec);
   staffTodayStatus.textContent=todayRec.checkIn?(todayRec.checkOut?"Checked Out":"Present"):"Not Checked In";
   staffCheckInBtn.disabled=!!todayRec.checkIn;
   staffCheckOutBtn.disabled=!todayRec.checkIn||!!todayRec.checkOut;
@@ -3021,7 +3236,7 @@ function renderStaffToday(){
 function renderStaffHistory(){
   const from=staffHistoryFrom.value||"0000-00-00",to=staffHistoryTo.value||"9999-99-99";
   const rows=(window.__myAttendance||[]).filter(x=>x.date>=from&&x.date<=to);
-  staffHistoryRows.innerHTML=rows.map(a=>`<tr><td>${a.date||""}</td><td>${a.checkIn||"—"}</td><td>${a.checkOut||"—"}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+"m":"—"}</td><td>${a.checkOut?"Checked Out":a.checkIn?"Present":"—"}</td></tr>`).join("")||'<tr><td colspan="5">No records</td></tr>';
+  staffHistoryRows.innerHTML=rows.map(a=>`<tr><td>${a.date||""}</td><td>${a.checkIn||"—"}</td><td>${a.checkOut||"—"}</td><td class="wh-cell-v101">${whTextV101(a)}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+"m":"—"}</td><td>${a.checkOut?"Checked Out":a.checkIn?"Present":"—"}</td></tr>`).join("")||'<tr><td colspan="6">No records</td></tr>';
 }
 async function fileToData(file,max=500){
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const c=document.createElement("canvas"),sc=Math.min(1,max/Math.max(im.width,im.height));c.width=im.width*sc;c.height=im.height*sc;c.getContext("2d").drawImage(im,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",.7))};im.onerror=rej;im.src=r.result};r.onerror=rej;r.readAsDataURL(file)});
@@ -3378,6 +3593,10 @@ td b,td strong{color:#0f766e}
 .nt-tasks button:focus-visible,.nt-tasks input:focus-visible,.nt-tasks select:focus-visible,.nt-tasks textarea:focus-visible{outline:3px solid #e3b348;outline-offset:2px}
 @media(max-width:760px){#staffFeatureGridV87{grid-template-columns:repeat(3,minmax(0,1fr))!important}.nt-cards{grid-template-columns:1fr}.nt-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.nt-dialog{padding:8px}.nt-dialog-card{padding:15px;max-height:95dvh}.nt-dialog-card .nt-toolbar{top:-15px}.nt-staff-panel{padding:14px}.nt-stats div{padding:10px 7px}.nt-stats b{font-size:21px}}
 .nt-upload-main{width:100%;font-size:17px!important;font-weight:750;padding:14px!important}
+.nt-camera-btn{display:flex!important;align-items:center;justify-content:center;gap:8px;width:100%;min-height:52px;padding:14px;font-size:16px;font-weight:750;color:#fff;background:#0f766e;border:1px solid #0f766e;border-radius:12px;cursor:pointer;text-align:center;margin:0 0 4px}
+.nt-camera-btn:active{background:#0b5f58}
+.nt-camera-btn.is-busy{opacity:.6;pointer-events:none}
+.nt-actions .nt-camera-btn{flex:1 1 100%}
 .nt-notice-bell{border:1px solid #c9dfd5!important;background:#e9f6ef!important;color:#155944!important;border-radius:10px;padding:9px 12px!important;cursor:pointer}
 .nt-notice-bell span{background:#d1e8dc;border-radius:20px;padding:2px 7px}.nt-notice-bell .has-unread{background:#c84132;color:#fff}
 #ntNoticeDialog{z-index:100004}.nt-notice-row{padding:15px;margin:10px 0;border:1px solid #d4e4dc;border-radius:12px;background:#fff}.nt-notice-row.unread{background:#eff9f3;border-right:4px solid #0f766e}.nt-notice-row .nt-actions{margin-top:10px}.nt-notice-help{font-size:13px!important;line-height:1.9;margin-top:15px!important}
@@ -3473,5 +3692,132 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
 @media(prefers-reduced-motion:reduce){#ownerApp *,#staffPortal *{scroll-behavior:auto!important;transition:none!important}}
 #staffPortal .nt-shop-map{display:inline-block;margin-top:6px;color:#e8dba5;text-decoration:underline;text-underline-offset:3px;font-size:11px;font-weight:600}
 
+/* ===== V101: live camera modal, working-hours cells, draft notice ===== */
+.nt-cam-v101{position:fixed;inset:0;z-index:100010;background:#0d2a2299;display:flex;align-items:center;justify-content:center;padding:14px}
+.nt-cam-card-v101{width:min(520px,100%);background:#fff;border-radius:18px;padding:16px;box-shadow:0 18px 60px #0b2a2255;direction:rtl;text-align:right}
+.nt-cam-head-v101{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;font-size:17px}
+.nt-cam-head-v101 button{border:1px solid #cfe2da;background:#eff8f4;border-radius:10px;min-width:42px;min-height:42px;font-size:18px;cursor:pointer}
+.nt-cam-stage-v101{position:relative;background:#0f1f1b;border-radius:14px;overflow:hidden;aspect-ratio:1;display:flex;align-items:center;justify-content:center}
+.nt-cam-stage-v101 video,.nt-cam-stage-v101 img{width:100%;height:100%;object-fit:cover;display:block}
+.nt-cam-msg-v101{margin:10px 0 6px;font-size:13px;color:#3c584f}
+.nt-cam-msg-v101.bad{color:#a42620;font-weight:700}
+.nt-cam-actions-v101{display:flex;flex-wrap:wrap;gap:8px}
+.nt-cam-actions-v101 button{flex:1 1 44%;min-height:48px;border:1px solid #c6ddd3;background:#eff8f3;color:#175440;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer}
+.nt-cam-actions-v101 .nt-cam-primary-v101{background:#0f766e;border-color:#0f766e;color:#fff}
+.nt-cam-note-v101{display:block;margin-top:10px;font-size:12px;color:#63786f}
+.wh-cell-v101{white-space:nowrap;font-variant-numeric:tabular-nums}
+.nt-draft-note-v101{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin:0 0 12px;padding:10px 12px;border:1px solid #f0d9a6;background:#fff8e8;color:#7a5510;border-radius:12px;font-size:13px;direction:rtl;text-align:right}
+.nt-draft-note-v101 button{border:1px solid #e3c68b;background:#fff;color:#7a5510;border-radius:9px;padding:7px 11px;font-size:12px;cursor:pointer;min-height:38px}
+
 </style>
+<script>
+/* ========== NOOR TRADERS V101 WIRING ==========
+   Live-camera buttons + draft restore. App ke baaqi code ke baad chalta hai. */
+(function(){
+  function ready(fn){ if(document.readyState!=='loading')setTimeout(fn,0); else document.addEventListener('DOMContentLoaded',function(){setTimeout(fn,0)}) }
+  function $(id){ return document.getElementById(id) }
+
+  function notice(anchor,text,onClear){
+    if(!anchor||!anchor.parentNode)return;
+    var old=anchor.parentNode.querySelector('.nt-draft-note-v101');
+    if(old)old.parentNode.removeChild(old);
+    var box=document.createElement('div');
+    box.className='nt-draft-note-v101';
+    box.innerHTML='<span>'+text+'</span><button type="button">ڈرافٹ صاف کریں</button>';
+    box.querySelector('button').onclick=function(){ try{onClear&&onClear()}catch(e){} box.parentNode&&box.parentNode.removeChild(box) };
+    anchor.parentNode.insertBefore(box,anchor);
+  }
+
+  ready(function(){
+    /* ---------- Staff account photo: live camera only ---------- */
+    var createBtn=$('staffPhotoBtnV101');
+    if(createBtn)createBtn.onclick=function(){
+      openLiveCameraV101({title:'ملازم کی تصویر — لائیو کیمرہ',facing:'user'}).then(function(data){
+        if(!data)return;
+        try{ staffPhotoDataV84=data }catch(e){}
+        var p=$('staffPhotoPreviewV84');
+        if(p){ p.textContent=''; p.style.backgroundImage='url("'+data+'")' }
+        NTDraftsV101.putPhoto('staffCreate',data);
+      });
+    };
+    var editBtn=$('staffEditPhotoBtnV101');
+    if(editBtn)editBtn.onclick=function(){
+      openLiveCameraV101({title:'تصویر تبدیل کریں — لائیو کیمرہ',facing:'user'}).then(function(data){
+        if(!data)return;
+        try{ staffEditPhotoDataV85=data }catch(e){}
+        var p=$('staffEditPhotoPreviewV85');
+        if(p){ p.textContent=''; p.style.backgroundImage='url("'+data+'")' }
+      });
+    };
+    var legacyBtn=$('staffPhotoBtnLegacyV101');
+    if(legacyBtn)legacyBtn.onclick=function(){
+      openLiveCameraV101({title:'ملازم کی تصویر — لائیو کیمرہ',facing:'user'}).then(function(data){
+        if(!data)return;
+        var p=$('staffPhotoPreview');
+        if(p){ p.textContent=''; p.style.backgroundImage='url("'+data+'")' }
+        try{ window.staffPhotoDataLegacyV101=data }catch(e){}
+      });
+    };
+
+    /* ---------- Draft: New Staff Account ---------- */
+    var createGuard=NTDraftsV101.guard({key:'staffCreate',fields:['staffNameV84','staffRoleV84','staffAddressV84','staffPhoneV84','staffLoginEnabledV84']});
+    window.NTStaffCreateDraftV101=createGuard;
+    var form=$('staffFormV84');
+    if(form){
+      var restored=createGuard.restore();
+      NTDraftsV101.getPhoto('staffCreate').then(function(data){
+        if(!data)return;
+        try{ staffPhotoDataV84=data }catch(e){}
+        var p=$('staffPhotoPreviewV84');
+        if(p){ p.textContent=''; p.style.backgroundImage='url("'+data+'")' }
+      });
+      if(restored){
+        notice(form,'ادھورا فارم واپس بحال کر دیا گیا ہے۔ مکمل کرکے Save کریں۔',function(){
+          createGuard.clear(); form.reset();
+          var chk=$('staffLoginEnabledV84'); if(chk)chk.checked=true;
+          try{ staffPhotoDataV84='' }catch(e){}
+          var p=$('staffPhotoPreviewV84'); if(p){ p.textContent='👤'; p.style.backgroundImage='' }
+        });
+        try{ toggleStaffCreateV84(true) }catch(e){}
+      }
+    }
+
+    /* ---------- Draft: Staff Edit (usi ملازم کے لیے) ---------- */
+    var editGuard=NTDraftsV101.guard({
+      key:'staffEdit',
+      fields:['staffEditNameV85','staffEditRoleV85','staffEditAddressV85','staffEditPhoneV85','staffEditActiveV85','staffEditLoginEnabledV85'],
+      tag:function(){ var el=$('staffEditOldPhoneV85'); return el?el.value:'' }
+    });
+    window.NTStaffEditDraftV101=editGuard;
+    var origEditStaff=window.editStaffV84;
+    if(typeof origEditStaff==='function'){
+      window.editStaffV84=function(phone){
+        var r=origEditStaff.apply(this,arguments);
+        setTimeout(function(){
+          try{
+            var el=$('staffEditOldPhoneV85'),f=$('staffEditFormV85');
+            if(el&&f&&editGuard.restore(el.value))
+              notice(f,'اس ملازم کی ادھوری تبدیلیاں بحال کر دی گئی ہیں۔',function(){ editGuard.clear(); origEditStaff(phone) });
+          }catch(e){}
+        },60);
+        return r;
+      };
+    }
+
+    /* ---------- Draft: owner data-entry forms ---------- */
+    var owner=[
+      {key:'entryForm',fields:['eDate','eType','eNote','eAmount','eCategory']},
+      {key:'expenseFormV84',fields:['expenseDateV84','expenseNoteV84','expenseCategoryV84','expenseAmountV84']},
+      {key:'purchaseForm',fields:['pDate','pNote','pAmount','pPending']}
+    ];
+    window.NTOwnerDraftsV101={};
+    owner.forEach(function(cfg){
+      if(!$(cfg.fields[0]))return;
+      var g=NTDraftsV101.guard(cfg);
+      window.NTOwnerDraftsV101[cfg.key]=g;
+      setTimeout(function(){ g.restore() },1200);   /* app init ke baad restore */
+    });
+  });
+})();
+</script>
 </body></html>
