@@ -1,6 +1,6 @@
 {
-  "version": "v100",
+  "version": "v101",
   "variant": "Production",
   "buildDate": "2026-09-09",
-  "notes": "Premium panels; robust task loading; clear multi-photo upload; owner in-app notifications; Guliana QXX4+5Q9 attendance location"
+  "notes": "Camera-only task photo upload and live-camera-only staff account photo (gallery removed); Working Hours shown everywhere Check-In/Check-Out appears, always calculated, never stored; draft auto-save for unsaved staff and owner forms; premium panels; robust task loading; owner in-app notifications; Guliana QXX4+5Q9 attendance location"
 }
