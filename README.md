@@ -1,4 +1,4 @@
-# Noor Traders Hisab v101
+# Noor Traders Hisab v102
 
 Based on the supplied v98 app and the working v99 login update. Read **START_HERE_URDU.md** for installation and use.
 
@@ -11,6 +11,7 @@ Based on the supplied v98 app and the working v99 login update. Read **START_HER
 - Up to eight compressed pictures per task submission, camera only (gallery picker removed), preview and removal before sending.
 - Staff account photos are captured with an in-app live camera (`getUserMedia`, front camera by default). The gallery/file picker cannot be opened for these fields.
 - "Working Hours" is shown next to every Check-In/Check-Out pair: today attendance, staff profile time table and full history, attendance history, staff reports, complete system report, the staff PDF report and the staff member's own report. It is derived from Check-In/Check-Out on every render and is never stored, so existing attendance records display hours without any migration. Records crossing midnight are handled; missing check-out shows "جاری ہے" and impossible spans (negative, or over 16 hours) show "—".
+- Salary is now part of Staff Add/Edit, every staff profile, Staff Reports, the employee's own PDF, the owner individual PDF, and the Complete System Report. Each employee has separate monthly salary, duty hours, working days, overtime rate and point rate. Final salary is calculated from clocked normal hours + overtime + attendance/task point value + owner additions - advances/deductions. Salary settings are mirrored to the employee account and preserved in online settings.
 - Unsaved Add/Edit forms survive refresh, reload, accidental back and app updates. Text fields are drafted to `localStorage` and the staff profile photo to IndexedDB (`ntDraftsV101`), keyed per form, expiring after 24 hours. Drafts clear automatically on a successful save, and the restore banner offers a manual clear. Password fields are never drafted.
 - Owner approval with integer points within the assigned maximum, or return for corrections.
 - Staff task points and PDF accounting; owner PDF embeds all current submission pictures, with per-employee totals and date filters.

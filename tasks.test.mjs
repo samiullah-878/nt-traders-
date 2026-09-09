@@ -33,8 +33,9 @@ test('role, own phone, stale revisions, invalid points and missing evidence are 
 test('PDF reports embed every owner picture, escape user text, and show staff point accounting',()=>{
  const t={...submitted(),...review(submitted()),title:'<script>alert(1)</script>',ownerNote:'OK <img src=x onerror=boom>'};
  const photos=new Map(t.photoIds.map(id=>['t1/'+id,image]));
- const html=reportDocument({tasks:[t],photos,includePhotos:true,attendance:[{date:t.date,phone,checkIn:'09:00',finalScore:10}]});
+ const html=reportDocument({tasks:[t],photos,includePhotos:true,attendance:[{date:t.date,phone,checkIn:'09:00',finalScore:10}],salary:{periodLabel:'September 2026',monthlySalary:30000,expectedHours:300,normalMin:600,normalSalary:1000,otMin:60,overtimeAmount:100,attPoints:10,taskPoints:8,points:18,pointsAmount:180,bonus:500,advance:200,final:1580}});
  assert.equal((html.match(/<img src="data:image/g)||[]).length,2);assert.ok(html.includes('&lt;script&gt;'));assert.ok(!html.includes('<script>'));assert.ok(html.includes('مجموعہ: 18'));
+ assert.ok(html.includes('Salary / تنخواہ'));assert.ok(html.includes('Rs 1,580'));
  const staffHtml=reportDocument({tasks:[t]});assert.ok(staffHtml.includes('ٹاسک پوائنٹس: 8'));assert.ok(!staffHtml.includes('data:image'));
  assert.throws(()=>reportDocument({tasks:[t],includePhotos:true,photos:new Map()}),/تصاویر/);
  assert.equal(selectTasks([t],{phone:other}).length,0);assert.equal(selectTasks([t],{from:'2026-09-09'}).length,0);

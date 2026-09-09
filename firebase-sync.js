@@ -80,7 +80,9 @@ function stripPictures(state){
   return {
     settings: {
       categories: clean(state.categories || []),
-      stockItems: clean(state.stockItems || [])
+      stockItems: clean(state.stockItems || []),
+      salaryConfig: clean(state.salaryConfig || {}),
+      salaryExtras: clean(state.salaryExtras || {})
     },
     entries: mapById((state.entries || []).map(({picture,...x})=>x)),
     staff: mapById(state.staff || []),
@@ -98,6 +100,8 @@ function buildRemoteState(){
 
   state.categories = clean(remote.settings?.categories || defaults.categories || []);
   state.stockItems = clean(remote.settings?.stockItems || defaults.stockItems || []);
+  state.salaryConfig = clean(remote.settings?.salaryConfig || defaults.salaryConfig || {});
+  state.salaryExtras = clean(remote.settings?.salaryExtras || defaults.salaryExtras || {});
 
   state.entries = [...remote.entries.values()].map(x=>{
     const pic = remote.entryPictures.get(String(x.id));
@@ -105,6 +109,12 @@ function buildRemoteState(){
   });
 
   state.staff = [...remote.staff.values()].map(clean);
+  for(const staff of state.staff){
+    let phone=String(staff.phone||staff.id||'').replace(/\D/g,'');
+    if(phone.startsWith('92')&&phone.length===12)phone='0'+phone.slice(2);
+    if(phone&&!state.salaryConfig[phone]&&staff.salary)state.salaryConfig[phone]=clean(staff.salary);
+    if(phone&&!state.salaryExtras[phone]&&Array.isArray(staff.salaryExtras))state.salaryExtras[phone]=clean(staff.salaryExtras);
+  }
 
   const picsByPurchase = new Map();
   for(const p of remote.purchasePictures.values()){

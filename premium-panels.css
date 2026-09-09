@@ -145,3 +145,12 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
 .staff-salary-grid-v101 .staff-salary-final-v101 b{color:#fff;font-size:21px}
 .staff-salary-note-v101{font-size:12px;color:#63786f;margin-top:10px}
 @media(max-width:760px){.staff-salary-grid-v101{grid-template-columns:1fr 1fr}}
+/* V102: salary is integrated into Staff Add/Edit, profiles and reports. */
+.salary-inline-fields-v102{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:12px;margin:5px 0;border:1px solid #cfe4db;background:#f2f9f6;border-radius:13px}
+.salary-inline-fields-v102 h4{grid-column:1/-1;margin:0;color:#0f5f59}.salary-inline-fields-v102 label{font-size:12px}.salary-inline-fields-v102 input{width:100%;margin-top:4px}
+.staff-card-salary-v102{font-size:11px;background:#fff7df;border:1px solid #f0dc9f;border-radius:9px;padding:8px;color:#795b0d;margin-bottom:7px}.staff-card-salary-v102 b{color:#5b4308}
+.profile-salary-v102{margin-bottom:10px;border-color:#b9ded2;background:linear-gradient(145deg,#fff,#effaf6)}.profile-salary-v102 .pro-card-head{align-items:flex-end}.profile-salary-v102 input[type=month]{width:auto;min-height:40px}
+.profile-salary-grid-v102{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}.profile-salary-grid-v102>div{background:#fff;border:1px solid #dcebe5;border-radius:12px;padding:10px}.profile-salary-grid-v102 small,.profile-salary-grid-v102 b{display:block}.profile-salary-grid-v102 small{font-size:10px;color:#61766d}.profile-salary-grid-v102 b{font-size:15px;margin-top:4px;color:#174f48}.profile-salary-grid-v102 .final{background:#0f766e;border-color:#0f766e}.profile-salary-grid-v102 .final small,.profile-salary-grid-v102 .final b{color:#fff}
+.salary-report-section-v102{margin-top:22px;padding-top:14px;border-top:3px solid #0f766e}.salary-report-section-v102 .salary-report-total-v102{font-size:18px;color:#0f5f59}
+@media(max-width:1000px){.profile-salary-grid-v102{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:620px){.salary-inline-fields-v102,.profile-salary-grid-v102{grid-template-columns:1fr 1fr}.profile-salary-v102 .pro-card-head{align-items:flex-start;flex-direction:column}}

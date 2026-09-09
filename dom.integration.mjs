@@ -13,14 +13,14 @@ const stripImports=s=>s.replace(/import[\s\S]*?from\s*["'][^"']+["'];/g,'');
 const delay=()=>new Promise(resolve=>setTimeout(resolve,30));
 const phone='03000000001',base='businesses/noor-traders',img='data:image/jpeg;base64,/9j/2Q==';
 const owner={uid:'owner',email:'hp6235@gmail.com',isAnonymous:false};
-const fixture={phone,name:'Synthetic employee',role:'Cashier',active:true,loginEnabled:true,address:'Test shop'};
+const fixture={phone,name:'Synthetic employee',role:'Cashier',active:true,loginEnabled:true,address:'Test shop',salary:{monthlySalary:30000,dutyHours:10,workingDays:30,overtimeRate:200,pointRate:10},salaryExtras:[{id:'bonus-1',month:'2026-09',kind:'bonus',amount:500},{id:'advance-1',month:'2026-09',kind:'advance',amount:100}]};
 async function boot(role,extraRecords=[]){
  const errors=[],w=new Window({url:'http://localhost:8765',settings:{disableJavaScriptEvaluation:true,disableJavaScriptFileLoading:true,disableCSSFileLoading:true}});
  w.console.error=(...v)=>errors.push(v.map(String).join(' '));w.console.warn=()=>{};
  w.document.write(html.replace(/<script[^>]*>[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,''));
  for(const el of w.document.querySelectorAll('[id]'))if(!(el.id in w))w[el.id]=el;
  w.structuredClone=structuredClone;w.setInterval=()=>0;w.setTimeout=(cb,ms)=>ms<1000?setTimeout(cb,0):0;w.fetch=async()=>({ok:true,json:async()=>({version:'v100'})});
- const records=new Map([[base+'/staffAccounts/'+phone,fixture],[base+'/staff/'+phone,{...fixture,id:phone}],[base+'/staffSessions/staff',{phone}],[base+'/staffConfig/main',{radius:200,version:'v100'}],[base+'/staffAttendance/attendance',{phone,date:'2026-09-08',checkIn:'09:00',finalScore:10}]]);
+ const records=new Map([[base+'/staffAccounts/'+phone,fixture],[base+'/staff/'+phone,{...fixture,id:phone}],[base+'/staffSessions/staff',{phone}],[base+'/staffConfig/main',{radius:200,version:'v102'}],[base+'/staffAttendance/attendance',{phone,date:'2026-09-08',checkIn:'09:00',checkOut:'20:00',finalScore:10}]]);
  for(const [path,data] of extraRecords)records.set(path,data);
  const phoneNotices=[],workerMessages=new Map();let permissionRequests=0;
  const registration={active:{state:'activated'},showNotification:async(title,options)=>phoneNotices.push({title,...options}),getNotifications:async()=>[]};
@@ -65,8 +65,10 @@ w.goScreen('staffTasks');w.document.querySelector('#ntOwnerTaskList [data-task-o
 w.document.getElementById('ntReviewPoints').value='7';submit(w.document.getElementById('ntReviewForm'));await delay();task=f.records.get(base+'/staffTasks/'+task.id);assert.equal(task.status,'approved');assert.equal(task.points,7);assert.equal(w.noorTasks.totals(phone).points,7);
 await w.noorTasks.report({phone,from:'2026-09-08',to:'2026-09-08',individual:true});const ownerReport=w.document.getElementById('ntReportFrame').srcdoc;
 assert.equal((ownerReport.match(/<img src="data:image/g)||[]).length,2);assert.ok(ownerReport.includes('مجموعہ: 17'));
+assert.ok(ownerReport.includes('Salary / تنخواہ'));assert.ok(ownerReport.includes('Rs 1,770'));
 w.logoutBtn.click();await delay();assert.equal(w.document.getElementById('ntTaskReport').hidden,true);assert.equal(w.document.getElementById('ntTaskDialog').hidden,true);
 w.staffLoginTab.click();w.staffLoginPassword.value=phone;submit(w.staffLoginForm);await delay();w.staffHistoryFrom.value='2026-09-08';w.staffHistoryTo.value='2026-09-08';w.staffPdfBtn.click();await delay();assert.ok(w.document.getElementById('ntReportFrame').srcdoc.includes('مجموعہ: 17'));
+assert.ok(w.document.getElementById('ntReportFrame').srcdoc.includes('Rs 1,770'));
 assert.deepEqual(errors,[]);console.log('PASS full UI: profile assignment → 2 photos → approval → both PDFs → logout cleanup');await w.happyDOM.abort();
 
 // The production failure: two old tasks without dates must still expose the upload UI.

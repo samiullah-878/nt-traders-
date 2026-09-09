@@ -19,7 +19,7 @@ export async function compressTaskPhoto(file) {
   } finally {URL.revokeObjectURL(url)}
 }
 
-export function installTaskUI({service,getStaff,getAttendance,getCurrentStaff,document:doc=document,compress=compressTaskPhoto}) {
+export function installTaskUI({service,getStaff,getAttendance,getSalary=()=>null,getCurrentStaff,document:doc=document,compress=compressTaskPhoto}) {
   let session=null,tasks=[],unsub=null,epoch=0,ready=false,fromCache=false,loadError='',profilePhone='',dialogEpoch=0,reportEpoch=0;
   const $=id=>doc.getElementById(id);
   const notifications=installTaskNotifications({service,document:doc,onOpen:async id=>{doc.defaultView.goScreen?.('staffTasks');return open(id)}});
@@ -53,6 +53,8 @@ export function installTaskUI({service,getStaff,getAttendance,getCurrentStaff,do
       if($('ntStaffTaskStats'))$('ntStaffTaskStats').innerHTML=stats(tasks);
       if($('ntStaffTaskList'))$('ntStaffTaskList').innerHTML=cards(selectTasks(tasks));
     }
+    doc.defaultView.renderSalaryV101?.();
+    doc.defaultView.renderStaffSalaryV101?.();
   }
   function renderProfile(){
     const slot=$('ownerProfileTasksV99');if(!slot||session?.role!=='owner'||!profilePhone)return;
@@ -104,10 +106,11 @@ export function installTaskUI({service,getStaff,getAttendance,getCurrentStaff,do
       ensureReady();const currentEpoch=epoch,owner=session.role==='owner';if(!owner)phone=session.phone;
       const rows=structuredClone(selectTasks(tasks,{phone,from,to,status})),attendance=individual?structuredClone(getAttendance(phone,from,to)||[]):[];
       const person=phone?(getStaff().find(s=>(s.phone||s.id)===phone)||getCurrentStaff()||{}):{};
+      const salary=individual?structuredClone(getSalary(phone,from,to)||null):null;
       reportFocus=doc.activeElement;const token=++reportEpoch;reportModal.hidden=false;reportModal.innerHTML=`<div class="nt-dialog-card nt-report-card"><div class="nt-toolbar"><h3>تصاویر اور پوائنٹس کی PDF</h3><div class="nt-actions"><button type="button" id="ntPrintReport" disabled>📄 Print / Save as PDF</button><button type="button" class="nt-close" data-close-report aria-label="بند کریں">×</button></div></div><p id="ntReportState" role="status">رپورٹ تیار ہو رہی ہے…</p><iframe id="ntReportFrame" title="Staff task report" sandbox="allow-same-origin allow-modals"></iframe></div>`;reportModal.querySelector('[data-close-report]').focus();
       const photos=new Map();if(owner){for(const task of rows){const entries=await service.photos(task);if(token!==reportEpoch||currentEpoch!==epoch)return;for(const entry of entries)photos.set(...entry)}}
       if(token!==reportEpoch||currentEpoch!==epoch)return;
-      const html=reportDocument({tasks:rows,photos,includePhotos:owner,attendance,title:owner?'Staff Picture & Points Report':'My Work & Points Report',subtitle:[person.name||phone||'تمام ملازمین',from||'ابتدا',to||'اب تک'].join(' • ')});
+      const html=reportDocument({tasks:rows,photos,includePhotos:owner,attendance,salary,title:owner?'Staff Complete Report':'My Attendance, Points & Salary Report',subtitle:[person.name||phone||'تمام ملازمین',from||'ابتدا',to||'اب تک'].join(' • ')});
       const frame=$('ntReportFrame');frame.onload=async()=>{
         try{
           const images=[...frame.contentDocument.images];await Promise.all(images.map(im=>im.complete?(im.naturalWidth?Promise.resolve():Promise.reject(new Error('رپورٹ کی تصویر نہیں کھل سکی۔'))):new Promise((resolve,reject)=>{im.onload=resolve;im.onerror=()=>reject(new Error('رپورٹ کی تصویر نہیں کھل سکی۔'))})));
