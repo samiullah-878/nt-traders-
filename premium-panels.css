@@ -1,0 +1,87 @@
+/* Premium panels: compact hierarchy, evergreen brand, warm gold details. */
+:root{--nt-forest:#103f35;--nt-emerald:#147d64;--nt-gold:#d4b46e;--nt-surface:#fff;--nt-line:#dce7df;--nt-muted:#60736a;--nt-shadow:0 8px 26px #133d2a09}
+body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8% 5%,#e0eee4 0,transparent 55%)!important;color:#203b30}
+#ownerApp,#staffPortal{font-family:var(--font-ui,"Segoe UI",sans-serif);font-size:15px;line-height:1.7}
+#ownerApp * ,#staffPortal *{box-sizing:border-box}
+#ownerApp .top{background:linear-gradient(120deg,#103f35,#185745)!important;color:#fff!important;border:1px solid #2b6653!important;border-radius:22px!important;padding:22px 24px!important;box-shadow:0 12px 32px #123c2920!important;gap:18px}
+#ownerApp .top h1{font-size:29px!important;color:#fff!important;line-height:1.35!important;font-weight:750!important;letter-spacing:-.5px;margin:4px 0!important}
+#ownerApp .top small{color:#d6e7db!important;font-size:12px!important}#ownerApp .top .nt-role-label{color:#efdaab!important;text-transform:uppercase;font-size:10px!important;letter-spacing:2px;font-weight:700}
+#ownerApp .cloud-box{background:#ffffff0a!important;border:1px solid #ffffff17!important;border-radius:14px!important;padding:12px 15px!important;min-width:0}
+#ownerApp #todayLabel{font-size:13px;color:#f0e5cc}#ownerApp #cloudStatus{font-size:11px!important}#ownerApp .user-bar{flex-wrap:wrap;gap:7px!important}#ownerApp #userEmail{font-size:11px;color:#e1eee3}
+#ownerApp .top-logout{background:#ffffff10!important;border:1px solid #ffffff29!important;color:#fff!important;border-radius:9px!important;font-size:12px!important;padding:8px 11px!important}
+#ownerApp .software-strip{background:transparent;border:0;box-shadow:none;padding:12px 4px;color:#587164}#ownerApp .software-strip strong{font-size:13px;color:#1b5742}
+#ownerApp .screen-head{border:1px solid var(--nt-line)!important;border-radius:17px!important;background:#fff!important;padding:18px 20px!important;box-shadow:var(--nt-shadow)!important}
+#ownerApp .screen-head h2{font-size:23px!important;line-height:1.45!important;color:#193f30!important;font-weight:750!important;margin:3px 0!important}
+#ownerApp .screen-head p{font-size:13px!important;line-height:1.8!important;color:var(--nt-muted)!important}
+#ownerApp .eyebrow{font-size:9px!important;letter-spacing:1.7px!important;color:#8c702e!important;font-weight:750!important}
+#ownerApp .pro-card,#ownerApp .card,#ownerApp .quick-entry-workspace{background:#fff!important;border:1px solid var(--nt-line)!important;border-radius:17px!important;box-shadow:var(--nt-shadow)!important}
+#ownerApp .pro-card-head h3,#ownerApp .card h3{color:#234632!important;font-size:18px!important;line-height:1.5!important}
+#ownerApp input,#ownerApp select,#ownerApp textarea{background:#fafcf9;border-color:#d5e3d9;border-radius:10px;min-height:42px;font-size:14px!important}
+#ownerApp .primary,#ownerApp .nt-primary{background:#147d64!important;border:1px solid #126a55!important;color:#fff!important;box-shadow:0 4px 12px #147d6416}
+#ownerApp button{font-size:13px;line-height:1.5}#ownerApp .soft{background:#f2f7f2;border:1px solid #d7e5da;color:#285640;border-radius:10px}#ownerApp .danger{background:#fff0eb;border:1px solid #f1d1c5;color:#a3372c}
+#ownerApp th,#staffPortal th{background:#eff5ef!important;color:#476655!important;font-weight:700!important;font-size:11px!important;text-transform:none;padding:12px 10px}
+#ownerApp td,#staffPortal td{font-size:13px!important;border-color:#edf2eb}#ownerApp tbody tr:hover{background:#f7faf6}
+#ownerApp .profile-hero-v84,#ownerApp .staff-card-v84{background:linear-gradient(120deg,#fff,#f0f7ee)!important;border-color:#dbe6d8!important}
+#ownerApp .profile-hero-v84 p{font-size:12px!important;color:#5a735f!important;font-weight:500!important}
+#ownerApp .staff-summary-card{border-radius:15px!important;box-shadow:none!important;padding:16px!important}#ownerApp .staff-summary-card b{font-size:30px!important}
+#ownerApp .staff-summary-total{background:#edf4fa!important;border-color:#d7e4ef!important}#ownerApp .staff-summary-present{background:#e9f6ed!important;border-color:#cfe6d5!important}#ownerApp .staff-summary-absent{background:#fbefeb!important;border-color:#f0dad1!important}#ownerApp .staff-summary-out{background:#f3f0fa!important;border-color:#e3dcf2!important}
+#ownerApp .staff-summary-card small{font-size:11px!important}#ownerApp .staff-summary-card em{font-size:10px!important}
+#staffTopNavV99{background:#fff!important;border:1px solid var(--nt-line)!important;border-radius:18px!important;box-shadow:var(--nt-shadow);padding:12px!important}
+#staffTopNavV99 .staff-cat-tabs-v87{background:transparent!important;border:0!important;padding:0 0 10px!important;position:static!important;gap:6px!important}
+#staffTopNavV99 .staff-cat-chip-v87{font-size:11px!important;font-weight:650!important;padding:7px 11px!important;border-radius:9px!important;box-shadow:none!important;min-height:34px;background:#f4f7f2!important;color:#4d6759!important;border-color:#e0e9df!important}
+#staffTopNavV99 .staff-cat-chip-v87.active{background:#184f3d!important;color:#fff!important;border-color:#184f3d!important}
+#staffFeatureGridV87 .staff-feature-card{transition:background .15s,border-color .15s;min-height:68px!important;border-radius:11px!important;box-shadow:none!important}
+#staffFeatureGridV87 .staff-feature-card:hover{border-color:#6aa68c!important}#staffFeatureGridV87 .staff-feature-card b{font-weight:650!important;font-size:11px!important}
+#staffFeatureGridV87 .staff-feature-card[aria-current="page"]{background:#e9f5ec!important;outline:2px solid #398565;outline-offset:0}
+#ownerApp #mobileDockV84{background:#103f35!important;border:1px solid #2c614c!important;border-radius:18px!important;box-shadow:0 7px 26px #173d3230!important}
+#ownerApp #mobileDockV84 button{color:#edf3e9!important;border-radius:12px!important}#ownerApp #mobileDockV84 button span{font-size:10px!important}
+#staffPortal{min-height:100vh;background:transparent!important}
+#staffPortal .staff-topbar{background:#103f35!important;color:#fff!important;padding:14px max(18px,calc((100vw - 1100px)/2))!important;border-bottom:1px solid #30634e;box-shadow:0 5px 22px #103f3515;position:relative}
+#staffPortal .brand-mark{background:#e8d49f;color:#244834;border:0;width:42px;height:42px;border-radius:13px;font-size:16px;box-shadow:none}
+#staffPortal .staff-brand-mini b{font-size:15px!important;color:#fff}#staffPortal .staff-brand-mini small{font-size:9px!important;letter-spacing:1.5px;color:#c3d7c8}
+#staffPortal .staff-logout{font-size:12px!important;padding:8px 14px!important;border-radius:10px;background:#ffffff0c;border-color:#ffffff30}
+#staffPortal .staff-portal-main{max-width:1136px!important;padding:20px 18px 44px!important}
+#staffPortal .staff-build-banner{font-size:10px!important;background:transparent!important;border:0!important;padding:2px 4px 12px!important;color:#698272;box-shadow:none!important}
+#staffPortal .staff-profile-hero{position:relative;overflow:hidden;background:linear-gradient(120deg,#194e3e,#276449)!important;border:1px solid #37735a!important;border-radius:22px!important;box-shadow:0 10px 30px #14392715;padding:24px!important;color:#fff}
+#staffPortal .staff-profile-hero:after{content:'NT';position:absolute;left:24px;bottom:-24px;font:900 100px/1 "Segoe UI",sans-serif;opacity:.045;pointer-events:none}
+#staffPortal .portal-avatar{width:68px!important;height:68px!important;border-radius:18px!important;border:3px solid #d3c690!important;background-color:#f1efda!important;color:#28533d;box-shadow:0 6px 14px #00000015;flex-shrink:0}
+#staffPortal .portal-kicker{font-size:9px!important;color:#e1d6ae!important;letter-spacing:1.8px;font-weight:650}
+#staffPortal #staffPortalName{font-size:27px!important;color:#fff!important;line-height:1.45;margin:3px 0 5px!important;font-weight:700!important}
+#staffPortal #staffPortalAddress{font-size:12px!important;color:#d3e4d6!important;margin:0 0 8px!important;line-height:1.7}
+#staffPortal .portal-contact{flex-direction:row!important;flex-wrap:wrap;gap:8px;font-size:11px!important;color:#e4efe2}#staffPortal .portal-contact span{background:#ffffff0d;border:1px solid #ffffff19;padding:4px 8px;border-radius:7px;font-size:11px!important}
+#staffPortal .store-location-card{background:#ffffff09!important;border:1px solid #ffffff20!important;border-radius:13px;color:#e0ecd9;padding:12px!important;min-width:0!important}
+#staffPortal .store-location-card b{font-size:12px!important;color:#fff}#staffPortal .store-location-card small,#staffPortal .store-location-card span{font-size:10px!important;color:#c9dccb}
+.nt-staff-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;background:#e6eee5;border:1px solid #dce7d9;padding:5px;border-radius:13px;margin:15px 0}
+#staffPortal .nt-staff-nav button{font-size:12px!important;font-weight:650;color:#41634d;background:transparent;border:0;border-radius:9px;padding:11px 5px!important;min-height:43px;cursor:pointer}
+#staffPortal .nt-staff-nav button:first-child{background:#fff;color:#14553b;box-shadow:0 3px 8px #254d3810}
+#staffPortal .nt-staff-panel{margin:14px 0 20px!important;background:#fff!important;border:1px solid #dce7db!important;border-radius:21px!important;padding:22px!important;box-shadow:var(--nt-shadow)}
+#staffPortal .nt-toolbar h2{font-size:23px!important;color:#244532!important;line-height:1.5!important;margin:0 0 7px!important;font-weight:750}
+#staffPortal .nt-toolbar small{font-size:12px!important;line-height:1.8!important;color:#677b6b!important}
+#staffPortal .nt-actions{width:100%;gap:8px}#staffPortal .nt-actions button{font-size:13px!important;line-height:1.5!important;border-radius:11px;padding:10px 14px!important}
+#staffPortal #ntQuickUpload{font-size:16px!important;padding:15px!important;background:#147d64!important;border-color:#147d64;color:#fff;min-height:54px;box-shadow:0 6px 16px #147d641c}
+#staffPortal .nt-actions button[data-task-report]{flex:1;background:#f4f7f2;color:#496149;border-color:#dce5d9}
+#staffPortal .nt-stats,#ownerApp .nt-stats{gap:9px;margin:18px 0 14px}
+#staffPortal .nt-stats>div,#ownerApp .nt-stats>div{border:1px solid #e0e8df;border-radius:13px;background:#f2f6ef;padding:14px 12px;font-size:11px!important;line-height:1.7}
+#staffPortal .nt-stats>div:nth-child(2),#ownerApp .nt-stats>div:nth-child(2){background:#fcf6e7;border-color:#eee3c6}
+#staffPortal .nt-stats>div:nth-child(3),#ownerApp .nt-stats>div:nth-child(3){background:#eaf6ee;border-color:#d2e9da}
+#staffPortal .nt-stats b,#ownerApp .nt-stats b{font-size:31px!important;line-height:1.4!important;color:#17533d!important;font-weight:750!important;margin-top:5px}
+.nt-progress-line{display:flex;align-items:center;justify-content:space-between;color:#6b806b;font-size:11px;gap:10px;margin:6px 0}.nt-progress-track{height:5px;background:#edf3e9;border-radius:10px;overflow:hidden;margin-bottom:16px}.nt-progress-track span{display:block;height:100%;background:#9ac296;border-radius:10px}
+#staffPortal .nt-card,#ownerApp .nt-card{border:1px solid #e0e8dc;border-radius:15px;box-shadow:none;background:#fbfcf9;padding:16px}
+#staffPortal .nt-card h3,#ownerApp .nt-card h3{font-size:17px!important;color:#284830!important;line-height:1.5!important}#staffPortal .nt-card p,#ownerApp .nt-card p{font-size:13px!important;line-height:1.8!important;color:#526c56}
+#staffPortal .nt-card button{width:100%;font-size:13px!important;border-radius:10px;padding:12px!important}
+#staffPortal .nt-state{font-size:10px!important;padding:5px 9px!important;border-radius:7px;line-height:1.6}
+#staffPortal .nt-staff-panel>small{display:block;font-size:11px!important;color:#71826e;line-height:1.8;margin-bottom:16px}
+#staffPortal .nt-msg,#staffPortal .nt-empty{font-size:13px!important;line-height:1.8;padding:12px 0}#staffPortal .nt-msg.error{color:#a53d32}
+#staffPortal .staff-status-grid{gap:10px;margin:18px 0 12px}#staffPortal .portal-stat{padding:15px;border-radius:14px;border-color:#dce6d9;background:#fbfdf9;box-shadow:none}#staffPortal .portal-stat span{font-size:11px!important;color:#6a806d}#staffPortal .portal-stat strong{font-size:20px!important;line-height:1.5!important;color:#385c3e}
+#staffPortal .portal-card{background:#fff;border:1px solid #dee7dc;border-radius:18px;padding:18px;box-shadow:var(--nt-shadow)}#staffPortal .portal-card-head h3{font-size:17px!important;color:#38543d!important;line-height:1.5}#staffPortal .portal-card-head small{font-size:9px!important;letter-spacing:1.4px;color:#8b793c}
+#staffPortal .selfie-stage{height:170px;border-color:#cadbc9;background:#f6faf3;border-radius:13px}#staffPortal .selfie-stage b{font-size:15px!important}#staffPortal .selfie-stage small{font-size:11px!important}
+#staffPortal .selfie-button,#staffPortal .portal-checkin{background:#147d64!important;color:#fff!important;border-color:#147d64!important;font-size:14px!important;border-radius:11px!important;padding:12px!important}
+#staffPortal .portal-checkout,#staffPortal .portal-secondary{font-size:13px!important;padding:11px!important;border-radius:10px!important;border-color:#e0e6d8;color:#5a7354;background:#f3f7ee}
+#staffPortal .attendance-instruction,#staffPortal .attendance-rule{font-size:12px!important;line-height:1.9!important;background:#f8f6ed;border-color:#e9e3cd;color:#726542}#staffPortal .attendance-instruction span,#staffPortal .attendance-rule span{font-size:12px!important}
+#staffPortal .portal-message,#staffPortal .gps-message{font-size:12px!important;line-height:1.8!important}#staffPortal .gps-ring{width:118px;height:118px;font-size:24px;border-width:8px}#staffPortal .gps-ring small{font-size:10px}
+#staffPortal .history-actions input{font-size:12px!important;min-height:42px;border-radius:9px;background:#f9fbf7;border:1px solid #dfe6d9;max-width:160px}#staffPortal .history-actions button{font-size:12px!important}
+.nt-tasks.nt-dialog .nt-dialog-card{background:#fffefa;border-color:#e2e8d9;border-radius:20px;box-shadow:0 20px 80px #102f283d}.nt-tasks.nt-dialog .nt-toolbar{background:#fffefa}.nt-tasks.nt-dialog h3{font-size:19px;line-height:1.6;color:#2c4933}.nt-tasks.nt-dialog p{font-size:14px;line-height:1.8}.nt-tasks.nt-dialog label{font-size:13px}.nt-tasks.nt-dialog .nt-primary{background:#147d64;color:#fff;border-color:#147d64}
+#staffTaskPanelV99,#staffAttendancePanelV100,#staffHistoryPanelV100{scroll-margin-top:14px}
+@media(max-width:800px){#ownerApp{padding:10px 10px 90px!important;min-width:0!important}#ownerApp .top{padding:17px!important;gap:12px!important;border-radius:19px!important;flex-direction:column;align-items:stretch!important}#ownerApp .top h1{font-size:24px!important}#ownerApp .cloud-box{padding:10px 12px!important}#ownerApp .screen-head{padding:16px!important;flex-wrap:wrap}#ownerApp .screen-head h2{font-size:21px!important}#ownerApp .screen-head p{font-size:12px!important}#ownerApp .nav.mobile-open{background:#fcfdf9!important;border-color:#d4e3d1!important}#ownerApp .nav button{border-radius:9px;color:#3c664c}#ownerApp .nav button.active{background:#e4f2e4!important;color:#155136!important}#staffPortal .staff-portal-main{padding:12px 12px 32px!important}#staffPortal .staff-profile-hero{padding:18px!important;gap:14px!important}#staffPortal #staffPortalName{font-size:24px!important}#staffPortal .portal-avatar{width:60px!important;height:60px!important}#staffPortal .store-location-card{padding:10px!important}#staffPortal .nt-staff-panel{padding:17px!important}#staffPortal .nt-toolbar h2{font-size:21px!important}#staffPortal .nt-stats>div,#ownerApp .nt-stats>div{font-size:10px!important;padding:12px 9px}#staffPortal .nt-stats b,#ownerApp .nt-stats b{font-size:27px!important}#staffPortal .staff-action-layout{gap:13px}.nt-notice-toast{top:8px;left:8px;right:8px;padding:11px;gap:7px}.nt-notice-toast button{font-size:12px!important}}
+@media(prefers-reduced-motion:reduce){#ownerApp *,#staffPortal *{scroll-behavior:auto!important;transition:none!important}}
+#staffPortal .nt-shop-map{display:inline-block;margin-top:6px;color:#e8dba5;text-decoration:underline;text-underline-offset:3px;font-size:11px;font-weight:600}

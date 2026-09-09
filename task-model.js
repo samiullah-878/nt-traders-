@@ -9,6 +9,27 @@ export function validDate(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value+'T00:00:00Z')) && new Date(value+'T00:00:00Z').toISOString().slice(0,10)===value;
 }
 export function validPhoto(data) { return typeof data==='string' && data.length<=MAX_PHOTO_CHARS && /^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(data); }
+export function taskMillis(value) {
+  if(value&&typeof value.toMillis==='function')value=value.toMillis();
+  else if(value&&typeof value==='object'&&Number.isFinite(value.seconds))value=value.seconds*1000;
+  else if(value instanceof Date)value=value.getTime();
+  else if(typeof value==='string')value=Date.parse(value);
+  return Number.isFinite(value)&&value>=0&&value<=8640000000000000?value:0;
+}
+// Older tasks can omit date/revision/status. Keep them usable without overwriting
+// their assignment or inventing a work date. Normalize at both read and write boundaries.
+export function normalizeTask(value,id='') {
+  const t=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
+  const text=(...values)=>values.find(v=>typeof v==='string'&&v.trim())?.trim()||'';
+  const assignedAt=taskMillis(t.assignedAt||t.createdAt),candidate=text(t.date,t.workDate,t.dueDate);
+  const date=validDate(candidate)?candidate:assignedAt?new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Karachi'}).format(new Date(assignedAt)):'';
+  const maxPoints=Number.isInteger(Number(t.maxPoints))&&Number(t.maxPoints)>=0?Number(t.maxPoints):10;
+  return {...t,id:text(id,t.id),phone:text(t.phone),staffName:text(t.staffName,t.name,t.phone),title:text(t.title,t.taskName,t.task)||'دکان کا کام',details:text(t.details,t.description),date,
+    status:text(t.status)||'assigned',assignedAt,maxPoints,revision:Number.isInteger(t.revision)&&t.revision>=0?t.revision:0,
+    submissionId:text(t.submissionId),submittedAt:taskMillis(t.submittedAt),points:Number.isFinite(Number(t.points))?Number(t.points):0,
+    photoIds:Array.isArray(t.photoIds)?t.photoIds.filter(v=>typeof v==='string'&&v&&!v.includes('/')):[],staffNote:text(t.staffNote),ownerNote:text(t.ownerNote)};
+}
+export function normalizeTasks(value) { return (Array.isArray(value)?value:[]).filter(t=>t&&typeof t==='object'&&!Array.isArray(t)).map(t=>normalizeTask(t)); }
 export function createTask(input, actor, id, now=Date.now()) {
   requireValue(actor?.role==='owner','صرف مالک نیا کام دے سکتا ہے۔');
   const title=String(input.title||'').trim(),details=String(input.details||'').trim(),maxPoints=Number(input.maxPoints);
@@ -41,12 +62,14 @@ export function reviewPatch(task, actor, input, now=Date.now()) {
 }
 export function selectTasks(tasks,{phone='',from='',to='',status=''}={}) {
   requireValue(!from||!to||from<=to,'شروع کی تاریخ آخری تاریخ سے پہلے ہونی چاہیے۔');
-  return tasks.filter(t=>(!phone||t.phone===phone)&&(!from||t.date>=from)&&(!to||t.date<=to)&&(!status||t.status===status)).sort((a,b)=>b.date.localeCompare(a.date)||b.assignedAt-a.assignedAt);
+  return normalizeTasks(tasks).filter(t=>(!phone||t.phone===phone)&&(!from||(t.date&&t.date>=from))&&(!to||(t.date&&t.date<=to))&&(!status||t.status===status)).sort((a,b)=>b.date.localeCompare(a.date)||b.assignedAt-a.assignedAt||a.id.localeCompare(b.id));
 }
 export function taskTotals(tasks) {
+  tasks=normalizeTasks(tasks);
   return {total:tasks.length,approved:tasks.filter(t=>t.status==='approved').length,pending:tasks.filter(t=>t.status==='submitted').length,points:tasks.reduce((n,t)=>n+(t.status==='approved'?Number(t.points)||0:0),0),possible:tasks.reduce((n,t)=>n+Number(t.maxPoints||0),0)};
 }
 export function reportDocument({tasks,photos=new Map(),title='Staff Picture & Points Report',subtitle='',attendance=[],includePhotos=false}) {
+  tasks=normalizeTasks(tasks);
   const e=escapeHtml,totals=taskTotals(tasks),attendancePoints=attendance.reduce((n,a)=>n+Number(a.finalScore??a.autoScore??0),0);
   const people=[...new Set(tasks.map(t=>t.phone))].map(phone=>{const own=tasks.filter(t=>t.phone===phone),s=taskTotals(own);return `<tr><td>${e(own[0].staffName)} • ${e(phone)}</td><td>${s.total}</td><td>${s.approved}</td><td>${s.points}</td></tr>`}).join('');
   const evidence=tasks.map(t=>`<article><h3>${e(t.title)}</h3><p>${e(t.staffName)} • ${e(t.phone)} • ${e(t.date)}</p><p class="note">${e(t.details)}</p><p><b>${e(STATUS[t.status]||t.status)}</b> • پوائنٹس: <b>${t.status==='approved'?Number(t.points):0} / ${Number(t.maxPoints)}</b></p><p class="note">ملازم: ${e(t.staffNote||'—')}<br>مالک: ${e(t.ownerNote||'—')}</p>${includePhotos?`<div class="photos">${(t.photoIds||[]).map((id,i)=>{const data=photos.get(t.id+'/'+id);requireValue(validPhoto(data),'رپورٹ کی تمام تصاویر ابھی لوڈ نہیں ہوئیں۔ دوبارہ کوشش کریں۔');return `<figure><img src="${data}" alt="${e(t.title)} — ${i+1}"><figcaption>${e(t.staffName)} — تصویر ${i+1}</figcaption></figure>`}).join('')}</div>`:''}</article>`).join('');

@@ -1,4 +1,4 @@
-> v99 کے لیے پہلے START_HERE_URDU.md پڑھیں۔ نیچے پرانے ورژن کی ہدایات ہیں۔
+> v100 کے لیے پہلے START_HERE_URDU.md پڑھیں۔ نیچے پرانے ورژن کی ہدایات ہیں۔
 
 # Noor Traders Hisab v85
 

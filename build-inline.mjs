@@ -9,12 +9,15 @@ function namespace(file,name,prelude=''){
 let bundle='/* BEGIN V99 INLINE MODULES */\n';
 bundle+=namespace('auth-controller.js','AuthV99');
 bundle+=namespace('task-model.js','TaskModelV99');
-bundle+=namespace('task-service.js','TaskServiceV99','const {createTask,submissionPatch,reviewPatch,validPhoto,requireValue}=TaskModelV99;const {isOwnerUser}=AuthV99;');
-bundle+=namespace('staff-tasks.js','TaskUIV99','const {MAX_PHOTOS,MAX_PHOTO_CHARS,STATUS,escapeHtml:e,workDate,selectTasks,taskTotals,reportDocument,requireValue}=TaskModelV99;');
+bundle+=namespace('task-service.js','TaskServiceV99','const {createTask,submissionPatch,reviewPatch,validPhoto,requireValue,normalizeTask}=TaskModelV99;const {isOwnerUser}=AuthV99;');
+bundle+=namespace('task-notifications.js','TaskNoticeV100','const {normalizeTasks,escapeHtml:e}=TaskModelV99;');
+bundle+=namespace('staff-tasks.js','TaskUIV99','const {installTaskNotifications}=TaskNoticeV100;const {MAX_PHOTOS,MAX_PHOTO_CHARS,STATUS,escapeHtml:e,workDate,selectTasks,taskTotals,reportDocument,requireValue}=TaskModelV99;');
 bundle+='const {createAuthController,isOwnerUser,loginErrorMessage}=AuthV99;\nconst {createTaskService}=TaskServiceV99;\nconst {installTaskUI}=TaskUIV99;\n/* END V99 INLINE MODULES */';
 let html=read('index.html');
 if(html.includes('/* BEGIN V99 INLINE MODULES */'))html=html.replace(/\/\* BEGIN V99 INLINE MODULES \*\/[\s\S]*?\/\* END V99 INLINE MODULES \*\//,()=>bundle);
 else html=html.replace(/import \{createAuthController,isOwnerUser,loginErrorMessage\} from '\.\/auth-controller\.js';\s*import \{createTaskService\} from '\.\/task-service\.js';\s*import \{installTaskUI\} from '\.\/staff-tasks\.js';/,()=>bundle);
 const css='<style id="taskStylesV99">\n'+read('staff-tasks.css')+'\n</style>';
 html=html.includes('<style id="taskStylesV99">')?html.replace(/<style id="taskStylesV99">[\s\S]*?<\/style>/,()=>css):html.replace('<link rel="stylesheet" href="./staff-tasks.css?v=v99">',()=>css);
-writeFileSync(new URL('index.html',root),html);console.log('Built standalone v99 index.html');
+const premium='<style id="premiumPanelsV100">\n'+read('premium-panels.css')+'\n</style>';
+html=html.includes('<style id="premiumPanelsV100">')?html.replace(/<style id="premiumPanelsV100">[\s\S]*?<\/style>/,()=>premium):html.slice(0,html.lastIndexOf('</body>'))+premium+'\n'+html.slice(html.lastIndexOf('</body>'));
+writeFileSync(new URL('index.html',root),html);console.log('Built standalone v100 index.html');

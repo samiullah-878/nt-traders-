@@ -3,7 +3,7 @@ import {test,before,after} from 'node:test';
 import {readFile} from 'node:fs/promises';
 import {initializeTestEnvironment,assertFails,assertSucceeds} from '@firebase/rules-unit-testing';
 import {doc,collection,query,where,getDoc,getDocs,setDoc,updateDoc,writeBatch} from 'firebase/firestore';
-import {createTask,submissionPatch} from '../task-model.js';
+import {createTask,submissionPatch,normalizeTask} from '../task-model.js';
 if(!process.env.FIRESTORE_EMULATOR_HOST)throw Error('Start a local Firestore emulator before running this gate.');
 const [host,port]=process.env.FIRESTORE_EMULATOR_HOST.split(':'),base='businesses/noor-traders';
 const phone='03000000001',other='03000000002',photo='data:image/jpeg;base64,/9j/2Q==';let env,owner,staff;
@@ -22,6 +22,14 @@ test('staff query is own-only; task assignments and points cannot be forged',asy
  await assertFails(setDoc(doc(staff,base+'/staffTasks/forged'),task));
  for(const patch of [{points:100},{maxPoints:100},{phone:other},{status:'approved'},{title:'changed'}])await assertFails(updateDoc(doc(staff,base+'/staffTasks/t1'),patch));
  await assertSucceeds(getDoc(doc(owner,base+'/staffTasks/t1')));
+});
+test('legacy tasks with omitted date/status/revision accept an atomic picture submission',async()=>{
+ const legacy={phone,title:'Legacy assigned work'};await assertSucceeds(setDoc(doc(owner,base+'/staffTasks/legacy'),legacy));
+ const patch=submissionPatch(normalizeTask(legacy,'legacy'),{role:'staff',uid:'staff',phone},{photos:[photo],submissionId:'legacy-submission',expectedRevision:0});
+ const b=writeBatch(staff);b.update(doc(staff,base+'/staffTasks/legacy'),patch);b.set(doc(staff,base+'/staffTasks/legacy/taskPhotos/'+patch.photoIds[0]),{taskId:'legacy',submissionId:patch.submissionId,dataUrl:photo,uploadedBy:'staff',createdAt:1});await assertSucceeds(b.commit());
+ await assertFails(setDoc(doc(staff,base+'/staffTaskNotificationReads/owner'),{seen:['legacy::legacy-submission']}));
+ await assertSucceeds(setDoc(doc(owner,base+'/staffTaskNotificationReads/owner'),{seen:['legacy::legacy-submission']}));
+ await assertFails(getDoc(doc(staff,base+'/staffTaskNotificationReads/owner')));
 });
 test('8 pictures and submitted status succeed together; pictures cannot change after submission',async()=>{
  const patch=submissionPatch(task,{role:'staff',uid:'staff',phone},{photos:Array(8).fill(photo),submissionId:'test-submission',expectedRevision:0});
