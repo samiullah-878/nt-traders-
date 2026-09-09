@@ -1,6 +1,6 @@
 {
-  "version": "v102",
+  "version": "v99",
   "variant": "Production",
-  "buildDate": "2026-09-09",
-  "notes": "Staff login: qadam-ba-qadam wajah, session likhna nakaam ho to bhi login"
+  "buildDate": "2026-09-08",
+  "notes": "Staff tasks, multiple pictures, owner approval and points PDFs; compact top buttons; separate logins"
 }

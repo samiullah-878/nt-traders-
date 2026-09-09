@@ -1,4 +1,4 @@
-const CACHE='noor-traders-v102';
+const CACHE='noor-traders-v99';
 self.addEventListener('install',e=>{self.skipWaiting()});
 self.addEventListener('activate',e=>{e.waitUntil(Promise.all([clients.claim(),caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))]))});
 self.addEventListener('message',e=>{if(e.data==='SKIP_WAITING')self.skipWaiting()});
@@ -10,9 +10,10 @@ self.addEventListener('fetch',e=>{
   e.respondWith(
     fetch(e.request,{cache:'no-store'}).then(r=>{
       // index.html / version.json hamesha internet se; sirf offline ke liye copy rakhi jati hai.
+      if(!r.ok)return r;
       const cp=r.clone();
       caches.open(CACHE).then(c=>c.put(isLive?new Request(u.pathname):e.request,cp)).catch(()=>{});
       return r;
-    }).catch(()=>caches.match(isLive?new Request(u.pathname):e.request).then(x=>x||caches.match('./index.html')))
+    }).catch(()=>caches.match(isLive?new Request(u.pathname):e.request).then(x=>x||(e.request.mode==='navigate'?caches.match('./index.html'):Response.error())))
   );
 });

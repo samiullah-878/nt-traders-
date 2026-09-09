@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-<title>Noor Traders Hisab v102</title>
+<title>Noor Traders Hisab v99</title>
 <style>
 :root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#6b7280;--brand:#0f766e;--brand2:#115e59;--red:#b91c1c;--line:#dce3ec;--gold:#b7791f;--blue:#1d4ed8}*{box-sizing:border-box}body{margin:0;font-family:system-ui,"Noto Nastaliq Urdu","Noto Sans Arabic",sans-serif;background:var(--bg);color:var(--ink)}button,input,select,textarea{font:inherit}.app{max-width:1280px;margin:auto;padding:12px}.top{background:linear-gradient(135deg,#134e4a,#0f766e);color:#fff;border-radius:22px;padding:18px;display:flex;gap:12px;align-items:center;justify-content:space-between;box-shadow:0 10px 30px #0f766e30}.top h1{margin:0;font-size:clamp(24px,5vw,40px)}.top small{opacity:.9}.nav{display:flex;gap:8px;overflow:auto;padding:12px 0;position:sticky;top:0;z-index:5;background:var(--bg)}.nav button{white-space:nowrap;border:1px solid var(--line);background:#fff;padding:10px 14px;border-radius:13px;font-weight:700}.nav button.active{background:var(--brand);color:#fff;border-color:var(--brand)}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 4px 16px #1720330a}.span12{grid-column:span 12}.span8{grid-column:span 8}.span6{grid-column:span 6}.span4{grid-column:span 4}.span3{grid-column:span 3}.kpi{font-size:13px;color:var(--muted)}.kpi strong{display:block;font-size:24px;color:var(--ink);margin-top:4px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.form{display:grid;grid-template-columns:repeat(12,1fr);gap:8px}.f2{grid-column:span 2}.f3{grid-column:span 3}.f4{grid-column:span 4}.f5{grid-column:span 5}.f6{grid-column:span 6}.f8{grid-column:span 8}.f12{grid-column:span 12}label{font-size:13px;color:var(--muted)}input,select,textarea{width:100%;border:1px solid #ccd5e0;border-radius:11px;padding:10px;background:#fff}button.primary{background:var(--brand);color:#fff;border:0;border-radius:11px;padding:10px 15px;font-weight:800}button.danger{background:#fff1f2;color:var(--red);border:1px solid #fecdd3;border-radius:10px;padding:8px 11px}button.soft{background:#eef7f6;color:var(--brand2);border:1px solid #cce8e5;border-radius:10px;padding:8px 11px}table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:9px 7px;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle}th{color:var(--muted);font-size:12px}.amt{font-weight:800;font-variant-numeric:tabular-nums}.muted{color:var(--muted)}.tab{display:none}.tab.active{display:block}.badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:12px;background:#eef2ff;color:#3730a3}.photo{width:52px;height:52px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}.stocktable input{min-width:80px;padding:7px}.pos{color:#15803d;font-weight:800}.neg{color:#b91c1c;font-weight:800}.notice{padding:10px 12px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;margin:10px 0}.footer{padding:20px;text-align:center;color:var(--muted)}@media(max-width:800px){.span8,.span6,.span4,.span3{grid-column:span 12}.f2,.f3,.f4,.f5,.f6,.f8{grid-column:span 12}.top{align-items:flex-start;flex-direction:column}table{font-size:12px}.card{padding:11px}}
 
@@ -880,22 +880,38 @@ th,td{font-size:16px;line-height:1.55}
 
     <div class="auth-card">
       <div class="login-card-title"><span class="brand-mark mini">NT</span><div><h2>Noor Traders Hisab</h2><p>Business & Staff System</p></div></div>
-      <div class="login-build-strip"><span class="variant-badge">Production</span><span>Version: <b id="loginVersionLabel">v85</b></span><span id="loginUpdateStatus" class="sync-state"><i class="status-dot"></i>Syncing...</span></div>
+      <div class="login-build-strip"><span class="variant-badge">Production</span><span>Version: <b id="loginVersionLabel">v99</b></span><span id="loginUpdateStatus" class="sync-state"><i class="status-dot"></i>Syncing...</span></div>
       <button type="button" class="sync-now-btn-v91" onclick="forceAppUpdateV85()">🔄 Sync / Update Now</button>
-      <div id="ownerLoginPane" class="auth-pane active">
+      <div class="auth-role-tabs" role="tablist" aria-label="اکاؤنٹ منتخب کریں">
+        <button id="ownerLoginTab" class="auth-role active" type="button" role="tab" aria-selected="true" aria-controls="ownerLoginPane" data-auth-role="owner">مالک</button>
+        <button id="staffLoginTab" class="auth-role" type="button" role="tab" aria-selected="false" aria-controls="staffLoginPane" data-auth-role="staff">اسٹاف</button>
+      </div>
+      <div id="ownerLoginPane" class="auth-pane active" role="tabpanel" aria-labelledby="ownerLoginTab">
         <div class="auth-pane-title">
           <span class="auth-icon">A</span>
           <div><b>ADMIN PANEL</b><small>مالک کا مکمل کاروباری پینل</small></div>
         </div>
         <form id="loginForm">
-          <label>Login ID</label>
-          <input id="loginEmail" type="text" autocomplete="username" required placeholder="admin (malik) ya mobile number (mulazim)">
-          <label>Password</label>
+          <label for="loginEmail">یوزر نیم</label>
+          <input id="loginEmail" type="text" autocomplete="username" required value="admin" autocapitalize="none" spellcheck="false">
+          <label for="loginPassword">مالک کا پاس ورڈ</label>
           <input id="loginPassword" type="password" autocomplete="current-password" required placeholder="••••••••">
-          <button id="loginBtn" class="primary auth-submit" type="submit">Login</button>
+          <button id="loginBtn" class="primary auth-submit" type="submit" disabled>مالک لاگ اِن</button>
         </form>
-        <div id="loginMessage" class="login-message"></div>
-        <div class="security-note">Malik: Login ID <b>admin</b> &bull; Mulazim: Login ID aur Password dono uska <b>mobile number</b> hai.</div>
+        <div id="loginMessage" class="login-message" role="status" aria-live="polite"></div>
+        <div class="security-note">اپنا موجودہ مالک پاس ورڈ درج کریں۔ لاگ اِن کے بعد Settings سے اسے تبدیل کر سکتے ہیں۔</div>
+      </div>
+      <div id="staffLoginPane" class="auth-pane" role="tabpanel" aria-labelledby="staffLoginTab">
+        <div class="auth-pane-title"><span class="auth-icon staff">S</span><div><b>اسٹاف لاگ اِن</b><small>اپنی پروفائل اور حاضری</small></div></div>
+        <form id="staffLoginForm">
+          <label for="staffLoginPhone">یوزر نیم</label>
+          <input id="staffLoginPhone" type="text" autocomplete="username" required value="admin" autocapitalize="none" spellcheck="false">
+          <label for="staffLoginPassword">پاس ورڈ — آپ کا موبائل نمبر</label>
+          <input id="staffLoginPassword" type="password" autocomplete="current-password" inputmode="tel" required placeholder="03xxxxxxxxx" dir="ltr">
+          <button id="staffLoginBtn" class="primary auth-submit" type="submit" disabled>اسٹاف لاگ اِن</button>
+        </form>
+        <div id="staffLoginMessage" class="login-message" role="status" aria-live="polite"></div>
+        <div class="phone-password-hint">موبائل نمبر وہی درج کریں جو مالک نے آپ کے اکاؤنٹ میں محفوظ کیا ہے۔ شروع کا 0 بھی شامل کریں۔</div>
       </div>
 
     </div>
@@ -907,12 +923,12 @@ th,td{font-size:16px;line-height:1.55}
   <div class="staff-topbar">
     <div class="staff-brand-mini">
       <span class="brand-mark mini">NT</span>
-      <div><b>ADMIN</b><small>NOOR TRADERS • STAFF PANEL</small></div>
+      <div><b>اسٹاف</b><small>NOOR TRADERS • STAFF PANEL</small></div>
     </div>
     <button id="staffLogoutBtn" class="staff-logout">Logout</button>
   </div>
 
-  <main class="staff-portal-main"><div class="staff-build-banner"><span>Version <b id="staffVersionLabel">v85</b> • Production</span><span id="staffUpdateState">Latest</span></div>
+  <main class="staff-portal-main"><div class="staff-build-banner"><span>Version <b id="staffVersionLabel">v99</b> • Production</span><span id="staffUpdateState">Latest</span></div>
     <section class="staff-profile-hero">
       <div class="staff-profile-left">
         <div id="staffPortalAvatar" class="portal-avatar">👤</div>
@@ -972,11 +988,7 @@ th,td{font-size:16px;line-height:1.55}
       </div>
     </section>
 
-    <section class="portal-card staff-tasks-card-v99">
-      <div class="portal-card-head"><div><small>MY WORK</small><h3>میرے کام / Mere Kaam</h3></div><span>🧰</span></div>
-      <div id="staffTaskListV99" class="staff-task-list-v99"></div>
-    </section>
-
+<section class="nt-tasks nt-staff-panel" id="staffTaskPanelV99"><div class="nt-toolbar"><div><h2>میرے کام اور تصویری رپورٹ</h2><small>کام مکمل کرکے تصاویر بھیجیں۔ مالک کی منظوری کے بعد پوائنٹس ملیں گے۔</small></div><div class="nt-actions"><button type="button" data-task-report>📄 میری پوائنٹس PDF</button><button type="button" data-task-retry>Refresh</button></div></div><div id="ntStaffTaskState" class="nt-msg" role="status"></div><div id="ntStaffTaskNotice" class="nt-msg" role="status"></div><div id="ntStaffTaskStats"></div><small>اوپر تمام تاریخوں کے ٹاسک پوائنٹس ہیں۔ PDF کے لیے نیچے حاضری رپورٹ کی تاریخیں منتخب کریں۔</small><div id="ntStaffTaskList" class="nt-cards"></div></section>
     <section class="portal-card staff-history-card">
       <div class="portal-card-head history-head">
         <div><small>MY REPORT</small><h3>میری Attendance History</h3></div>
@@ -997,9 +1009,9 @@ th,td{font-size:16px;line-height:1.55}
   </main>
 </div>
 
-<div class="app" id="ownerApp">
+<div class="app" id="ownerApp" hidden style="display:none">
 <div class="top">
-  <div><h1>Noor Traders Hisab</h1><small>Gulyana • <b id="headerVersionLabel">v85</b> • Production • Advanced Business Software</small></div>
+  <div><h1>Noor Traders Hisab</h1><small>Gulyana • <b id="headerVersionLabel">v99</b> • Production • Advanced Business Software</small></div>
   <div class="cloud-box">
     <b id="todayLabel"></b><br>
     <small id="cloudStatus">Firebase سے رابطہ ہو رہا ہے…</small>
@@ -1072,40 +1084,37 @@ th,td{font-size:16px;line-height:1.55}
   <div class="split-layout"><div class="pro-card entry-form-card"><h3>نئی Account Entry</h3><form id="accountFormV84" class="vertical-form"><label>Date</label><input id="accountDateV84" type="date"><label>Detail</label><input id="accountNoteV84"><label>Amount</label><input id="accountAmountV84" type="number" required><button class="primary">Save</button></form></div><div class="pro-card"><div class="pro-card-head"><h3>History</h3><input id="accountFilterDateV84" type="date"></div><div class="table-scroll"><table><thead><tr><th>Detail</th><th>Amount</th><th>Action</th></tr></thead><tbody id="accountRowsV84"></tbody></table></div><div class="screen-total">Total <b id="accountTotalV84">Rs 0</b></div></div></div>
 </section>
 
+<div id="staffTopNavV99" aria-label="Staff shortcuts" hidden><div class="staff-cat-tabs-v87" id="staffCatTabsV87">
+    <button class="staff-cat-chip-v87 active" data-cat="all" onclick="filterStaffCatV87('all')">📋 Sab</button>
+    <button class="staff-cat-chip-v87" data-cat="staff" onclick="filterStaffCatV87('staff')">👥 Staff</button>
+    <button class="staff-cat-chip-v87" data-cat="hazri" onclick="filterStaffCatV87('hazri')">✓ Hazri</button>
+    <button class="staff-cat-chip-v87" data-cat="performance" onclick="filterStaffCatV87('performance')">🏆 Performance</button>
+    <button class="staff-cat-chip-v87" data-cat="reports" onclick="filterStaffCatV87('reports')">📊 Reports</button>
+  </div><div class="staff-feature-grid" id="staffFeatureGridV87"><button data-screen="staffCenter" type="button" class="staff-feature-card" data-cat="all" onclick="goScreen('staffCenter')"><span class="feature-icon">⌂</span><span><b>Staff Dashboard</b></span></button><button data-screen="staffTasks" type="button" class="staff-feature-card" data-cat="reports" onclick="goScreen('staffTasks')"><span class="feature-icon">📷</span><span><b>Tasks / Picture Report</b></span></button>
+    <button data-screen="staffAccounts" class="staff-feature-card staff-feature-primary" data-cat="staff" onclick="goScreen('staffAccounts')"><span class="feature-icon">👥</span><span><b>Staff List</b><small>Profiles, phone, address and account status</small></span><strong>→</strong></button>
+    <button data-screen="staffAccounts" class="staff-feature-card" data-cat="staff" onclick="goScreen('staffAccounts');toggleStaffCreateV84(true)"><span class="feature-icon">＋</span><span><b>Add Staff</b><small>Create a new employee account and profile</small></span><strong>→</strong></button>
+    <button data-screen="staffProfile" class="staff-feature-card" data-cat="staff" onclick="goScreen('staffProfile')"><span class="feature-icon">◎</span><span><b>Staff Profile</b><small>View profile, edit details or manage photo</small></span><strong>→</strong></button>
+    <button data-screen="attendanceToday" class="staff-feature-card staff-feature-action" data-cat="hazri" onclick="goScreen('attendanceToday')"><span class="feature-icon">✓</span><span><b>Check In / Check Out</b><small>Live attendance, GPS, selfie and late status</small></span><strong>→</strong></button>
+    <button data-screen="attendanceToday" class="staff-feature-card" data-cat="hazri" onclick="goScreen('attendanceToday')"><span class="feature-icon">📍</span><span><b>Location Attendance</b><small>200m geofence, GPS distance and evidence</small></span><strong>→</strong></button>
+    <button data-screen="attendanceHistory" class="staff-feature-card" data-cat="hazri" onclick="goScreen('attendanceHistory')"><span class="feature-icon">📅</span><span><b>Attendance History</b><small>Date selection, calendar-style records and PDF</small></span><strong>→</strong></button>
+    <button data-screen="scores" class="staff-feature-card" data-cat="performance" onclick="goScreen('scores')"><span class="feature-icon">🏆</span><span><b>Scores & Ranking</b><small>Performance, punctuality and monthly scores</small></span><strong>→</strong></button>
+    <button data-screen="staffKhana" class="staff-feature-card" data-cat="performance" onclick="goScreen('staffKhana')"><span class="feature-icon">🍽</span><span><b>Khana Allowance</b><small>Daily and monthly meal allowance totals</small></span><strong>→</strong></button>
+    <button data-screen="staffReports" class="staff-feature-card" data-cat="reports" onclick="goScreen('staffReports')"><span class="feature-icon">▤</span><span><b>Staff Reports</b><small>Date range reports for all staff</small></span><strong>→</strong></button>
+    <button data-screen="attendanceHistory" class="staff-feature-card" data-cat="reports" onclick="goScreen('attendanceHistory');printHistoryReportV84()"><span class="feature-icon">▣</span><span><b>Reports & Summary</b><small>Daily/monthly staff reports and exports</small></span><strong>→</strong></button>
+  </div></div>
 <section id="staffCenter" class="tab app-screen staff-center-screen">
   <div class="screen-head staff-dashboard-heading">
     <div><div class="eyebrow">PEOPLE OPERATIONS</div><h2>Staff Dashboard</h2><p>ملازمین، حاضری، location اور performance ایک ہی جگہ</p></div>
     <div class="screen-actions"><button class="primary" onclick="goScreen('staffAccounts');toggleStaffCreateV84(true)">＋ Add Staff</button><button class="soft" onclick="goScreen('attendanceToday')">Open Attendance</button></div>
   </div>
-<div class="staff-cat-tabs-v87" id="staffCatTabsV87">
-    <button class="staff-cat-chip-v87 active" data-cat="all" onclick="filterStaffCatV87('all')">📋 Sab</button>
-    <button class="staff-cat-chip-v87" data-cat="staff" onclick="filterStaffCatV87('staff')">👥 Staff</button>
-    <button class="staff-cat-chip-v87" data-cat="hazri" onclick="filterStaffCatV87('hazri')">✓ Hazri</button>
-    <button class="staff-cat-chip-v87" data-cat="performance" onclick="filterStaffCatV87('performance')">🏆 Performance</button>
-    <button class="staff-cat-chip-v87" data-cat="kaam" onclick="filterStaffCatV87('kaam')">🧰 Kaam</button>
-    <button class="staff-cat-chip-v87" data-cat="reports" onclick="filterStaffCatV87('reports')">📊 Reports</button>
-  </div>
+
     <div class="staff-search-v89">
     <span>🔍</span>
     <input id="staffQuickSearchV89" type="search" placeholder="Mulazim ka naam ya mobile number likhein" oninput="renderStaffQuickSearchV89()">
     <button type="button" class="soft" onclick="staffQuickSearchV89.value='';renderStaffQuickSearchV89()">✕</button>
   </div>
   <div id="staffQuickResultsV89" class="staff-search-results-v89"></div>
-<div class="staff-feature-grid" id="staffFeatureGridV87">
-    <button class="staff-feature-card staff-feature-primary" data-cat="staff" onclick="goScreen('staffAccounts')"><span class="feature-icon">👥</span><span><b>Staff List</b><small>Profiles, phone, address and account status</small></span><strong>→</strong></button>
-    <button class="staff-feature-card" data-cat="staff" onclick="goScreen('staffAccounts');toggleStaffCreateV84(true)"><span class="feature-icon">＋</span><span><b>Add Staff</b><small>Create a new employee account and profile</small></span><strong>→</strong></button>
-    <button class="staff-feature-card" data-cat="staff" onclick="goScreen('staffProfile')"><span class="feature-icon">◎</span><span><b>Staff Profile</b><small>View profile, edit details or manage photo</small></span><strong>→</strong></button>
-    <button class="staff-feature-card staff-feature-action" data-cat="hazri" onclick="goScreen('attendanceToday')"><span class="feature-icon">✓</span><span><b>Check In / Check Out</b><small>Live attendance, GPS, selfie and late status</small></span><strong>→</strong></button>
-    <button class="staff-feature-card" data-cat="hazri" onclick="goScreen('attendanceToday')"><span class="feature-icon">📍</span><span><b>Location Attendance</b><small>200m geofence, GPS distance and evidence</small></span><strong>→</strong></button>
-    <button class="staff-feature-card" data-cat="hazri" onclick="goScreen('attendanceHistory')"><span class="feature-icon">📅</span><span><b>Attendance History</b><small>Date selection, calendar-style records and PDF</small></span><strong>→</strong></button>
-    <button class="staff-feature-card" data-cat="performance" onclick="goScreen('scores')"><span class="feature-icon">🏆</span><span><b>Scores & Ranking</b><small>Performance, punctuality and monthly scores</small></span><strong>→</strong></button>
-    <button class="staff-feature-card" data-cat="performance" onclick="goScreen('staffKhana')"><span class="feature-icon">🍽</span><span><b>Khana Allowance</b><small>Daily and monthly meal allowance totals</small></span><strong>→</strong></button>
-    <button class="staff-feature-card" data-cat="kaam" onclick="goScreen('tasks')"><span class="feature-icon">🧰</span><span><b>Kaam / Approval</b><small>Kaam dein, tasveerein dekhein aur points dein</small></span><strong>→</strong></button>
-    <button class="staff-feature-card" data-cat="kaam" onclick="openTaskFormV99()"><span class="feature-icon">＋</span><span><b>Naya Kaam Dein</b><small>Kisi bhi mulazim ko naya kaam saunpein</small></span><strong>→</strong></button>
-    <button class="staff-feature-card" data-cat="reports" onclick="goScreen('staffReports')"><span class="feature-icon">▤</span><span><b>Staff Reports</b><small>Date range reports for all staff</small></span><strong>→</strong></button>
-    <button class="staff-feature-card" data-cat="reports" onclick="goScreen('attendanceHistory');printHistoryReportV84()"><span class="feature-icon">▣</span><span><b>Reports & Summary</b><small>Daily/monthly staff reports and exports</small></span><strong>→</strong></button>
-  </div>
-  </div>
+
 <div class="staff-summary-cards">
     <div class="staff-summary-card staff-summary-total"><span class="summary-icon">👥</span><div><small>Total Staff</small><b id="staffCenterTotal">0</b><em>Active accounts</em></div></div>
     <div class="staff-summary-card staff-summary-present"><span class="summary-icon">✓</span><div><small>Present Today</small><b id="staffCenterPresent">0</b><em>Checked in</em></div></div>
@@ -1115,40 +1124,13 @@ th,td{font-size:16px;line-height:1.55}
   <div class="staff-center-summary pro-card staff-live-summary"><div class="pro-card-head"><div><div class="eyebrow">LIVE SNAPSHOT</div><h3>آج کی Staff Activity</h3></div><button class="soft" onclick="goScreen('attendanceToday')">Refresh</button></div><div class="staff-center-stats"><div><small>Total Staff</small><b id="staffCenterCount">0 accounts</b></div><div><small>Present</small><b id="staffCenterPresentMirror">0</b></div><div><small>Absent</small><b id="staffCenterAbsentMirror">0</b></div><div><small>Late</small><b id="staffCenterLate">0</b></div><div><small>Checked Out</small><b id="staffCenterOutMirror">0</b></div></div></div>
   </section>
 
-<section id="tasks" class="tab app-screen">
-  <div class="screen-head"><div><div class="eyebrow">STAFF • KAAM</div><h2>Kaam / Approval</h2><p>Kaam dein • tasveerein dekhein • points dein</p></div>
-    <div class="screen-actions">
-      <select id="taskFilterV99" onchange="renderTasksV99()">
-        <option value="pending">Approval ka intezar</option>
-        <option value="all">Sab kaam</option>
-        <option value="assigned">Diye gaye</option>
-        <option value="approved">Manzoor shuda</option>
-        <option value="returned">Wapis bheje gaye</option>
-      </select>
-      <button class="primary" onclick="openTaskFormV99()">＋ Naya Kaam</button>
-      <button class="soft" onclick="printTasksReportV99()">📄 PDF (tasveeron ke sath)</button>
-    </div>
-  </div>
-  <div id="taskKpisV99" class="task-kpis-v99"></div>
-  <div id="taskListV99" class="task-list-v99"></div>
-</section>
-
-<div id="taskModalV99" class="modal-v84" hidden><div class="modal-card-v84">
-  <div class="modal-head-v84"><div><div class="eyebrow">NAYA KAAM</div><h3>Mulazim ko kaam dein</h3></div><button type="button" onclick="closeTaskFormV99()">×</button></div>
-  <form id="taskFormV99" class="vertical-form">
-    <label>Mulazim</label><select id="taskStaffV99" required></select>
-    <label>Kaam ka naam</label><input id="taskTitleV99" required placeholder="Maslan: Dukan ki safai">
-    <label>Tafseel</label><textarea id="taskDetailV99" rows="3" placeholder="Kya karna hai"></textarea>
-    <div class="two-col-v84">
-      <label>Tareekh<input id="taskDateV99" type="date"></label>
-      <label>Zyada se zyada Points (0-10)<input id="taskPointsV99" type="number" min="0" max="10" value="10"></label>
-    </div>
-    <button class="primary">Kaam Save karein</button>
-  </form>
-</div></div>
-
+<section id="staffTasks" class="tab app-screen nt-tasks">
+<div class="screen-head"><div><div class="eyebrow">STAFF • PICTURE REPORTS</div><h2>کام، تصاویر اور پوائنٹس</h2><p>نیا کام دیں، تصاویر دیکھیں، OK کریں اور پوائنٹس دیں۔</p></div></div>
+<div class="pro-card"><div class="nt-toolbar"><button type="button" class="nt-primary" data-task-assign="">＋ نیا کام دیں</button><div class="nt-actions"><button type="button" data-task-report>📄 تصاویر والی PDF</button><button type="button" data-task-retry>Refresh</button></div></div>
+<div class="nt-filters"><label>ملازم<select id="ntTaskStaffFilter"><option value="">تمام ملازمین</option></select></label><label>حالت<select id="ntTaskStatusFilter"><option value="">تمام کام</option><option value="assigned">کام باقی ہے</option><option value="submitted">منظوری باقی</option><option value="approved">منظور / OK</option><option value="changes_requested">دوبارہ کام</option></select></label><label>تاریخ سے<input type="date" id="ntTaskFrom"></label><label>تاریخ تک<input type="date" id="ntTaskTo"></label></div>
+<div id="ntOwnerTaskState" class="nt-msg" role="status"></div><div id="ntOwnerTaskNotice" class="nt-msg" role="status"></div><div id="ntOwnerTaskStats"></div><div id="ntOwnerTaskList" class="nt-cards"></div></div></section>
 <section id="staffAccounts" class="tab app-screen">
-  <div class="screen-head"><div><div class="eyebrow">STAFF • ACCOUNTS</div><h2>Staff Accounts</h2><p>Name، Address، Phone/Password اور Profile management</p></div><div class="screen-actions"><button class="soft" onclick="pushAllStaffToCloudV100()">☁️ Sab Staff Cloud par bhejein</button><button class="soft" onclick="showCloudAccountsV101()">🔍 Cloud accounts dekhein</button><button class="primary" onclick="toggleStaffCreateV84(true)">+ New Staff</button></div></div>
+  <div class="screen-head"><div><div class="eyebrow">STAFF • ACCOUNTS</div><h2>Staff Accounts</h2><p>Name، Address، Phone/Password اور Profile management</p></div><button class="primary" onclick="toggleStaffCreateV84(true)">+ New Staff</button></div>
   <div class="staff-accounts-grid"><div id="staffCreateV84" class="pro-card staff-create-v84"><div class="pro-card-head"><h3>New Staff Account</h3><button class="icon-close" onclick="toggleStaffCreateV84(false)">×</button></div><form id="staffFormV84" class="vertical-form"><div class="profile-upload-v84"><div id="staffPhotoPreviewV84" class="account-avatar">👤</div><label class="soft photo-label-v84">Photo<input id="staffPhotoV84" type="file" accept="image/*" capture="user" hidden></label></div><label>1. Name</label><input id="staffNameV84" required><label>2. Role</label><input id="staffRoleV84" placeholder="Sales / Driver / Manager"><label>3. Address</label><textarea id="staffAddressV84" rows="3" required></textarea><label>4. Phone Number / Login ID</label><input id="staffPhoneV84" inputmode="tel" required placeholder="03XXXXXXXXX"><div class="password-auto-box"><span>Password</span><b id="staffPasswordV84">Phone Number</b></div><label class="staff-login-toggle"><input id="staffLoginEnabledV84" type="checkbox" checked> Staff login enabled</label><button class="primary">Save Account</button></form></div><div class="pro-card staff-list-card-v84"><div class="pro-card-head"><div><h3>All Staff</h3><small id="staffCountV84">0 accounts</small></div><input id="staffSearchV84" placeholder="Search name / phone"></div><div id="staffCardsV84" class="staff-cards-v84"></div></div></div>
 </section>
 
@@ -1206,6 +1188,7 @@ th,td{font-size:16px;line-height:1.55}
       <select id="staffEditActiveV85"><option value="true">Active</option><option value="false">Inactive</option></select>
       <label class="staff-login-toggle"><input id="staffEditLoginEnabledV85" type="checkbox" checked> Staff login enabled</label>
       <div class="password-auto-box"><span>Password</span><b id="staffEditPasswordV85">Phone Number</b></div>
+      <button class="nt-task-link" type="button" data-task-edit-assign>＋ اس ملازم کو نیا کام دیں</button><small>نام یا فون بدلا ہے تو پہلے Save Staff Changes کریں۔</small>
       <button class="primary" type="submit">Save Staff Changes</button>
     </form>
   </div>
@@ -1340,14 +1323,14 @@ th,td{font-size:16px;line-height:1.55}
 <section id="manufacturing" class="tab app-screen"><div class="grid"><div class="card span12"><h3>Batch Cost / Manufacturing</h3><form id="batchForm" class="form"><div class="f3"><label>تاریخ</label><input id="bDate" type="date"></div><div class="f3"><label>Batch نام</label><input id="bName"></div><div class="f3"><label>Product</label><input id="bProduct"></div><div class="f3"><label>Batch KG</label><input id="bKg" type="number" step="0.01"></div><div class="f4"><label>Material Cost</label><input id="bMaterial" type="number"></div><div class="f4"><label>Extra / Labour</label><input id="bExtra" type="number"></div><div class="f4" style="align-self:end"><button class="primary">Batch Save</button></div></form></div><div class="card span12"><table><thead><tr><th>Date</th><th>Batch</th><th>Product</th><th>KG</th><th>Total Cost</th><th>Cost/KG</th><th></th></tr></thead><tbody id="batchRows"></tbody></table></div></div></section>
 
 <section id="salesReports" class="tab app-screen"><div class="grid"><div class="card span12"><h3>Sales Reports</h3><div class="report-group-links"><span>Daily Sale</span><span>Date-wise Sale</span><span>Monthly Sale</span><span>Wasooli</span><span>Accounts Incoming</span><span>Cash / Change</span><span>Expenses</span><span>Purchase / Bills</span></div><div class="row"><input id="reportMonthSalesV84" type="month" style="width:auto"><button class="primary" onclick="renderSalesReportsV84()">Report بنائیں</button><button class="soft" onclick="previewReportV84('salesReports')">Preview PDF</button></div></div><div class="card span12" id="salesReportBoxV84"></div></div></section>
-<section id="staffReports" class="tab app-screen"><div class="grid"><div class="card span12"><h3>Staff Reports</h3><div class="report-group-links"><span>Today Attendance</span><span>Attendance History</span><span>Scores / Ranking</span><span>Staff Accounts</span><span>Khana Allowance</span><span>Check-in / Check-out</span><span>Present / Absent</span></div><div class="row"><label>From <input id="staffReportFromV84" type="date"></label><label>To <input id="staffReportToV84" type="date"></label><button class="primary" onclick="renderStaffReportsV84()">Report بنائیں</button><button class="soft" onclick="previewReportV84('staffReports')">Preview PDF</button></div></div><div class="card span12" id="staffReportBoxV84"></div></div></section>
+<section id="staffReports" class="tab app-screen"><div class="grid"><div class="card span12"><h3>Staff Reports</h3><div class="report-group-links"><span>Today Attendance</span><span>Attendance History</span><span>Scores / Ranking</span><span>Staff Accounts</span><span>Khana Allowance</span><span>Check-in / Check-out</span><span>Present / Absent</span></div><div class="row"><label>From <input id="staffReportFromV84" type="date"></label><label>To <input id="staffReportToV84" type="date"></label><button class="primary" onclick="renderStaffReportsV84()">Report بنائیں</button><button class="soft" onclick="previewReportV84('staffReports')">Attendance PDF</button><button class="soft" onclick="window.noorTasks?.report({from:staffReportFromV84.value,to:staffReportToV84.value})">📷 تصاویر اور پوائنٹس PDF</button></div></div><div class="card span12" id="staffReportBoxV84"></div></div></section>
 <section id="completeReport" class="tab app-screen"><div class="grid"><div class="card span12 complete-report-card"><h2>Complete System Report</h2><p class="muted">Business، Staff، Stock، Purchases اور Production کی consolidated report</p><div class="complete-report-filters"><label>Filter<select id="systemReportFilterV84"><option value="today">Today</option><option value="date">Specific date</option><option value="range">From / To</option><option value="month">Month</option><option value="all">All history</option></select></label><label id="systemReportDateWrapV84">Date<input id="systemReportDateV84" type="date"></label><label id="systemReportFromWrapV84" hidden>From<input id="systemReportFromV84" type="date"></label><label id="systemReportToWrapV84" hidden>To<input id="systemReportToV84" type="date"></label><label id="systemReportMonthWrapV84" hidden>Month<input id="systemReportMonthV84" type="month"></label></div><div class="complete-report-actions"><button class="primary" onclick="generateCompleteSystemReportV84('preview')">Preview PDF</button><button class="soft" onclick="generateCompleteSystemReportV84('download')">Download PDF</button><button class="soft" onclick="generateCompleteSystemReportV84('share')">Share / Send PDF</button><button class="soft" onclick="generateCompleteSystemReportV84('print')">Print</button></div><div id="completeReportStatusV84" class="complete-report-status"></div></div></div></section>
 <section id="reports" class="tab app-screen"><div class="grid"><div class="card span12"><h3>Reports</h3><div class="row"><button class="primary" onclick="goScreen('salesReports')">Sales Reports</button><button class="soft" onclick="goScreen('staffReports')">Staff Reports</button><button class="soft" onclick="goScreen('completeReport')">Complete System Report</button></div></div><div class="card span12"><h3>Monthly Report</h3><div class="row"><input id="reportMonth" type="month" style="width:auto"><button class="primary" onclick="renderReport()">Report بنائیں</button><button class="soft" onclick="window.print()">Print / PDF</button></div></div><div class="card span12" id="reportBox"></div></div></section>
 
 <div id="pdfPreviewModal" class="pdf-preview-modal" hidden><div class="pdf-preview-shell"><div class="pdf-preview-head"><div><span class="eyebrow">NOOR TRADERS HISAB</span><h2 id="pdfPreviewTitle">Report Preview</h2></div><button class="icon-close" type="button" onclick="closePdfPreviewV85()" aria-label="Close preview">×</button></div><iframe id="pdfPreviewFrame" title="PDF preview"></iframe><div class="pdf-preview-actions"><button class="primary" type="button" onclick="downloadPdfV85()">Download PDF</button><button class="soft" type="button" onclick="sharePdfV85()">Share / Send</button><button class="soft" type="button" onclick="printPdfPreviewV85()">Print</button><button class="soft" type="button" onclick="closePdfPreviewV85()">Close</button></div></div></div>
 <div id="entryEditModalV85" class="entry-edit-modal-v85" hidden><div class="entry-edit-card-v85"><div class="pro-card-head"><div><div class="eyebrow">EDIT ENTRY</div><h3>Update Transaction</h3></div><button type="button" class="icon-close" onclick="closeEntryEditV85()">×</button></div><form id="entryEditFormV85" class="entry-edit-form"><input type="date" id="editEntryDateV85"><input id="editEntryDetailV85" placeholder="Detail / Name"><select id="editEntryTypeV85"></select><select id="editEntrySubCategoryV85"></select><input id="editEntryAmountV85" type="number" min="0.01" step="0.01" required><input id="editEntryPhotoV85" type="file" accept="image/*" capture="environment"><div id="editEntryPhotoPreviewV85" class="quick-photo-preview" hidden></div><div class="row"><button class="primary" type="submit">Save Changes</button><button class="soft" type="button" onclick="closeEntryEditV85()">Cancel</button></div></form></div></div>
 
-<section id="settings" class="tab app-screen"><div class="grid"><div class="card span6"><h3>Full Migration Backup</h3><p class="muted">مکمل JSON backup download کریں یا restore کریں۔ Restore ہونے پر online data بھی sync ہوگا۔</p><div class="row"><button class="primary" onclick="backupAll()">Full Migration Backup Download</button><label class="soft" style="cursor:pointer">Backup Restore<input type="file" id="restoreFile" accept="application/json" style="display:none"></label></div></div><div class="card span6"><h3>Expense Categories</h3><div class="row"><input id="newCat" placeholder="نئی category"><button class="soft" onclick="addCategory()">Add</button></div><div id="catList" style="margin-top:10px"></div></div><div class="card span12"><h3>Attendance Policy & Version</h3><div class="form"><div class="f3"><label>Shift Start</label><input id="policyShiftStartV84" type="time" value="09:00"></div><div class="f3"><label>Shift End (optional)</label><input id="policyShiftEndV84" type="time"></div><div class="f3"><label>Geofence Radius (m)</label><input id="policyRadiusV84" type="number" value="200"></div><div class="f3"><label>Variant</label><input id="policyVariantV84" value="Production"></div><div class="f12"><label>Check-In Instruction</label><input id="policyInstructionV84" value="سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔"></div><div class="f12 score-policy-editor"><label>Score Rules (minutes late → score)</label><div class="score-policy-grid"><span>≤10 min <input id="score10V84" type="number" value="10" min="0" max="10"></span><span>≤20 min <input id="score20V84" type="number" value="8" min="0" max="10"></span><span>≤30 min <input id="score30V84" type="number" value="6" min="0" max="10"></span><span>≤45 min <input id="score45V84" type="number" value="4" min="0" max="10"></span><span>Later <input id="scoreLateV84" type="number" value="2" min="0" max="10"></span></div></div><div class="f12"><button class="primary" type="button" onclick="saveAttendancePolicyV84()">Save Attendance Policy</button></div></div><div class="version-panel-v84"><span>Current Version <b id="settingsVersionV84">v85</b></span><span>Variant <b id="settingsVariantV84">Production</b></span><span id="settingsUpdateV84">Up to date</span><button class="soft update-now-v85" type="button" onclick="forceAppUpdateV85()">Check / Update Now</button></div></div><div class="card span12"><h3>Storage</h3><p>یہ version <b>Firebase Firestore</b> کے ساتھ online sync کرتا ہے اور browser <b>localStorage</b> کو offline/local cache کے طور پر رکھتا ہے۔</p><button class="danger" onclick="resetAll()">صرف اس Browser کا Local Cache صاف کریں</button></div></div></section>
+<section id="settings" class="tab app-screen"><div class="grid"><div class="card span6"><h3>Full Migration Backup</h3><p class="muted">مکمل JSON backup download کریں یا restore کریں۔ Restore ہونے پر online data بھی sync ہوگا۔</p><div class="row"><button class="primary" onclick="backupAll()">Full Migration Backup Download</button><label class="soft" style="cursor:pointer">Backup Restore<input type="file" id="restoreFile" accept="application/json" style="display:none"></label></div></div><div class="card span6"><h3>Expense Categories</h3><div class="row"><input id="newCat" placeholder="نئی category"><button class="soft" onclick="addCategory()">Add</button></div><div id="catList" style="margin-top:10px"></div></div><div class="card span12"><h3>Attendance Policy & Version</h3><div class="form"><div class="f3"><label>Shift Start</label><input id="policyShiftStartV84" type="time" value="09:00"></div><div class="f3"><label>Shift End (optional)</label><input id="policyShiftEndV84" type="time"></div><div class="f3"><label>Geofence Radius (m)</label><input id="policyRadiusV84" type="number" value="200"></div><div class="f3"><label>Variant</label><input id="policyVariantV84" value="Production"></div><div class="f12"><label>Check-In Instruction</label><input id="policyInstructionV84" value="سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔"></div><div class="f12 score-policy-editor"><label>Score Rules (minutes late → score)</label><div class="score-policy-grid"><span>≤10 min <input id="score10V84" type="number" value="10" min="0" max="10"></span><span>≤20 min <input id="score20V84" type="number" value="8" min="0" max="10"></span><span>≤30 min <input id="score30V84" type="number" value="6" min="0" max="10"></span><span>≤45 min <input id="score45V84" type="number" value="4" min="0" max="10"></span><span>Later <input id="scoreLateV84" type="number" value="2" min="0" max="10"></span></div></div><div class="f12"><button class="primary" type="button" onclick="saveAttendancePolicyV84()">Save Attendance Policy</button></div></div><div class="version-panel-v84"><span>Current Version <b id="settingsVersionV84">v99</b></span><span>Variant <b id="settingsVariantV84">Production</b></span><span id="settingsUpdateV84">Up to date</span><button class="soft update-now-v85" type="button" onclick="forceAppUpdateV85()">Check / Update Now</button></div></div><div class="card span6"><h3>مالک کا پاس ورڈ</h3><p class="muted">یوزر نیم: <b>admin</b></p><form id="ownerPasswordForm" class="vertical-form"><label for="ownerOldPassword">موجودہ پاس ورڈ</label><input id="ownerOldPassword" type="password" autocomplete="current-password" required><label for="ownerNewPassword">نیا پاس ورڈ — کم از کم 6 حروف</label><input id="ownerNewPassword" type="password" autocomplete="new-password" minlength="6" required><label for="ownerConfirmPassword">نیا پاس ورڈ دوبارہ درج کریں</label><input id="ownerConfirmPassword" type="password" autocomplete="new-password" minlength="6" required><button id="ownerPasswordBtn" class="primary" type="submit">پاس ورڈ تبدیل کریں</button><div id="ownerPasswordMessage" class="login-message" role="status" aria-live="polite"></div></form></div><div class="card span12"><h3>Storage</h3><p>یہ version <b>Firebase Firestore</b> کے ساتھ online sync کرتا ہے اور browser <b>localStorage</b> کو offline/local cache کے طور پر رکھتا ہے۔</p><button class="danger" onclick="resetAll()">صرف اس Browser کا Local Cache صاف کریں</button></div></div></section>
 
 <div class="footer">Noor Traders Hisab — Standalone HTML conversion from v79 source</div></div>
 <script>
@@ -1376,7 +1359,7 @@ const money=n=>'Rs '+Number(n||0).toLocaleString('en-PK',{maximumFractionDigits:
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const navCategories=[
   {id:'accounts',label:'💼 Accounts',items:[['dashboard','Overview'],['sales','Sale'],['collections','Wasooli'],['expenses','Expenses'],['cashScreen','Cash / Change'],['accountIncoming','Accounts Incoming'],['purchases','Purchase / Bills']]},
-  {id:'staff',label:'👥 Staff',items:[['staffCenter','Staff Control'],['staffAccounts','Staff Accounts'],['attendanceToday','Today Attendance'],['scores','Scores / Ranking'],['staffKhana','Khana Allowance'],['attendanceHistory','Attendance History'],['tasks','Kaam / Approval'],['staffReports','Staff Reports']]},
+  {id:'staff',label:'👥 Staff',items:[['staffCenter','Staff Control'],['staffAccounts','Staff Accounts'],['staffTasks','Tasks / Picture Reports'],['attendanceToday','Today Attendance'],['scores','Scores / Ranking'],['staffKhana','Khana Allowance'],['attendanceHistory','Attendance History'],['staffReports','Staff Reports']]},
   {id:'stock',label:'📦 Stock / Purchase',items:[['stock','Stock Audit']]},
   {id:'production',label:'🏭 Production',items:[['manufacturing','Batch Cost']]},
   {id:'reports',label:'📊 Reports',items:[['completeReport','Complete System Report'],['reports','Report Center'],['salesReports','Sales Reports'],['staffReports','Staff Reports'],['stock','Stock / Purchase Reports'],['manufacturing','Production Reports']]},
@@ -1393,7 +1376,10 @@ function goScreen(id,fromHistory=false){
   if(!screenExists(id))return;
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('#nav [data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));
-  const el=document.getElementById(id);el.classList.add('active');scrollToScreenV94(el);
+  const el=document.getElementById(id);el.classList.add('active');
+  const staffBar=document.getElementById('staffTopNavV99'),staffScreens=['staffCenter','staffAccounts','staffProfile','attendanceToday','attendanceHistory','scores','staffKhana','staffReports','staffTasks'];
+  if(staffBar){staffBar.hidden=!staffScreens.includes(id);if(!staffBar.hidden){el.before(staffBar);staffBar.querySelectorAll('[data-screen]').forEach(b=>{if(b.dataset.screen===id)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')})}}
+  scrollToScreenV94(staffBar&&!staffBar.hidden?staffBar:el);
   document.getElementById('nav')?.classList.remove('mobile-open');
   renderNavigation(id);
   if(id!=='dashboard'){
@@ -1406,134 +1392,10 @@ function goScreen(id,fromHistory=false){
     }
   }
   if(!fromHistory)history.pushState({screen:id},'',`#${id}`);
-  if(id==='dashboard')renderV84Dashboard();if(id==='staffCenter')renderStaffCenterV84();if(id==='staffAccounts')renderStaffAccountsV84();if(id==='attendanceToday')renderTodayAttendanceV84();if(id==='attendanceHistory')renderAttendanceHistoryV84();if(id==='scores')renderScoresV84();if(id==='staffKhana')renderKhanaAllowanceV85();if(id==='staffProfile')renderStaffProfileV84();if(id==='staffReports')renderStaffReportsV84();if(id==='salesReports')renderSalesReportsV84();if(id==='tasks')renderTasksV99();if(id==='completeReport')renderCompleteReportScreenV84();
+  if(id==='dashboard')renderV84Dashboard();if(id==='staffTasks')window.noorTasks?.refresh();if(id==='staffCenter')renderStaffCenterV84();if(id==='staffAccounts')renderStaffAccountsV84();if(id==='attendanceToday')renderTodayAttendanceV84();if(id==='attendanceHistory')renderAttendanceHistoryV84();if(id==='scores')renderScoresV84();if(id==='staffKhana')renderKhanaAllowanceV85();if(id==='staffProfile')renderStaffProfileV84();if(id==='staffReports')renderStaffReportsV84();if(id==='salesReports')renderSalesReportsV84();if(id==='completeReport')renderCompleteReportScreenV84();
   setTimeout(cleanEmptyBoxesV92,60);
 }
 window.goScreen=goScreen;
-async function pushAllStaffToCloudV100(){
-  // Har staff ko staffAccounts (cloud) mein likh deta hai — isi se unka login banta hai.
-  const list=db.staff||[];
-  if(!list.length)return alert('Koi staff mojood nahi');
-  let ok=0,fail=0,last='';
-  toastV97?.('☁️ '+list.length+' staff cloud par bheje ja rahe hain…',0);
-  for(const s of list){
-    const phone=normPhoneV84(s.phone||s.id);
-    if(!phone||phone.length<10){fail++;continue}
-    try{
-      await window.noorStaffSystem?.upsertAccount({...s,phone,id:phone,active:s.active!==false,loginEnabled:s.loginEnabled!==false});
-      ok++;
-    }catch(e){fail++;last=e?.code||e?.message||'error';console.error(e)}
-  }
-  toastV97?.(fail? `⚠️ ${ok} kamyab, ${fail} nakaam ${last?'('+last+')':''}` : `✅ ${ok} staff cloud par mehfooz ho gaye. Ab unka login chalega.`,6000);
-  renderStaffAccountsV84();
-}
-window.pushAllStaffToCloudV100=pushAllStaffToCloudV100;
-function showCloudAccountsV101(){
-  const cloud=window.noorStaffSystem?.getCloudAccounts?.()||[];
-  const local=(db.staff||[]).map(s=>normPhoneV84(s.phone||s.id));
-  const missing=local.filter(p=>!cloud.some(c=>c.id===p));
-  const lines=cloud.map(c=>`${c.id} — ${c.name||'?'} ${c.active?'✓active':'✗inactive'} ${c.loginEnabled?'✓login':'✗login-off'}`).join('\n')||'(cloud mein koi account nahi)';
-  alert('CLOUD staffAccounts ('+cloud.length+'):\n'+lines+'\n\nCloud mein NAHI: '+(missing.join(', ')||'koi nahi'));
-}
-window.showCloudAccountsV101=showCloudAccountsV101;
-/* ===== KAAM / TASK SYSTEM (v99) ===== */
-function tasksV99(phone){return window.noorStaffSystem?.getTasks?.(phone)||[]}
-function taskPhotosV99(id){return window.noorStaffSystem?.getTaskPhotos?.(id)||[]}
-function taskStatusChipV99(t){
-  const map={assigned:['🆕 Diya gaya','assigned'],submitted:['⏳ Approval chahiye','submitted'],approved:['✅ Manzoor','approved'],returned:['↩️ Wapis bheja','returned']};
-  const x=map[t.status||'assigned']||map.assigned;
-  return `<span class="task-chip-v99 tc-${x[1]}">${x[0]}</span>`;
-}
-function openTaskFormV99(phone){
-  const sel=document.getElementById('taskStaffV99');
-  sel.innerHTML=db.staff.map(x=>{const p=normPhoneV84(x.phone||x.id);return `<option value="${p}">${esc(x.name||'Staff')} • ${esc(p)}</option>`}).join('');
-  if(phone)sel.value=normPhoneV84(phone);
-  taskTitleV99.value='';taskDetailV99.value='';taskDateV99.value=today();taskPointsV99.value=10;
-  taskModalV99.hidden=false;
-}
-function closeTaskFormV99(){taskModalV99.hidden=true}
-window.openTaskFormV99=openTaskFormV99;window.closeTaskFormV99=closeTaskFormV99;
-taskFormV99.onsubmit=async e=>{
-  e.preventDefault();
-  const phone=normPhoneV84(taskStaffV99.value);
-  if(!phone)return alert('Mulazim chunein');
-  const s=staffForPhoneV84(phone);
-  const task={id:'T'+Date.now(),phone,staffName:s.name||phone,title:taskTitleV99.value.trim(),detail:taskDetailV99.value.trim(),
-    dueDate:taskDateV99.value||today(),maxPoints:Math.min(10,Math.max(0,+taskPointsV99.value||10)),
-    status:'assigned',points:null,ownerNote:'',createdAt:Date.now()};
-  if(!task.title)return alert('Kaam ka naam likhein');
-  await window.noorStaffSystem?.saveTask(task);
-  closeTaskFormV99();renderTasksV99();
-  alert('Kaam bhej diya gaya: '+task.staffName);
-};
-function renderTasksV99(){
-  const box=document.getElementById('taskListV99');if(!box)return;
-  const f=(document.getElementById('taskFilterV99')||{}).value||'pending';
-  let list=tasksV99();
-  const kpi=document.getElementById('taskKpisV99');
-  if(kpi){
-    const pend=list.filter(t=>t.status==='submitted').length,ok=list.filter(t=>t.status==='approved').length;
-    const pts=list.filter(t=>t.status==='approved').reduce((a,b)=>a+(+b.points||0),0);
-    kpi.innerHTML=`<div><small>Kul Kaam</small><strong>${list.length}</strong></div><div><small>Approval chahiye</small><strong>${pend}</strong></div><div><small>Manzoor shuda</small><strong>${ok}</strong></div><div><small>Kul Points</small><strong>${pts}</strong></div>`;
-  }
-  if(f==='pending')list=list.filter(t=>t.status==='submitted');
-  else if(f!=='all')list=list.filter(t=>(t.status||'assigned')===f);
-  box.innerHTML=list.map(t=>{
-    const pics=taskPhotosV99(t.id);
-    const st=staffForPhoneV84(t.phone);
-    return `<article class="task-card-v99">
-      <div class="task-head-v99"><div><b>${esc(t.title||'Kaam')}</b><small>👤 ${esc(st.name||t.staffName||t.phone)} • ${esc(normPhoneV84(t.phone))}</small></div>${taskStatusChipV99(t)}</div>
-      ${t.detail?`<p>${esc(t.detail)}</p>`:''}
-      <small class="task-meta-v99">📅 ${esc(t.dueDate||'')} • Max ${t.maxPoints??10} points${t.points!=null?` • Diye gaye: <b>${t.points}</b>`:''}</small>
-      ${pics.length?`<div class="task-photos-v99">${pics.map(ph=>`<img src="${ph.data}" onclick="viewTaskPhotoV99('${ph.id}')">`).join('')}</div>`:'<div class="task-nopic-v99">Abhi tasveer nahi aayi</div>'}
-      ${t.ownerNote?`<div class="task-note-v99">📝 ${esc(t.ownerNote)}</div>`:''}
-      <div class="task-actions-v99">
-        ${t.status==='submitted'?`<input type="number" min="0" max="${t.maxPoints??10}" value="${t.maxPoints??10}" id="pts_${t.id}" class="task-points-in-v99">
-          <button class="primary" onclick="approveTaskV99('${t.id}')">✅ Manzoor + Points</button>
-          <button class="soft" onclick="returnTaskV99('${t.id}')">↩️ Wapis bhejein</button>`:''}
-        ${t.status==='approved'?`<button class="soft" onclick="reopenTaskV99('${t.id}')">Dobara kholain</button>`:''}
-        <button class="danger" onclick="deleteTaskV99Ui('${t.id}')">🗑 Delete</button>
-      </div>
-    </article>`;
-  }).join('')||'<div class="empty-state-v84">Is filter mein koi kaam nahi</div>';
-}
-window.renderTasksV99=renderTasksV99;
-function viewTaskPhotoV99(photoId){
-  const ph=taskPhotosV99('').find(x=>x.id===photoId)||(window.noorStaffSystem?.getTaskPhotos?.(photoId.split('_')[0])||[]).find(x=>x.id===photoId);
-  if(!ph)return;
-  const w=window.open('','_blank');w.document.write(`<img src="${ph.data}" style="max-width:100%">`);w.document.close();
-}
-window.viewTaskPhotoV99=viewTaskPhotoV99;
-async function approveTaskV99(id){
-  const t=tasksV99().find(x=>x.id===id);if(!t)return;
-  const inp=document.getElementById('pts_'+id);
-  let pts=Math.min(+(t.maxPoints??10),Math.max(0,+(inp?.value||0)));
-  await window.noorStaffSystem?.saveTask({id,status:'approved',points:pts,approvedAt:Date.now(),ownerNote:''});
-  renderTasksV99();
-}
-async function returnTaskV99(id){
-  const note=prompt('Wapis bhejne ki wajah likhein:','Kaam mukammal nahi');
-  if(note===null)return;
-  await window.noorStaffSystem?.saveTask({id,status:'returned',ownerNote:note,points:null});
-  renderTasksV99();
-}
-async function reopenTaskV99(id){await window.noorStaffSystem?.saveTask({id,status:'assigned',points:null});renderTasksV99()}
-async function deleteTaskV99Ui(id){if(confirm('Yeh kaam delete karein?')){await window.noorStaffSystem?.deleteTask(id);renderTasksV99()}}
-window.approveTaskV99=approveTaskV99;window.returnTaskV99=returnTaskV99;window.reopenTaskV99=reopenTaskV99;window.deleteTaskV99Ui=deleteTaskV99Ui;
-function printTasksReportV99(phone){
-  const list=tasksV99(phone);
-  const rows=list.map(t=>{
-    const pics=taskPhotosV99(t.id).map(p=>`<img src="${p.data}" style="width:120px;height:120px;object-fit:cover;border-radius:8px;margin:3px">`).join('')||'—';
-    const st=staffForPhoneV84(t.phone);
-    return `<tr><td>${esc(t.dueDate||'')}</td><td>${esc(st.name||t.staffName||t.phone)}</td><td>${esc(t.title||'')}<br><small>${esc(t.detail||'')}</small></td><td>${esc(t.status||'')}</td><td><b>${t.points??'—'}</b>/${t.maxPoints??10}</td><td>${pics}</td></tr>`;
-  }).join('')||'<tr><td colspan="6">Koi kaam nahi</td></tr>';
-  const total=list.filter(t=>t.status==='approved').reduce((a,b)=>a+(+b.points||0),0);
-  const w=window.open('','_blank');
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Kaam Report</title><style>body{font-family:Arial;padding:22px;color:#142033}h1{color:#0f766e;margin:0}table{width:100%;border-collapse:collapse;margin-top:14px}th,td{border:1px solid #d5dee6;padding:7px;font-size:11px;vertical-align:top}th{background:#eef5f4;color:#0f5f59}</style></head><body><h1>Noor Traders Gulyana</h1><p>Kaam / Task Report • Kul Points: <b>${total}</b> • ${new Date().toLocaleString('en-PK')}</p><table><thead><tr><th>Date</th><th>Mulazim</th><th>Kaam</th><th>Status</th><th>Points</th><th>Tasveerein</th></tr></thead><tbody>${rows}</tbody></table><script>setTimeout(()=>window.print(),600)<\/script></body></html>`);
-  w.document.close();
-}
-window.printTasksReportV99=printTasksReportV99;
-window.refreshStaffProfileV99=()=>{if(document.getElementById('staffProfile')?.classList.contains('active'))renderStaffProfileV84()};
 // "More" menu: bahar tap karte hi band ho jaye, aur page khulte waqt hamesha band ho.
 document.addEventListener('click',e=>{
   const nav=document.getElementById('nav');
@@ -1966,7 +1828,7 @@ attendanceEditFormV84.onsubmit=async e=>{
   closeAttendanceEditV84();renderTodayAttendanceV84();renderAttendanceHistoryV84();renderScoresV84();
 };
 
-function printWindowV84(title,subtitle,summary,headers,rows){const w=window.open('','_blank');w.document.write(`<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{font-family:Arial,sans-serif;padding:28px;color:#142033}.brand{border-bottom:3px solid #0f766e;padding-bottom:14px}.brand h1{margin:0;color:#0f766e}.brand p{margin:5px 0;color:#64748b}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:18px 0}.summary div{border:1px solid #dce5ec;border-radius:10px;padding:10px}.summary span{font-size:10px;color:#64748b;display:block}.summary b{font-size:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #d5dee6;padding:7px;text-align:right;font-size:10px}th{background:#eef5f4;color:#0f5f59}.foot{margin-top:18px;font-size:9px;color:#64748b}@media print{body{padding:10px}}</style></head><body><div class="brand"><h1>Noor Traders Gulyana</h1><p>${esc(title)} • ${esc(subtitle)}</p></div><div class="summary">${summary}</div><table><thead><tr>${headers.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>${window.__taskExtraV99||''}<div class="foot">Generated from Noor Traders Hisab ${V84_VERSION} • ${V84_VARIANT}</div><script>setTimeout(()=>window.print(),450)<\/script></body></html>`);w.document.close();window.__taskExtraV99=''}
+function printWindowV84(title,subtitle,summary,headers,rows){const w=window.open('','_blank');w.document.write(`<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{font-family:Arial,sans-serif;padding:28px;color:#142033}.brand{border-bottom:3px solid #0f766e;padding-bottom:14px}.brand h1{margin:0;color:#0f766e}.brand p{margin:5px 0;color:#64748b}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:18px 0}.summary div{border:1px solid #dce5ec;border-radius:10px;padding:10px}.summary span{font-size:10px;color:#64748b;display:block}.summary b{font-size:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #d5dee6;padding:7px;text-align:right;font-size:10px}th{background:#eef5f4;color:#0f5f59}.foot{margin-top:18px;font-size:9px;color:#64748b}@media print{body{padding:10px}}</style></head><body><div class="brand"><h1>Noor Traders Gulyana</h1><p>${esc(title)} • ${esc(subtitle)}</p></div><div class="summary">${summary}</div><table><thead><tr>${headers.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table><div class="foot">Generated from Noor Traders Hisab ${V84_VERSION} • ${V84_VARIANT}</div><script>setTimeout(()=>window.print(),450)<\/script></body></html>`);w.document.close()}
 function dailyReportDataV84(d){const m=attMapV84(d),list=db.staff.map(s=>{const p=normPhoneV84(s.phone||s.id),a=m.get(p)||{};return{s,p,a}});const present=list.filter(x=>x.a.checkIn).length,late=list.filter(x=>(x.a.minutesLate||0)>10).length,out=list.filter(x=>x.a.checkOut).length,scores=list.map(x=>attScoreV84(x.a)).filter(x=>x!=null);return{list,present,absent:db.staff.length-present,late,out,avg:scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—'}}
 function printDailyAttendanceV84(){const d=todayAttDateV84.value||today(),r=dailyReportDataV84(d),summary=`<div><span>Total Staff</span><b>${db.staff.length}</b></div><div><span>Present</span><b>${r.present}</b></div><div><span>Absent</span><b>${r.absent}</b></div><div><span>Late / Avg Score</span><b>${r.late} / ${r.avg}</b></div>`,rows=r.list.map(x=>`<tr><td>${x.s.photo?`<img src="${x.s.photo}" style="width:34px;height:34px;object-fit:cover;border-radius:6px">`:'—'}</td><td>${esc(x.s.name)}</td><td>${esc(x.s.role||'Staff')}</td><td>${esc(x.p)}</td><td>${attendanceStatusV84(x.a)}</td><td>${esc(x.a.checkIn||'—')}</td><td>${esc(x.a.checkOut||'—')}</td><td>${x.a.selfie?`<img src="${x.a.selfie}" style="width:34px;height:34px;object-fit:cover;border-radius:6px">`:'—'}</td><td>${attScoreV84(x.a)??'—'}</td><td>${esc(x.a.ownerNote||'—')}</td></tr>`).join('');printWindowV84('Daily Attendance Report',d,summary,['Profile','Name','Role','Phone','Status','Check-In','Check-Out','Selfie','Score','Notes'],rows)}
 function printHistoryReportV84(){const from=histFromV84.value||today(),to=histToV84.value||today(),phone=histStaffV84.value;let data=(window.noorStaffSystem?.getAttendanceBetween(from,to)||[]).filter(a=>!phone||normPhoneV84(a.phone)===phone);const scores=data.map(attScoreV84).filter(x=>x!=null),summary=`<div><span>Records</span><b>${data.length}</b></div><div><span>Late</span><b>${data.filter(a=>(a.minutesLate||0)>10).length}</b></div><div><span>Avg Score</span><b>${scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—'}</b></div><div><span>Period</span><b>${from} → ${to}</b></div>`,rows=data.map(a=>`<tr><td>${a.date}</td><td>${esc(staffForPhoneV84(a.phone).name||a.name||a.phone)}</td><td>${a.checkIn||'—'}</td><td>${Math.max(0,Math.round(a.minutesLate||0))}</td><td>${attScoreV84(a)??'—'}</td><td>${a.checkOut||'—'}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+'m':'—'}</td></tr>`).join('');printWindowV84('Attendance History Report',`${from} to ${to}`,summary,['Date','Staff','Check-In','Late','Score','Check-Out','Distance'],rows)}
@@ -1979,7 +1841,7 @@ window.applyPolicyV84=applyPolicyV84;
 restoreFileV84.onchange=async()=>{try{const x=JSON.parse(await restoreFileV84.files[0].text());if(!x.data)throw Error();if(confirm('Backup restore کرنے سے موجود data replace ہوگا۔ جاری رکھیں؟')){db=x.data;save()}}catch{alert('درست backup file نہیں')}};
 
 
-const APP_VERSION_V85='v102';
+const APP_VERSION_V85='v99';
 let currentPdfHtmlV85='';
 
 /* ===== AUTO UPDATE (v88) =====
@@ -2162,7 +2024,8 @@ staffEditFormV85?.addEventListener('submit',async e=>{
   if(db.staff.some(s=>normPhoneV84(s.phone||s.id)===newPhone&&normPhoneV84(s.phone||s.id)!==oldPhone))return alert('یہ Phone Number پہلے موجود ہے۔');
   const s=staffForPhoneV84(oldPhone);if(!s.phone&&!s.id)return;
   const updated={...s,id:newPhone,phone:newPhone,name:staffEditNameV85.value.trim(),role:staffEditRoleV85.value.trim(),address:staffEditAddressV85.value.trim(),photo:staffEditPhotoDataV85||s.photo||'',active:staffEditActiveV85.value==='true',loginEnabled:staffEditLoginEnabledV85.checked,updatedAt:Date.now()};
-  if(oldPhone!==newPhone)await window.noorStaffSystem?.migrateStaffPhone?.(oldPhone,newPhone,updated);else await window.noorStaffSystem?.upsertAccount(updated);
+  const saveButton=staffEditFormV85.querySelector('[type=submit]');saveButton.disabled=true;
+  try{if(oldPhone!==newPhone)await window.noorStaffSystem?.migrateStaffPhone?.(oldPhone,newPhone,updated);else await window.noorStaffSystem?.upsertAccount(updated)}catch(error){alert('پروفائل مکمل محفوظ نہیں ہوا۔ انٹرنیٹ چیک کرکے دوبارہ Save کریں۔');return}finally{saveButton.disabled=false}
   const idx=db.staff.findIndex(x=>normPhoneV84(x.phone||x.id)===oldPhone);if(idx>=0)db.staff[idx]=updated;
   if(currentProfilePhoneV84===oldPhone)currentProfilePhoneV84=newPhone;
   save();closeStaffEditV85();
@@ -2177,13 +2040,12 @@ function currentMonthStaffStatsV85(s,rows){
   return{start,end:b.today,days,present,absent:Math.max(0,days-present),pct:Math.round((present/days)*100)}
 }
 function renderStaffProfileV84(){
-  if(!currentProfilePhoneV84)return;
+  if(!currentProfilePhoneV84){staffProfileBodyV84.innerHTML='<div class="pro-card"><p>پروفائل دیکھنے یا کام دینے کے لیے پہلے ملازم منتخب کریں۔</p><button class="primary" onclick="goScreen(\'staffAccounts\')">Staff List کھولیں</button></div>';return;}
   const phone=currentProfilePhoneV84;
   const s=staffForPhoneV84(phone);
   const rows=(window.noorStaffSystem?.getAttendanceBetween('0000-00-00','9999-99-99')||[]).filter(a=>normPhoneV84(a.phone)===phone).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const scores=rows.map(attScoreV84).filter(x=>x!=null),late=rows.filter(a=>(a.minutesLate||0)>10).length,ms=currentMonthStaffStatsV85(s,rows);
   const d=today(),ta=rows.find(a=>a.date===d)||{},st=attendanceStatusV84(ta);
-  const myTasks=tasksV99(phone);
   const shift=policyV84.shiftStart||'09:00',shiftEnd=policyV84.shiftEnd||'—';
   const khanaDaily=Number(s.mealAmount||s.khanaAmount||0);
   profileTitleV84.textContent=s.name||phone;
@@ -2196,11 +2058,11 @@ function renderStaffProfileV84(){
     <button class="primary" onclick="openAttendanceEditV84('${d}_${phone}','${phone}')">✓ Hazri lagayein / theek karein</button>
     <button class="soft" onclick="editStaffV84('${phone}')">✏️ Edit</button>
     <button class="soft" onclick="openStaffHistoryV89('${phone}')">📅 Attendance History</button>
-    <button class="soft" onclick="openTaskFormV99('${phone}')">🧰 Naya Kaam Dein</button>
     <button class="soft" onclick="printIndividualStaffV84('${phone}')">📄 PDF Report</button>
     <button class="soft" onclick="resetStaffPasswordV85('${phone}')">🔐 Password Reset</button>
     <button class="danger" onclick="deleteStaffV84('${phone}')">🗑 Delete</button>
   </div>
+  <div id="ownerProfileTasksV99" class="nt-tasks nt-profile-tasks"></div>
   <div class="pro-card profile-today-v89">
     <div class="pro-card-head"><div><div class="eyebrow">AAJ KA TIME TABLE</div><h3>${esc(d)}</h3></div><span class="status-v84 ${st.toLowerCase().replaceAll(' ','-')}">${st}</span></div>
     <div class="profile-today-grid-v89">
@@ -2219,20 +2081,12 @@ function renderStaffProfileV84(){
     <div><small>Late Din</small><strong>${late}</strong></div>
     <div><small>Khana (rozana)</small><strong>${money(khanaDaily)}</strong></div>
     <div><small>Khana (is mahine)</small><strong>${money(khanaDaily*ms.present)}</strong></div>
-    <div><small>Kaam ke Points</small><strong>${myTasks.filter(t=>t.status==='approved').reduce((a,b)=>a+(+b.points||0),0)}</strong></div>
-    <div><small>Kaam (mukammal/kul)</small><strong>${myTasks.filter(t=>t.status==='approved').length} / ${myTasks.length}</strong></div>
-  </div>
-  <div class="pro-card">
-    <div class="pro-card-head"><div><div class="eyebrow">KAAM</div><h3>Is mulazim ke kaam</h3></div><button class="soft" onclick="printTasksReportV99('${phone}')">📄 Kaam PDF</button></div>
-    <div class="task-list-v99">${myTasks.map(t=>{
-      const pics=taskPhotosV99(t.id);
-      return `<article class="task-card-v99"><div class="task-head-v99"><div><b>${esc(t.title||'Kaam')}</b><small>📅 ${esc(t.dueDate||'')}</small></div>${taskStatusChipV99(t)}</div>${pics.length?`<div class="task-photos-v99">${pics.map(ph=>`<img src="${ph.data}">`).join('')}</div>`:''}<small class="task-meta-v99">Points: <b>${t.points??'—'}</b>/${t.maxPoints??10}</small>${t.status==='submitted'?`<div class="task-actions-v99"><input type="number" min="0" max="${t.maxPoints??10}" value="${t.maxPoints??10}" id="pts_${t.id}" class="task-points-in-v99"><button class="primary" onclick="approveTaskV99('${t.id}')">✅ Manzoor</button><button class="soft" onclick="returnTaskV99('${t.id}')">↩️ Wapis</button></div>`:''}</article>`;
-    }).join('')||'<div class="empty-state-v84">Koi kaam nahi diya gaya</div>'}</div>
   </div>
   <div class="pro-card">
     <div class="pro-card-head"><h3>Poori Attendance History</h3><small>${rows.length} records</small></div>
     <div class="table-scroll"><table><thead><tr><th>Date</th><th>Check-In</th><th>Late</th><th>Score</th><th>Check-Out</th><th>Distance</th><th></th></tr></thead><tbody>${rows.map(a=>`<tr><td>${esc(a.date||'')}</td><td>${esc(a.checkIn||'—')}</td><td>${Math.max(0,Math.round(a.minutesLate||0))}m</td><td><b>${attScoreV84(a)??'—'}</b></td><td>${esc(a.checkOut||'—')}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+'m':'—'}</td><td><button class="soft" onclick="openAttendanceEditV84('${a.id||`${a.date}_${phone}`}','${phone}')">Edit</button></td></tr>`).join('')||'<tr><td colspan="7">Koi record nahi</td></tr>'}</tbody></table></div>
   </div>`;
+  window.noorTasks?.profile(phone);
 }
 function openStaffHistoryV89(phone){
   goScreen('attendanceHistory');
@@ -2240,13 +2094,7 @@ function openStaffHistoryV89(phone){
   if(sel){sel.value=normPhoneV84(phone);renderAttendanceHistoryV84()}
 }
 window.openStaffHistoryV89=openStaffHistoryV89;
-function printIndividualStaffV84(phone){
-  const s=staffForPhoneV84(phone),data=(window.noorStaffSystem?.getAttendanceBetween('0000-00-00','9999-99-99')||[]).filter(a=>normPhoneV84(a.phone)===normPhoneV84(phone)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-  const scores=data.map(attScoreV84).filter(x=>x!=null),ms=currentMonthStaffStatsV85(s,data),late=data.filter(a=>(a.minutesLate||0)>10).length,perfect=data.filter(a=>attScoreV84(a)===10).length;
-  const summary=`<div><span>Staff</span><b>${esc(s.name||phone)}</b></div><div><span>This Month Attendance</span><b>${ms.pct}%</b></div><div><span>Present / Absent</span><b>${ms.present} / ${ms.absent}</b></div><div><span>Avg Score</span><b>${scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—'}</b></div><div><span>Late Days</span><b>${late}</b></div><div><span>10/10 Days</span><b>${perfect}</b></div><div><span>Phone / Password</span><b>${esc(normPhoneV84(phone))}</b></div><div><span>Account</span><b>${s.active===false?'Inactive':'Active'}</b></div>`;
-  const rows=data.map(a=>`<tr><td>${esc(a.date||'')}</td><td>${esc(a.checkIn||'—')}</td><td>${Math.max(0,Math.round(a.minutesLate||0))}</td><td>${a.autoScore??'—'}</td><td>${attScoreV84(a)??'—'}</td><td>${esc(a.checkOut||'—')}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+'m':'—'}</td><td>${esc(a.ownerNote||'')}</td></tr>`).join('');
-  printWindowV84('Individual Staff Performance Report',`${s.name||phone} • ${normPhoneV84(phone)} • ${ms.start} to ${ms.end}`,summary,['Date','Check-In','Late min','Auto Score','Final Score','Check-Out','Distance','Owner Note'],rows);
-}
+function printIndividualStaffV84(phone){return window.noorTasks?.report({phone:normPhoneV84(phone),individual:true})}
 
 function renderAllV84(){renderEntryScreensV84();renderV84Dashboard();renderQuickEntryV85();renderStaffCenterV84();renderStaffAccountsV84();renderTodayAttendanceV84();renderAttendanceHistoryV84();renderScoresV84();if(currentProfilePhoneV84)renderStaffProfileV84()}
 const _oldRenderAllV84=renderAll;renderAll=function(){_oldRenderAllV84();try{renderAllV84()}catch(e){console.warn('v84 render',e)}};
@@ -2255,26 +2103,488 @@ document.querySelectorAll('#mobileDockV84 [data-go]').forEach(b=>b.onclick=()=>g
 
 window.addEventListener('online',()=>{document.body.classList.remove('offline-v84')});window.addEventListener('offline',()=>{document.body.classList.add('offline-v84')});
 
-
-/* Individual PDF mein kaam aur points bhi shamil karein (yeh sab se aakhri definition hai) */
-const __printIndivV99=printIndividualStaffV84;
-window.printIndividualStaffV84=function(phone){
-  const tks=tasksV99(phone),tpts=tks.filter(t=>t.status==='approved').reduce((a,b)=>a+(+b.points||0),0);
-  window.__taskExtraV99=`<h3 style="color:#0f766e;margin-top:20px">Kaam aur Points (Kul: ${tpts})</h3><table><thead><tr><th>Date</th><th>Kaam</th><th>Status</th><th>Points</th></tr></thead><tbody>${tks.map(t=>`<tr><td>${esc(t.dueDate||'')}</td><td>${esc(t.title||'')}</td><td>${esc(t.status||'')}</td><td>${t.points??'—'}/${t.maxPoints??10}</td></tr>`).join('')||'<tr><td colspan="4">Koi kaam nahi</td></tr>'}</tbody></table>`;
-  return __printIndivV99(phone);
-};
+setTimeout(()=>{if(!window.noorAuthReady){const m=document.getElementById('loginMessage');if(m)m.textContent='لاگ اِن سروس لوڈ نہیں ہو سکی۔ انٹرنیٹ چیک کرکے Sync / Update Now دبائیں۔'}},20000);
 setupDates();renderNavigation(location.hash.slice(1)||'dashboard');goScreen(location.hash.slice(1)||'dashboard',true);renderAll();setTimeout(renderQuickEntryV85,0);
 
 </script>
 <script type="module">
+/* BEGIN V99 INLINE MODULES */
+const AuthV99=(()=>{
+
+// Authentication decisions are independent of the login screen and job titles.
+// Keep the owner list in sync with isOwner() in firestore.rules.
+const OWNER_EMAILS = Object.freeze([
+  'admin@nt-traders.firebaseapp.com',
+  'hp6235@gmail.com',
+  'owner@nttraders.local'
+]);
+
+function normalizePhone(value) {
+  let phone = String(value ?? '').trim()
+    .replace(/[۰-۹]/g, digit => String(digit.charCodeAt(0) - 0x6f0))
+    .replace(/[٠-٩]/g, digit => String(digit.charCodeAt(0) - 0x660));
+  // Reject letters instead of silently accepting a password with extra text.
+  if (!/^[+\d\s()-]+$/.test(phone)) return '';
+  phone = phone.replace(/\D/g, '');
+  if (phone.startsWith('0092')) phone = '0' + phone.slice(4);
+  else if (phone.startsWith('92') && phone.length === 12) phone = '0' + phone.slice(2);
+  if (phone.length === 10 && phone.startsWith('3')) phone = '0' + phone;
+  return /^03\d{9}$/.test(phone) ? phone : '';
+}
+
+function isOwnerUser(user) {
+  return !!user && !user.isAnonymous &&
+    OWNER_EMAILS.includes(String(user.email || '').toLowerCase());
+}
+
+function failure(code) {
+  return Object.assign(new Error(code), { code });
+}
+
+function parseLogin({ role, username, password }) {
+  const name = String(username || '').trim().toLowerCase();
+  if (!password) throw failure('login/password-required');
+  if (role === 'owner') {
+    if (name !== 'admin' && !OWNER_EMAILS.includes(name)) throw failure('login/owner-username');
+    return { role, emails: name === 'admin' ? OWNER_EMAILS : [name], password };
+  }
+  if (role !== 'staff') throw failure('login/role-required');
+  const phone = normalizePhone(password);
+  if (!phone || (name !== 'admin' && normalizePhone(name) !== phone)) {
+    throw failure('login/staff-credentials');
+  }
+  return { role, phone };
+}
+
+// SDK and account reads are injected so real authentication ordering can be
+// regression-tested without touching production users or attendance records.
+function createAuthController({ auth, sdk, accounts, onReset, onSession, onError }) {
+  let epoch = 0;
+  let pending = false;
+  let activeUid = null;
+  const check = (ticket, user) => {
+    if (ticket !== epoch || auth.currentUser?.uid !== user.uid) throw failure('login/cancelled');
+  };
+  function reset() {
+    activeUid = null;
+    onReset();
+  }
+  async function activate(user, ticket, expectedRole) {
+    check(ticket, user);
+    if (user.isAnonymous) {
+      if (expectedRole === 'owner') throw failure('login/owner-required');
+      // The UID-bound server record is authoritative. Never restore a phone
+      // from localStorage left behind by another staff member on this browser.
+      const session = await accounts.getSession(user.uid);
+      check(ticket, user);
+      const phone = normalizePhone(session?.phone);
+      if (!phone) throw failure('login/staff-session');
+      const account = await accounts.getAccount(phone);
+      check(ticket, user);
+      if (!account || account.active === false || account.loginEnabled === false) {
+        throw failure('login/staff-disabled');
+      }
+      onSession({ role: 'staff', user, phone, account });
+    } else {
+      if (expectedRole === 'staff' || !isOwnerUser(user)) throw failure('login/owner-required');
+      onSession({ role: 'owner', user });
+    }
+    activeUid = user.uid;
+  }
+  async function restore(user) {
+    // Firebase emits an anonymous-user event BEFORE the staff session is saved.
+    // Only the explicit login operation may activate that in-progress session.
+    if (pending || (user && user.uid === activeUid)) return;
+    const ticket = ++epoch;
+    reset();
+    if (!user) return;
+    try {
+      await activate(user, ticket);
+    } catch (error) {
+      if (ticket !== epoch) return;
+      reset();
+      const offline = ['unavailable', 'auth/network-request-failed'].includes(error.code);
+      if (!offline && auth.currentUser?.uid === user.uid) await sdk.signOut(auth);
+      onError(error, user.isAnonymous ? 'staff' : 'owner');
+    }
+  }
+  const unsubscribe = sdk.onAuthStateChanged(auth, user => {
+    void restore(user).catch(error => onError(error, 'owner'));
+  });
+
+  return {
+    resume() { return restore(auth.currentUser); },
+    async login(input) {
+      if (pending) throw failure('login/busy');
+      const request = parseLogin(input);
+      pending = true;
+      const ticket = ++epoch;
+      let attemptUser = null;
+      reset();
+      try {
+        // A new staff login must never reuse a previous user's anonymous UID.
+        if (auth.currentUser) await sdk.signOut(auth);
+        if (ticket !== epoch) throw failure('login/cancelled');
+        let credential;
+        if (request.role === 'owner') {
+          for (const email of request.emails) {
+            try {
+              credential = await sdk.signInWithEmailAndPassword(auth, email, request.password);
+              attemptUser = credential.user;
+              break;
+            } catch (error) {
+              if (ticket !== epoch) throw failure('login/cancelled');
+              if (!['auth/invalid-credential', 'auth/invalid-login-credentials', 'auth/user-not-found', 'auth/wrong-password'].includes(error.code) ||
+                  email === request.emails.at(-1)) throw error;
+            }
+          }
+        } else {
+          credential = await sdk.signInAnonymously(auth);
+          attemptUser = credential.user;
+          check(ticket, credential.user);
+          await accounts.createSession(credential.user.uid, request.phone);
+        }
+        check(ticket, credential.user);
+        await activate(credential.user, ticket, request.role);
+      } catch (error) {
+        if (ticket === epoch) {
+          reset();
+          if (auth.currentUser) await sdk.signOut(auth);
+        } else if (attemptUser && auth.currentUser?.uid === attemptUser.uid) {
+          // A sign-in promise may finish after Logout. Do not leave it signed in.
+          await sdk.signOut(auth);
+        }
+        throw error;
+      } finally {
+        pending = false;
+      }
+    },
+    async logout() {
+      ++epoch;
+      reset();
+      await sdk.signOut(auth);
+    },
+    async changePassword(currentPassword, newPassword) {
+      const user = auth.currentUser;
+      if (!isOwnerUser(user)) throw failure('login/owner-required');
+      if (!currentPassword) throw failure('login/password-required');
+      if (newPassword.length < 6) throw failure('auth/weak-password');
+      const ticket = epoch;
+      const credential = sdk.EmailAuthProvider.credential(user.email, currentPassword);
+      await sdk.reauthenticateWithCredential(user, credential);
+      check(ticket, user);
+      await sdk.updatePassword(user, newPassword);
+      check(ticket, user);
+    },
+    dispose() { ++epoch; unsubscribe(); reset(); }
+  };
+}
+
+function loginErrorMessage(error, role = 'owner') {
+  switch (error.code) {
+    case 'login/owner-username': return 'مالک کے لیے یوزر نیم admin درج کریں۔';
+    case 'login/staff-credentials': return 'اسٹاف کا یوزر نیم admin اور پاس ورڈ اس کا مکمل محفوظ شدہ موبائل نمبر ہے، مثلاً 03xxxxxxxxx۔';
+    case 'login/password-required': return 'پاس ورڈ درج کریں۔';
+    case 'login/staff-disabled': return 'اسٹاف اکاؤنٹ موجود نہیں یا مالک نے اس کا لاگ اِن بند کیا ہے۔';
+    case 'login/staff-session': return 'پچھلا اسٹاف سیشن مکمل نہیں۔ دوبارہ لاگ اِن کریں۔';
+    case 'login/owner-required': return 'اس اکاؤنٹ کو مالک کے پینل کی اجازت نہیں ہے۔';
+    case 'login/busy': return 'لاگ اِن کی جانچ ہو رہی ہے، ایک لمحہ انتظار کریں۔';
+    case 'login/cancelled': return 'اکاؤنٹ تبدیل ہو گیا ہے۔ دوبارہ لاگ اِن کریں۔';
+    case 'auth/invalid-credential':
+    case 'auth/invalid-login-credentials':
+    case 'auth/wrong-password':
+    case 'auth/user-not-found': return 'مالک کا پاس ورڈ درست نہیں، یا مالک کا اکاؤنٹ ابھی ترتیب نہیں دیا گیا۔';
+    case 'auth/operation-not-allowed': return role === 'staff'
+      ? 'اسٹاف لاگ اِن کی سروس بند ہے۔ Firebase میں Anonymous sign-in فعال کرنا ضروری ہے۔'
+      : 'مالک کی لاگ اِن سروس بند ہے۔ Firebase میں Email/Password sign-in فعال کرنا ضروری ہے۔';
+    case 'auth/user-disabled': return 'یہ اکاؤنٹ بند ہے۔ مالک سے رابطہ کریں۔';
+    case 'auth/too-many-requests': return 'کوششیں زیادہ ہو گئی ہیں۔ کچھ دیر بعد دوبارہ کوشش کریں۔';
+    case 'auth/network-request-failed':
+    case 'unavailable': return 'انٹرنیٹ کنکشن چیک کرکے دوبارہ کوشش کریں۔';
+    case 'permission-denied': return 'اکاؤنٹ یا اس کی اجازت کی تصدیق نہیں ہوئی۔ مالک سے اکاؤنٹ کی حالت اور نئی Firestore Rules چیک کروائیں۔';
+    case 'auth/weak-password':
+    case 'auth/password-does-not-meet-requirements': return 'نیا پاس ورڈ کم از کم 6 حروف کا ہو اور اکاؤنٹ کی پاس ورڈ شرائط پوری کرے۔';
+    case 'auth/requires-recent-login': return 'دوبارہ لاگ اِن کرکے پاس ورڈ تبدیل کریں۔';
+    default: return 'لاگ اِن مکمل نہیں ہوا۔ انٹرنیٹ اور اکاؤنٹ کی ترتیب چیک کریں۔';
+  }
+}
+
+return {OWNER_EMAILS,normalizePhone,isOwnerUser,parseLogin,createAuthController,loginErrorMessage};
+})();
+const TaskModelV99=(()=>{
+
+// Pure task accounting and state transitions. Firestore rules enforce the same boundaries.
+const MAX_PHOTOS = 8;
+const MAX_PHOTO_CHARS = 280000;
+const STATUS = Object.freeze({assigned:'کام باقی ہے',submitted:'مالک کی منظوری باقی ہے',approved:'منظور / OK',changes_requested:'دوبارہ کام / تصاویر بھیجیں'});
+const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function requireValue(ok, message) { if (!ok) throw new Error(message); }
+function workDate() { return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Karachi'}).format(new Date()); }
+function validDate(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value+'T00:00:00Z')) && new Date(value+'T00:00:00Z').toISOString().slice(0,10)===value;
+}
+function validPhoto(data) { return typeof data==='string' && data.length<=MAX_PHOTO_CHARS && /^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(data); }
+function createTask(input, actor, id, now=Date.now()) {
+  requireValue(actor?.role==='owner','صرف مالک نیا کام دے سکتا ہے۔');
+  const title=String(input.title||'').trim(),details=String(input.details||'').trim(),maxPoints=Number(input.maxPoints);
+  requireValue(/^03\d{9}$/.test(input.phone),'ملازم کا محفوظ شدہ موبائل نمبر منتخب کریں۔');
+  requireValue(title.length>0&&title.length<=160,'کام کا نام 1 سے 160 حروف میں لکھیں۔');
+  requireValue(details.length<=2000,'تفصیل زیادہ سے زیادہ 2000 حروف میں لکھیں۔');
+  requireValue(validDate(input.date),'کام کی درست تاریخ منتخب کریں۔');
+  requireValue(Number.isInteger(maxPoints)&&maxPoints>=0&&maxPoints<=1000,'زیادہ سے زیادہ پوائنٹس 0 سے 1000 درج کریں۔');
+  return {id,phone:input.phone,staffName:String(input.staffName||input.phone),title,details,date:input.date,maxPoints,status:'assigned',assignedBy:actor.uid,assignedAt:now,revision:0,submissionId:'',photoIds:[],staffNote:'',submittedBy:'',submittedAt:0,points:0,ownerNote:'',reviewedBy:'',reviewedAt:0};
+}
+function submissionPatch(task, actor, input, now=Date.now()) {
+  requireValue(actor?.role==='staff'&&actor.phone===task.phone,'آپ صرف اپنا کام جمع کر سکتے ہیں۔');
+  requireValue(['assigned','changes_requested'].includes(task.status),'یہ کام جمع ہو چکا ہے۔ مالک کی تصدیق کا انتظار کریں۔');
+  requireValue(task.revision===input.expectedRevision,'کام میں تبدیلی ہوئی ہے۔ اسے دوبارہ کھولیں۔');
+  requireValue(Array.isArray(input.photos)&&input.photos.length>=1&&input.photos.length<=MAX_PHOTOS,`1 سے ${MAX_PHOTOS} تصاویر شامل کریں۔`);
+  requireValue(input.photos.every(validPhoto),'تصویر تیار نہیں ہوئی۔ دوبارہ منتخب کریں۔');
+  requireValue(/^[A-Za-z0-9_-]{8,80}$/.test(input.submissionId),'تصاویر دوبارہ منتخب کرکے کوشش کریں۔');
+  const note=String(input.staffNote||'').trim();requireValue(note.length<=2000,'نوٹ زیادہ سے زیادہ 2000 حروف کا ہو۔');
+  return {status:'submitted',revision:task.revision+1,submissionId:input.submissionId,photoIds:input.photos.map((_,i)=>input.submissionId+'_'+i),staffNote:note,submittedBy:actor.uid,submittedAt:now};
+}
+function reviewPatch(task, actor, input, now=Date.now()) {
+  requireValue(actor?.role==='owner','صرف مالک کام منظور کر سکتا ہے۔');
+  requireValue(task.status==='submitted'&&task.revision===input.expectedRevision&&task.submissionId===input.submissionId,'یہ جمع شدہ کام بدل چکا ہے یا اس کی تصدیق ہو چکی ہے۔ دوبارہ کھولیں۔');
+  requireValue(['approved','changes_requested'].includes(input.status),'درست فیصلہ منتخب کریں۔');
+  const points=Number(input.points),ownerNote=String(input.ownerNote||'').trim();
+  requireValue(ownerNote.length<=2000,'نوٹ زیادہ سے زیادہ 2000 حروف کا ہو۔');
+  requireValue(input.status!=='changes_requested'||ownerNote.length>0,'دوبارہ کام کی وجہ لکھیں۔');
+  requireValue(input.status!=='approved'||(Number.isInteger(points)&&points>=0&&points<=task.maxPoints),'پوائنٹس مقررہ حد کے اندر درج کریں۔');
+  return {status:input.status,points:input.status==='approved'?points:0,ownerNote,reviewedBy:actor.uid,reviewedAt:now};
+}
+function selectTasks(tasks,{phone='',from='',to='',status=''}={}) {
+  requireValue(!from||!to||from<=to,'شروع کی تاریخ آخری تاریخ سے پہلے ہونی چاہیے۔');
+  return tasks.filter(t=>(!phone||t.phone===phone)&&(!from||t.date>=from)&&(!to||t.date<=to)&&(!status||t.status===status)).sort((a,b)=>b.date.localeCompare(a.date)||b.assignedAt-a.assignedAt);
+}
+function taskTotals(tasks) {
+  return {total:tasks.length,approved:tasks.filter(t=>t.status==='approved').length,pending:tasks.filter(t=>t.status==='submitted').length,points:tasks.reduce((n,t)=>n+(t.status==='approved'?Number(t.points)||0:0),0),possible:tasks.reduce((n,t)=>n+Number(t.maxPoints||0),0)};
+}
+function reportDocument({tasks,photos=new Map(),title='Staff Picture & Points Report',subtitle='',attendance=[],includePhotos=false}) {
+  const e=escapeHtml,totals=taskTotals(tasks),attendancePoints=attendance.reduce((n,a)=>n+Number(a.finalScore??a.autoScore??0),0);
+  const people=[...new Set(tasks.map(t=>t.phone))].map(phone=>{const own=tasks.filter(t=>t.phone===phone),s=taskTotals(own);return `<tr><td>${e(own[0].staffName)} • ${e(phone)}</td><td>${s.total}</td><td>${s.approved}</td><td>${s.points}</td></tr>`}).join('');
+  const evidence=tasks.map(t=>`<article><h3>${e(t.title)}</h3><p>${e(t.staffName)} • ${e(t.phone)} • ${e(t.date)}</p><p class="note">${e(t.details)}</p><p><b>${e(STATUS[t.status]||t.status)}</b> • پوائنٹس: <b>${t.status==='approved'?Number(t.points):0} / ${Number(t.maxPoints)}</b></p><p class="note">ملازم: ${e(t.staffNote||'—')}<br>مالک: ${e(t.ownerNote||'—')}</p>${includePhotos?`<div class="photos">${(t.photoIds||[]).map((id,i)=>{const data=photos.get(t.id+'/'+id);requireValue(validPhoto(data),'رپورٹ کی تمام تصاویر ابھی لوڈ نہیں ہوئیں۔ دوبارہ کوشش کریں۔');return `<figure><img src="${data}" alt="${e(t.title)} — ${i+1}"><figcaption>${e(t.staffName)} — تصویر ${i+1}</figcaption></figure>`}).join('')}</div>`:''}</article>`).join('');
+  const lateDays=attendance.filter(a=>Number(a.minutesLate||0)>10).length,scored=attendance.filter(a=>a.finalScore!=null||a.autoScore!=null);
+  const average=scored.length?(attendancePoints/scored.length).toFixed(1):'—';
+  const att=attendance.length?`<h2>Attendance / حاضری</h2><p>حاضری ریکارڈ: ${attendance.length} • دیر والے دن: ${lateDays} • اوسط اسکور: ${average}</p><p>حاضری کے پوائنٹس: ${attendancePoints} • ٹاسک پوائنٹس: ${totals.points} • مجموعہ: ${attendancePoints+totals.points}</p><table class="attendance"><thead><tr><th>تاریخ</th><th>Check-In</th><th>Late min</th><th>Auto</th><th>حاضری پوائنٹس</th><th>Check-Out</th><th>Distance</th><th>مالک کا نوٹ</th></tr></thead><tbody>${attendance.map(a=>`<tr><td>${e(a.date)}</td><td>${e(a.checkIn||'—')}</td><td>${Math.max(0,Math.round(a.minutesLate||0))}</td><td>${e(a.autoScore??'—')}</td><td>${e(a.finalScore??a.autoScore??'—')}</td><td>${e(a.checkOut||'—')}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+'m':'—'}</td><td>${e(a.ownerNote||'—')}</td></tr>`).join('')}</tbody></table>`:'';
+  return `<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>${e(title)}</title><style>@page{size:A4;margin:13mm}body{font:14px/1.65 Arial,sans-serif;color:#17302d;padding:12px}h1{font-size:24px;color:#0f766e}h2{font-size:19px}h3{margin:0;font-size:17px}table{width:100%;border-collapse:collapse;margin:14px 0}th,td{border:1px solid #d2dedb;padding:8px;text-align:right}th{background:#eaf4f0}article{border-top:2px solid #b8d9ce;padding:15px 0;break-inside:auto}article h3{break-after:avoid}p{margin:6px 0}.note{white-space:pre-wrap;overflow-wrap:anywhere}.totals{background:#eaf4f0;padding:14px}.photos{display:block}figure{display:inline-block;vertical-align:top;width:46%;margin:8px 1%;break-inside:avoid}img{display:block;width:100%;max-height:95mm;object-fit:contain}figcaption{font-size:12px;text-align:center}thead{display:table-header-group}.attendance{font-size:11px}.attendance th,.attendance td{padding:5px;overflow-wrap:anywhere}@media print{body{padding:0}article{box-shadow:none}}</style></head><body><h1>Noor Traders Gulyana</h1><h2>${e(title)}</h2><p>${e(subtitle)}</p><div class="totals">کل کام: ${totals.total} • منظور شدہ: ${totals.approved} • منظوری باقی: ${totals.pending}<br><b>منظور شدہ ٹاسک پوائنٹس: ${totals.points}</b> / مقررہ ${totals.possible}<br>صرف منظور شدہ کام کے پوائنٹس جمع کیے گئے ہیں۔ تاریخ کا حساب کام کی مقررہ تاریخ سے ہے۔</div><table><thead><tr><th>ملازم</th><th>کام</th><th>منظور</th><th>ٹاسک پوائنٹس</th></tr></thead><tbody>${people||'<tr><td colspan="4">اس مدت میں کوئی کام نہیں۔</td></tr>'}</tbody></table>${evidence}${att}</body></html>`;
+}
+
+return {MAX_PHOTOS,MAX_PHOTO_CHARS,STATUS,escapeHtml,requireValue,workDate,validDate,validPhoto,createTask,submissionPatch,reviewPatch,selectTasks,taskTotals,reportDocument};
+})();
+const TaskServiceV99=(()=>{
+const {createTask,submissionPatch,reviewPatch,validPhoto,requireValue}=TaskModelV99;const {isOwnerUser}=AuthV99;
+
+
+
+function createTaskService({fs,auth,sdk,getStaffPhone,businessId='noor-traders'}) {
+  const {collection,doc,getDoc,getDocs,query,where,onSnapshot,runTransaction,writeBatch}=sdk;
+  const tasks=collection(fs,'businesses',businessId,'staffTasks');
+  function actor() {
+    const user=auth.currentUser;
+    if(isOwnerUser(user))return {role:'owner',uid:user.uid};
+    const phone=getStaffPhone();
+    requireValue(user?.isAnonymous&&/^03\d{9}$/.test(phone),'پہلے اپنے اکاؤنٹ میں لاگ اِن کریں۔');
+    return {role:'staff',uid:user.uid,phone};
+  }
+  function unchanged(a) { const b=actor();requireValue(a.uid===b.uid&&a.phone===b.phone,'اکاؤنٹ تبدیل ہو گیا۔ دوبارہ کوشش کریں۔'); }
+  return {
+    actor,
+    listen(next,error) {
+      const a=actor(),ref=a.role==='owner'?tasks:query(tasks,where('phone','==',a.phone));
+      return onSnapshot(ref,{includeMetadataChanges:true},s=>{try{unchanged(a);const list=[];s.forEach(d=>list.push({...d.data(),id:d.id}));next(list,!!s.metadata?.fromCache)}catch(e){error(e)}},error);
+    },
+    async assign(input) {
+      const a=actor(),ref=doc(tasks),task=createTask(input,a,ref.id);
+      await runTransaction(fs,async tx=>{
+        const account=await tx.get(doc(fs,'businesses',businessId,'staffAccounts',task.phone));unchanged(a);
+        requireValue(account.exists()&&account.data().active!==false&&account.data().loginEnabled!==false,'ملازم کا فعال اکاؤنٹ پہلے محفوظ کریں۔');
+        tx.set(ref,{...task,staffName:account.data().name||task.phone});
+      });
+      return task.id;
+    },
+    async submit(id,input) {
+      const a=actor(),ref=doc(tasks,id);
+      await runTransaction(fs,async tx=>{
+        const s=await tx.get(ref);unchanged(a);requireValue(s.exists(),'کام دستیاب نہیں رہا۔');
+        const patch=submissionPatch(s.data(),a,input);
+        tx.update(ref,patch);
+        input.photos.forEach((dataUrl,i)=>tx.set(doc(ref,'taskPhotos',patch.photoIds[i]),{taskId:id,submissionId:patch.submissionId,dataUrl,uploadedBy:a.uid,createdAt:patch.submittedAt}));
+      });
+    },
+    async photos(task) {
+      const a=actor();requireValue(a.role==='owner'||a.phone===task.phone,'اس کام کی اجازت نہیں۔');
+      const result=await Promise.all((task.photoIds||[]).map(async id=>{
+        const s=await getDoc(doc(tasks,task.id,'taskPhotos',id));unchanged(a);
+        requireValue(s.exists()&&s.data().submissionId===task.submissionId&&validPhoto(s.data().dataUrl),'تصویر مکمل لوڈ نہیں ہوئی۔ انٹرنیٹ چیک کرکے دوبارہ کھولیں۔');
+        return [task.id+'/'+id,s.data().dataUrl];
+      }));
+      return new Map(result);
+    },
+    async review(id,input) {
+      const a=actor(),ref=doc(tasks,id);
+      await runTransaction(fs,async tx=>{
+        const s=await tx.get(ref);unchanged(a);requireValue(s.exists(),'کام دستیاب نہیں رہا۔');
+        tx.update(ref,reviewPatch(s.data(),a,input));
+      });
+    },
+    async migratePhone(oldPhone,newPhone,name) {
+      const a=actor();requireValue(a.role==='owner','صرف مالک پروفائل بدل سکتا ہے۔');
+      const snapshot=await getDocs(query(tasks,where('phone','==',oldPhone))),refs=[];
+      snapshot.forEach(d=>refs.push(d.ref||doc(tasks,d.id)));
+      // Photos resolve access through their parent task; their paths never change.
+      for(let i=0;i<refs.length;i+=350){unchanged(a);const b=writeBatch(fs);for(const ref of refs.slice(i,i+350))b.update(ref,{phone:newPhone,staffName:name||newPhone});await b.commit()}
+    }
+  };
+}
+
+return {createTaskService};
+})();
+const TaskUIV99=(()=>{
+const {MAX_PHOTOS,MAX_PHOTO_CHARS,STATUS,escapeHtml:e,workDate,selectTasks,taskTotals,reportDocument,requireValue}=TaskModelV99;
+
+
+async function compressTaskPhoto(file) {
+  requireValue(file&&/^image\//.test(file.type),'صرف تصویر منتخب کریں۔');
+  requireValue(file.size<=25*1024*1024,'ایک تصویر 25 MB سے کم ہونی چاہیے۔');
+  const url=URL.createObjectURL(file),im=new Image();
+  try {
+    await new Promise((resolve,reject)=>{im.onload=resolve;im.onerror=()=>reject(new Error('یہ تصویر نہیں کھل رہی۔ JPG یا PNG استعمال کریں۔'));im.src=url});
+    requireValue(im.naturalWidth&&im.naturalHeight,'تصویر خالی ہے۔');
+    const canvas=document.createElement('canvas');let edge=1280;
+    for(let attempt=0;attempt<5;attempt++){
+      const scale=Math.min(1,edge/Math.max(im.naturalWidth,im.naturalHeight));canvas.width=Math.max(1,Math.round(im.naturalWidth*scale));canvas.height=Math.max(1,Math.round(im.naturalHeight*scale));
+      const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(im,0,0,canvas.width,canvas.height);
+      for(const quality of [.8,.65,.5]){const data=canvas.toDataURL('image/jpeg',quality);if(data.length<=MAX_PHOTO_CHARS)return data}
+      edge=Math.round(edge*.7);
+    }
+    throw new Error('تصویر بہت بڑی ہے۔ چھوٹی تصویر منتخب کریں۔');
+  } finally {URL.revokeObjectURL(url)}
+}
+
+function installTaskUI({service,getStaff,getAttendance,getCurrentStaff,document:doc=document,compress=compressTaskPhoto}) {
+  let session=null,tasks=[],unsub=null,epoch=0,ready=false,fromCache=false,loadError='',profilePhone='',dialogEpoch=0,reportEpoch=0;
+  const $=id=>doc.getElementById(id);
+  const mainModal=doc.createElement('div');mainModal.id='ntTaskDialog';mainModal.className='nt-tasks nt-dialog';mainModal.hidden=true;mainModal.setAttribute('role','dialog');mainModal.setAttribute('aria-modal','true');mainModal.setAttribute('aria-label','Task details');doc.body.appendChild(mainModal);
+  const reportModal=doc.createElement('div');reportModal.id='ntTaskReport';reportModal.className='nt-tasks nt-dialog';reportModal.hidden=true;reportModal.setAttribute('role','dialog');reportModal.setAttribute('aria-modal','true');reportModal.setAttribute('aria-label','PDF report');doc.body.appendChild(reportModal);
+  const imageModal=doc.createElement('div');imageModal.id='ntTaskImage';imageModal.className='nt-tasks nt-dialog';imageModal.style.zIndex='100003';imageModal.hidden=true;imageModal.setAttribute('role','dialog');imageModal.setAttribute('aria-modal','true');imageModal.setAttribute('aria-label','Picture');doc.body.appendChild(imageModal);
+  let previousFocus=null,reportFocus=null,imageFocus=null;
+  function closeDialog(){dialogEpoch++;mainModal.hidden=true;mainModal.innerHTML='';previousFocus?.focus?.()}
+  function closeReport(){reportEpoch++;reportModal.hidden=true;reportModal.innerHTML='';reportFocus?.focus?.()}
+  function closeImage(){imageModal.hidden=true;imageModal.innerHTML='';imageFocus?.focus?.()}
+  function showImage(src){imageFocus=doc.activeElement;imageModal.innerHTML=`<div class="nt-dialog-card"><div class="nt-toolbar"><b>تصویر</b><button type="button" class="nt-close" data-close-image aria-label="بند کریں">×</button></div><img class="nt-full-image" src="${src}" alt="کام کی تصویر"></div>`;imageModal.hidden=false;imageModal.querySelector('button').focus()}
+  function dialog(title,html){previousFocus=doc.activeElement;dialogEpoch++;mainModal.innerHTML=`<div class="nt-dialog-card"><div class="nt-toolbar"><h3>${e(title)}</h3><button type="button" class="nt-close" data-close-task aria-label="بند کریں">×</button></div>${html}<div class="nt-msg" role="status" aria-live="polite" id="ntDialogMessage"></div></div>`;mainModal.hidden=false;mainModal.querySelector('input:not([disabled]),select,textarea,button')?.focus();return dialogEpoch}
+  function message(text,error=false){const el=$('ntDialogMessage');if(el){el.textContent=text;el.className='nt-msg '+(error?'error':'success')}}
+  function errorText(err){return ['permission-denied','unauthenticated'].includes(err?.code)?'اجازت نہیں ملی۔ مالک سے اکاؤنٹ اور نئی Firestore Rules چیک کروائیں۔':['unavailable','failed-precondition'].includes(err?.code)?'انٹرنیٹ سے رابطہ کرکے دوبارہ کوشش کریں۔':err?.message||'کام محفوظ نہیں ہوا۔ دوبارہ کوشش کریں۔'}
+  function notice(text,error=false){const id=session?.role==='owner'?'ntOwnerTaskNotice':'ntStaffTaskNotice';if($(id)){$(id).textContent=text;$(id).className='nt-msg '+(error?'error':'success')}}
+  function ensureReady(){requireValue(session&&ready&&!loadError,'کام ابھی لوڈ نہیں ہوئے۔ انٹرنیٹ چیک کرکے دوبارہ کوشش کریں۔')}
+  const stats=rows=>{const s=taskTotals(rows);return `<div class="nt-stats"><div>کل کام<b>${s.total}</b></div><div>منظوری باقی<b>${s.pending}</b></div><div>منظور شدہ پوائنٹس<b>${s.points}</b></div></div>`};
+  function cards(rows){return rows.map(t=>`<article class="nt-card"><span class="nt-state ${e(t.status)}">${e(STATUS[t.status]||t.status)}</span><h3>${e(t.title)}</h3><small>${e(t.staffName)} • ${e(t.date)}</small><p>${e(t.details)}</p>${t.ownerNote?`<p class="nt-note">مالک: ${e(t.ownerNote)}</p>`:''}<p><b>پوائنٹس: ${t.status==='approved'?Number(t.points):0} / ${Number(t.maxPoints)}</b> • ${t.photoIds?.length||0} تصاویر</p><button type="button" class="${session.role==='staff'&&['assigned','changes_requested'].includes(t.status)?'nt-primary':''}" data-task-open="${e(t.id)}">${session.role==='staff'&&['assigned','changes_requested'].includes(t.status)?'📷 کام / تصاویر جمع کریں':session.role==='owner'&&t.status==='submitted'?'تصاویر دیکھیں اور OK کریں':'تفصیل اور تصاویر'}</button></article>`).join('')||'<p class="nt-empty">ابھی کوئی کام نہیں۔</p>'}
+  function filter(){return {phone:$('ntTaskStaffFilter')?.value||'',status:$('ntTaskStatusFilter')?.value||'',from:$('ntTaskFrom')?.value||'',to:$('ntTaskTo')?.value||''}}
+  function render(){
+    if(!session)return;
+    const state=loadError?errorText(loadError):!ready?'کام لوڈ ہو رہے ہیں…':fromCache?'محفوظ شدہ ڈیٹا دکھایا جا رہا ہے۔ نئی تبدیلی کے لیے انٹرنیٹ ضروری ہے۔':'';
+    const prefix=session.role==='owner'?'Owner':'Staff';if($('nt'+prefix+'TaskState'))$('nt'+prefix+'TaskState').textContent=state;
+    if(session.role==='owner'){
+      const sel=$('ntTaskStaffFilter');if(sel){const value=sel.value,people=new Map([...getStaff().map(s=>[s.phone||s.id,s.name]),...tasks.map(t=>[t.phone,t.staffName])]);sel.innerHTML='<option value="">تمام ملازمین</option>'+[...people].map(([phone,name])=>`<option value="${e(phone)}">${e(name)} • ${e(phone)}</option>`).join('');sel.value=value}
+      try{const rows=selectTasks(tasks,filter());if($('ntOwnerTaskStats'))$('ntOwnerTaskStats').innerHTML=stats(rows);if($('ntOwnerTaskList'))$('ntOwnerTaskList').innerHTML=cards(rows)}catch(err){notice(errorText(err),true)}
+      renderProfile();
+    }else{
+      if($('ntStaffTaskStats'))$('ntStaffTaskStats').innerHTML=stats(tasks);
+      if($('ntStaffTaskList'))$('ntStaffTaskList').innerHTML=cards(selectTasks(tasks));
+    }
+  }
+  function renderProfile(){
+    const slot=$('ownerProfileTasksV99');if(!slot||session?.role!=='owner'||!profilePhone)return;
+    const rows=selectTasks(tasks,{phone:profilePhone});slot.innerHTML=`<div class="nt-toolbar"><h3>کام، تصاویر اور پوائنٹس</h3><div class="nt-actions"><button class="nt-primary" type="button" data-task-assign="${e(profilePhone)}">＋ نیا کام دیں</button><button type="button" data-task-profile-report="${e(profilePhone)}">📄 تصاویر والی PDF</button></div></div>${!ready?'<p>کام لوڈ ہو رہے ہیں…</p>':stats(rows)+`<div class="nt-cards">${cards(rows)}</div>`}`;
+  }
+  function assign(phone='') {
+    try{
+      ensureReady();requireValue(session.role==='owner','صرف مالک نیا کام دے سکتا ہے۔');
+      const staff=getStaff().filter(s=>s.active!==false&&s.loginEnabled!==false),options=staff.map(s=>`<option value="${e(s.phone||s.id)}" ${(s.phone||s.id)===phone?'selected':''}>${e(s.name)} • ${e(s.phone||s.id)}</option>`).join('');
+      const token=dialog('ملازم کو نیا کام دیں',`<form id="ntAssignForm"><label>ملازم<select name="phone" required>${options}</select></label><label>کام کا نام<input name="title" required maxlength="160" placeholder="مثلاً شیلف صاف کرکے سامان ترتیب دیں"></label><label>کام کی تفصیل<textarea name="details" rows="3" maxlength="2000"></textarea></label><div class="nt-filters"><label>کام کی تاریخ<input name="date" type="date" required value="${workDate()}"></label><label>زیادہ سے زیادہ پوائنٹس<input name="maxPoints" type="number" value="10" min="0" max="1000" step="1" required></label></div><button class="nt-primary" type="submit">کام محفوظ کرکے ملازم کو دیں</button></form>`);
+      $('ntAssignForm').onsubmit=async ev=>{ev.preventDefault();const form=ev.currentTarget,btn=form.querySelector('[type=submit]');btn.disabled=true;message('کام محفوظ ہو رہا ہے…');try{const input=Object.fromEntries(new FormData(form));await service.assign(input);if(token!==dialogEpoch)return;closeDialog();notice('نیا کام ملازم کے پینل پر بھیج دیا گیا۔')}catch(err){if(token===dialogEpoch)message(errorText(err),true)}finally{if(token===dialogEpoch)btn.disabled=false}};
+    }catch(err){notice(errorText(err),true)}
+  }
+  async function open(id) {
+    try{
+      ensureReady();const task=structuredClone(tasks.find(t=>t.id===id));requireValue(task,'کام نہیں ملا۔');
+      const canSubmit=session.role==='staff'&&['assigned','changes_requested'].includes(task.status),canReview=session.role==='owner'&&task.status==='submitted';
+      const token=dialog(task.title,`<p>${e(task.staffName)} • ${e(task.date)}</p><p class="nt-note">${e(task.details)}</p><p><span class="nt-state ${e(task.status)}">${e(STATUS[task.status])}</span> • پوائنٹس: ${task.status==='approved'?Number(task.points):0} / ${Number(task.maxPoints)}</p><p class="nt-note">ملازم: ${e(task.staffNote||'—')}<br>مالک: ${e(task.ownerNote||'—')}</p><div id="ntSavedPhotos" class="nt-photos"></div>${canSubmit?`<form id="ntSubmitForm"><p>کام مکمل کرکے 1 سے ${MAX_PHOTOS} تصاویر شامل کریں۔ ہر تصویر الگ کھول کر دیکھی جا سکتی ہے۔</p><div class="nt-actions"><label>گیلری سے متعدد تصاویر<input id="ntGalleryPhotos" type="file" accept="image/*" multiple></label><label>نئی تصویر لیں<input id="ntCameraPhoto" type="file" accept="image/*" capture="environment"></label></div><div id="ntDraftPhotos" class="nt-photos"></div><small id="ntPhotoCount">0 / ${MAX_PHOTOS} تصاویر</small><label>کام کے بارے میں نوٹ<textarea id="ntStaffNote" maxlength="2000" rows="3"></textarea></label><button class="nt-primary" type="submit" id="ntSubmitPhotos" disabled>تصاویر مالک کو بھیجیں</button></form>`:canReview?`<form id="ntReviewForm"><label>دینے والے پوائنٹس (0–${Number(task.maxPoints)})<input id="ntReviewPoints" type="number" min="0" max="${Number(task.maxPoints)}" step="1" value="${Number(task.maxPoints)}" required></label><label>مالک کا نوٹ<textarea id="ntOwnerNote" rows="3" maxlength="2000"></textarea></label><div class="nt-actions"><button type="submit" class="nt-primary" disabled>✓ OK — منظور کریں</button><button type="button" id="ntRequestChanges" disabled>دوبارہ کام / تصاویر مانگیں</button></div></form>`:''}`);
+      if(task.photoIds?.length){message('تصاویر لوڈ ہو رہی ہیں…');const photos=await service.photos(task);if(token!==dialogEpoch)return;$('ntSavedPhotos').innerHTML=[...photos.values()].map((src,i)=>`<div class="nt-photo"><img src="${src}" data-task-image alt="کام کی تصویر ${i+1}" tabindex="0" role="button"></div>`).join('');message('')}
+      if(token!==dialogEpoch)return;
+      if(canSubmit)wireSubmission(task,token);
+      if(canReview)wireReview(task,token);
+    }catch(err){message(errorText(err),true)}
+  }
+  function wireSubmission(task,token){
+    const photos=[];let preparing=false,saving=false;
+    const refresh=()=>{if(token!==dialogEpoch)return;$('ntPhotoCount').textContent=`${photos.length} / ${MAX_PHOTOS} تصاویر`;$('ntDraftPhotos').innerHTML=photos.map((src,i)=>`<div class="nt-photo"><img src="${src}" data-task-image alt="نئی تصویر ${i+1}" tabindex="0" role="button"><button type="button" data-remove-photo="${i}">ہٹائیں</button></div>`).join('');$('ntSubmitPhotos').disabled=!photos.length||preparing||saving;$('ntGalleryPhotos').disabled=preparing||saving;$('ntCameraPhoto').disabled=preparing||saving};
+    const add=async ev=>{const files=[...ev.target.files];ev.target.value='';if(preparing||saving)return;preparing=true;refresh();message('تصاویر تیار ہو رہی ہیں…');try{requireValue(photos.length+files.length<=MAX_PHOTOS,`زیادہ سے زیادہ ${MAX_PHOTOS} تصاویر شامل کریں۔`);for(const file of files){const data=await compress(file);if(token!==dialogEpoch)return;photos.push(data)}message('تصاویر تیار ہیں۔ بھیجنے سے پہلے دیکھ لیں۔')}catch(err){if(token===dialogEpoch)message(errorText(err),true)}finally{preparing=false;refresh()}};
+    $('ntGalleryPhotos').onchange=add;$('ntCameraPhoto').onchange=add;
+    $('ntDraftPhotos').onclick=ev=>{const b=ev.target.closest('[data-remove-photo]');if(b&&!preparing&&!saving){photos.splice(Number(b.dataset.removePhoto),1);refresh()}};
+    $('ntSubmitForm').onsubmit=async ev=>{ev.preventDefault();if(preparing||saving)return;saving=true;refresh();message('تصاویر اور کام محفوظ ہو رہے ہیں…');const input={photos:[...photos],staffNote:$('ntStaffNote').value,submissionId:crypto.randomUUID(),expectedRevision:task.revision};try{await service.submit(task.id,input);if(token!==dialogEpoch)return;closeDialog();notice('تصاویر جمع ہو گئیں۔ مالک کی منظوری کے بعد پوائنٹس ملیں گے۔')}catch(err){if(token===dialogEpoch)message(errorText(err),true)}finally{saving=false;refresh()}};
+  }
+  function wireReview(task,token){
+    const form=$('ntReviewForm');form.querySelectorAll('button').forEach(b=>b.disabled=false);let busy=false;
+    const review=async status=>{if(busy)return;if(status==='approved'&&!form.reportValidity())return;busy=true;form.querySelectorAll('button').forEach(b=>b.disabled=true);message('فیصلہ محفوظ ہو رہا ہے…');try{await service.review(task.id,{status,points:$('ntReviewPoints').value,ownerNote:$('ntOwnerNote').value,expectedRevision:task.revision,submissionId:task.submissionId});if(token!==dialogEpoch)return;closeDialog();notice(status==='approved'?'کام منظور ہوگیا اور پوائنٹس شامل ہو گئے۔':'وجہ کے ساتھ کام ملازم کو واپس بھیج دیا گیا۔')}catch(err){if(token===dialogEpoch)message(errorText(err),true)}finally{busy=false;if(token===dialogEpoch)form.querySelectorAll('button').forEach(b=>b.disabled=false)}};
+    form.onsubmit=ev=>{ev.preventDefault();void review('approved')};$('ntRequestChanges').onclick=()=>review('changes_requested');
+  }
+  async function report({phone='',from='',to='',status='',individual=false}={}){
+    try{
+      ensureReady();const currentEpoch=epoch,owner=session.role==='owner';if(!owner)phone=session.phone;
+      const rows=structuredClone(selectTasks(tasks,{phone,from,to,status})),attendance=individual?structuredClone(getAttendance(phone,from,to)||[]):[];
+      const person=phone?(getStaff().find(s=>(s.phone||s.id)===phone)||getCurrentStaff()||{}):{};
+      reportFocus=doc.activeElement;const token=++reportEpoch;reportModal.hidden=false;reportModal.innerHTML=`<div class="nt-dialog-card nt-report-card"><div class="nt-toolbar"><h3>تصاویر اور پوائنٹس کی PDF</h3><div class="nt-actions"><button type="button" id="ntPrintReport" disabled>📄 Print / Save as PDF</button><button type="button" class="nt-close" data-close-report aria-label="بند کریں">×</button></div></div><p id="ntReportState" role="status">رپورٹ تیار ہو رہی ہے…</p><iframe id="ntReportFrame" title="Staff task report" sandbox="allow-same-origin allow-modals"></iframe></div>`;reportModal.querySelector('[data-close-report]').focus();
+      const photos=new Map();if(owner){for(const task of rows){const entries=await service.photos(task);if(token!==reportEpoch||currentEpoch!==epoch)return;for(const entry of entries)photos.set(...entry)}}
+      if(token!==reportEpoch||currentEpoch!==epoch)return;
+      const html=reportDocument({tasks:rows,photos,includePhotos:owner,attendance,title:owner?'Staff Picture & Points Report':'My Work & Points Report',subtitle:[person.name||phone||'تمام ملازمین',from||'ابتدا',to||'اب تک'].join(' • ')});
+      const frame=$('ntReportFrame');frame.onload=async()=>{
+        try{
+          const images=[...frame.contentDocument.images];await Promise.all(images.map(im=>im.complete?(im.naturalWidth?Promise.resolve():Promise.reject(new Error('رپورٹ کی تصویر نہیں کھل سکی۔'))):new Promise((resolve,reject)=>{im.onload=resolve;im.onerror=()=>reject(new Error('رپورٹ کی تصویر نہیں کھل سکی۔'))})));
+          if(token!==reportEpoch||currentEpoch!==epoch)return;
+          $('ntReportState').textContent='رپورٹ تیار ہے۔ Print کھول کر Save as PDF منتخب کریں۔';$('ntPrintReport').disabled=false;
+        }catch(err){if(token===reportEpoch)$('ntReportState').textContent=errorText(err)}
+      };frame.srcdoc=html;
+      $('ntPrintReport').onclick=()=>{frame.contentWindow.focus();frame.contentWindow.print()};
+    }catch(err){if($('ntReportState'))$('ntReportState').textContent=errorText(err);else notice(errorText(err),true)}
+  }
+  doc.addEventListener('click',ev=>{
+    const b=ev.target.closest('button,img');if(!b)return;
+    if(b.matches('[data-close-task]'))closeDialog();else if(b.matches('[data-close-report]'))closeReport();else if(b.matches('[data-close-image]'))closeImage();else if(b.matches('[data-task-image]'))showImage(b.src);else if(b.hasAttribute('data-task-edit-assign'))assign($('staffEditOldPhoneV85').value);else if(b.hasAttribute('data-task-assign'))assign(b.dataset.taskAssign);else if(b.dataset.taskOpen)void open(b.dataset.taskOpen);else if(b.dataset.taskProfileReport)void report({phone:b.dataset.taskProfileReport,individual:true});else if(b.matches('[data-task-report]'))void report(session?.role==='owner'?filter():{phone:session?.phone,from:$('staffHistoryFrom')?.value,to:$('staffHistoryTo')?.value,individual:true});else if(b.matches('[data-task-retry]')&&session)api.start(session);
+  });
+  doc.addEventListener('keydown',ev=>{
+    if(ev.key==='Escape'){if(!imageModal.hidden)closeImage();else if(!reportModal.hidden)closeReport();else if(!mainModal.hidden)closeDialog()}
+    if(['Enter',' '].includes(ev.key)&&ev.target.matches('[data-task-image]')){ev.preventDefault();showImage(ev.target.src)}
+    if(ev.key==='Tab'){const modal=!imageModal.hidden?imageModal:!reportModal.hidden?reportModal:!mainModal.hidden?mainModal:null;if(!modal)return;const els=[...modal.querySelectorAll('button:not([disabled]),input:not([disabled]),textarea,select,[tabindex="0"]')];if(!els.length)return;const first=els[0],last=els.at(-1);if(ev.shiftKey&&doc.activeElement===first){ev.preventDefault();last.focus()}else if(!ev.shiftKey&&doc.activeElement===last){ev.preventDefault();first.focus()}}
+  });
+  ['ntTaskStaffFilter','ntTaskStatusFilter','ntTaskFrom','ntTaskTo'].forEach(id=>$(id)?.addEventListener('change',()=>{notice('');render()}));
+  const api={
+    start(next){api.stop();session={...next};const ticket=epoch;render();try{unsub=service.listen((rows,cached)=>{if(ticket!==epoch)return;tasks=rows;ready=true;fromCache=cached;loadError='';render()},err=>{if(ticket!==epoch)return;ready=false;tasks=[];loadError=err;render()})}catch(err){loadError=err;render()}},
+    stop(){epoch++;unsub?.();unsub=null;session=null;tasks=[];ready=false;loadError='';closeDialog();closeReport();closeImage();for(const id of ['ntOwnerTaskList','ntStaffTaskList','ntOwnerTaskStats','ntStaffTaskStats','ownerProfileTasksV99'])if($(id))$(id).innerHTML=''},
+    assign,open,report,
+    profile(phone){profilePhone=phone;renderProfile()},
+    totals(phone){return taskTotals(selectTasks(tasks,{phone}))},
+    refresh:render
+  };
+  return api;
+}
+
+return {compressTaskPhoto,installTaskUI};
+})();
+const {createAuthController,isOwnerUser,loginErrorMessage}=AuthV99;
+const {createTaskService}=TaskServiceV99;
+const {installTaskUI}=TaskUIV99;
+/* END V99 INLINE MODULES */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 import {
-  getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously, signOut, onAuthStateChanged,
+  getAuth, signInWithEmailAndPassword, signInAnonymously, signOut, onAuthStateChanged, EmailAuthProvider, reauthenticateWithCredential, updatePassword,
   setPersistence, browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 import {
   getFirestore, collection, doc, onSnapshot, writeBatch, getDoc, setDoc, deleteDoc,
-  query, where, getDocs
+  query, where, getDocs, runTransaction
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -2319,15 +2629,19 @@ const userEmail=document.getElementById("userEmail");
 const logoutBtn=document.getElementById("logoutBtn");
 const staffLogoutBtn=document.getElementById("staffLogoutBtn");
 
-document.querySelectorAll(".auth-role").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    document.querySelectorAll(".auth-role").forEach(x=>x.classList.remove("active"));
-    document.querySelectorAll(".auth-pane").forEach(x=>x.classList.remove("active"));
-    btn.classList.add("active");
-    document.getElementById(btn.dataset.authRole==="owner"?"ownerLoginPane":"staffLoginPane").classList.add("active");
+function selectLoginRole(role){
+  document.querySelectorAll('.auth-role').forEach(button=>{
+    const selected=button.dataset.authRole===role;
+    button.classList.toggle('active',selected);button.setAttribute('aria-selected',String(selected));
   });
-});
-
+  document.getElementById('ownerLoginPane').classList.toggle('active',role==='owner');
+  document.getElementById('staffLoginPane').classList.toggle('active',role==='staff');
+}
+document.querySelectorAll('.auth-role').forEach(button=>button.addEventListener('click',()=>{
+  selectLoginRole(button.dataset.authRole);
+  loginMessage.textContent='';staffLoginMessage.textContent='';
+  loginPassword.value='';staffLoginPassword.value='';
+}));
 function normalizePhone(v){
   let d=String(v||"").replace(/\D/g,"");
   if(d.startsWith("92")&&d.length>=12)d="0"+d.slice(2);
@@ -2442,7 +2756,7 @@ async function commitOps(ops){
   }
 }
 async function saveStateNow(state){
-  if(!auth.currentUser||auth.currentUser.isAnonymous||applyingRemote)return;
+  if(!isOwnerUser(auth.currentUser)||applyingRemote)return;
   const cur=stripPictures(clean(state));
   const prev=lastPushed||{settings:null,entries:new Map(),entryPictures:new Map(),staff:new Map(),purchases:new Map(),purchasePictures:new Map(),batches:new Map(),attendance:new Map(),stockRecords:new Map()};
   const ops=[];
@@ -2454,15 +2768,12 @@ async function saveStateNow(state){
 function saveState(state){clearTimeout(saveTimer);saveTimer=setTimeout(()=>saveStateNow(state),350)}
 window.noorFirebaseSync={ready:false,saveState};
 
-const staffTasksCol=collection(fs,"businesses",BUSINESS_ID,"staffTasks");
-const taskPhotosCol=collection(fs,"businesses",BUSINESS_ID,"taskPhotos");
-let ownerTasks=new Map(),ownerTaskPhotos=new Map();
 const staffAccountsCol=collection(fs,"businesses",BUSINESS_ID,"staffAccounts");
 const staffAttendanceCol=collection(fs,"businesses",BUSINESS_ID,"staffAttendance");
 const staffSessionsCol=collection(fs,"businesses",BUSINESS_ID,"staffSessions");
 const STAFF_SESSION_KEY="noor-traders-staff-session";
 const staffConfigDoc=doc(fs,"businesses",BUSINESS_ID,"staffConfig","main");
-let staffConfig={shiftStart:'09:00',shiftEnd:'',radius:200,variant:'Production',instruction:'سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔',scores:{m10:10,m20:8,m30:6,m45:4,late:2},version:'v85'};
+let staffConfig={shiftStart:'09:00',shiftEnd:'',radius:200,variant:'Production',instruction:'سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔',scores:{m10:10,m20:8,m30:6,m45:4,late:2},version:'v99'};
 
 async function upsertAccount(account){
   const phone=normalizePhone(account.phone||account.id);
@@ -2485,18 +2796,19 @@ async function migrateStaffPhone(oldPhone,newPhone,account){
     }
     await batch.commit();
   }
-  await setDoc(doc(staffAccountsCol,newPhone),{name:account.name||'',address:account.address||'',phone:newPhone,photo:account.photo||'',active:account.active!==false,updatedAt:Date.now()},{merge:true});
+  await upsertAccount({...account,phone:newPhone});
+  await taskService.migratePhone(oldPhone,newPhone,account.name);
   if(oldPhone!==newPhone)await deleteDoc(doc(staffAccountsCol,oldPhone));
 }
 
 async function mirrorLegacyStaff(){
-  if(!auth.currentUser||auth.currentUser.isAnonymous)return;
+  if(!isOwnerUser(auth.currentUser))return;
   const list=window.getNoorDb?.().staff||[];
   for(const s of list)if(s.phone)try{await upsertAccount(s)}catch(e){console.warn(e)}
 }
 function startOwnerStaffListeners(){
   stopStaffListeners();
-  staffUnsubs.push(onSnapshot(staffConfigDoc,s=>{if(s.exists()){staffConfig={...staffConfig,...clean(s.data()),scores:{...staffConfig.scores,...(s.data().scores||{})}};window.applyPolicyV84?.(staffConfig)}else if(auth.currentUser&&!auth.currentUser.isAnonymous){setDoc(staffConfigDoc,staffConfig,{merge:true}).catch(console.warn)}}));
+  staffUnsubs.push(onSnapshot(staffConfigDoc,s=>{if(s.exists()){staffConfig={...staffConfig,...clean(s.data()),scores:{...staffConfig.scores,...(s.data().scores||{})}};window.applyPolicyV84?.(staffConfig)}else if(isOwnerUser(auth.currentUser)){setDoc(staffConfigDoc,staffConfig,{merge:true}).catch(console.warn)}}));
   staffUnsubs.push(onSnapshot(staffAccountsCol,s=>{
     ownerStaffAccounts=new Map();s.forEach(d=>ownerStaffAccounts.set(d.id,clean(d.data())));
     window.renderAttendance?.();
@@ -2505,14 +2817,6 @@ function startOwnerStaffListeners(){
     ownerStaffAttendance=new Map();s.forEach(d=>ownerStaffAttendance.set(d.id,{id:d.id,...clean(d.data())}));
     window.renderAttendance?.();
   }));
-  staffUnsubs.push(onSnapshot(staffTasksCol,s=>{
-    ownerTasks=new Map();s.forEach(d=>ownerTasks.set(d.id,{id:d.id,...clean(d.data())}));
-    window.renderTasksV99?.();window.refreshStaffProfileV99?.();
-  },e=>console.warn(e)));
-  staffUnsubs.push(onSnapshot(taskPhotosCol,s=>{
-    ownerTaskPhotos=new Map();s.forEach(d=>ownerTaskPhotos.set(d.id,{id:d.id,...clean(d.data())}));
-    window.renderTasksV99?.();
-  },e=>console.warn(e)));
 }
 function getAttendanceForDate(date){
   const m=new Map();
@@ -2522,24 +2826,11 @@ function getAttendanceForDate(date){
 function getAttendanceBetween(from,to){
   return [...ownerStaffAttendance.values()].filter(a=>(!from||a.date>=from)&&(!to||a.date<=to)).sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.checkInTs||0)-(b.checkInTs||0));
 }
-async function saveConfig(cfg){staffConfig={...staffConfig,...clean(cfg),scores:{...staffConfig.scores,...(cfg.scores||{})},version:'v85'};await setDoc(staffConfigDoc,staffConfig,{merge:true});window.applyPolicyV84?.(staffConfig)}
+async function saveConfig(cfg){staffConfig={...staffConfig,...clean(cfg),scores:{...staffConfig.scores,...(cfg.scores||{})},version:'v99'};await setDoc(staffConfigDoc,staffConfig,{merge:true});window.applyPolicyV84?.(staffConfig)}
 function getAttendanceById(id){return ownerStaffAttendance.get(id)||null}
 async function updateAttendance(id,patch){await setDoc(doc(staffAttendanceCol,id),patch,{merge:true})}
 async function deleteAttendance(id){await deleteDoc(doc(staffAttendanceCol,id))}
-function getTasksV99(phone){
-  const list=[...ownerTasks.values()].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-  return phone?list.filter(t=>normalizePhone(t.phone)===normalizePhone(phone)):list;
-}
-function getTaskPhotosV99(taskId){
-  return [...ownerTaskPhotos.values()].filter(p=>p.taskId===taskId).sort((a,b)=>(a.index||0)-(b.index||0));
-}
-async function saveTaskV99(task){await setDoc(doc(staffTasksCol,String(task.id)),clean(task),{merge:true})}
-async function deleteTaskV99(id){
-  for(const ph of getTaskPhotosV99(id)){try{await deleteDoc(doc(taskPhotosCol,ph.id))}catch(e){}}
-  await deleteDoc(doc(staffTasksCol,String(id)));
-}
-function getCloudAccountsV101(){return [...ownerStaffAccounts.entries()].map(([id,a])=>({id,name:a.name||'',active:a.active!==false,loginEnabled:a.loginEnabled!==false}))}
-window.noorStaffSystem={getCloudAccounts:getCloudAccountsV101,upsertAccount,deleteAccount,migrateStaffPhone,getAttendanceForDate,getAttendanceBetween,getAttendanceById,updateAttendance,deleteAttendance,saveConfig,shop:SHOP,getTasks:getTasksV99,getTaskPhotos:getTaskPhotosV99,saveTask:saveTaskV99,deleteTask:deleteTaskV99};
+window.noorStaffSystem={upsertAccount,deleteAccount,migrateStaffPhone,getAttendanceForDate,getAttendanceBetween,getAttendanceById,updateAttendance,deleteAttendance,saveConfig,shop:SHOP};
 
 function haversine(lat1,lon1,lat2,lon2){
   const R=6371000,toRad=x=>x*Math.PI/180;
@@ -2559,29 +2850,6 @@ function getGps(){
 function pkTime(){return new Date().toLocaleTimeString("en-PK",{timeZone:"Asia/Karachi",hour:"2-digit",minute:"2-digit"})}
 function pkDate(){return new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Karachi"}).format(new Date())}
 
-async function loadStaffSession(user,phoneFromLogin=""){
-  let phone=normalizePhone(phoneFromLogin);
-  if(!phone)phone=normalizePhone(localStorage.getItem(STAFF_SESSION_KEY));
-  if(!phone){
-    for(let attempt=0;attempt<3&&!phone;attempt++){
-      const sess=await getDoc(doc(staffSessionsCol,user.uid));
-      if(sess.exists())phone=normalizePhone(sess.data().phone);
-      if(!phone)await new Promise(resolve=>setTimeout(resolve,250));
-    }
-  }
-  if(!phone)return false;
-  let acc=null;
-  for(let attempt=0;attempt<3&&!acc;attempt++){
-    try{acc=await getDoc(doc(staffAccountsCol,phone))}
-    catch(e){console.warn(e);await new Promise(r=>setTimeout(r,400))}
-  }
-  if(!acc||!acc.exists()||acc.data().active===false||acc.data().loginEnabled===false)return false;
-  currentStaff={...acc.data(),phone};currentStaffPhone=phone;
-  localStorage.setItem(STAFF_SESSION_KEY,phone);
-  renderStaffProfile();
-  startStaffOwnListener();
-  return true;
-}
 function renderStaffProfile(){
   if(!currentStaff)return;
   staffPortalName.textContent=currentStaff.name||"Staff";
@@ -2591,14 +2859,8 @@ function renderStaffProfile(){
 }
 let ownAttendanceUnsub=null;
 function startStaffOwnListener(){
-  staffUnsubs.push(onSnapshot(staffConfigDoc,s=>{if(s.exists()){staffConfig={...staffConfig,...clean(s.data()),scores:{...staffConfig.scores,...(s.data().scores||{})}};const radius=staffConfig.radius||SHOP.radius;staffRuleText.textContent=`Selfie لازمی + Noor Traders سے زیادہ سے زیادہ ${radius}m`;staffInstructionText.textContent=staffConfig.instruction||staffInstructionText.textContent;staffVersionLabel.textContent=staffConfig.version||'v85'}}));
+  staffUnsubs.push(onSnapshot(staffConfigDoc,s=>{if(s.exists()){staffConfig={...staffConfig,...clean(s.data()),scores:{...staffConfig.scores,...(s.data().scores||{})}};const radius=staffConfig.radius||SHOP.radius;staffRuleText.textContent=`Selfie لازمی + Noor Traders سے زیادہ سے زیادہ ${radius}m`;staffInstructionText.textContent=staffConfig.instruction||staffInstructionText.textContent;staffVersionLabel.textContent='v99'}}));
   if(ownAttendanceUnsub)try{ownAttendanceUnsub()}catch{}
-  const tq=query(staffTasksCol,where("phone","==",currentStaffPhone));
-  staffUnsubs.push(onSnapshot(tq,s=>{
-    const rows=[];s.forEach(d=>rows.push({id:d.id,...clean(d.data())}));
-    rows.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-    window.__myTasks=rows;renderStaffTasksV99();
-  },e=>{console.warn(e)}));
   const q=query(staffAttendanceCol,where("phone","==",currentStaffPhone));
   ownAttendanceUnsub=onSnapshot(q,s=>{
     const rows=[];s.forEach(d=>rows.push(clean(d.data())));
@@ -2619,60 +2881,6 @@ function renderStaffHistory(){
   const rows=(window.__myAttendance||[]).filter(x=>x.date>=from&&x.date<=to);
   staffHistoryRows.innerHTML=rows.map(a=>`<tr><td>${a.date||""}</td><td>${a.checkIn||"—"}</td><td>${a.checkOut||"—"}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+"m":"—"}</td><td>${a.checkOut?"Checked Out":a.checkIn?"Present":"—"}</td></tr>`).join("")||'<tr><td colspan="5">No records</td></tr>';
 }
-function taskStatusLabelV99(t){
-  return t.status==='approved'?'✅ Manzoor ('+(t.points??0)+'/'+(t.maxPoints??10)+')'
-    :t.status==='submitted'?'⏳ Malik ke paas'
-    :t.status==='returned'?'↩️ Wapis aaya'
-    :'🆕 Naya kaam';
-}
-function renderStaffTasksV99(){
-  const box=document.getElementById('staffTaskListV99');
-  if(!box)return;
-  const rows=window.__myTasks||[];
-  box.innerHTML=rows.map(t=>{
-    const canSend=t.status!=='approved'&&t.status!=='submitted';
-    return `<article class="staff-task-v99 st-${t.status||'assigned'}">
-      <div class="stask-head-v99"><b>${escHtmlV99(t.title||'Kaam')}</b><span>${taskStatusLabelV99(t)}</span></div>
-      ${t.detail?`<p>${escHtmlV99(t.detail)}</p>`:''}
-      ${t.dueDate?`<small>📅 ${escHtmlV99(t.dueDate)}</small>`:''}
-      ${t.ownerNote?`<div class="stask-note-v99">📝 ${escHtmlV99(t.ownerNote)}</div>`:''}
-      ${canSend?`<label class="stask-upload-v99">📷 Tasveerein chunein (5 tak)<input type="file" accept="image/*" multiple data-task="${t.id}" onchange="pickTaskPhotosV99(this)" hidden></label>
-      <div class="stask-preview-v99" id="pv_${t.id}"></div>
-      <button type="button" class="portal-checkin" onclick="submitTaskV99('${t.id}')">✓ Kaam Mukammal — bhejein</button>
-      <div class="stask-msg-v99" id="msg_${t.id}"></div>`:''}
-    </article>`;
-  }).join('')||'<div class="stask-empty-v99">Abhi koi kaam nahi mila</div>';
-}
-function escHtmlV99(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-const taskPhotoBufferV99={};
-async function pickTaskPhotosV99(input){
-  const id=input.dataset.task,files=[...(input.files||[])].slice(0,5);
-  const msg=document.getElementById('msg_'+id);if(msg)msg.textContent='Tasveerein taiyar ho rahi hain…';
-  const out=[];
-  for(const f of files){try{out.push(await fileToData(f,520))}catch(e){}}
-  taskPhotoBufferV99[id]=out;
-  const pv=document.getElementById('pv_'+id);
-  if(pv)pv.innerHTML=out.map(d=>`<img src="${d}">`).join('');
-  if(msg)msg.textContent=out.length+' tasveerein taiyar hain';
-}
-window.pickTaskPhotosV99=pickTaskPhotosV99;
-async function submitTaskV99(id){
-  const msg=document.getElementById('msg_'+id);
-  const pics=taskPhotoBufferV99[id]||[];
-  if(!pics.length){if(msg)msg.textContent='Pehle kam az kam ek tasveer lagayein.';return}
-  if(msg)msg.textContent='Bheja ja raha hai…';
-  try{
-    for(let i=0;i<pics.length;i++){
-      await setDoc(doc(taskPhotosCol,`${id}_${i}`),{taskId:id,index:i,phone:currentStaffPhone,data:pics[i],createdAt:Date.now()});
-    }
-    await setDoc(doc(staffTasksCol,id),{status:'submitted',submittedAt:Date.now(),photoCount:pics.length,ownerNote:''},{merge:true});
-    delete taskPhotoBufferV99[id];
-    if(msg)msg.textContent='✅ Malik ko bhej diya gaya.';
-  }catch(e){console.error(e);if(msg)msg.textContent='Nahi bheja gaya — internet ya rules check karein.'}
-}
-window.submitTaskV99=submitTaskV99;
-window.renderStaffTasksV99=renderStaffTasksV99;
-
 async function fileToData(file,max=500){
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const c=document.createElement("canvas"),sc=Math.min(1,max/Math.max(im.width,im.height));c.width=im.width*sc;c.height=im.height*sc;c.getContext("2d").drawImage(im,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",.7))};im.onerror=rej;im.src=r.result};r.onerror=rej;r.readAsDataURL(file)});
 }
@@ -2721,151 +2929,99 @@ staffCheckOutBtn?.addEventListener("click",async()=>{
   staffActionMessage.className="portal-message ok";staffActionMessage.textContent="Check-Out کامیاب ہو گیا۔";
 });
 staffHistoryRefresh?.addEventListener("click",renderStaffHistory);
-staffPdfBtn?.addEventListener("click",()=>{
-  const rows=(window.__myAttendance||[]).filter(x=>x.date>=(staffHistoryFrom.value||"0000-00-00")&&x.date<=(staffHistoryTo.value||"9999-99-99")).map(a=>`<tr><td>${a.date}</td><td>${a.checkIn||"—"}</td><td>${a.checkOut||"—"}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+" m":"—"}</td></tr>`).join("");
-  const tks=(window.__myTasks||[]),tdone=tks.filter(t=>t.status==='approved'),tpts=tdone.reduce((a,b)=>a+(+b.points||0),0);
-  const taskRows=tks.map(t=>`<tr><td>${t.dueDate||''}</td><td>${(t.title||'').replace(/[<>]/g,'')}</td><td>${t.status||''}</td><td>${t.points??'—'}/${t.maxPoints??10}</td></tr>`).join('')||'<tr><td colspan="4">Koi kaam nahi</td></tr>';
-  const w=window.open("","_blank");w.document.write(`<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>My Attendance Report</title><style>body{font-family:Arial;padding:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px}</style></head><body><h1>Noor Traders Gulyana</h1><h3>${currentStaff?.name||""} • ${currentStaffPhone}</h3><table><thead><tr><th>Date</th><th>Check-In</th><th>Check-Out</th><th>Distance</th></tr></thead><tbody>${rows}</tbody></table><h3>Mere Kaam aur Points (Kul: ${tpts})</h3><table><thead><tr><th>Date</th><th>Kaam</th><th>Status</th><th>Points</th></tr></thead><tbody>${taskRows}</tbody></table><script>setTimeout(()=>window.print(),350)<\/script></body></html>`);w.document.close();
-});
+staffPdfBtn?.addEventListener('click',()=>window.noorTasks.report({phone:currentStaffPhone,from:staffHistoryFrom.value,to:staffHistoryTo.value,individual:true}));
 
-/* ===== LOGIN SETTINGS =====
-   MALIK  : Login ID = admin      Password = OWNER_PASSWORD (niche likha hua)
-   MULAZIM: Login ID = mobile no. Password = wohi mobile number
-   Password badalna ho to sirf OWNER_PASSWORD ki line change karein,
-   aur Firebase Console > Authentication > Users mein bhi wohi password rakhein. */
-const ADMIN_AUTH_EMAIL="admin@nt-traders.firebaseapp.com";
-const OWNER_EMAILS=[ADMIN_AUTH_EMAIL,"hp6235@gmail.com"];
-const OWNER_LOGIN_ID="admin";
-const OWNER_PASSWORD="123456";
-let manualLoginBusy=false;
+const taskService=createTaskService({fs,auth,sdk:{collection,doc,getDoc,getDocs,query,where,onSnapshot,runTransaction,writeBatch},getStaffPhone:()=>currentStaffPhone});
+window.noorTasks=installTaskUI({service:taskService,getStaff:()=>window.getNoorDb?.().staff||[],getCurrentStaff:()=>currentStaff,getAttendance:(phone,from,to)=>{const rows=auth.currentUser?.isAnonymous?(window.__myAttendance||[]):getAttendanceBetween(from||'0000-00-00',to||'9999-99-99');return rows.filter(a=>(!phone||normalizePhone(a.phone)===phone)&&(!from||a.date>=from)&&(!to||a.date<=to))}});
 
-function setLoginMessage(text,ok=false){
-  loginMessage.className=ok?"login-message ok":"login-message";
-  loginMessage.textContent=text;
+function resetAuthView(){
+  clearTimeout(saveTimer);stopListeners();stopStaffListeners();window.noorTasks?.stop();
+  if(ownAttendanceUnsub){ownAttendanceUnsub();ownAttendanceUnsub=null}
+  window.noorFirebaseSync.ready=false;
+  currentStaff=null;currentStaffPhone='';staffSelfieData='';lastStaffGps=null;
+  document.getElementById('ownerPasswordForm')?.reset();
+  ownerStaffAccounts.clear();ownerStaffAttendance.clear();window.__myAttendance=[];
+  // Remove only the obsolete login hint, never business or attendance data.
+  try{localStorage.removeItem(STAFF_SESSION_KEY)}catch{}
+  ownerApp.hidden=true;ownerApp.style.display='none';staffPortal.hidden=true;userBar.hidden=true;
+  loginGate.classList.remove('hidden');
 }
-async function ownerSignIn(pass){
-  const badCred=c=>c==="auth/user-not-found"||c==="auth/invalid-credential"||c==="auth/invalid-login-credentials"||c==="auth/wrong-password";
-  let lastErr=null;
-  // OWNER_EMAILS mein se jo bhi email is password ke sath chalti hai, usi se login ho jayega.
-  for(const email of OWNER_EMAILS){
-    try{await signInWithEmailAndPassword(auth,email,pass);return}
-    catch(err){lastErr=err;if(!badCred(err.code))throw err}
-  }
-  // Koi bhi na chali: pehli dafa admin account khud bana dete hain.
-  try{
-    await createUserWithEmailAndPassword(auth,OWNER_EMAILS[0],pass);
-  }catch(e2){
-    if(e2.code==="auth/email-already-in-use")throw new Error("owner-firebase");
-    if(e2.code==="auth/operation-not-allowed"||e2.code==="auth/weak-password")throw e2;
-    throw lastErr||e2;
-  }
+function showAuthError(error,role){
+  selectLoginRole(role);
+  const message=role==='staff'?staffLoginMessage:loginMessage;
+  message.className='login-message';message.textContent=loginErrorMessage(error,role);
 }
-async function staffSignIn(phone,pass){
-  if(normalizePhone(pass)!==phone)throw new Error("staff-login");
-  localStorage.setItem(STAFF_SESSION_KEY,phone);
-
-  // Qadam 1: anonymous sign-in
-  let cred=null;
-  try{cred=await signInAnonymously(auth)}
-  catch(e){const err=new Error("step1-signin: "+(e.code||e.message));err.stepV102=1;throw err}
-
-  // Qadam 2: account parhna
-  let acc=null;
-  try{acc=await getDoc(doc(staffAccountsCol,phone))}
-  catch(e){
-    localStorage.removeItem(STAFF_SESSION_KEY);await signOut(auth);
-    const err=new Error("step2-account: "+(e.code||e.message));err.stepV102=2;throw err;
-  }
-  if(!acc.exists()){localStorage.removeItem(STAFF_SESSION_KEY);await signOut(auth);const err=new Error("step2-account: doc-nahi-mila");err.stepV102=2;throw err}
-  if(acc.data().active===false||acc.data().loginEnabled===false){
-    localStorage.removeItem(STAFF_SESSION_KEY);await signOut(auth);
-    const err=new Error("step2-account: account band hai");err.stepV102=2;throw err;
-  }
-
-  // Qadam 3: session likhna (nakaam ho to bhi andar jane dete hain)
-  let sessionOk=true,sessionErr='';
-  try{await setDoc(doc(staffSessionsCol,cred.user.uid),{phone,createdAt:Date.now()})}
-  catch(e){sessionOk=false;sessionErr=e.code||e.message;console.warn('session write failed',e)}
-
-  // Qadam 4: profile load
-  currentStaff={...acc.data(),phone};currentStaffPhone=phone;
-  renderStaffProfile();startStaffOwnListener();
-  loginGate.classList.add("hidden");ownerApp.style.display="none";staffPortal.hidden=false;userBar.hidden=true;
-  if(!sessionOk){
-    const m=document.getElementById('staffActionMessage');
-    if(m)m.textContent='Attendance ke liye rules update karein ('+sessionErr+')';
-  }
+try{await setPersistence(auth,browserLocalPersistence)}catch{
+  loginMessage.textContent='اس براؤزر میں سیشن محفوظ نہیں ہو رہا۔ بند کرنے کے بعد دوبارہ لاگ اِن درکار ہو سکتا ہے۔';
 }
-loginForm?.addEventListener("submit",async e=>{
-  e.preventDefault();setLoginMessage("");loginBtn.disabled=true;manualLoginBusy=true;
-  const loginId=loginEmail.value.trim(),pass=loginPassword.value.trim();
-  const normalized=normalizePhone(loginId);
-  const isEmail=loginId.includes("@");
-  const isAdmin=loginId.toLowerCase()===OWNER_LOGIN_ID;
-  try{
-    if(isEmail){
-      // Malik apni asli Firebase email + uska password bhi laga sakta hai.
-      await signInWithEmailAndPassword(auth,loginId,pass);
-      loginPassword.value="";
-    }else if(isAdmin){
-      if(pass!==OWNER_PASSWORD)throw new Error("owner-password");
-      await ownerSignIn(pass);
-      loginPassword.value="";
-    }else if(normalized.length>=10){
-      await staffSignIn(normalized,pass);
-      loginPassword.value="";
-    }else{throw new Error("login-id")}
-  }catch(err){
-    console.error(err);
-    const m=
-      err.message==="owner-password"?"Malik ka password ghalat hai.":
-      err.message==="owner-firebase"?"Firebase mein admin user ka password alag hai. Console > Authentication > Users mein admin@nt-traders.firebaseapp.com ko DELETE kar ke 'Add user' se dobara banayein (password 123456). Ya apni asli email aur uska password yahan Login ID mein likhein.":
-      err.message==="staff-login"?"Mulazim ka mobile number ya password ghalat hai (password = wohi mobile number).":
-      (err.message||'').startsWith('step')?("Ruka yahan → "+err.message):
-      err.message==="login-id"?"Login ID mein 'admin' ya poora mobile number likhein.":
-      err.code==="auth/operation-not-allowed"?"Firebase Authentication mein Email/Password aur Anonymous provider enable karein.":
-      err.code==="auth/network-request-failed"?"Internet connection check karein.":
-      err.code==="auth/too-many-requests"?"Bohat zyada koshishein. Thori der baad dobara try karein.":
-      err.code==="permission-denied"?"Account access denied — Firestore Rules aur account status check karein.":
-      "Login nahi hua. Internet aur Firebase settings check karein.";
-    setLoginMessage(m);
-    loginGate.classList.remove("hidden");
-  }
-  finally{manualLoginBusy=false;loginBtn.disabled=false}
-});
-logoutBtn?.addEventListener("click",()=>signOut(auth));
-staffLogoutBtn?.addEventListener("click",()=>signOut(auth));
-
-try{await setPersistence(auth,browserLocalPersistence)}catch(e){console.warn(e)}
-
-onAuthStateChanged(auth,async user=>{
-  stopStaffListeners();
-  if(ownAttendanceUnsub){try{ownAttendanceUnsub()}catch{};ownAttendanceUnsub=null}
-  if(!user){
-    stopListeners();window.noorFirebaseSync.ready=false;
-    currentStaff=null;currentStaffPhone="";
-    loginGate.classList.remove("hidden");ownerApp.style.display="none";staffPortal.hidden=true;userBar.hidden=true;return;
-  }
-  loginGate.classList.add("hidden");
-  if(user.isAnonymous){
-    stopListeners();window.noorFirebaseSync.ready=false;
-    ownerApp.style.display="none";staffPortal.hidden=false;userBar.hidden=true;
-    // Agar abhi login form khud session bana raha hai to yahan kuch na karein,
-    // warna session banne se pehle hi logout ho kar app band ho jati thi.
-    if(manualLoginBusy)return;
-    const loaded=await loadStaffSession(user);
-    if(!loaded){
-      if(manualLoginBusy)return;
-      await signOut(auth);
-      setLoginMessage("Session khatam ho gaya. Dobara mobile number se login karein.");
-      return;
+const authController=createAuthController({
+  auth,
+  sdk:{signInWithEmailAndPassword,signInAnonymously,signOut,onAuthStateChanged,EmailAuthProvider,reauthenticateWithCredential,updatePassword},
+  accounts:{
+    async getSession(uid){const snapshot=await getDoc(doc(staffSessionsCol,uid));return snapshot.exists()?snapshot.data():null},
+    async getAccount(phone){const snapshot=await getDoc(doc(staffAccountsCol,phone));return snapshot.exists()?snapshot.data():null},
+    async createSession(uid,phone){await setDoc(doc(staffSessionsCol,uid),{phone,createdAt:Date.now()})}
+  },
+  onReset:resetAuthView,
+  onError:showAuthError,
+  onSession(session){
+    loginMessage.textContent='';staffLoginMessage.textContent='';
+    loginPassword.value='';staffLoginPassword.value='';
+    if(session.role==='staff'){
+      currentStaff={...session.account,phone:session.phone};currentStaffPhone=session.phone;
+      ownerApp.hidden=true;ownerApp.style.display='none';userBar.hidden=true;
+      renderStaffProfile();startStaffOwnListener();staffPortal.hidden=false;
+    }else{
+      staffPortal.hidden=true;ownerApp.hidden=false;ownerApp.style.display='';
+      userBar.hidden=false;userEmail.textContent='مالک • admin';
+      setCloud('Firebase data load ہو رہا ہے…');startListeners();startOwnerStaffListeners();
     }
-  }else{
-    staffPortal.hidden=true;ownerApp.style.display="";
-    userBar.hidden=false;userEmail.textContent="ADMIN • "+(user.email||"Owner");
-    setCloud("Firebase data load ہو رہا ہے…");startListeners();startOwnerStaffListeners();
+    window.noorTasks.start(session);
+    loginGate.classList.add('hidden');
   }
 });
+async function submitLogin(event,role){
+  event.preventDefault();
+  const username=role==='owner'?loginEmail.value:staffLoginPhone.value;
+  const password=role==='owner'?loginPassword.value:staffLoginPassword.value;
+  loginMessage.textContent='';staffLoginMessage.textContent='';
+  loginBtn.disabled=true;staffLoginBtn.disabled=true;
+  document.querySelectorAll('.auth-role').forEach(button=>button.disabled=true);
+  const button=role==='owner'?loginBtn:staffLoginBtn,caption=button.textContent;
+  button.textContent='جانچ ہو رہی ہے…';
+  try{await authController.login({role,username,password})}
+  catch(error){showAuthError(error,role)}
+  finally{
+    loginPassword.value='';staffLoginPassword.value='';button.textContent=caption;
+    loginBtn.disabled=false;staffLoginBtn.disabled=false;
+    document.querySelectorAll('.auth-role').forEach(button=>button.disabled=false);
+  }
+}
+loginForm.addEventListener('submit',event=>submitLogin(event,'owner'));
+staffLoginForm.addEventListener('submit',event=>submitLogin(event,'staff'));
+logoutBtn?.addEventListener('click',()=>authController.logout().catch(error=>showAuthError(error,'owner')));
+staffLogoutBtn?.addEventListener('click',()=>authController.logout().catch(error=>showAuthError(error,'staff')));
+window.addEventListener('online',()=>authController.resume().catch(error=>showAuthError(error,'staff')));
+const passwordForm=document.getElementById('ownerPasswordForm');
+passwordForm.addEventListener('submit',async event=>{
+  event.preventDefault();
+  const oldPassword=document.getElementById('ownerOldPassword');
+  const newPassword=document.getElementById('ownerNewPassword');
+  const confirmation=document.getElementById('ownerConfirmPassword');
+  const message=document.getElementById('ownerPasswordMessage');
+  const button=document.getElementById('ownerPasswordBtn');
+  message.className='login-message';message.textContent='';
+  if(newPassword.value!==confirmation.value){message.textContent='دونوں نئے پاس ورڈ ایک جیسے درج کریں۔';return}
+  button.disabled=true;
+  try{
+    await authController.changePassword(oldPassword.value,newPassword.value);
+    passwordForm.reset();message.className='login-message ok';message.textContent='مالک کا پاس ورڈ تبدیل ہو گیا ہے۔ آئندہ یہی نیا پاس ورڈ استعمال کریں۔';
+  }catch(error){message.textContent=loginErrorMessage(error,'owner')}
+  finally{oldPassword.value='';button.disabled=false}
+});
+window.noorAuthReady=true;
+loginBtn.disabled=false;staffLoginBtn.disabled=false;
+
 </script>
 
 
@@ -3052,43 +3208,33 @@ td b,td strong{color:#0f766e}
 .modal-v84{overscroll-behavior:contain}
 .toast-v97{position:fixed;left:14px;right:14px;bottom:78px;z-index:100001;display:none;background:#0f3d3a;color:#fff;border-radius:14px;padding:13px 16px;font-size:14px;font-weight:800;text-align:center;box-shadow:0 14px 34px rgba(15,23,42,.35)}
 .toast-v97.show{display:block}
-/* ===== KAAM / TASK SYSTEM ===== */
-.task-kpis-v99{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:12px}
-.task-kpis-v99>div{background:#fff;border:1px solid #cfe0f5;border-radius:15px;padding:12px}
-.task-kpis-v99 small{display:block;color:#5b6b7f;font-size:10px;font-weight:800}
-.task-kpis-v99 strong{display:block;font-size:22px;color:#1d4ed8;margin-top:4px}
-.task-list-v99{display:grid;gap:11px}
-.task-card-v99{background:linear-gradient(150deg,#fff,#eef5ff);border:1px solid #cbdcf6;border-radius:17px;padding:14px;box-shadow:0 6px 18px rgba(15,23,42,.06)}
-.task-head-v99{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.task-head-v99 b{color:#0b5a86;font-size:16px;display:block}
-.task-head-v99 small{color:#5b6b7f;font-size:11px;display:block;margin-top:3px}
-.task-card-v99 p{margin:8px 0 4px;color:#33475b;font-size:13px}
-.task-meta-v99{display:block;color:#5b6b7f;font-size:11px;margin-top:6px}
-.task-chip-v99{font-size:10px;font-weight:900;padding:6px 9px;border-radius:999px;white-space:nowrap}
-.tc-assigned{background:#eaf0ff;color:#1d4ed8}
-.tc-submitted{background:#fff4e0;color:#b45309}
-.tc-approved{background:#e7f9ee;color:#15803d}
-.tc-returned{background:#ffeaea;color:#b91c1c}
-.task-photos-v99{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
-.task-photos-v99 img{width:76px;height:76px;object-fit:cover;border-radius:11px;border:1px solid #cbdcf6}
-.task-nopic-v99{margin-top:8px;font-size:11px;color:#94a3b8}
-.task-note-v99{margin-top:8px;background:#fff7e6;border:1px solid #f3ddb0;border-radius:11px;padding:9px;font-size:12px;color:#8a5a08}
-.task-actions-v99{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:10px}
-.task-points-in-v99{width:74px!important;text-align:center;font-weight:900;color:#15803d}
-.staff-task-list-v99{display:grid;gap:11px}
-.staff-task-v99{border:1px solid #dfe8ef;border-radius:16px;padding:13px;background:#fff}
-.stask-head-v99{display:flex;justify-content:space-between;gap:9px;align-items:flex-start}
-.stask-head-v99 b{font-size:16px;color:#0b5a86}
-.stask-head-v99 span{font-size:11px;font-weight:900;white-space:nowrap;color:#0f766e}
-.staff-task-v99 p{margin:7px 0;color:#475569;font-size:13px}
-.staff-task-v99 small{color:#64748b;font-size:11px}
-.stask-note-v99{margin-top:7px;background:#fff1f1;border:1px solid #f6cccc;border-radius:10px;padding:8px;font-size:12px;color:#b91c1c}
-.stask-upload-v99{display:block;margin-top:10px;text-align:center;border:1px dashed #9fd3cb;background:#eefaf7;color:#0f766e;font-weight:900;border-radius:12px;padding:12px;cursor:pointer}
-.stask-preview-v99{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.stask-preview-v99 img{width:64px;height:64px;object-fit:cover;border-radius:10px}
-.stask-msg-v99{font-size:12px;color:#0f766e;margin-top:6px;font-weight:800}
-.stask-empty-v99{text-align:center;color:#64748b;padding:18px}
-@media(max-width:600px){.task-kpis-v99{grid-template-columns:1fr 1fr}.task-photos-v99 img{width:64px;height:64px}}
 </style>
 
+<style id="taskStylesV99">
+[hidden]{display:none!important}
+#staffTopNavV99{margin:8px 0 18px;padding:10px;background:#f5faf8;border:1px solid #d3e5de;border-radius:16px}
+#staffTopNavV99 .staff-cat-tabs-v87{margin:0 0 8px;gap:6px}
+#staffFeatureGridV87{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin:0!important}
+#staffFeatureGridV87 .staff-feature-card{min-height:65px!important;height:auto!important;padding:9px 7px!important;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;border-radius:11px!important;text-align:center;box-shadow:none!important;min-width:0}
+#staffFeatureGridV87 .feature-icon{width:auto!important;height:auto!important;font-size:21px;line-height:1.2;background:transparent!important;border-radius:0}
+#staffFeatureGridV87 .staff-feature-card b{font-size:12px!important;line-height:1.4;font-weight:750}
+#staffFeatureGridV87 .staff-feature-card small,#staffFeatureGridV87 .staff-feature-card strong{display:none!important}
+#staffFeatureGridV87 .staff-feature-card[aria-current="page"]{outline:2px solid #0f766e;outline-offset:1px}
+.nt-tasks{direction:rtl;text-align:right;color:#17332c;font-family:var(--font-ui,Arial,sans-serif)}
+.nt-tasks *{box-sizing:border-box}.nt-tasks input,.nt-tasks select,.nt-tasks textarea{min-width:0;max-width:100%;font:inherit;padding:10px;border:1px solid #c4d7cd;border-radius:9px;background:#fff;color:#17332c;width:100%}
+.nt-tasks button,.nt-task-link{font:inherit;cursor:pointer;border:1px solid #c6ddd3;border-radius:10px;background:#eff8f3;padding:10px 14px;color:#175440;min-height:44px}
+.nt-tasks button:disabled{opacity:.6;cursor:wait}.nt-tasks .nt-primary{color:#fff;background:#0f766e;border-color:#0f766e}
+.nt-tasks h2,.nt-tasks h3,.nt-tasks p{margin:0 0 10px}.nt-tasks h2{font-size:22px}.nt-tasks h3{font-size:17px}.nt-tasks small{font-size:12px;color:#53685e}
+.nt-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}.nt-actions{display:flex;flex-wrap:wrap;gap:8px}
+.nt-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0}.nt-tasks label{display:block;font-size:13px}.nt-tasks label input,.nt-tasks label select,.nt-tasks label textarea{margin-top:5px}
+.nt-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}.nt-stats div{background:#eaf5ef;padding:12px;border-radius:11px;font-size:12px}.nt-stats b{display:block;font-size:23px;color:#0f766e}
+.nt-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.nt-card{background:#fff;border:1px solid #d6e4dd;border-radius:14px;padding:15px;overflow-wrap:anywhere;box-shadow:0 3px 12px #143c2408}.nt-card p,.nt-note{white-space:pre-wrap;overflow-wrap:anywhere}.nt-state{display:inline-block;background:#fff0cf;color:#745117;padding:4px 9px;border-radius:7px;font-size:12px;margin-bottom:10px}.nt-state.approved{background:#dff3e5;color:#166439}.nt-state.changes_requested{background:#ffe7e3;color:#923927}
+.nt-empty,.nt-msg{padding:10px 0;font-size:14px;white-space:pre-wrap}.nt-msg.error{color:#a42620}.nt-msg.success{color:#166439}.nt-msg:empty{padding:0}
+.nt-dialog{position:fixed;inset:0;z-index:100001;background:#14352c99;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}.nt-dialog-card{width:min(720px,100%);max-height:92dvh;overflow:auto;background:#fff;border-radius:18px;padding:20px;box-shadow:0 15px 60px #14271d4d}.nt-dialog-card label{margin-bottom:12px}.nt-dialog-card .nt-toolbar{position:sticky;top:-20px;background:#fff;padding:8px 0;z-index:2}.nt-dialog-card .nt-close{font-size:23px;min-width:44px;padding:4px 10px}
+.nt-photos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}.nt-photo{position:relative;border:1px solid #dae5df;border-radius:10px;padding:5px;min-width:0}.nt-photo img{display:block;width:100%;aspect-ratio:1;object-fit:contain;background:#edf2ef;border-radius:7px;cursor:zoom-in}.nt-photo button{width:100%;margin-top:4px;font-size:12px;padding:5px}.nt-full-image{max-width:100%;max-height:76dvh;object-fit:contain;display:block;margin:auto}
+.nt-report-card{width:min(1060px,100%)}.nt-report-card iframe{width:100%;height:70dvh;border:1px solid #ceddd3;background:#fff}.nt-profile-tasks{margin:16px 0}.nt-staff-panel{margin:18px 0;padding:18px;background:#fff;border:1px solid #d9e9e0;border-radius:18px}
+.nt-tasks button:focus-visible,.nt-tasks input:focus-visible,.nt-tasks select:focus-visible,.nt-tasks textarea:focus-visible{outline:3px solid #e3b348;outline-offset:2px}
+@media(max-width:760px){#staffFeatureGridV87{grid-template-columns:repeat(3,minmax(0,1fr))!important}.nt-cards{grid-template-columns:1fr}.nt-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.nt-dialog{padding:8px}.nt-dialog-card{padding:15px;max-height:95dvh}.nt-dialog-card .nt-toolbar{top:-15px}.nt-staff-panel{padding:14px}.nt-stats div{padding:10px 7px}.nt-stats b{font-size:21px}}
+
+</style>
 </body></html>
