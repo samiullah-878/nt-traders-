@@ -1,17 +1,26 @@
 {
-  "name": "nt-traders-staff-tasks",
+  "name": "nt-traders",
+  "version": "0.1.0",
   "private": true,
-  "type": "module",
   "scripts": {
-    "build": "node scripts/build-inline.mjs",
-    "test": "node --test tests/*.test.mjs",
-    "test:dom": "node tests/dom.integration.mjs",
-    "test:rules": "node --test tests/firestore.rules.mjs tests/task-rules.mjs"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "firebase": "10.14.1",
+    "lucide-react": "^1.43.0",
+    "next": "15.5.4",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
   },
   "devDependencies": {
-    "happy-dom": "20.14.0",
-    "@firebase/rules-unit-testing": "3.0.4",
-    "firebase": "10.14.1",
-    "firebase-tools": "13.35.1"
+    "@tailwindcss/postcss": "4.1.13",
+    "@types/node": "22.10.5",
+    "@types/react": "19.0.7",
+    "@types/react-dom": "19.0.3",
+    "tailwindcss": "4.1.13",
+    "typescript": "5.7.3"
   }
 }
