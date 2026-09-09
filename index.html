@@ -880,7 +880,7 @@ th,td{font-size:16px;line-height:1.55}
 
     <div class="auth-card">
       <div class="login-card-title"><span class="brand-mark mini">NT</span><div><h2>Noor Traders Hisab</h2><p>Business & Staff System</p></div></div>
-      <div class="login-build-strip"><span class="variant-badge">Production</span><span>Version: <b id="loginVersionLabel">v100</b></span><span id="loginUpdateStatus" class="sync-state"><i class="status-dot"></i>Syncing...</span></div>
+      <div class="login-build-strip"><span class="variant-badge">Production</span><span>Version: <b id="loginVersionLabel">v101</b></span><span id="loginUpdateStatus" class="sync-state"><i class="status-dot"></i>Syncing...</span></div>
       <button type="button" class="sync-now-btn-v91" onclick="forceAppUpdateV85()">🔄 Sync / Update Now</button>
       <div class="auth-role-tabs" role="tablist" aria-label="اکاؤنٹ منتخب کریں">
         <button id="ownerLoginTab" class="auth-role active" type="button" role="tab" aria-selected="true" aria-controls="ownerLoginPane" data-auth-role="owner">مالک</button>
@@ -928,7 +928,7 @@ th,td{font-size:16px;line-height:1.55}
     <button id="staffLogoutBtn" class="staff-logout">Logout</button>
   </div>
 
-  <main class="staff-portal-main"><div class="staff-build-banner"><span>Version <b id="staffVersionLabel">v100</b> • Production</span><span id="staffUpdateState">Latest</span></div>
+  <main class="staff-portal-main"><div class="staff-build-banner"><span>Version <b id="staffVersionLabel">v101</b> • Production</span><span id="staffUpdateState">Latest</span></div>
     <section class="staff-profile-hero">
       <div class="staff-profile-left">
         <div id="staffPortalAvatar" class="portal-avatar">👤</div>
@@ -1013,7 +1013,7 @@ th,td{font-size:16px;line-height:1.55}
 
 <div class="app" id="ownerApp" hidden style="display:none">
 <div class="top">
-  <div><div class="nt-role-label">NOOR TRADERS • مالک کا پینل</div><h1>Noor Traders Hisab</h1><small>Gulyana • <b id="headerVersionLabel">v100</b> • کاروبار آپ کی نظر میں</small></div>
+  <div><div class="nt-role-label">NOOR TRADERS • مالک کا پینل</div><h1>Noor Traders Hisab</h1><small>Gulyana • <b id="headerVersionLabel">v101</b> • کاروبار آپ کی نظر میں</small></div>
   <div class="cloud-box">
     <b id="todayLabel"></b><br>
     <small id="cloudStatus">Firebase سے رابطہ ہو رہا ہے…</small>
@@ -1333,7 +1333,7 @@ th,td{font-size:16px;line-height:1.55}
 <div id="pdfPreviewModal" class="pdf-preview-modal" hidden><div class="pdf-preview-shell"><div class="pdf-preview-head"><div><span class="eyebrow">NOOR TRADERS HISAB</span><h2 id="pdfPreviewTitle">Report Preview</h2></div><button class="icon-close" type="button" onclick="closePdfPreviewV85()" aria-label="Close preview">×</button></div><iframe id="pdfPreviewFrame" title="PDF preview"></iframe><div class="pdf-preview-actions"><button class="primary" type="button" onclick="downloadPdfV85()">Download PDF</button><button class="soft" type="button" onclick="sharePdfV85()">Share / Send</button><button class="soft" type="button" onclick="printPdfPreviewV85()">Print</button><button class="soft" type="button" onclick="closePdfPreviewV85()">Close</button></div></div></div>
 <div id="entryEditModalV85" class="entry-edit-modal-v85" hidden><div class="entry-edit-card-v85"><div class="pro-card-head"><div><div class="eyebrow">EDIT ENTRY</div><h3>Update Transaction</h3></div><button type="button" class="icon-close" onclick="closeEntryEditV85()">×</button></div><form id="entryEditFormV85" class="entry-edit-form"><input type="date" id="editEntryDateV85"><input id="editEntryDetailV85" placeholder="Detail / Name"><select id="editEntryTypeV85"></select><select id="editEntrySubCategoryV85"></select><input id="editEntryAmountV85" type="number" min="0.01" step="0.01" required><input id="editEntryPhotoV85" type="file" accept="image/*" capture="environment"><div id="editEntryPhotoPreviewV85" class="quick-photo-preview" hidden></div><div class="row"><button class="primary" type="submit">Save Changes</button><button class="soft" type="button" onclick="closeEntryEditV85()">Cancel</button></div></form></div></div>
 
-<section id="settings" class="tab app-screen"><div class="grid"><div class="card span6"><h3>Full Migration Backup</h3><p class="muted">مکمل JSON backup download کریں یا restore کریں۔ Restore ہونے پر online data بھی sync ہوگا۔</p><div class="row"><button class="primary" onclick="backupAll()">Full Migration Backup Download</button><label class="soft" style="cursor:pointer">Backup Restore<input type="file" id="restoreFile" accept="application/json" style="display:none"></label></div></div><div class="card span6"><h3>Expense Categories</h3><div class="row"><input id="newCat" placeholder="نئی category"><button class="soft" onclick="addCategory()">Add</button></div><div id="catList" style="margin-top:10px"></div></div><div class="card span12"><h3>Attendance Policy & Version</h3><div class="form"><div class="f3"><label>Shift Start</label><input id="policyShiftStartV84" type="time" value="09:00"></div><div class="f3"><label>Shift End (optional)</label><input id="policyShiftEndV84" type="time"></div><div class="f3"><label>Geofence Radius (m)</label><input id="policyRadiusV84" type="number" value="200"></div><div class="f3"><label>Variant</label><input id="policyVariantV84" value="Production"></div><div class="f12"><label>Check-In Instruction</label><input id="policyInstructionV84" value="سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔"></div><div class="f12 score-policy-editor"><label>Score Rules (minutes late → score)</label><div class="score-policy-grid"><span>≤10 min <input id="score10V84" type="number" value="10" min="0" max="10"></span><span>≤20 min <input id="score20V84" type="number" value="8" min="0" max="10"></span><span>≤30 min <input id="score30V84" type="number" value="6" min="0" max="10"></span><span>≤45 min <input id="score45V84" type="number" value="4" min="0" max="10"></span><span>Later <input id="scoreLateV84" type="number" value="2" min="0" max="10"></span></div></div><div class="f12"><button class="primary" type="button" onclick="saveAttendancePolicyV84()">Save Attendance Policy</button></div></div><div class="version-panel-v84"><span>Current Version <b id="settingsVersionV84">v100</b></span><span>Variant <b id="settingsVariantV84">Production</b></span><span id="settingsUpdateV84">Up to date</span><button class="soft update-now-v85" type="button" onclick="forceAppUpdateV85()">Check / Update Now</button></div></div><div class="card span6"><h3>مالک کا پاس ورڈ</h3><p class="muted">یوزر نیم: <b>admin</b></p><form id="ownerPasswordForm" class="vertical-form"><label for="ownerOldPassword">موجودہ پاس ورڈ</label><input id="ownerOldPassword" type="password" autocomplete="current-password" required><label for="ownerNewPassword">نیا پاس ورڈ — کم از کم 6 حروف</label><input id="ownerNewPassword" type="password" autocomplete="new-password" minlength="6" required><label for="ownerConfirmPassword">نیا پاس ورڈ دوبارہ درج کریں</label><input id="ownerConfirmPassword" type="password" autocomplete="new-password" minlength="6" required><button id="ownerPasswordBtn" class="primary" type="submit">پاس ورڈ تبدیل کریں</button><div id="ownerPasswordMessage" class="login-message" role="status" aria-live="polite"></div></form></div><div class="card span12"><h3>Storage</h3><p>یہ version <b>Firebase Firestore</b> کے ساتھ online sync کرتا ہے اور browser <b>localStorage</b> کو offline/local cache کے طور پر رکھتا ہے۔</p><button class="danger" onclick="resetAll()">صرف اس Browser کا Local Cache صاف کریں</button></div></div></section>
+<section id="settings" class="tab app-screen"><div class="grid"><div class="card span6"><h3>Full Migration Backup</h3><p class="muted">مکمل JSON backup download کریں یا restore کریں۔ Restore ہونے پر online data بھی sync ہوگا۔</p><div class="row"><button class="primary" onclick="backupAll()">Full Migration Backup Download</button><label class="soft" style="cursor:pointer">Backup Restore<input type="file" id="restoreFile" accept="application/json" style="display:none"></label></div></div><div class="card span6"><h3>Expense Categories</h3><div class="row"><input id="newCat" placeholder="نئی category"><button class="soft" onclick="addCategory()">Add</button></div><div id="catList" style="margin-top:10px"></div></div><div class="card span12"><h3>Attendance Policy & Version</h3><div class="form"><div class="f3"><label>Shift Start</label><input id="policyShiftStartV84" type="time" value="09:00"></div><div class="f3"><label>Shift End (optional)</label><input id="policyShiftEndV84" type="time"></div><div class="f3"><label>Geofence Radius (m)</label><input id="policyRadiusV84" type="number" value="200"></div><div class="f3"><label>Variant</label><input id="policyVariantV84" value="Production"></div><div class="f12"><label>Check-In Instruction</label><input id="policyInstructionV84" value="سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔"></div><div class="f12 score-policy-editor"><label>Score Rules (minutes late → score)</label><div class="score-policy-grid"><span>≤10 min <input id="score10V84" type="number" value="10" min="0" max="10"></span><span>≤20 min <input id="score20V84" type="number" value="8" min="0" max="10"></span><span>≤30 min <input id="score30V84" type="number" value="6" min="0" max="10"></span><span>≤45 min <input id="score45V84" type="number" value="4" min="0" max="10"></span><span>Later <input id="scoreLateV84" type="number" value="2" min="0" max="10"></span></div></div><div class="f12"><button class="primary" type="button" onclick="saveAttendancePolicyV84()">Save Attendance Policy</button></div></div><div class="version-panel-v84"><span>Current Version <b id="settingsVersionV84">v101</b></span><span>Variant <b id="settingsVariantV84">Production</b></span><span id="settingsUpdateV84">Up to date</span><button class="soft update-now-v85" type="button" onclick="forceAppUpdateV85()">Check / Update Now</button></div></div><div class="card span6"><h3>مالک کا پاس ورڈ</h3><p class="muted">یوزر نیم: <b>admin</b></p><form id="ownerPasswordForm" class="vertical-form"><label for="ownerOldPassword">موجودہ پاس ورڈ</label><input id="ownerOldPassword" type="password" autocomplete="current-password" required><label for="ownerNewPassword">نیا پاس ورڈ — کم از کم 6 حروف</label><input id="ownerNewPassword" type="password" autocomplete="new-password" minlength="6" required><label for="ownerConfirmPassword">نیا پاس ورڈ دوبارہ درج کریں</label><input id="ownerConfirmPassword" type="password" autocomplete="new-password" minlength="6" required><button id="ownerPasswordBtn" class="primary" type="submit">پاس ورڈ تبدیل کریں</button><div id="ownerPasswordMessage" class="login-message" role="status" aria-live="polite"></div></form></div><div class="card span12"><h3>Storage</h3><p>یہ version <b>Firebase Firestore</b> کے ساتھ online sync کرتا ہے اور browser <b>localStorage</b> کو offline/local cache کے طور پر رکھتا ہے۔</p><button class="danger" onclick="resetAll()">صرف اس Browser کا Local Cache صاف کریں</button></div></div></section>
 
 <div class="footer">Noor Traders Hisab — Standalone HTML conversion from v79 source</div></div>
 <script>
@@ -2053,7 +2053,7 @@ window.applyPolicyV84=applyPolicyV84;
 restoreFileV84.onchange=async()=>{try{const x=JSON.parse(await restoreFileV84.files[0].text());if(!x.data)throw Error();if(confirm('Backup restore کرنے سے موجود data replace ہوگا۔ جاری رکھیں؟')){db=x.data;save()}}catch{alert('درست backup file نہیں')}};
 
 
-const APP_VERSION_V85='v100';
+const APP_VERSION_V85='v101';
 let currentPdfHtmlV85='';
 
 /* ===== AUTO UPDATE (v88) =====
@@ -2088,34 +2088,18 @@ function bootActionsV95(html){
   if(!box)return;box.innerHTML=html;box.hidden=false;
 }
 async function bootVersionGateV95(){
-  // App tab tak nahi khulti jab tak sab se nayi version na aa jaye.
-  let v=null;
+  // v101: gate ab kabhi app ko nahi rokta. App foran khulti hai.
+  // Version check background mein hota hai; nayi version ho to sirf banner dikhta hai.
+  closeBootGateV95();
+  try{Object.keys(localStorage).filter(k=>k.startsWith('nt_boot_try_')||k.startsWith('nt_update_try_')).forEach(k=>localStorage.removeItem(k))}catch(e){}
   try{
-    const r=await Promise.race([
-      fetch('./version.json?t='+Date.now(),{cache:'reload'}),
-      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),3500))
-    ]);
-    if(r&&r.ok)v=await r.json();
+    const r=await fetch('./version.json?t='+Date.now(),{cache:'reload'});
+    if(!r||!r.ok)return;
+    const v=await r.json();
+    if(!v||!v.version)return;
+    latestVersionV88=v.version;
+    if(v.version!==APP_VERSION_V85)showUpdateBannerV88(v.version);
   }catch(e){}
-  if(!v||!v.version){ // internet nahi — offline kaam chalta rahe
-    bootMsgV95('Internet nahi mila — offline chal rahi hai');
-    setTimeout(closeBootGateV95,900);return;
-  }
-  latestVersionV88=v.version;
-  if(v.version===APP_VERSION_V85){
-    try{Object.keys(localStorage).filter(k=>k.startsWith('nt_boot_try_')||k.startsWith('nt_update_try_')).forEach(k=>localStorage.removeItem(k))}catch(e){}
-    closeBootGateV95();return;
-  }
-  const k='nt_boot_try_'+v.version;
-  let tries=0;try{tries=+(localStorage.getItem(k)||0)}catch(e){}
-  if(tries>=3){
-    bootMsgV95('Nayi version '+v.version+' server par hai lekin load nahi ho rahi.');
-    bootActionsV95('<button type="button" onclick="localStorage.removeItem(\'nt_boot_try_'+v.version+'\');location.reload()">Dobara koshish</button><button type="button" class="ghost" onclick="closeBootGateV95()">Purani se kaam chalayein</button>');
-    return;
-  }
-  try{localStorage.setItem(k,String(tries+1))}catch(e){}
-  bootMsgV95('Nayi version '+v.version+' load ho rahi hai…');
-  await applyUpdateV88(v.version);
 }
 window.closeBootGateV95=closeBootGateV95;
 function showUpdateBannerV88(ver,busy=false){
@@ -3129,7 +3113,7 @@ const staffAttendanceCol=collection(fs,"businesses",BUSINESS_ID,"staffAttendance
 const staffSessionsCol=collection(fs,"businesses",BUSINESS_ID,"staffSessions");
 const STAFF_SESSION_KEY="noor-traders-staff-session";
 const staffConfigDoc=doc(fs,"businesses",BUSINESS_ID,"staffConfig","main");
-let staffConfig={shiftStart:'09:00',shiftEnd:'',radius:200,variant:'Production',instruction:'سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔',scores:{m10:10,m20:8,m30:6,m45:4,late:2},version:'v100'};
+let staffConfig={shiftStart:'09:00',shiftEnd:'',radius:200,variant:'Production',instruction:'سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔',scores:{m10:10,m20:8,m30:6,m45:4,late:2},version:'v101'};
 
 async function upsertAccount(account){
   const phone=normalizePhone(account.phone||account.id);
@@ -3182,7 +3166,7 @@ function getAttendanceForDate(date){
 function getAttendanceBetween(from,to){
   return [...ownerStaffAttendance.values()].filter(a=>(!from||a.date>=from)&&(!to||a.date<=to)).sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.checkInTs||0)-(b.checkInTs||0));
 }
-async function saveConfig(cfg){staffConfig={...staffConfig,...clean(cfg),scores:{...staffConfig.scores,...(cfg.scores||{})},version:'v100'};await setDoc(staffConfigDoc,staffConfig,{merge:true});window.applyPolicyV84?.(staffConfig)}
+async function saveConfig(cfg){staffConfig={...staffConfig,...clean(cfg),scores:{...staffConfig.scores,...(cfg.scores||{})},version:'v101'};await setDoc(staffConfigDoc,staffConfig,{merge:true});window.applyPolicyV84?.(staffConfig)}
 function getAttendanceById(id){return ownerStaffAttendance.get(id)||null}
 async function updateAttendance(id,patch){await setDoc(doc(staffAttendanceCol,id),patch,{merge:true})}
 async function deleteAttendance(id){await deleteDoc(doc(staffAttendanceCol,id))}
@@ -3215,7 +3199,7 @@ function renderStaffProfile(){
 }
 let ownAttendanceUnsub=null;
 function startStaffOwnListener(){
-  staffUnsubs.push(onSnapshot(staffConfigDoc,s=>{if(s.exists()){staffConfig={...staffConfig,...clean(s.data()),scores:{...staffConfig.scores,...(s.data().scores||{})}};const radius=staffConfig.radius||SHOP.radius;staffRuleText.textContent=`Selfie لازمی + Noor Traders سے زیادہ سے زیادہ ${radius}m`;staffInstructionText.textContent=staffConfig.instruction||staffInstructionText.textContent;staffVersionLabel.textContent='v100'}}));
+  staffUnsubs.push(onSnapshot(staffConfigDoc,s=>{if(s.exists()){staffConfig={...staffConfig,...clean(s.data()),scores:{...staffConfig.scores,...(s.data().scores||{})}};const radius=staffConfig.radius||SHOP.radius;staffRuleText.textContent=`Selfie لازمی + Noor Traders سے زیادہ سے زیادہ ${radius}m`;staffInstructionText.textContent=staffConfig.instruction||staffInstructionText.textContent;staffVersionLabel.textContent='v101'}}));
   if(ownAttendanceUnsub)try{ownAttendanceUnsub()}catch{}
   const q=query(staffAttendanceCol,where("phone","==",currentStaffPhone));
   ownAttendanceUnsub=onSnapshot(q,s=>{
