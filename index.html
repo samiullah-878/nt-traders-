@@ -872,7 +872,7 @@ th,td{font-size:16px;line-height:1.55}
 
     <div class="auth-card">
       <div class="login-card-title"><span class="brand-mark mini">NT</span><div><h2>Noor Traders Hisab</h2><p>Business & Staff System</p></div></div>
-      <div class="login-build-strip"><span class="variant-badge">Production</span><span>Version: <b id="loginVersionLabel">v103</b></span><span id="loginUpdateStatus" class="sync-state"><i class="status-dot"></i>Syncing...</span></div>
+      <div class="login-build-strip"><span class="variant-badge">Production</span><span>Version: <b id="loginVersionLabel">v104</b></span><span id="loginUpdateStatus" class="sync-state"><i class="status-dot"></i>Syncing...</span></div>
       <button type="button" class="sync-now-btn-v91" onclick="forceAppUpdateV85()">🔄 Sync / Update Now</button>
       <div class="auth-role-tabs" role="tablist" aria-label="اکاؤنٹ منتخب کریں">
         <button id="ownerLoginTab" class="auth-role active" type="button" role="tab" aria-selected="true" aria-controls="ownerLoginPane" data-auth-role="owner">مالک</button>
@@ -920,7 +920,7 @@ th,td{font-size:16px;line-height:1.55}
     <button id="staffLogoutBtn" class="staff-logout">Logout</button>
   </div>
 
-  <main class="staff-portal-main"><div class="staff-build-banner"><span>Version <b id="staffVersionLabel">v103</b> • Production</span><span id="staffUpdateState">Latest</span></div>
+  <main class="staff-portal-main"><div class="staff-build-banner"><span>Version <b id="staffVersionLabel">v104</b> • Production</span><span id="staffUpdateState">Latest</span></div>
     <section class="staff-profile-hero">
       <div class="staff-profile-left">
         <div id="staffPortalAvatar" class="portal-avatar">👤</div>
@@ -1014,7 +1014,7 @@ th,td{font-size:16px;line-height:1.55}
 
 <div class="app" id="ownerApp" hidden style="display:none">
 <div class="top">
-  <div><div class="nt-role-label">NOOR TRADERS • مالک کا پینل</div><h1>Noor Traders Hisab</h1><small>Gulyana • <b id="headerVersionLabel">v103</b> • کاروبار آپ کی نظر میں</small></div>
+  <div><div class="nt-role-label">NOOR TRADERS • مالک کا پینل</div><h1>Noor Traders Hisab</h1><small>Gulyana • <b id="headerVersionLabel">v104</b> • کاروبار آپ کی نظر میں</small></div>
   <div class="cloud-box">
     <b id="todayLabel"></b><br>
     <small id="cloudStatus">Firebase سے رابطہ ہو رہا ہے…</small>
@@ -1335,7 +1335,7 @@ th,td{font-size:16px;line-height:1.55}
 <div id="pdfPreviewModal" class="pdf-preview-modal" hidden><div class="pdf-preview-shell"><div class="pdf-preview-head"><div><span class="eyebrow">NOOR TRADERS HISAB</span><h2 id="pdfPreviewTitle">Report Preview</h2></div><button class="icon-close" type="button" onclick="closePdfPreviewV85()" aria-label="Close preview">×</button></div><iframe id="pdfPreviewFrame" title="PDF preview"></iframe><div class="pdf-preview-actions"><button class="primary" type="button" onclick="downloadPdfV85()">Download PDF</button><button class="soft" type="button" onclick="sharePdfV85()">Share / Send</button><button class="soft" type="button" onclick="printPdfPreviewV85()">Print</button><button class="soft" type="button" onclick="closePdfPreviewV85()">Close</button></div></div></div>
 <div id="entryEditModalV85" class="entry-edit-modal-v85" hidden><div class="entry-edit-card-v85"><div class="pro-card-head"><div><div class="eyebrow">EDIT ENTRY</div><h3>Update Transaction</h3></div><button type="button" class="icon-close" onclick="closeEntryEditV85()">×</button></div><form id="entryEditFormV85" class="entry-edit-form"><input type="date" id="editEntryDateV85"><input id="editEntryDetailV85" placeholder="Detail / Name"><select id="editEntryTypeV85"></select><select id="editEntrySubCategoryV85"></select><input id="editEntryAmountV85" type="number" min="0.01" step="0.01" required><input id="editEntryPhotoV85" type="file" accept="image/*" capture="environment"><div id="editEntryPhotoPreviewV85" class="quick-photo-preview" hidden></div><div class="row"><button class="primary" type="submit">Save Changes</button><button class="soft" type="button" onclick="closeEntryEditV85()">Cancel</button></div></form></div></div>
 
-<section id="settings" class="tab app-screen"><div class="grid"><div class="card span6"><h3>Full Migration Backup</h3><p class="muted">مکمل JSON backup download کریں یا restore کریں۔ Restore ہونے پر online data بھی sync ہوگا۔</p><div class="row"><button class="primary" onclick="backupAll()">Full Migration Backup Download</button><label class="soft" style="cursor:pointer">Backup Restore<input type="file" id="restoreFile" accept="application/json" style="display:none"></label></div></div><div class="card span6"><h3>Expense Categories</h3><div class="row"><input id="newCat" placeholder="نئی category"><button class="soft" onclick="addCategory()">Add</button></div><div id="catList" style="margin-top:10px"></div></div><div class="card span12"><h3>Attendance Policy & Version</h3><div class="form"><div class="f3"><label>Shift Start</label><input id="policyShiftStartV84" type="time" value="09:00"></div><div class="f3"><label>Shift End (optional)</label><input id="policyShiftEndV84" type="time"></div><div class="f3"><label>Geofence Radius (m)</label><input id="policyRadiusV84" type="number" value="200"></div><div class="f3"><label>Variant</label><input id="policyVariantV84" value="Production"></div><div class="f12"><label>Check-In Instruction</label><input id="policyInstructionV84" value="سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔"></div><div class="f12 score-policy-editor"><label>Score Rules (minutes late → score)</label><div class="score-policy-grid"><span>≤10 min <input id="score10V84" type="number" value="10" min="0" max="10"></span><span>≤20 min <input id="score20V84" type="number" value="8" min="0" max="10"></span><span>≤30 min <input id="score30V84" type="number" value="6" min="0" max="10"></span><span>≤45 min <input id="score45V84" type="number" value="4" min="0" max="10"></span><span>Later <input id="scoreLateV84" type="number" value="2" min="0" max="10"></span></div></div><div class="f12"><button class="primary" type="button" onclick="saveAttendancePolicyV84()">Save Attendance Policy</button></div></div><div class="version-panel-v84"><span>Current Version <b id="settingsVersionV84">v103</b></span><span>Variant <b id="settingsVariantV84">Production</b></span><span id="settingsUpdateV84">Up to date</span><button class="soft update-now-v85" type="button" onclick="forceAppUpdateV85()">Check / Update Now</button></div></div><div class="card span6"><h3>مالک کا پاس ورڈ</h3><p class="muted">یوزر نیم: <b>admin</b></p><form id="ownerPasswordForm" class="vertical-form"><label for="ownerOldPassword">موجودہ پاس ورڈ</label><input id="ownerOldPassword" type="password" autocomplete="current-password" required><label for="ownerNewPassword">نیا پاس ورڈ — کم از کم 6 حروف</label><input id="ownerNewPassword" type="password" autocomplete="new-password" minlength="6" required><label for="ownerConfirmPassword">نیا پاس ورڈ دوبارہ درج کریں</label><input id="ownerConfirmPassword" type="password" autocomplete="new-password" minlength="6" required><button id="ownerPasswordBtn" class="primary" type="submit">پاس ورڈ تبدیل کریں</button><div id="ownerPasswordMessage" class="login-message" role="status" aria-live="polite"></div></form></div><div class="card span12"><h3>Storage</h3><p>یہ version <b>Firebase Firestore</b> کے ساتھ online sync کرتا ہے اور browser <b>localStorage</b> کو offline/local cache کے طور پر رکھتا ہے۔</p><button class="danger" onclick="resetAll()">صرف اس Browser کا Local Cache صاف کریں</button></div></div></section>
+<section id="settings" class="tab app-screen"><div class="grid"><div class="card span6"><h3>Full Migration Backup</h3><p class="muted">مکمل JSON backup download کریں یا restore کریں۔ Restore ہونے پر online data بھی sync ہوگا۔</p><div class="row"><button class="primary" onclick="backupAll()">Full Migration Backup Download</button><label class="soft" style="cursor:pointer">Backup Restore<input type="file" id="restoreFile" accept="application/json" style="display:none"></label></div></div><div class="card span6"><h3>Expense Categories</h3><div class="row"><input id="newCat" placeholder="نئی category"><button class="soft" onclick="addCategory()">Add</button></div><div id="catList" style="margin-top:10px"></div></div><div class="card span12"><h3>Attendance Policy & Version</h3><div class="form"><div class="f3"><label>Shift Start</label><input id="policyShiftStartV84" type="time" value="09:00"></div><div class="f3"><label>Shift End (optional)</label><input id="policyShiftEndV84" type="time"></div><div class="f3"><label>Geofence Radius (m)</label><input id="policyRadiusV84" type="number" value="200"></div><div class="f3"><label>Variant</label><input id="policyVariantV84" value="Production"></div><div class="f12"><label>Check-In Instruction</label><input id="policyInstructionV84" value="سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔"></div><div class="f12 score-policy-editor"><label>Score Rules (minutes late → score)</label><div class="score-policy-grid"><span>≤10 min <input id="score10V84" type="number" value="10" min="0" max="10"></span><span>≤20 min <input id="score20V84" type="number" value="8" min="0" max="10"></span><span>≤30 min <input id="score30V84" type="number" value="6" min="0" max="10"></span><span>≤45 min <input id="score45V84" type="number" value="4" min="0" max="10"></span><span>Later <input id="scoreLateV84" type="number" value="2" min="0" max="10"></span></div></div><div class="f12"><button class="primary" type="button" onclick="saveAttendancePolicyV84()">Save Attendance Policy</button></div></div><div class="version-panel-v84"><span>Current Version <b id="settingsVersionV84">v104</b></span><span>Variant <b id="settingsVariantV84">Production</b></span><span id="settingsUpdateV84">Up to date</span><button class="soft update-now-v85" type="button" onclick="forceAppUpdateV85()">Check / Update Now</button></div></div><div class="card span6"><h3>مالک کا پاس ورڈ</h3><p class="muted">یوزر نیم: <b>admin</b></p><form id="ownerPasswordForm" class="vertical-form"><label for="ownerOldPassword">موجودہ پاس ورڈ</label><input id="ownerOldPassword" type="password" autocomplete="current-password" required><label for="ownerNewPassword">نیا پاس ورڈ — کم از کم 6 حروف</label><input id="ownerNewPassword" type="password" autocomplete="new-password" minlength="6" required><label for="ownerConfirmPassword">نیا پاس ورڈ دوبارہ درج کریں</label><input id="ownerConfirmPassword" type="password" autocomplete="new-password" minlength="6" required><button id="ownerPasswordBtn" class="primary" type="submit">پاس ورڈ تبدیل کریں</button><div id="ownerPasswordMessage" class="login-message" role="status" aria-live="polite"></div></form></div><div class="card span12"><h3>Storage</h3><p>یہ version <b>Firebase Firestore</b> کے ساتھ online sync کرتا ہے اور browser <b>localStorage</b> کو offline/local cache کے طور پر رکھتا ہے۔</p><button class="danger" onclick="resetAll()">صرف اس Browser کا Local Cache صاف کریں</button></div></div></section>
 <section id="staffSalary" class="tab app-screen">
   <div class="pro-card">
     <div class="pro-card-head">
@@ -2116,7 +2116,7 @@ function ntSetVersionStatusV101(latest){
   });
   return newer;
 }
-const APP_VERSION_V85='v103';
+const APP_VERSION_V85='v104';
 let currentPdfHtmlV85='';
 
 /* ===== AUTO UPDATE (v88) =====
@@ -2366,7 +2366,7 @@ function openStaffHistoryV89(phone){
 window.openStaffHistoryV89=openStaffHistoryV89;
 function printIndividualStaffV84(phone){return window.noorTasks?.report({phone:normPhoneV84(phone),individual:true})}
 
-function renderAllV84(){renderEntryScreensV84();renderV84Dashboard();renderQuickEntryV85();renderStaffCenterV84();renderStaffAccountsV84();renderTodayAttendanceV84();renderAttendanceHistoryV84();renderScoresV84();if(currentProfilePhoneV84)renderStaffProfileV84()}
+function renderAllV84(){window.noorStaffUpgrades?.render();renderEntryScreensV84();renderV84Dashboard();renderQuickEntryV85();renderStaffCenterV84();renderStaffAccountsV84();renderTodayAttendanceV84();renderAttendanceHistoryV84();renderScoresV84();if(currentProfilePhoneV84)renderStaffProfileV84()}
 const _oldRenderAllV84=renderAll;renderAll=function(){_oldRenderAllV84();try{renderAllV84()}catch(e){console.warn('v84 render',e)}};
 
 document.querySelectorAll('#mobileDockV84 [data-go]').forEach(b=>b.onclick=()=>goScreen(b.dataset.go));mobileMoreV84.onclick=()=>nav.classList.toggle('mobile-open');
@@ -3218,7 +3218,7 @@ const staffAttendanceCol=collection(fs,"businesses",BUSINESS_ID,"staffAttendance
 const staffSessionsCol=collection(fs,"businesses",BUSINESS_ID,"staffSessions");
 const STAFF_SESSION_KEY="noor-traders-staff-session";
 const staffConfigDoc=doc(fs,"businesses",BUSINESS_ID,"staffConfig","main");
-let staffConfig={shiftStart:'09:00',shiftEnd:'',radius:200,variant:'Production',instruction:'سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔',scores:{m10:10,m20:8,m30:6,m45:4,late:2},version:'v103'};
+let staffConfig={shiftStart:'09:00',shiftEnd:'',radius:200,variant:'Production',instruction:'سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔',scores:{m10:10,m20:8,m30:6,m45:4,late:2},version:'v104'};
 
 async function upsertAccount(account){
   const phone=normalizePhone(account.phone||account.id);
@@ -3226,7 +3226,13 @@ async function upsertAccount(account){
   const data={name:account.name||"",role:account.role||"Staff",address:account.address||"",phone,photo:account.photo||"",active:account.active!==false,loginEnabled:account.loginEnabled!==false,updatedAt:Date.now()};
   if(account.salary&&typeof account.salary==='object')data.salary=clean(account.salary);
   if(Array.isArray(account.salaryExtras))data.salaryExtras=clean(account.salaryExtras);
-  await setDoc(doc(staffAccountsCol,phone),data,{merge:true});
+  await runTransaction(fs,async tx=>{
+    const r=doc(staffAccountsCol,phone),snapshot=await tx.get(r),old=snapshot.exists()?snapshot.data():{};
+    tx.set(r,data,{merge:true});
+    if(JSON.stringify(old.salary||null)!==JSON.stringify(data.salary||old.salary||null)||JSON.stringify(old.salaryExtras||[])!==JSON.stringify(data.salaryExtras||old.salaryExtras||[])){
+      tx.set(doc(collection(fs,'businesses',BUSINESS_ID,'staffAudit')),{type:'salary account update',target:phone,before:JSON.stringify({salary:old.salary||null,extras:old.salaryExtras||[]}),after:JSON.stringify({salary:data.salary||old.salary||null,extras:data.salaryExtras||old.salaryExtras||[]}),reason:'Staff account / salary saved by owner',by:auth.currentUser.uid,at:Date.now()});
+    }
+  });
 }
 async function deleteAccount(phone){await deleteDoc(doc(staffAccountsCol,normalizePhone(phone)))}
 
@@ -3268,6 +3274,7 @@ function startOwnerStaffListeners(){
   }));
 }
 function refreshOwnerAttendanceSummariesV103(){
+  window.noorStaffUpgrades?.render();
   /* Firestore ka pehla snapshot screen banne ke baad aata hai. Dashboard ko
      dobara render kiye baghair purana "Absent" state chipka rehta tha. */
   try{window.renderV84Dashboard?.()}catch(e){console.warn('dashboard attendance refresh',e)}
@@ -3289,10 +3296,10 @@ function getAttendanceForDate(date){
 function getAttendanceBetween(from,to){
   return [...ownerStaffAttendance.values()].filter(a=>(!from||a.date>=from)&&(!to||a.date<=to)).map(normalizeAttendanceV103).sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.checkInTs||0)-(b.checkInTs||0));
 }
-async function saveConfig(cfg){staffConfig={...staffConfig,...clean(cfg),scores:{...staffConfig.scores,...(cfg.scores||{})},version:'v103'};await setDoc(staffConfigDoc,staffConfig,{merge:true});window.applyPolicyV84?.(staffConfig)}
+async function saveConfig(cfg){staffConfig={...staffConfig,...clean(cfg),scores:{...staffConfig.scores,...(cfg.scores||{})},version:'v104'};await setDoc(staffConfigDoc,staffConfig,{merge:true});window.applyPolicyV84?.(staffConfig)}
 function getAttendanceById(id){return ownerStaffAttendance.get(id)||null}
-async function updateAttendance(id,patch){await setDoc(doc(staffAttendanceCol,id),patch,{merge:true})}
-async function deleteAttendance(id){await deleteDoc(doc(staffAttendanceCol,id))}
+async function updateAttendance(id,patch){return window.noorStaffUpgrades.attendance(id,patch)}
+async function deleteAttendance(id){return window.noorStaffUpgrades.attendance(id,{},true)}
 window.noorStaffSystem={upsertAccount,deleteAccount,migrateStaffPhone,getAttendanceForDate,getAttendanceBetween,getAttendanceById,updateAttendance,deleteAttendance,saveConfig,shop:SHOP};
 
 function haversine(lat1,lon1,lat2,lon2){
@@ -3322,14 +3329,14 @@ function renderStaffProfile(){
 }
 let ownAttendanceUnsub=null;
 function startStaffOwnListener(){
-  staffUnsubs.push(onSnapshot(staffConfigDoc,s=>{if(s.exists()){staffConfig={...staffConfig,...clean(s.data()),scores:{...staffConfig.scores,...(s.data().scores||{})}};const radius=staffConfig.radius||SHOP.radius;staffRuleText.textContent=`Selfie لازمی + Noor Traders سے زیادہ سے زیادہ ${radius}m`;staffInstructionText.textContent=staffConfig.instruction||staffInstructionText.textContent;staffVersionLabel.textContent='v103'}}));
+  staffUnsubs.push(onSnapshot(staffConfigDoc,s=>{if(s.exists()){staffConfig={...staffConfig,...clean(s.data()),scores:{...staffConfig.scores,...(s.data().scores||{})}};const radius=staffConfig.radius||SHOP.radius;staffRuleText.textContent=`Selfie لازمی + Noor Traders سے زیادہ سے زیادہ ${radius}m`;staffInstructionText.textContent=staffConfig.instruction||staffInstructionText.textContent;staffVersionLabel.textContent='v104'}}));
   staffUnsubs.push(onSnapshot(doc(staffAccountsCol,currentStaffPhone),s=>{if(s.exists()){currentStaff={...clean(s.data()),phone:currentStaffPhone};window.currentStaffAccountV101=currentStaff;renderStaffProfile();window.renderStaffSalaryV101?.()}}));
   if(ownAttendanceUnsub)try{ownAttendanceUnsub()}catch{}
   const q=query(staffAttendanceCol,where("phone","==",currentStaffPhone));
   ownAttendanceUnsub=onSnapshot(q,s=>{
     const rows=[];s.forEach(d=>rows.push(clean(d.data())));
     rows.sort((a,b)=>(b.date||"").localeCompare(a.date||""));
-    window.__myAttendance=rows;renderStaffToday();renderStaffHistory();window.renderStaffSalaryV101?.();
+    window.__myAttendance=rows;window.noorStaffUpgrades?.render();renderStaffToday();renderStaffHistory();window.renderStaffSalaryV101?.();
   },e=>{console.error(e);staffActionMessage.textContent="Attendance data load نہیں ہوا۔ Rules check کریں۔"});
 }
 function renderStaffToday(){
@@ -3373,12 +3380,12 @@ staffCheckInBtn?.addEventListener("click",async()=>{
   try{gps=await getGps()}catch(e){staffActionMessage.textContent="GPS location حاصل نہیں ہوئی۔";return}
   const meters=Math.round(gps.distance);staffGpsMeters.textContent=String(meters);staffDistance.textContent=meters+" m";
   const radius=+(staffConfig.radius||SHOP.radius);if(gps.distance>radius){staffGpsRing.className="gps-ring bad";staffActionMessage.textContent=`Check-In blocked: آپ ${meters}m دور ہیں۔ حد ${radius}m ہے۔`;return}
-  const date=pkDate(),id=`${date}_${currentStaffPhone}`,minutesLate=Math.max(0,currentPkMinutesV84()-localMinutesFromTimeV84(staffConfig.shiftStart||'09:00')),autoScore=scoreForLateV84(minutesLate);
+  const date=pkDate(),id=`${date}_${currentStaffPhone}`,minutesLate=Math.max(0,currentPkMinutesV84()-localMinutesFromTimeV84(window.noorStaffUpgrades?.schedule(currentStaffPhone)?.shiftStart||staffConfig.shiftStart||'09:00')),autoScore=scoreForLateV84(Math.max(0,minutesLate-Number(window.noorStaffUpgrades?.schedule(currentStaffPhone)?.grace??10)+10));
   await setDoc(doc(staffAttendanceCol,id),{
     id,
     date,phone:currentStaffPhone,name:currentStaff.name||"",address:currentStaff.address||"",
     checkIn:pkTime(),checkInTs:Date.now(),checkInLat:gps.lat,checkInLng:gps.lng,checkInAccuracy:gps.accuracy,
-    checkInDistance:gps.distance,selfie:staffSelfieData,shopLat:SHOP.lat,shopLng:SHOP.lng,shopRadius:+(staffConfig.radius||SHOP.radius),minutesLate,autoScore,finalScore:autoScore,shiftStart:staffConfig.shiftStart||'09:00'
+    checkInDistance:gps.distance,selfie:staffSelfieData,shopLat:SHOP.lat,shopLng:SHOP.lng,shopRadius:+(staffConfig.radius||SHOP.radius),minutesLate,autoScore,finalScore:autoScore,shiftStart:window.noorStaffUpgrades?.schedule(currentStaffPhone)?.shiftStart||staffConfig.shiftStart||'09:00'
   },{merge:true});
   staffActionMessage.className="portal-message ok";staffActionMessage.textContent="Check-In کامیاب ہو گیا۔";
 });
@@ -3399,8 +3406,94 @@ staffPdfBtn?.addEventListener('click',()=>window.noorTasks.report({phone:current
 const taskService=createTaskService({fs,auth,sdk:{collection,doc,getDoc,getDocs,query,where,onSnapshot,runTransaction,writeBatch},getStaffPhone:()=>currentStaffPhone});
 window.noorTasks=installTaskUI({service:taskService,getStaff:()=>window.getNoorDb?.().staff||[],getCurrentStaff:()=>currentStaff,getAttendance:(phone,from,to)=>{const rows=auth.currentUser?.isAnonymous?(window.__myAttendance||[]):getAttendanceBetween(from||'0000-00-00',to||'9999-99-99');return rows.filter(a=>(!phone||normalizePhone(a.phone)===phone)&&(!from||a.date>=from)&&(!to||a.date<=to))},getSalary:(phone,from,to)=>window.salaryReportForRangeV102?.(phone,from,to)||null});
 
+/* BEGIN V104 STAFF MODULE */
+const StaffUpgradesV104=(()=>{
+
+/* Additive Staff v104. Existing screens remain available. */
+function staffStatusV104(account, attendance={}, requests=[], date, schedule={}) {
+  const checked=attendance.checkIn||attendance.checkInTime;
+  if(checked){
+    const minutes=t=>{const m=String(t||'').match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);if(!m)return null;return (m[3]?(+m[1]%12)+(m[3].toUpperCase()==='PM'?12:0):+m[1])*60 + +m[2]};
+    const actual=minutes(checked),start=minutes(schedule.shiftStart);
+    const late=start!=null&&actual!=null?Math.max(0,actual-start):Number(attendance.minutesLate||0);
+    return late>Number(schedule.grace??10)?'late':'present';
+  }
+  if(requests.some(r=>r.phone===account.phone&&r.kind==='leave'&&r.status==='approved'&&r.date<=date&&r.to>=date))return 'leave';
+  if((schedule.weeklyOff||[]).includes(new Date(date+'T12:00:00Z').getUTCDay()))return 'off';
+  return 'absent';
+}
+function installStaffUpgrades({fs,auth,sdk,getStaff,getAttendance,getConfig,isOwner}){
+ const {collection,doc,query,where,onSnapshot,runTransaction}=sdk;
+ const col=n=>collection(fs,'businesses','noor-traders',n),ref=(n,id)=>doc(col(n),id);
+ const $=id=>document.getElementById(id),escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Karachi'}).format(new Date());
+ let session=null,unsubs=[],data={staffRequests:[],staffSchedules:[],staffPayroll:[],staffAudit:[]},loaded=new Set(),filter='all',tab='overview',epoch=0;
+ const names={present:'Hazir',late:'Late',absent:'Ghair hazir',leave:'Chhutti',off:'Weekly off'};
+ const owner=()=>session?.role==='owner'&&isOwner(auth.currentUser);
+ const schedule=p=>data.staffSchedules.find(x=>x.id===p)||getConfig();
+ const payment=(p,m)=>data.staffPayroll.find(x=>x.id===`${m}_${p}`);
+ const money=n=>'Rs '+Number(n||0).toLocaleString('en-PK',{maximumFractionDigits:2});
+ function snapshot(p,m){const r=payment(p,m);return r?.state==='final'?structuredClone(r.snapshot):null}
+ window.staffFinalSalaryV104=snapshot;
+ const ownerBox=document.createElement('section');ownerBox.id='staffUpgradeOwner';ownerBox.className='su-panel';$('staffCenter').prepend(ownerBox);
+ const ownBox=document.createElement('section');ownBox.id='staffUpgradeOwn';ownBox.className='su-panel';$('staffTaskPanelV99').before(ownBox);
+ const style=document.createElement('style');style.textContent='.su-panel{background:#fff;border:1px solid #d2e4dc;border-radius:18px;padding:16px;margin:12px 0;color:#183e30}.su-nav,.su-grid{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.su-grid>*{flex:1 1 130px}.su-panel button{min-height:44px;border:1px solid #ccdcd3;border-radius:10px;padding:9px 13px;cursor:pointer}.su-panel button[aria-pressed=true]{background:#184f3d;color:white}.su-panel label{display:block;margin:8px 0}.su-panel input,.su-panel select,.su-panel textarea{width:100%;max-width:100%;padding:10px;border:1px solid #b9cec1;border-radius:8px}.su-row{border-top:1px solid #e3ece6;padding:12px 0;overflow-wrap:anywhere}.su-row p{margin:6px 0}.su-panel details{padding:8px 0}.su-panel small{color:#536a5c}.su-error{color:#a32424}.su-panel [hidden]{display:none!important}@media(max-width:500px){.su-grid>*{flex-basis:42%}.su-panel{padding:12px}.su-nav button{flex:1 1 40%}}';document.head.append(style);
+ ownerBox.innerHTML='<h2>Staff Control</h2><div class="su-nav" id="suNav"></div><p id="suMessage" role="status"></p><div id="suContent"></div>';
+ ownBox.innerHTML='<h2>Aaj / آج</h2><div id="suOwnSummary"></div><details><summary>Chhutti / Attendance correction ki request</summary><form id="suRequest"><label>Request<select name="kind"><option value="leave">Chhutti</option><option value="correction">Bhoola checkout / attendance correction</option></select></label><div class="su-grid"><label>Date<input name="date" type="date" required></label><label>Leave end date<input name="to" type="date" required></label></div><label>Correction: check-in<input name="checkIn" type="time"></label><label>Correction: check-out<input name="checkOut" type="time"></label><label>Wajah<textarea name="reason" maxlength="1000" required></textarea></label><button>Request bhejein</button></form></details><p id="suOwnMessage" role="status"></p><div id="suOwnRequests"></div>';
+ function message(s,bad=false){const el=$(owner()?'suMessage':'suOwnMessage');el.textContent=s;el.className=bad?'su-error':''}
+ async function action(fn,button){if(button)button.disabled=true;try{await fn();message('Save ho gaya');render()}catch(e){message(e.message||'Save nahi hua — dobara koshish karein',true)}finally{if(button)button.disabled=false}}
+ function guard(){if(!owner())throw Error('Owner login zaroori hai')}
+ function audit(tx,type,id,before,after,reason){const ar=doc(col('staffAudit'));tx.set(ar,{type,target:id,before:JSON.stringify(before||null),after:JSON.stringify(after||null),reason,by:auth.currentUser.uid,at:Date.now()})}
+ async function write(n,id,patch,reason){guard();await runTransaction(fs,async tx=>{const r=ref(n,id),old=await tx.get(r);tx.set(r,patch,{merge:true});audit(tx,n,id,old.exists()?old.data():null,patch,reason)})}
+ function person(p){return getStaff().find(s=>String(s.phone||s.id)===p)||{phone:p,name:p}}
+ function render(){if(!session)return;ownerBox.hidden=!owner();ownBox.hidden=owner();if(owner())renderOwner();else renderOwn()}
+ function renderOwner(){
+  $('suNav').innerHTML=[['overview','Overview'],['staff','Staff / Duty'],['approvals','Approvals'],['salary','Salary / Payments'],['history','Change history']].map(([k,v])=>`<button data-tab="${k}" aria-pressed="${tab===k}">${v}</button>`).join('');
+  const box=$('suContent');if(loaded.size<4){box.textContent='Staff controls load ho rahe hain…';return}
+  const staff=getStaff().filter(s=>s.active!==false).map(s=>({...s,phone:String(s.phone||s.id)}));
+  if(tab==='overview'){
+   const rows=staff.map(s=>({s,a:getAttendance(today(),today()).find(a=>a.phone===s.phone)||{}})).map(x=>({...x,status:staffStatusV104(x.s,x.a,data.staffRequests,today(),schedule(x.s.phone))}));
+   box.innerHTML=`<div class="su-grid">${[['all','Sab'],...Object.entries(names)].map(([k,v])=>`<button data-filter="${k}" aria-pressed="${filter===k}">${v}<br><b>${rows.filter(x=>k==='all'||x.status===k).length}</b></button>`).join('')}</div><label>Staff search<input id="suSearch" placeholder="Naam ya phone"></label><div id="suPeople">${rows.filter(x=>filter==='all'||x.status===filter).map(({s,a,status})=>`<div class="su-row" data-search="${escape((s.name+' '+s.phone).toLowerCase())}"><b>${escape(s.name)}</b> · ${names[status]}<p>${escape(a.checkIn||'—')} → ${escape(a.checkOut||'—')} · ${escape(window.whTextV101?.(a)||'')}</p><button data-profile="${escape(s.phone)}">Poora profile</button></div>`).join('')||'<p>Koi staff nahi.</p>'}</div><details><summary>Missing checkout (${getAttendance('0000-00-00',today()).filter(a=>a.date<today()&&(a.checkIn||a.checkInTime)&&!(a.checkOut||a.checkOutTime)).length})</summary>${getAttendance('0000-00-00',today()).filter(a=>a.date<today()&&(a.checkIn||a.checkInTime)&&!(a.checkOut||a.checkOutTime)).map(a=>`<p>${escape(person(a.phone).name)} · ${escape(a.date)} <button data-att="${escape(a.id||a.date+'_'+a.phone)}" data-phone="${escape(a.phone)}">Correction</button></p>`).join('')}</details><button data-tasks>Pending picture approvals</button>`;
+  } else if(tab==='staff'){
+   box.innerHTML=staff.map(s=>{const c=schedule(s.phone);return `<details class="su-row"><summary>${escape(s.name)} · Duty settings</summary><button data-profile="${escape(s.phone)}">Profile / salary / pictures</button><form data-schedule="${escape(s.phone)}"><div class="su-grid"><label>Duty start<input type="time" name="shiftStart" value="${escape(c.shiftStart||'09:00')}" required></label><label>Duty end<input type="time" name="shiftEnd" value="${escape(c.shiftEnd||'')}"></label><label>Grace minutes<input name="grace" type="number" min="0" max="120" value="${Number(c.grace??10)}" required></label></div><label>Weekly off<select name="off"><option value="">None</option>${['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map((d,i)=>`<option value="${i}" ${(c.weeklyOff||[]).includes(i)?'selected':''}>${d}</option>`).join('')}</select></label><label>Tabdeeli ki wajah<input name="reason" maxlength="500" required></label><button>Save duty</button></form></details>`}).join('');
+  }else if(tab==='approvals'){
+   box.innerHTML='<button data-tasks>Pictures dekhein / points approve karein</button>'+data.staffRequests.slice().sort((a,b)=>b.createdAt-a.createdAt).map(r=>requestRow(r,true)).join('');
+  }else if(tab==='salary'){
+   const m=window.suMonthV104||today().slice(0,7);box.innerHTML=`<label>Month<input id="suMonth" type="month" value="${m}"></label>`+staff.map(s=>{const p=payment(s.phone,m),r=window.salaryCalcV101?.(s.phone,m);return `<div class="su-row"><b>${escape(s.name)}</b><p>${p?.state==='final'?'Final':'Estimate'}: ${money(r?.final)} · Paid: ${money(p?.paid)} · Baqi: ${money((r?.final||0)-(p?.paid||0))}</p><small>Attendance points: ${r?.attPoints||0} · Task points: ${r?.taskPoints||0}</small><p><button data-salary="${escape(s.phone)}">Salary breakdown / advance</button> <button data-final="${escape(s.phone)}">${p?.state==='final'?'Reopen with reason':'Review & final'}</button> ${p?.state==='final'?`<button data-pay="${escape(s.phone)}">Payment add</button>`:''}</p>${(p?.payments||[]).map(x=>`<small>${escape(x.date)} · ${money(x.amount)} · ${escape(x.note)}</small><br>`).join('')}</div>`}).join('');
+  }else box.innerHTML=data.staffAudit.slice().sort((a,b)=>b.at-a.at).map(a=>`<details class="su-row"><summary>${escape(a.type)} · ${escape(a.target)} · ${escape(new Date(a.at).toLocaleString('en-PK',{timeZone:'Asia/Karachi'}))}</summary><p>By: ${escape(a.by)} · ${escape(a.reason)}</p><p>Before: ${escape(a.before)}</p><p>After: ${escape(a.after)}</p></details>`).join('')||'Abhi koi tabdeeli nahi.';
+ }
+ function requestRow(r,review){return `<div class="su-row"><b>${escape(review?person(r.phone).name:r.kind)}</b> · ${escape(r.kind)} · ${escape(r.status)}<p>${escape(r.date)} → ${escape(r.to)} · ${escape(r.checkIn)} / ${escape(r.checkOut)}</p><p>${escape(r.reason)}</p><small>${escape(r.ownerNote||'')}</small>${review&&r.status==='pending'?`<p><button data-review="${escape(r.id)}" data-status="approved">Approve</button> <button data-review="${escape(r.id)}" data-status="rejected">Reject</button></p>`:''}</div>`}
+ function renderOwn(){const p=session.phone,c=schedule(p),a=(window.__myAttendance||[]).find(x=>x.date===today())||{},m=$('staffSalaryMonthV101')?.value||today().slice(0,7),pay=payment(p,m);$('suOwnSummary').innerHTML=`<p>Duty: <b>${escape(c.shiftStart||'09:00')} → ${escape(c.shiftEnd||'—')}</b> · Grace: ${Number(c.grace??10)}m</p><p>Aaj: ${escape(a.checkIn||'—')} → ${escape(a.checkOut||'—')} · ${escape(window.whTextV101?.(a)||'')}</p><div class="su-nav"><button data-jump="staffAttendancePanelV100">Check-In / Out</button><button data-jump="staffTaskPanelV99">Mere kaam / pictures</button><button data-jump="staffSalaryPanelV101">Meri salary</button></div>${pay?.state==='final'?`<p>${escape(m)} Final salary: <b>${money(pay.snapshot.final)}</b> · Paid: ${money(pay.paid)} · Baqi: ${money(pay.snapshot.final-(pay.paid||0))}</p>`:''}`;$('suOwnRequests').innerHTML=data.staffRequests.slice().sort((a,b)=>b.createdAt-a.createdAt).map(r=>requestRow(r,false)).join('');}
+ $('suRequest').onsubmit=e=>{e.preventDefault();const f=e.currentTarget,v=Object.fromEntries(new FormData(f));action(async()=>{if(session?.role!=='staff')throw Error('Staff login required');if(v.kind==='correction')v.to=v.date;if(v.to<v.date)throw Error('End date pehle nahi ho sakti');if(v.kind==='correction'&&!v.checkIn&&!v.checkOut)throw Error('Correct time likhein');const id=doc(col('staffRequests')).id;await runTransaction(fs,async tx=>tx.set(ref('staffRequests',id),{...v,phone:session.phone,status:'pending',createdAt:Date.now(),by:auth.currentUser.uid}));f.reset();f.elements.date.value=f.elements.to.value=today()},f.querySelector('button'))};
+ ownerBox.addEventListener('input',e=>{if(e.target.id==='suSearch'){const q=e.target.value.toLowerCase();ownerBox.querySelectorAll('[data-search]').forEach(el=>el.hidden=!el.dataset.search.includes(q))}});
+ ownerBox.addEventListener('change',e=>{if(e.target.id==='suMonth'){window.suMonthV104=e.target.value;render()}});
+ ownerBox.addEventListener('submit',e=>{const f=e.target;if(!f.dataset.schedule)return;e.preventDefault();const v=Object.fromEntries(new FormData(f));action(()=>write('staffSchedules',f.dataset.schedule,{phone:f.dataset.schedule,shiftStart:v.shiftStart,shiftEnd:v.shiftEnd,grace:Number(v.grace),weeklyOff:v.off===''?[]:[Number(v.off)]},v.reason),f.querySelector('button'))});
+ async function click(e){const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+  if(d.tab){tab=d.tab;render()}if(d.filter){filter=d.filter;render()}
+  if(d.profile)window.openStaffProfileV84(d.profile);if(d.salary)window.openSalaryDetailV101(d.salary);
+  if(d.att)window.openAttendanceEditV84(d.att,d.phone);
+  if(d.tasks){window.goScreen('staffTasks');const s=$('ntTaskStatusFilter');if(s){s.value='submitted';s.dispatchEvent(new Event('change',{bubbles:true}))}}
+  if(d.jump)$(d.jump)?.scrollIntoView({behavior:'smooth'});
+  if(d.review)await action(async()=>{guard();const reason=prompt('Approval / rejection note');if(reason===null)return;await runTransaction(fs,async tx=>{const rr=ref('staffRequests',d.review),snap=await tx.get(rr);if(!snap.exists()||snap.data().status!=='pending')throw Error('Request pehle review ho chuki');const r=snap.data(),ar=ref('staffAttendance',`${r.date}_${r.phone}`);let old;if(r.kind==='correction'&&d.status==='approved'){old=await tx.get(ar);if(!old.exists())throw Error('Attendance record nahi mila; existing attendance edit se durust karein');}const patch={status:d.status,ownerNote:reason,reviewedAt:Date.now(),reviewedBy:auth.currentUser.uid};tx.set(rr,patch,{merge:true});if(old){const a=old.data(),p={ownerNote:reason,editedAt:Date.now(),editedBy:auth.currentUser.uid};if(r.checkIn){p.checkIn=r.checkIn;p.checkInTs=null}if(r.checkOut){p.checkOut=r.checkOut;p.checkOutTs=null}tx.set(ar,p,{merge:true});audit(tx,'attendance',ar.id,a,p,reason)}audit(tx,'request',d.review,r,patch,reason)})},b);
+  if(d.final)await action(async()=>{guard();const p=d.final,m=window.suMonthV104||today().slice(0,7);if(!/^\d{4}-\d{2}$/.test(m))throw Error('Month select karein');const old=payment(p,m),reason=prompt(old?.state==='final'?'Reopen ki wajah?':'Salary review kar li? Final karne ka note:');if(!reason?.trim())return;const calculated=window.salaryCalcV101(p,m);if(old?.state!=='final'&&calculated.openDays)throw Error('Pehle missing checkouts durust karein');await runTransaction(fs,async tx=>{const r=ref('staffPayroll',`${m}_${p}`),s=await tx.get(r),current=s.exists()?s.data():null;if((current?.state||'draft')!==(old?.state||'draft'))throw Error('Salary badal gayi; dobara review karein');const patch={phone:p,month:m,state:current?.state==='final'?'draft':'final',snapshot:current?.state==='final'?current.snapshot:JSON.parse(JSON.stringify({...calculated,recs:(calculated.recs||[]).map(({phone,date,checkIn,checkOut,finalScore,autoScore})=>({phone,date,checkIn:checkIn||'',checkOut:checkOut||'',finalScore:finalScore??null,autoScore:autoScore??null}))})),paid:current?.paid||0,payments:current?.payments||[],updatedAt:Date.now()};tx.set(r,patch);audit(tx,'salary final',r.id,current,patch,reason)})},b);
+  if(d.pay)await action(async()=>{guard();const raw=prompt('Kitni salary pay ki?');if(raw===null)return;const amount=Number(raw);if(!Number.isFinite(amount)||amount<=0)throw Error('Amount durust likhein');const date=prompt('Payment date YYYY-MM-DD',today());if(!/^\d{4}-\d{2}-\d{2}$/.test(date||''))throw Error('Date durust likhein');const note=prompt('Payment note / reference');if(note===null)return;const m=window.suMonthV104||today().slice(0,7);await runTransaction(fs,async tx=>{const r=ref('staffPayroll',`${m}_${d.pay}`),s=await tx.get(r);if(!s.exists()||s.data().state!=='final')throw Error('Pehle salary final karein');const old=s.data(),paid=(old.paid||0)+amount;if(paid>old.snapshot.final+0.005)throw Error('Payment baqi salary se zyada hai');const patch={paid,payments:[...(old.payments||[]),{amount,date,note,by:auth.currentUser.uid,at:Date.now()}]};tx.set(r,patch,{merge:true});audit(tx,'salary payment',r.id,{paid:old.paid},patch,note)})},b);
+ }
+ ownerBox.addEventListener('click',click);ownBox.addEventListener('click',click);
+ const shortcuts=document.createElement('div');shortcuts.className='su-nav';shortcuts.innerHTML='<button data-short="overview">Overview</button><button data-short="staff">Staff / Duty</button><button data-short="approvals">Approvals</button><button data-short="salary">Salary</button>';
+ $('staffTopNavV99')?.prepend(shortcuts);shortcuts.addEventListener('click',e=>{const b=e.target.closest('[data-short]');if(b){tab=b.dataset.short;window.goScreen('staffCenter');render();ownerBox.scrollIntoView({behavior:'smooth'})}});
+
+ for(const name of ['saveSalaryCfgV101','addSalaryExtraV101','deleteSalaryExtraV101']){const original=window[name];if(original)window[name]=async function(...args){try{return await original.apply(this,args)}catch(e){alert('Salary save nahi hui: '+(e.message||'Dobara koshish karein'))}}}
+ function stop(){epoch++;unsubs.forEach(u=>u());unsubs=[];session=null;loaded.clear();for(const k in data)data[k]=[];ownerBox.hidden=ownBox.hidden=true;$('suContent').innerHTML='';$('suOwnRequests').innerHTML='';$('suOwnSummary').innerHTML='';$('suRequest').reset()}
+ function start(s){stop();session=s;const token=epoch;for(const n of Object.keys(data)){if(!owner()&&n==='staffAudit'){loaded.add(n);continue}const q=owner()?col(n):query(col(n),where('phone','==',s.phone));unsubs.push(onSnapshot(q,snap=>{if(token!==epoch)return;data[n]=[];snap.forEach(d=>data[n].push({id:d.id,...d.data()}));loaded.add(n);render();if(n==='staffPayroll'){window.renderSalaryV101?.();window.renderStaffSalaryV101?.()}},err=>message('Naye Staff controls load nahi hue. Updated Firestore rules publish karein, phir refresh. '+err.code,true)))}$('suRequest').elements.date.value=$('suRequest').elements.to.value=today();render()}
+ return {start,stop,render,schedule,snapshot,write,async log(type,id,before,after,reason){guard();await runTransaction(fs,async tx=>audit(tx,type,id,before,after,reason))},async attendance(id,patch,remove=false){guard();await runTransaction(fs,async tx=>{const r=ref('staffAttendance',id),s=await tx.get(r);if(remove)tx.delete(r);else tx.set(r,patch,{merge:true});audit(tx,'attendance',id,s.exists()?s.data():null,remove?null:patch,patch.ownerNote||'Owner attendance edit')})}};
+}
+
+return {staffStatusV104,installStaffUpgrades};
+})();
+/* END V104 STAFF MODULE */
+window.noorStaffUpgrades=StaffUpgradesV104.installStaffUpgrades({fs,auth,sdk:{collection,doc,query,where,onSnapshot,runTransaction},getStaff:()=>window.getNoorDb?.().staff||[],getAttendance:getAttendanceBetween,getConfig:()=>staffConfig,isOwner:isOwnerUser});
 function resetAuthView(){
-  clearTimeout(saveTimer);stopListeners();stopStaffListeners();window.noorTasks?.stop();
+  clearTimeout(saveTimer);stopListeners();stopStaffListeners();window.noorTasks?.stop();window.noorStaffUpgrades?.stop();
   if(ownAttendanceUnsub){ownAttendanceUnsub();ownAttendanceUnsub=null}
   window.noorFirebaseSync.ready=false;
   currentStaff=null;currentStaffPhone='';window.currentStaffAccountV101=null;staffSelfieData='';lastStaffGps=null;
@@ -3442,7 +3535,7 @@ const authController=createAuthController({
       userBar.hidden=false;userEmail.textContent='مالک • admin';
       setCloud('Firebase data load ہو رہا ہے…');startListeners();startOwnerStaffListeners();
     }
-    window.noorTasks.start(session);
+    window.noorTasks.start(session);window.noorStaffUpgrades.start(session);
     loginGate.classList.add('hidden');
   }
 });
@@ -4031,7 +4124,9 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
     const own=(db.salaryExtras||{})[phone];
     return Array.isArray(own)?own:(Array.isArray(staff.salaryExtras)?staff.salaryExtras:[]);
   }
-  function saveCfg(phone,patch){
+  async function saveCfg(phone,patch){
+    const reason=prompt("Salary settings badalne ki wajah?");if(!reason?.trim())return;
+    await window.noorStaffUpgrades?.log("salary settings",phone,cfgFor(phone),patch,reason);
     phone=normPhoneV84(phone);
     db.salaryConfig??={};
     db.salaryConfig[phone]={...cfgFor(phone),...patch};
@@ -4051,6 +4146,7 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
 
   /* ---------- calculation ---------- */
   function calc(phone,month){
+    const frozen=window.staffFinalSalaryV104?.(phone,month);if(frozen)return frozen;
     const cfg=cfgFor(phone),{from,to}=monthRange(month);
     const recs=(window.noorStaffSystem?.getAttendanceBetween(from,to)||[]).filter(a=>normPhoneV84(a.phone)===phone);
     const dutyMin=Math.max(0,Math.round(cfg.dutyHours*60));
@@ -4204,9 +4300,9 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
     </div>`;
   }
 
-  window.saveSalaryCfgV101=function(){
+  window.saveSalaryCfgV101=async function(){
     if(!currentSalaryPhone)return;
-    saveCfg(currentSalaryPhone,{
+    await saveCfg(currentSalaryPhone,{
       monthlySalary:Number($('salCfgSalaryV101').value||0),
       dutyHours:Number($('salCfgDutyV101').value||10),
       workingDays:Number($('salCfgDaysV101').value||30),
@@ -4216,11 +4312,13 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
     renderDetail();
     window.toastV97&&toastV97('✅ Salary settings save ho gayi');
   };
-  window.addSalaryExtraV101=function(){
+  window.addSalaryExtraV101=async function(){
     if(!currentSalaryPhone)return;
     const amount=Number($('salExtraAmountV101').value||0);
     if(!(amount>0))return alert('Amount درست درج کریں۔');
     const month=$('salaryMonthV101')?.value||curMonth();
+    const reason=$('salExtraNoteV101').value.trim();if(!reason)return alert('Wajah / note likhein');
+    await window.noorStaffUpgrades?.log('salary adjustment',currentSalaryPhone,null,{month,amount,kind:$('salExtraKindV101').value},reason);
     db.salaryExtras??={};
     (db.salaryExtras[currentSalaryPhone]??=[]).push({
       id:'sx'+Date.now()+Math.random().toString(36).slice(2,6),
@@ -4232,9 +4330,11 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
     save();
     renderDetail();
   };
-  window.deleteSalaryExtraV101=function(id){
+  window.deleteSalaryExtraV101=async function(id){
     if(!currentSalaryPhone)return;
     if(!confirm('یہ اندراج delete کریں؟'))return;
+    const reason=prompt('Salary entry delete karne ki wajah?');if(!reason?.trim())return;
+    await window.noorStaffUpgrades?.log('salary adjustment delete',currentSalaryPhone,(db.salaryExtras[currentSalaryPhone]||[]).find(x=>String(x.id)===String(id)),null,reason);
     db.salaryExtras[currentSalaryPhone]=(db.salaryExtras[currentSalaryPhone]||[]).filter(x=>String(x.id)!==String(id));
     mirrorToStaff(currentSalaryPhone);
     save();
@@ -4252,6 +4352,7 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
 
   /* ---------- staff ka apna (read-only) salary view ---------- */
   function staffCalc(month){
+    const frozen=window.staffFinalSalaryV104?.(window.currentStaffAccountV101?.phone,month);if(frozen)return frozen;
     const acc=window.currentStaffAccountV101||null;
     const cfg={monthlySalary:Number(acc?.salary?.monthlySalary||0),dutyHours:Number(acc?.salary?.dutyHours||10),
                workingDays:Number(acc?.salary?.workingDays||30),overtimeRate:Number(acc?.salary?.overtimeRate||0),
@@ -4309,7 +4410,7 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
         <div><small>Points</small><b>${r.points}</b><span>${money(r.pointsAmount)}</span></div>
         <div><small>Bonus</small><b>${money(r.bonus)}</b><span>مالک کی طرف سے</span></div>
         <div><small>Advance</small><b>− ${money(r.advance)}</b><span>پیشگی / کٹوتی</span></div>
-        <div class="staff-salary-final-v101"><small>Estimated Salary</small><b>${money(r.final)}</b><span>${monthLabel(month)}</span></div>
+        <div class="staff-salary-final-v101"><small>${window.staffFinalSalaryV104?.(window.currentStaffAccountV101?.phone,month)?'Final Salary':'Estimated Salary'}</small><b>${money(r.final)}</b><span>${monthLabel(month)}</span></div>
       </div>`;
   };
 

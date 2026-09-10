@@ -1,3 +1,30 @@
+# Noor Traders Staff v104
+
+This update preserves the v103 staff screens and adds an owner Staff Control overview, duty schedules, leave/correction requests, salary finalization/payment tracking and change history. Existing login credentials/configuration are unchanged. This ZIP has not been deployed to production.
+
+## Use
+- Owner: Staff Control → Overview / Staff-Duty / Approvals / Salary / Change history. Existing Staff List, GPS/selfie attendance, camera-only task submission, reports, meal allowances, scores and all other screens remain available.
+- Employee: Aaj summary and requests are above the existing task and attendance panels. Staff can request leave or corrections; owner approves or rejects. Leave approval marks leave in the new overview; it does not automatically add paid leave to the existing hourly salary calculation.
+- Duty settings support a start/end time, one weekly-off day and grace minutes per employee. Defaults use the existing shop policy. End time is informational; actual clocked hours and existing salary duty-hours settings continue to determine pay. Overnight working-hour calculations remain available. Existing historical scores are preserved.
+- Finalize salary only after reviewing the monthly breakdown and resolving open attendance. The final snapshot is reused by existing salary views and reports until the owner reopens it with a reason. Payments are recorded separately from advances, with date, note and remaining balance; payment entry does not create a business cash/expense entry.
+- Attendance corrections/deletions, schedules, request reviews, salary configuration/adjustments, finalization and payments generate owner-visible audit events. This is application change history, not a tamper-proof accounting log.
+
+## Deploy this update
+1. Publish `firestore.rules` to the existing Firebase project. The new own-record permissions are necessary for staff requests, duty schedules and finalized salary views. Existing Firebase configuration and owner identities are retained.
+2. Upload `index.html`, `sw.js` and `version.json` to the current host, retaining existing manifest/assets.
+3. Press Sync on the login screen, then verify one owner and one staff login.
+
+The new collections are `staffRequests`, `staffSchedules`, `staffPayroll`, and `staffAudit`. They are stored in the existing Firebase business. Like existing cloud tasks/photos, they are not part of the legacy local JSON business backup. This update does not change backup/restore scope. New review/payment operations require a successful online transaction; no success is shown for a failed commit.
+
+## Validation
+32 unit/domain tests and eight actual-HTML/DOM scenarios passed using a synthetic SDK, including existing picture submission/approval/PDF flows and the new request → approved correction → schedule → salary freeze → payment workflow. Overpayment and failed payment writes were rejected. DOM tests adapt top-level classic-script bindings to Happy DOM's per-evaluation scope; production scripts are unchanged by that test adaptation. Mobile screenshot verification was unavailable because Chromium could not be downloaded. Additional Firebase rules tests are supplied; a live emulator and production camera/GPS/push validation were not run.
+
+Run `npm test`, `npm run test:dom`, and `npm run build`. `npm run test:rules` requires the local Firestore emulator. Sources for new controls are in `staff-upgrades.js`; the build embeds them in the standalone HTML.
+
+---
+
+## Preserved v103 documentation
+
 # Noor Traders Hisab v103
 
 v103 fixes the live attendance summary so present staff no longer remain marked absent after Firestore finishes loading. It also makes the Salary Breakdown fit narrow mobile screens without clipping its amount column.

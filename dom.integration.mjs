@@ -31,7 +31,7 @@ async function boot(role,extraRecords=[]){
  w.eval(stripImports(ui).replace(/export /g,''));
  // Happy DOM has no image/canvas decoder; inject fixed JPEG data only at that boundary.
  const realInstall=w.installTaskUI;w.installTaskUI=args=>realInstall({...args,compress:async()=>img});
- for(const b of blocks)if(b.module)await w.eval('(async()=>{'+stripImports(b.code).replace('installTaskUI({service:taskService,','installTaskUI({compress:async()=>\'data:image/jpeg;base64,/9j/2Q==\',service:taskService,')+'})()');else w.eval(b.code);
+ for(const b of blocks)if(b.module)await w.eval('(async()=>{'+stripImports(b.code).replace('installTaskUI({service:taskService,','installTaskUI({compress:async()=>\'data:image/jpeg;base64,/9j/2Q==\',service:taskService,')+'})()');else w.eval(b.code.replace(/^(const|let) /gm,'var '));
  await delay();return{w,f,errors,phoneNotices,workerMessages,getPermissionRequests:()=>permissionRequests};
 }
 for(const role of ['none','owner','staff','outsider']){
@@ -103,4 +103,34 @@ assert.deepEqual(errors,[]);console.log('PASS full UI: profile assignment → 2 
  w.logoutBtn.click();await delay();assert.equal(w.document.getElementById('ntNoticeDialog').hidden,true);assert.equal(w.document.getElementById('ntNoticeToast').hidden,true);
  await f.sdk.setDoc(f.sdk.doc({},base+'/staffTasks/live-task'),{...data,submissionId:'another-submission',revision:2});await delay();assert.equal(phoneNotices.length,1,'no owner alerts after logout');
  assert.deepEqual(errors,[]);console.log('PASS live in-app + opt-in phone alert + click to photos + persisted read + logout privacy');await w.happyDOM.abort();
+}
+
+// v104 additive staff workflow, using the same actual HTML and synthetic SDK.
+{
+ const {w,f,errors}=await boot('staff');
+ const form=w.document.getElementById('suRequest');
+ form.elements.kind.value='correction';form.elements.date.value='2026-09-08';form.elements.to.value='2026-09-08';form.elements.checkOut.value='19:00';form.elements.reason.value='Forgot checkout';
+ form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await delay();
+ const request=[...f.records].find(([k])=>k.includes('/staffRequests/'));
+ assert.ok(request,'staff request saved');assert.equal(request[1].phone,phone);assert.equal(request[1].status,'pending');
+ const o=await boot('owner',[request,[base+'/staffAttendance/2026-09-08_'+phone,{phone,date:'2026-09-08',checkIn:'09:00',finalScore:10}]]);
+ o.w.prompt=()=> 'Reviewed';o.w.document.querySelector('[data-tab="approvals"]').click();
+ o.w.document.querySelector('[data-review][data-status="approved"]').click();await delay();
+ assert.equal(o.f.records.get(request[0]).status,'approved');
+ assert.equal(o.f.records.get(base+'/staffAttendance/2026-09-08_'+phone).checkOut,'19:00');
+ assert.ok([...o.f.records.keys()].some(k=>k.includes('/staffAudit/')));
+ o.w.document.querySelector('[data-tab="staff"]').click();const schedule=o.w.document.querySelector('[data-schedule]');
+ schedule.elements.shiftStart.value='10:00';schedule.elements.grace.value='15';schedule.elements.off.value='5';schedule.elements.reason.value='New shift';schedule.dispatchEvent(new o.w.Event('submit',{bubbles:true,cancelable:true}));await delay();
+ assert.equal(o.f.records.get(base+'/staffSchedules/'+phone).shiftStart,'10:00');
+ o.w.document.querySelector('[data-tab="salary"]').click();o.w.document.querySelector('[data-final]').click();await delay();
+ const payrollPath=base+'/staffPayroll/2026-09_'+phone,payroll=o.f.records.get(payrollPath);assert.equal(payroll.state,'final');
+ const final=payroll.snapshot.final;
+ await o.f.sdk.setDoc(o.f.sdk.doc({},base,'staffAttendance','2026-09-08_'+phone),{checkOut:'18:00'},{merge:true});await delay();assert.equal(o.w.salaryCalcV101(phone,'2026-09').final,final,'finalized amount stays frozen');
+ let answers=['100','2026-09-10','Cash'];o.w.prompt=()=>answers.shift();o.w.document.querySelector('[data-pay]').click();await delay();assert.equal(o.f.records.get(payrollPath).paid,100);
+ answers=['999999','2026-09-10','Cash'];o.w.prompt=()=>answers.shift();o.w.document.querySelector('[data-pay]').click();await delay();assert.equal(o.f.records.get(payrollPath).paid,100,'overpayment rejected');
+ o.f.failNextCommit();answers=['100','2026-09-10','Cash'];o.w.prompt=()=>answers.shift();o.w.document.querySelector('[data-pay]').click();await delay();assert.equal(o.f.records.get(payrollPath).paid,100,'failed commit leaves payment unchanged');
+ assert.deepEqual(errors,[]);assert.deepEqual(o.errors,[]);
+ if(process.env.NT_VISUAL_DIR){o.w.document.querySelector('[data-tab="overview"]').click();o.w.goScreen('staffCenter');fs.writeFileSync(process.env.NT_VISUAL_DIR+'/owner.html',o.w.document.documentElement.outerHTML.replace(/<script[^>]*>[\s\S]*?<\/script>/g,''));fs.writeFileSync(process.env.NT_VISUAL_DIR+'/staff.html',w.document.documentElement.outerHTML.replace(/<script[^>]*>[\s\S]*?<\/script>/g,''));}
+ w.noorStaffUpgrades.stop();assert.equal(w.document.getElementById('suOwnRequests').textContent,'');
+ console.log('PASS v104 staff request → audited correction → duty schedule → salary freeze → payment / overpayment / failure → logout');
 }

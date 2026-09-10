@@ -1,3 +1,15 @@
+# v104 — Staff update
+
+Purane staff features rakhe gaye hain. Naye options Staff Control mein hain: Overview, Staff / Duty, Approvals, Salary aur Change history. Staff login par Aaj aur request form milta hai.
+
+**Zaroori:** Pehle isi Firebase project mein ZIP wali `firestore.rules` publish karein. Phir `index.html`, `sw.js`, `version.json` host par update karein aur Sync dabayein. Yeh ZIP abhi live publish nahi hui.
+
+Salary final karne se pehle missing checkouts durust karein. Final salary badalni ho to reason ke saath Reopen karein. Salary payment isi screen par record karein; is se business cash entry khud nahi banti. Chhutti approve hone se paid-leave salary khud add nahi hoti.
+
+Naye cloud records purane local JSON backup mein shamil nahi. Mukammal tafseel aur test results README.md mein hain.
+
+---
+
 # Noor Traders v103 — Attendance اور Salary Mobile Fix
 
 ## ویب سائٹ پر لگائیں

@@ -48,3 +48,20 @@ test('another employee and disabled employee cannot read the evidence',async()=>
  await assertSucceeds(updateDoc(doc(owner,base+'/staffAccounts/'+phone),{loginEnabled:false}));
  await assertFails(getDoc(doc(staff,base+'/staffTasks/t1')));await assertFails(getDoc(doc(staff,base+'/staffTasks/t1/taskPhotos/test-submission_0')));
 });
+test('v104 staff requests are own-only and approvals, payroll and schedules remain owner controlled',async()=>{
+ const r={phone,kind:'leave',date:'2026-09-10',to:'2026-09-11',checkIn:'',checkOut:'',reason:'Family',status:'pending',createdAt:1,by:'staff'};
+ await assertSucceeds(setDoc(doc(staff,base+'/staffRequests/r1'),r));
+ await assertFails(setDoc(doc(staff,base+'/staffRequests/forged'),{...r,phone:other}));
+ await assertFails(updateDoc(doc(staff,base+'/staffRequests/r1'),{status:'approved'}));
+ await assertSucceeds(updateDoc(doc(owner,base+'/staffRequests/r1'),{status:'approved'}));
+ await assertSucceeds(getDocs(query(collection(staff,base+'/staffRequests'),where('phone','==',phone))));
+ await assertFails(getDocs(collection(staff,base+'/staffRequests')));
+ for(const n of ['staffPayroll','staffSchedules']){
+  await assertSucceeds(setDoc(doc(owner,base+'/'+n+'/own'),{phone}));
+  await assertSucceeds(setDoc(doc(owner,base+'/'+n+'/other'),{phone:other}));
+  await assertSucceeds(getDoc(doc(staff,base+'/'+n+'/own')));
+  await assertFails(getDoc(doc(staff,base+'/'+n+'/other')));
+  await assertFails(setDoc(doc(staff,base+'/'+n+'/own'),{phone,paid:999}));
+ }
+ await assertFails(getDocs(collection(staff,base+'/staffAudit')));
+});

@@ -20,6 +20,7 @@ const css='<style id="taskStylesV99">\n'+read('staff-tasks.css')+'\n</style>';
 html=html.includes('<style id="taskStylesV99">')?html.replace(/<style id="taskStylesV99">[\s\S]*?<\/style>/,()=>css):html.replace('<link rel="stylesheet" href="./staff-tasks.css?v=v99">',()=>css);
 const premium='<style id="premiumPanelsV100">\n'+read('premium-panels.css')+'\n</style>';
 html=html.includes('<style id="premiumPanelsV100">')?html.replace(/<style id="premiumPanelsV100">[\s\S]*?<\/style>/,()=>premium):html.slice(0,html.lastIndexOf('</body>'))+premium+'\n'+html.slice(html.lastIndexOf('</body>'));
+html=html.replace(/\/\* BEGIN V104 STAFF MODULE \*\/[\s\S]*?\/\* END V104 STAFF MODULE \*\//,()=> '/* BEGIN V104 STAFF MODULE */\n'+namespace('staff-upgrades.js','StaffUpgradesV104')+'/* END V104 STAFF MODULE */');
 const declared=JSON.parse(read('version.json')).version;
 for(const id of ['loginVersionLabel','staffVersionLabel','headerVersionLabel','settingsVersionV84']){
  html=html.replace(new RegExp(`(id="${id}"[^>]*>)[^<]*`),`$1${declared}`);

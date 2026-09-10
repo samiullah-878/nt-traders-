@@ -1,7 +1,7 @@
 /* Noor Traders Hisab — service worker
    Sirf STATIC assets ka cache. User/business data (localStorage, IndexedDB,
    Firebase/Firestore) ko ye file kabhi haath nahi lagati. */
-const APP_VERSION='v103';
+const APP_VERSION='v104';
 const CACHE='noor-traders-static-'+APP_VERSION;
 
 self.addEventListener('install',e=>{self.skipWaiting()});

@@ -1,6 +1,6 @@
 {
-  "version": "v103",
+  "version": "v104",
   "variant": "Production",
   "buildDate": "2026-09-10",
-  "notes": "Attendance Dashboard and Staff Center now refresh immediately after live Firestore attendance loads and support legacy checkInTime/checkOutTime fields; Salary Breakdown is rebuilt for narrow mobile screens without clipped amounts; all v102 integrated salary features remain unchanged"
+  "notes": "Additive Staff Control: status filters, duty schedules, leave/correction requests, audited approval, finalized salary snapshots and payment history. Existing features preserved. Publish included Firestore rules."
 }
