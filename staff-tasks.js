@@ -137,6 +137,7 @@ export function installTaskUI({service,getStaff,getAttendance,getSalary=()=>null
     assign,open,report,
     profile(phone){profilePhone=phone;renderProfile()},
     totals(phone,range={}){return taskTotals(selectTasks(tasks,{phone,from:range.from||'',to:range.to||''}))},
+    refreshNotifications:()=>notifications.refresh(),suggestionNotice:r=>notifications.suggestionNotice(r),
     refresh:render
   };
   return api;

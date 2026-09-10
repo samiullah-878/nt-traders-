@@ -1,6 +1,6 @@
 {
-  "version": "v104",
+  "version": "v107",
   "variant": "Production",
   "buildDate": "2026-09-10",
-  "notes": "Additive Staff Control: status filters, duty schedules, leave/correction requests, audited approval, finalized salary snapshots and payment history. Existing features preserved. Publish included Firestore rules."
+  "notes": "Staff suggestions in Urdu, owner notification inbox/unread badge/live alerts and bundled Urdu font. Staff-only interface preserved. Updated rules required for suggestion submission."
 }

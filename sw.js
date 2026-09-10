@@ -1,7 +1,7 @@
 /* Noor Traders Hisab — service worker
    Sirf STATIC assets ka cache. User/business data (localStorage, IndexedDB,
    Firebase/Firestore) ko ye file kabhi haath nahi lagati. */
-const APP_VERSION='v104';
+const APP_VERSION='v107';
 const CACHE='noor-traders-static-'+APP_VERSION;
 
 self.addEventListener('install',e=>{self.skipWaiting()});
@@ -38,6 +38,9 @@ self.addEventListener('fetch',e=>{
 // Owner page ki notifications par click handle karta hai.
 self.addEventListener('notificationclick',event=>{
   const data=event.notification.data;event.notification.close();
+  if(data?.type==='NT_STAFF_SUGGESTION'&&typeof data.ownerUid==='string'){
+    event.waitUntil((async()=>{const scope=new URL(self.registration.scope),windows=await clients.matchAll({type:'window',includeUncontrolled:true});for(const client of windows){const url=new URL(client.url);if(url.origin===scope.origin&&url.pathname.startsWith(scope.pathname)){await client.focus();client.postMessage(data);return}}const url=new URL('index.html',scope);url.hash='staffCenter';await clients.openWindow(url.href)})());return;
+  }
   if(data?.type!=='NT_TASK_NOTIFICATION'||typeof data.taskId!=='string'||typeof data.ownerUid!=='string')return;
   event.waitUntil((async()=>{
     const scope=new URL(self.registration.scope),windows=await clients.matchAll({type:'window',includeUncontrolled:true});

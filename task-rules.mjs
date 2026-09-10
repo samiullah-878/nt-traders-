@@ -65,3 +65,10 @@ test('v104 staff requests are own-only and approvals, payroll and schedules rema
  }
  await assertFails(getDocs(collection(staff,base+'/staffAudit')));
 });
+test('v107 suggestion belongs to sender and staff cannot mark it reviewed',async()=>{
+ const r={phone,kind:'suggestion',date:'2026-09-10',to:'2026-09-10',checkIn:'',checkOut:'',reason:'کام بہتر بنائیں',status:'pending',createdAt:1,by:'staff'};
+ await assertSucceeds(setDoc(doc(staff,base+'/staffRequests/suggestion'),r));
+ await assertFails(setDoc(doc(staff,base+'/staffRequests/spoofed-suggestion'),{...r,phone:other}));
+ await assertFails(updateDoc(doc(staff,base+'/staffRequests/suggestion'),{status:'reviewed'}));
+ await assertSucceeds(updateDoc(doc(owner,base+'/staffRequests/suggestion'),{status:'reviewed'}));
+});

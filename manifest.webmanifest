@@ -1,6 +1,6 @@
 {
-  "name": "Noor Traders Hisab",
-  "short_name": "Noor Hisab",
+  "name": "Noor Traders Staff",
+  "short_name": "NT Staff",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

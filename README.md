@@ -1,3 +1,27 @@
+# v107 — Staff ki raaye aur Urdu font
+
+Staff screen par “کام بہتر بنانے کے لیے میری رائے” kholein, suggestion likhein aur “مالک کو رائے بھیجیں” dabayein. Owner ke existing 🔔 notifications mein naam, raaye aur waqt aata hai. Nayi raaye par unread badge / live in-app alert; “پڑھ لی ہے” se read status staff ko bhi dikhai deta hai. Existing opt-in phone alerts suggestion par bhi lagte hain jab owner app khuli aur online ho. Band app ke liye push server add nahi hua; wapas login par raaye inbox mein milti hai.
+
+Noto Nastaliq Urdu regular/bold fonts HTML mein embedded hain; font ke liye internet ki zaroorat nahi. License licenses/Noto-Nastaliq-Urdu-OFL.txt mein hai. Urdu styling Staff screen aur notification panel par lagti hai.
+
+Zaroori: updated firestore.rules publish karein (staffRequests mein suggestion ki permission), phir index.html, sw.js, version.json aur manifest.webmanifest upload karein. App abhi live publish nahi hui. Staff-only system aur purane staff features barqarar hain.
+
+---
+
+# v106 — Sirf Staff System
+
+Home par Staff Control khulta hai. Menu mein Staff, attendance, tasks/pictures, points, khana allowance, salary, staff reports, settings aur backup hain. Sale, khata, wasooli, expenses, cash, stock, purchase, production aur business reports ke screens/menu hata diye gaye hain; purane direct links Staff Control par aate hain. Purana saved business data delete nahi hota.
+
+Developer note: legacy business markup/helpers remain inert and hidden for shared initialization and data compatibility. They cannot be opened through app navigation. Existing backup/sync format remains unchanged; this is a Staff-only interface, not deletion or migration of stored business records. Staff settings retains existing backup and owner password utilities.
+
+Publish index.html, sw.js, version.json and manifest.webmanifest. v104/v105 ke Firestore rules same hain. App abhi live deploy nahi ki gayi.
+
+---
+
+# v105 — Staff navigation fix
+
+Staff option par click karne se selected form/data seedha nazar aata hai. Lambi options list par scroll nahi hota. Purane features maujood hain. Is fix ke liye index.html, sw.js aur version.json update karein. v104 ke Firestore rules mein koi nayi tabdeeli nahi.
+
 # Noor Traders Staff v104
 
 This update preserves the v103 staff screens and adds an owner Staff Control overview, duty schedules, leave/correction requests, salary finalization/payment tracking and change history. Existing login credentials/configuration are unchanged. This ZIP has not been deployed to production.
