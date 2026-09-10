@@ -20,10 +20,13 @@ const css='<style id="taskStylesV99">\n'+read('staff-tasks.css')+'\n</style>';
 html=html.includes('<style id="taskStylesV99">')?html.replace(/<style id="taskStylesV99">[\s\S]*?<\/style>/,()=>css):html.replace('<link rel="stylesheet" href="./staff-tasks.css?v=v99">',()=>css);
 const premium='<style id="premiumPanelsV100">\n'+read('premium-panels.css')+'\n</style>';
 html=html.includes('<style id="premiumPanelsV100">')?html.replace(/<style id="premiumPanelsV100">[\s\S]*?<\/style>/,()=>premium):html.slice(0,html.lastIndexOf('</body>'))+premium+'\n'+html.slice(html.lastIndexOf('</body>'));
+const declared=JSON.parse(read('version.json')).version;
+for(const id of ['loginVersionLabel','staffVersionLabel','headerVersionLabel','settingsVersionV84']){
+ html=html.replace(new RegExp(`(id="${id}"[^>]*>)[^<]*`),`$1${declared}`);
+}
 writeFileSync(new URL('index.html',root),html);
 // Safety: app ka andar wala version aur version.json hamesha barabar hone chahiye,
 // warna boot gate update loop mein phans jata hai.
-const declared=JSON.parse(read('version.json')).version;
 const inApp=(html.match(/const APP_VERSION_V85='([^']+)'/)||[])[1];
 const inSw=(read('sw.js').match(/const APP_VERSION='([^']+)'/)||[])[1];
 if(declared!==inApp||declared!==inSw){console.error(`VERSION MISMATCH: version.json=${declared}, APP_VERSION_V85=${inApp}, sw.js=${inSw}`);process.exit(1)}

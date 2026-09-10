@@ -1,6 +1,6 @@
 {
-  "version": "v102",
+  "version": "v103",
   "variant": "Production",
-  "buildDate": "2026-09-09",
-  "notes": "Salary integrated into Staff Add/Edit, Staff Profile, Staff Reports, individual PDF and Complete System Report; per-staff salary settings persist online; Working Hours, Overtime, Attendance and Task Points, owner additions and deductions calculate the final salary"
+  "buildDate": "2026-09-10",
+  "notes": "Attendance Dashboard and Staff Center now refresh immediately after live Firestore attendance loads and support legacy checkInTime/checkOutTime fields; Salary Breakdown is rebuilt for narrow mobile screens without clipped amounts; all v102 integrated salary features remain unchanged"
 }

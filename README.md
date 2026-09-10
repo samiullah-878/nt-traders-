@@ -1,4 +1,6 @@
-# Noor Traders Hisab v102
+# Noor Traders Hisab v103
+
+v103 fixes the live attendance summary so present staff no longer remain marked absent after Firestore finishes loading. It also makes the Salary Breakdown fit narrow mobile screens without clipping its amount column.
 
 Based on the supplied v98 app and the working v99 login update. Read **START_HERE_URDU.md** for installation and use.
 

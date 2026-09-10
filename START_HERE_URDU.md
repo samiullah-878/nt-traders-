@@ -1,13 +1,15 @@
-# Noor Traders v102 — Attendance کے ساتھ مکمل Salary System
+# Noor Traders v103 — Attendance اور Salary Mobile Fix
 
 ## ویب سائٹ پر لگائیں
 
 1. ZIP کھول کر `nt-traders--main` فولڈر میں جائیں۔ اپنی موجودہ ویب سائٹ کے اصل فولڈر میں **index.html، sw.js، version.json** تینوں فائلیں اکٹھی بدلیں۔ ZIP یا اضافی اندرونی فولڈر اپلوڈ نہ کریں۔ تمام نیا کوڈ index.html کے اندر بھی موجود ہے۔
 2. Firebase Console میں اپنے **nt-traders → Firestore Database → Rules** پر جائیں۔ اس پیکج کی **firestore.rules** کا مکمل متن لگا کر Publish کریں۔ نئی تصویری رپورٹس اور اسٹاف سیشن کے لیے یہ لازمی ہے۔
 3. **Authentication → Sign-in method** میں **Email/Password** اور **Anonymous** فعال ہوں۔ مالک کا موجودہ Firebase اکاؤنٹ رہنے دیں؛ اسے حذف یا دوبارہ بنانے کی ضرورت نہیں۔
-4. ویب سائٹ کی deployment مکمل ہونے پر **Sync / Update Now** دبائیں۔ لاگ اِن اسکرین پر **v102** دیکھیں۔
+4. ویب سائٹ کی deployment مکمل ہونے پر **Sync / Update Now** دبائیں۔ لاگ اِن اسکرین پر **v103** دیکھیں۔
 
 **نیا (v102):** ہر ملازم کی الگ Monthly Salary، Daily Duty Hours، Working Days، Overtime Rate اور Per Point Rate اب Staff Add/Edit میں ہی درج ہوتے ہیں۔ Final Salary حاضری کے Working Hours، Overtime، Attendance + approved Task Points، مالک کی شامل کردہ رقم اور Advance/کٹوتی سے بنتی ہے۔ یہ حساب Staff Profile، Staff Reports، ملازم کی اپنی PDF، Individual PDF اور Complete System Report میں بھی شامل ہے۔
+
+**درستگی (v103):** Firebase سے آج کی حاضری load ہوتے ہی Dashboard اور Staff Center خود refresh ہوتے ہیں، اس لیے حاضر ملازم Absent نہیں رہتا۔ Salary Breakdown موبائل پر مکمل width میں card-style دکھتی ہے اور رقم بائیں طرف سے نہیں کٹتی۔
 
 
 ## اسٹاف کہاں سے تصاویر لگائے گا؟
