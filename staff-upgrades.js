@@ -1,3 +1,42 @@
+// Urdu speech-to-text: only reviewed text is submitted; no audio is stored.
+export function installUrduDictation({form,status,win=window}){
+ const doc=form.ownerDocument,field=form.elements.reason;
+ const box=doc.createElement('div');box.className='su-dictation';box.setAttribute('lang','ur');box.setAttribute('dir','rtl');
+ box.innerHTML='<button type="button" data-dictate>🎙 بول کر اردو لکھیں</button><button type="button" data-dictate-stop hidden>بولنا بند کریں</button><p data-dictate-status role="status" aria-live="polite"></p><p data-dictate-preview dir="auto"></p><small>اردو میں بولیں، پھر لکھا ہوا متن دیکھ کر درست کریں اور بھیجیں۔ آواز سے لکھنے کے لیے انٹرنیٹ درکار ہو سکتا ہے۔</small>';
+ field.closest('label').after(box);
+ const start=box.querySelector('[data-dictate]'),stop=box.querySelector('[data-dictate-stop]'),message=box.querySelector('[data-dictate-status]'),preview=box.querySelector('[data-dictate-preview]'),submit=form.querySelector('[type=submit]');
+ const Recognition=win.SpeechRecognition||win.webkitSpeechRecognition;
+ let recognition=null,generation=0,active=false;
+ function idle(){active=false;start.disabled=!Recognition;stop.hidden=true;field.readOnly=false;submit.disabled=false;preview.textContent=''}
+ function reset(){generation++;const old=recognition;recognition=null;try{old?.abort()}catch{}idle();message.textContent=''}
+ if(!Recognition){start.disabled=true;message.textContent='اس براؤزر میں آواز سے لکھنے کی سہولت نہیں۔ Chrome میں کھولیں یا یہاں خود لکھیں۔'}
+ start.onclick=()=>{
+  if(!Recognition||active)return;
+  if(win.isSecureContext===false){message.textContent='مائیک استعمال کرنے کے لیے ایپ HTTPS پر کھولیں۔';return}
+  const ticket=++generation,seen=new Set();let received=false,failed=false;
+  const r=new Recognition();recognition=r;r.lang='ur-PK';r.continuous=true;r.interimResults=true;
+  active=true;start.disabled=true;stop.hidden=false;field.readOnly=true;submit.disabled=true;status.textContent='';message.textContent='سن رہے ہیں… اردو میں بولیں۔';
+  r.onresult=event=>{
+   if(ticket!==generation)return;let interim='';
+   for(let i=event.resultIndex;i<event.results.length;i++){
+    const result=event.results[i],text=String(result[0]?.transcript||'').trim();
+    if(result.isFinal&&!seen.has(i)){
+     seen.add(i);if(!text)continue;
+     const prefix=field.value&& !/\s$/.test(field.value)?' ':'';
+     if((field.value+prefix+text).length>field.maxLength){failed=true;message.textContent='متن کی حد پوری ہو گئی ہے۔ مختصر کر کے دوبارہ بولیں۔';r.stop();continue}
+     field.value+=prefix+text;received=true;field.dispatchEvent(new win.Event('input',{bubbles:true}));
+    }else if(!result.isFinal)interim+=text+' ';
+   }
+   preview.textContent=interim;
+  };
+  r.onerror=event=>{if(ticket!==generation)return;failed=true;const labels={'not-allowed':'مائیک کی اجازت نہیں ملی۔ براؤزر کی settings میں اجازت دیں یا خود لکھیں۔','service-not-allowed':'آواز سے لکھنے کی اجازت نہیں ملی۔ آپ خود لکھ سکتے ہیں۔','audio-capture':'مائیک دستیاب نہیں۔ مائیک چیک کریں۔','network':'آواز سے لکھنے کا رابطہ نہیں ہو سکا۔ انٹرنیٹ چیک کریں۔','no-speech':'آواز سنائی نہیں دی۔ دوبارہ کوشش کریں۔','language-not-supported':'اس براؤزر میں اردو کی پہچان دستیاب نہیں۔ خود لکھیں یا دوسرا براؤزر استعمال کریں۔'};message.textContent=labels[event.error]||'آواز سے لکھنا رک گیا۔ دوبارہ کوشش کریں یا خود لکھیں۔';idle()};
+  r.onend=()=>{if(ticket!==generation)return;recognition=null;idle();if(!failed)message.textContent=received?'لکھا ہوا متن دیکھ کر درست کریں، پھر مالک کو بھیجیں۔':'کوئی متن نہیں ملا۔ دوبارہ بولیں یا خود لکھیں۔'};
+  try{r.start()}catch{failed=true;idle();message.textContent='مائیک شروع نہیں ہوا۔ دوبارہ کوشش کریں یا خود لکھیں۔'}
+ };
+ stop.onclick=()=>{try{recognition?.stop();stop.hidden=true;message.textContent='آخری الفاظ لکھے جا رہے ہیں…'}catch{reset()}};
+ return {reset,isActive:()=>active};
+}
+
 /* Additive Staff v104. Existing screens remain available. */
 export function staffStatusV104(account, attendance={}, requests=[], date, schedule={}) {
   const checked=attendance.checkIn||attendance.checkInTime;
@@ -32,7 +71,8 @@ export function installStaffUpgrades({fs,auth,sdk,getStaff,getAttendance,getConf
  ownBox.innerHTML='<h2>Aaj / آج</h2><div id="suOwnSummary"></div><details><summary>Chhutti / Attendance correction ki request</summary><form id="suRequest"><label>Request<select name="kind"><option value="leave">Chhutti</option><option value="correction">Bhoola checkout / attendance correction</option></select></label><div class="su-grid"><label>Date<input name="date" type="date" required></label><label>Leave end date<input name="to" type="date" required></label></div><label>Correction: check-in<input name="checkIn" type="time"></label><label>Correction: check-out<input name="checkOut" type="time"></label><label>Wajah<textarea name="reason" maxlength="1000" required></textarea></label><button>Request bhejein</button></form></details><p id="suOwnMessage" role="status"></p><div id="suOwnRequests"></div>';
  const suggestionBox=document.createElement('details');suggestionBox.className='su-row';suggestionBox.setAttribute('lang','ur');suggestionBox.setAttribute('dir','rtl');suggestionBox.innerHTML='<summary>💡 کام بہتر بنانے کے لیے میری رائے</summary><p>اپنی تجویز لکھیں۔ یہ آپ کے نام کے ساتھ مالک کی اطلاعات میں جائے گی۔</p><form id="suSuggestion"><label>میری تجویز<textarea name="reason" lang="ur" dir="auto" maxlength="1000" rows="4" placeholder="آپ کے خیال میں کام کیسے بہتر ہو سکتا ہے؟" required></textarea></label><button type="submit">مالک کو رائے بھیجیں</button></form><p id="suSuggestionStatus" role="status"></p>';
  ownBox.append(suggestionBox);
- $('suSuggestion').onsubmit=async e=>{e.preventDefault();const f=e.currentTarget,button=f.querySelector('button'),reason=f.elements.reason.value.trim();if(!reason)return;const ticket=epoch;if(session?.role!=='staff')return;button.disabled=true;$('suSuggestionStatus').textContent='رائے بھیجی جا رہی ہے…';try{const id=doc(col('staffRequests')).id,payload={phone:session.phone,kind:'suggestion',date:today(),to:today(),checkIn:'',checkOut:'',reason,status:'pending',createdAt:Date.now(),by:auth.currentUser.uid};await runTransaction(fs,async tx=>tx.set(ref('staffRequests',id),payload));if(ticket!==epoch)return;f.reset();$('suSuggestionStatus').textContent='آپ کی رائے مالک کو بھیج دی گئی ہے۔'}catch(e){if(ticket===epoch)$('suSuggestionStatus').textContent='رائے نہیں بھیجی جا سکی۔ انٹرنیٹ چیک کر کے دوبارہ کوشش کریں۔'}finally{button.disabled=false}};
+ const dictation=installUrduDictation({form:$('suSuggestion'),status:$('suSuggestionStatus')});
+ $('suSuggestion').onsubmit=async e=>{e.preventDefault();const f=e.currentTarget,button=f.querySelector('[type=submit]'),reason=f.elements.reason.value.trim();if(dictation.isActive()||!reason)return;const ticket=epoch;if(session?.role!=='staff')return;button.disabled=true;$('suSuggestionStatus').textContent='رائے بھیجی جا رہی ہے…';try{const id=doc(col('staffRequests')).id,payload={phone:session.phone,kind:'suggestion',date:today(),to:today(),checkIn:'',checkOut:'',reason,status:'pending',createdAt:Date.now(),by:auth.currentUser.uid};await runTransaction(fs,async tx=>tx.set(ref('staffRequests',id),payload));if(ticket!==epoch)return;f.reset();$('suSuggestionStatus').textContent='آپ کی رائے مالک کو بھیج دی گئی ہے۔'}catch(e){if(ticket===epoch)$('suSuggestionStatus').textContent='رائے نہیں بھیجی جا سکی۔ انٹرنیٹ چیک کر کے دوبارہ کوشش کریں۔'}finally{button.disabled=false}};
  function suggestions(){return owner()?data.staffRequests.filter(r=>r.kind==='suggestion').sort((a,b)=>b.createdAt-a.createdAt):[]}
  function suggestionHtml(){return '<section lang="ur" dir="rtl"><h3>💡 ملازمین کی آراء</h3>'+ (suggestions().map(r=>requestRow(r,true)).join('')||'<p>ابھی کوئی رائے موصول نہیں ہوئی۔</p>')+'</section>'}
  async function markSuggestionsRead(){guard();for(const r of suggestions().filter(r=>r.status==='pending'))await write('staffRequests',r.id,{status:'reviewed',reviewedBy:auth.currentUser.uid,reviewedAt:Date.now()},'رائے پڑھ لی گئی')}
@@ -80,7 +120,7 @@ export function installStaffUpgrades({fs,auth,sdk,getStaff,getAttendance,getConf
  $('staffTopNavV99')?.prepend(shortcuts);shortcuts.addEventListener('click',e=>{const b=e.target.closest('[data-short]');if(b){tab=b.dataset.short;window.goScreen('staffCenter');render()}});
 
  for(const name of ['saveSalaryCfgV101','addSalaryExtraV101','deleteSalaryExtraV101']){const original=window[name];if(original)window[name]=async function(...args){try{return await original.apply(this,args)}catch(e){alert('Salary save nahi hui: '+(e.message||'Dobara koshish karein'))}}}
- function stop(){epoch++;suggestionBaseline=false;knownSuggestions.clear();$('suSuggestion').reset();$('suSuggestionStatus').textContent='';unsubs.forEach(u=>u());unsubs=[];session=null;loaded.clear();for(const k in data)data[k]=[];ownerBox.hidden=ownBox.hidden=true;$('suContent').innerHTML='';$('suOwnRequests').innerHTML='';$('suOwnSummary').innerHTML='';$('suRequest').reset()}
+ function stop(){epoch++;dictation.reset();suggestionBaseline=false;knownSuggestions.clear();$('suSuggestion').reset();$('suSuggestionStatus').textContent='';unsubs.forEach(u=>u());unsubs=[];session=null;loaded.clear();for(const k in data)data[k]=[];ownerBox.hidden=ownBox.hidden=true;$('suContent').innerHTML='';$('suOwnRequests').innerHTML='';$('suOwnSummary').innerHTML='';$('suRequest').reset()}
  function start(s){stop();session=s;const token=epoch;for(const n of Object.keys(data)){if(!owner()&&n==='staffAudit'){loaded.add(n);continue}const q=owner()?col(n):query(col(n),where('phone','==',s.phone));unsubs.push(onSnapshot(q,snap=>{if(token!==epoch)return;data[n]=[];snap.forEach(d=>data[n].push({id:d.id,...d.data()}));loaded.add(n);render();if(n==='staffRequests'&&owner()){
  const rows=suggestions(),ids=new Set(rows.map(r=>r.id));
  if(!snap.metadata?.fromCache){if(suggestionBaseline){const added=rows.filter(r=>!knownSuggestions.has(r.id)&&r.status==='pending');if(added.length)window.noorTasks?.suggestionNotice?.({...added[0],staffName:person(added[0].phone).name})}knownSuggestions=ids;suggestionBaseline=true}

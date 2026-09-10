@@ -1,3 +1,29 @@
+# v109 — Khane ke paise Daily / Monthly
+
+Staff Add/Edit ke Salary Settings mein “کھانے کے پیسے” section hai: None, Daily ya Monthly; raqam; aur “تنخواہ میں شامل کریں”. Salary detail/settings mein bhi yahi options hain.
+
+Daily = rate × selected month ke unique hazri/check-in wale din. Ghair-hazir ya sirf approved-leave days shamil nahi; checkout missing ho tab bhi us din ka khana count hota hai. Monthly = fixed monthly amount, attendance se prorate nahi hota. Checkbox ON par khana earned salary mein ADD hota hai; OFF par khane ka hisaab alag rehta hai, salary mein add nahi hota. Yeh payment receipt ya automatic cash entry nahi banata. Pehle se final salary snapshots nahi badalte; zaroorat ho to owner reason ke saath reopen kare.
+
+Settings current/unfinalized month calculations par apply hoti hain, per-date rate history nahi. Existing legacy meal rates carry forward where available, with salary inclusion OFF by default to avoid double counting. Owner profile, Khana Allowance, staff salary, owner salary breakdown and PDFs show the meal amount. Staff cannot edit their own salary/meal settings.
+
+Validated: daily/monthly/excluded calculations, unique attendance-day counting, finalized amount preservation, Edit save/reopen and account synchronization, matching staff salary and PDF; existing DOM workflows also passed. Real mobile visual rendering was not tested here.
+
+Upload index.html, sw.js and version.json. Is change ke liye Firestore rules mein nayi tabdeeli nahi. Live publish nahi kiya gaya.
+
+---
+
+# v108 — Bol kar Urdu mein raaye likhein
+
+Validation: existing DOM workflows plus simulated speech recognition passed (Urdu language selection, final-result deduplication, interim preview, editable text submission, permission denial and late callback cancellation). Real microphone/browser recognition was not tested in this environment.
+
+Staff screen → “کام بہتر بنانے کے لیے میری رائے” → “🎙 بول کر اردو لکھیں”. Urdu mein bolein, “بولنا بند کریں” dabayein, text check/edit karein, phir “مالک کو رائے بھیجیں”. Owner ko text notification milti hai; audio file record/store/send nahi hoti.
+
+Browser speech recognition ur-PK use hoti hai. HTTPS aur microphone permission zaroori hain. Browser/service ko internet chahiye ho sakta hai; unsupported browsers mein manual typing rahegi. Chrome par live microphone verification deployment ke baad karein. Recognition apne aap band ho to mic dobara daba sakte hain; pehle ka text rehta hai. Logout pending dictation cancel karta hai.
+
+v107 ke Firestore rules mein is update ke liye koi tabdeeli nahi. index.html, sw.js aur version.json upload karein. Yeh ZIP live publish nahi hui.
+
+---
+
 # v107 — Staff ki raaye aur Urdu font
 
 Staff screen par “کام بہتر بنانے کے لیے میری رائے” kholein, suggestion likhein aur “مالک کو رائے بھیجیں” dabayein. Owner ke existing 🔔 notifications mein naam, raaye aur waqt aata hai. Nayi raaye par unread badge / live in-app alert; “پڑھ لی ہے” se read status staff ko bhi dikhai deta hai. Existing opt-in phone alerts suggestion par bhi lagte hain jab owner app khuli aur online ho. Band app ke liye push server add nahi hua; wapas login par raaye inbox mein milti hai.

@@ -179,3 +179,41 @@ assert.deepEqual(errors,[]);console.log('PASS full UI: profile assignment → 2 
  assert.deepEqual(errors,[]);assert.deepEqual(o.errors,[]);
  console.log('PASS v107 suggestion send/failure, owner inbox/read status, live alert, escaping, font embedding');
 }
+
+{
+ const {w,f,errors}=await boot('staff');
+ // Reinstall only dictation with a deterministic browser recognition boundary.
+ const {installUrduDictation}=await import('../staff-upgrades.js');
+ const form=w.document.getElementById('suSuggestion');form.querySelector('.su-dictation').remove();let rec;
+ w.SpeechRecognition=class{constructor(){rec=this}start(){}stop(){this.onend?.()}abort(){this.onend?.()}};
+ const voice=installUrduDictation({form,status:w.document.getElementById('suSuggestionStatus'),win:w});
+ form.elements.reason.value='میری رائے';form.querySelector('[data-dictate]').click();assert.equal(rec.lang,'ur-PK');assert.equal(form.querySelector('[type=submit]').disabled,true);
+ const final=Object.assign([{transcript:'کام بہتر کریں'}],{isFinal:true});
+ rec.onresult({resultIndex:0,results:[final]});rec.onresult({resultIndex:0,results:[final]});
+ assert.equal(form.elements.reason.value,'میری رائے کام بہتر کریں','final segment appended once');
+ const interim=Object.assign([{transcript:'عارضی الفاظ'}],{isFinal:false});rec.onresult({resultIndex:1,results:[final,interim]});assert.ok(!form.elements.reason.value.includes('عارضی'));
+ form.querySelector('[data-dictate-stop]').click();assert.equal(form.elements.reason.readOnly,false);assert.equal(form.querySelector('[type=submit]').disabled,false);
+ form.elements.reason.value+='۔';form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await delay();
+ const suggestion=[...f.records.values()].find(v=>v.kind==='suggestion');assert.equal(suggestion.reason,'میری رائے کام بہتر کریں۔');assert.ok(!('audio' in suggestion));
+ form.querySelector('[data-dictate]').click();const old=rec;voice.reset();old.onresult({resultIndex:0,results:[final]});assert.equal(form.elements.reason.value,'','late recognition discarded after reset');
+ form.querySelector('[data-dictate]').click();rec.onerror({error:'not-allowed'});assert.equal(form.elements.reason.readOnly,false);assert.ok(form.querySelector('[data-dictate-status]').textContent.includes('اجازت'));
+ assert.deepEqual(errors,[]);console.log('PASS v108 Urdu dictation, editable text, no duplicate/interim submission, permission denial and cancellation');
+}
+
+{
+ const {w,f,errors}=await boot('owner');
+ w.editStaffV84(phone);
+ w.document.getElementById('staffEditMealV109Mode').value='monthly';
+ w.document.getElementById('staffEditMealV109Rate').value='3000';
+ w.document.getElementById('staffEditMealV109Include').checked=true;
+ w.document.getElementById('staffEditFormV85').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await delay();
+ const acc=f.records.get(base+'/staffAccounts/'+phone);assert.equal(acc.salary.mealMode,'monthly');assert.equal(acc.salary.mealRate,3000);assert.equal(acc.salary.mealInSalary,true);
+ const ownerSalary=w.salaryCalcV101(phone,'2026-09');assert.equal(ownerSalary.mealSalary,3000);assert.equal(ownerSalary.final,4700);
+ const staff=await boot('staff',[[base+'/staffAccounts/'+phone,acc]]);const own=staff.w.salaryReportForRangeV102(phone,'2026-09-01','2026-09-30');assert.equal(own.final,ownerSalary.final);assert.equal(own.mealSalary,3000);
+ const pdf=model.reportDocument({tasks:[],salary:own});assert.ok(pdf.includes('کھانے کے پیسے'));assert.ok(pdf.includes('3,000'));
+ w.editStaffV84(phone);assert.equal(w.document.getElementById('staffEditMealV109Mode').value,'monthly');assert.equal(w.document.getElementById('staffEditMealV109Include').checked,true);
+ w.document.getElementById('staffEditMealV109Include').checked=false;w.document.getElementById('staffEditFormV85').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await delay();
+ assert.equal(w.salaryCalcV101(phone,'2026-09').mealSalary,0);assert.equal(w.salaryCalcV101(phone,'2026-09').final,1700);
+ assert.deepEqual(errors,[]);assert.deepEqual(staff.errors,[]);
+ console.log('PASS v109 meal Add/Edit fields, persistence to staff account, monthly salary inclusion, matching staff/PDF and exclusion');
+}

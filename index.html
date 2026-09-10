@@ -873,7 +873,7 @@ th,td{font-size:16px;line-height:1.55}
 
     <div class="auth-card">
       <div class="login-card-title"><span class="brand-mark mini">NT</span><div><h2>Noor Traders Staff</h2><p>Business & Staff System</p></div></div>
-      <div class="login-build-strip"><span class="variant-badge">Production</span><span>Version: <b id="loginVersionLabel">v107</b></span><span id="loginUpdateStatus" class="sync-state"><i class="status-dot"></i>Syncing...</span></div>
+      <div class="login-build-strip"><span class="variant-badge">Production</span><span>Version: <b id="loginVersionLabel">v109</b></span><span id="loginUpdateStatus" class="sync-state"><i class="status-dot"></i>Syncing...</span></div>
       <button type="button" class="sync-now-btn-v91" onclick="forceAppUpdateV85()">🔄 Sync / Update Now</button>
       <div class="auth-role-tabs" role="tablist" aria-label="اکاؤنٹ منتخب کریں">
         <button id="ownerLoginTab" class="auth-role active" type="button" role="tab" aria-selected="true" aria-controls="ownerLoginPane" data-auth-role="owner">مالک</button>
@@ -921,7 +921,7 @@ th,td{font-size:16px;line-height:1.55}
     <button id="staffLogoutBtn" class="staff-logout">Logout</button>
   </div>
 
-  <main class="staff-portal-main"><div class="staff-build-banner"><span>Version <b id="staffVersionLabel">v107</b> • Production</span><span id="staffUpdateState">Latest</span></div>
+  <main class="staff-portal-main"><div class="staff-build-banner"><span>Version <b id="staffVersionLabel">v109</b> • Production</span><span id="staffUpdateState">Latest</span></div>
     <section class="staff-profile-hero">
       <div class="staff-profile-left">
         <div id="staffPortalAvatar" class="portal-avatar">👤</div>
@@ -1015,7 +1015,7 @@ th,td{font-size:16px;line-height:1.55}
 
 <div class="app" id="ownerApp" hidden style="display:none">
 <div class="top">
-  <div><div class="nt-role-label">NOOR TRADERS • مالک کا پینل</div><h1>Noor Traders Staff</h1><small>Gulyana • <b id="headerVersionLabel">v107</b> • کاروبار آپ کی نظر میں</small></div>
+  <div><div class="nt-role-label">NOOR TRADERS • مالک کا پینل</div><h1>Noor Traders Staff</h1><small>Gulyana • <b id="headerVersionLabel">v109</b> • کاروبار آپ کی نظر میں</small></div>
   <div class="cloud-box">
     <b id="todayLabel"></b><br>
     <small id="cloudStatus">Firebase سے رابطہ ہو رہا ہے…</small>
@@ -1135,7 +1135,7 @@ th,td{font-size:16px;line-height:1.55}
 <div id="ntOwnerTaskState" class="nt-msg" role="status"></div><div id="ntOwnerTaskNotice" class="nt-msg" role="status"></div><div id="ntOwnerTaskStats"></div><div id="ntOwnerTaskList" class="nt-cards"></div></div></section>
 <section id="staffAccounts" class="tab app-screen">
   <div class="screen-head"><div><div class="eyebrow">STAFF • ACCOUNTS + SALARY</div><h2>Staff Accounts</h2><p>Name، Address، Phone/Password اور ہر ملازم کی الگ Salary settings</p></div><button class="primary" onclick="toggleStaffCreateV84(true)">+ New Staff</button></div>
-  <div class="staff-accounts-grid"><div id="staffCreateV84" class="pro-card staff-create-v84"><div class="pro-card-head"><h3>New Staff Account</h3><button class="icon-close" onclick="toggleStaffCreateV84(false)">×</button></div><form id="staffFormV84" class="vertical-form"><div class="profile-upload-v84"><div id="staffPhotoPreviewV84" class="account-avatar">👤</div><button type="button" id="staffPhotoBtnV101" class="soft photo-label-v84">📷 لائیو کیمرہ</button><input id="staffPhotoV84" type="file" hidden disabled></div><label>1. Name</label><input id="staffNameV84" required><label>2. Role</label><input id="staffRoleV84" placeholder="Sales / Driver / Manager"><label>3. Address</label><textarea id="staffAddressV84" rows="3" required></textarea><label>4. Phone Number / Login ID</label><input id="staffPhoneV84" inputmode="tel" required placeholder="03XXXXXXXXX"><div class="password-auto-box"><span>Password</span><b id="staffPasswordV84">Phone Number</b></div><div class="salary-inline-fields-v102"><h4>5. Salary Settings</h4><label>Monthly Salary (Rs)<input id="staffMonthlySalaryV102" type="number" min="0" step="1" placeholder="مثلاً 30000"></label><label>Daily Duty Hours<input id="staffDutyHoursV102" type="number" min="1" max="24" step="0.5" value="10"></label><label>Monthly Working Days<input id="staffWorkingDaysV102" type="number" min="1" max="31" step="1" value="30"></label><label>Overtime Rate (Rs/hour)<input id="staffOvertimeRateV102" type="number" min="0" step="1" placeholder="خالی = عام hourly rate"></label><label>Per Point Rate (Rs)<input id="staffPointRateV102" type="number" min="0" step="1" placeholder="مثلاً 10"></label></div><label class="staff-login-toggle"><input id="staffLoginEnabledV84" type="checkbox" checked> Staff login enabled</label><button class="primary">Save Account + Salary</button></form></div><div class="pro-card staff-list-card-v84"><div class="pro-card-head"><div><h3>All Staff</h3><small id="staffCountV84">0 accounts</small></div><input id="staffSearchV84" placeholder="Search name / phone"></div><div id="staffCardsV84" class="staff-cards-v84"></div></div></div>
+  <div class="staff-accounts-grid"><div id="staffCreateV84" class="pro-card staff-create-v84"><div class="pro-card-head"><h3>New Staff Account</h3><button class="icon-close" onclick="toggleStaffCreateV84(false)">×</button></div><form id="staffFormV84" class="vertical-form"><div class="profile-upload-v84"><div id="staffPhotoPreviewV84" class="account-avatar">👤</div><button type="button" id="staffPhotoBtnV101" class="soft photo-label-v84">📷 لائیو کیمرہ</button><input id="staffPhotoV84" type="file" hidden disabled></div><label>1. Name</label><input id="staffNameV84" required><label>2. Role</label><input id="staffRoleV84" placeholder="Sales / Driver / Manager"><label>3. Address</label><textarea id="staffAddressV84" rows="3" required></textarea><label>4. Phone Number / Login ID</label><input id="staffPhoneV84" inputmode="tel" required placeholder="03XXXXXXXXX"><div class="password-auto-box"><span>Password</span><b id="staffPasswordV84">Phone Number</b></div><div class="salary-inline-fields-v102"><h4>5. Salary Settings</h4><label>Monthly Salary (Rs)<input id="staffMonthlySalaryV102" type="number" min="0" step="1" placeholder="مثلاً 30000"></label><label>Daily Duty Hours<input id="staffDutyHoursV102" type="number" min="1" max="24" step="0.5" value="10"></label><label>Monthly Working Days<input id="staffWorkingDaysV102" type="number" min="1" max="31" step="1" value="30"></label><label>Overtime Rate (Rs/hour)<input id="staffOvertimeRateV102" type="number" min="0" step="1" placeholder="خالی = عام hourly rate"></label><label>Per Point Rate (Rs)<input id="staffPointRateV102" type="number" min="0" step="1" placeholder="مثلاً 10"></label><div id="staffMealV109Fields" class="meal-slot-v109"></div></div><label class="staff-login-toggle"><input id="staffLoginEnabledV84" type="checkbox" checked> Staff login enabled</label><button class="primary">Save Account + Salary</button></form></div><div class="pro-card staff-list-card-v84"><div class="pro-card-head"><div><h3>All Staff</h3><small id="staffCountV84">0 accounts</small></div><input id="staffSearchV84" placeholder="Search name / phone"></div><div id="staffCardsV84" class="staff-cards-v84"></div></div></div>
 </section>
 
 <section id="attendanceToday" class="tab app-screen">
@@ -1158,7 +1158,7 @@ th,td{font-size:16px;line-height:1.55}
 
 <section id="staffKhana" class="tab app-screen">
   <div class="screen-head"><div><div class="eyebrow">STAFF • KHANA</div><h2>Khana Allowance</h2><p>Daily / monthly meal allowance from existing staff settings and attendance.</p></div><div class="screen-actions"><input id="khanaDateV85" type="date"><input id="khanaMonthV85" type="month"><button class="soft" onclick="renderKhanaAllowanceV85()">Refresh</button></div></div>
-  <div class="summary-grid-v84" id="khanaSummaryV85"></div><div class="pro-card"><div class="table-scroll"><table><thead><tr><th>Staff</th><th>Role</th><th>Meal Plan</th><th>Daily Amount</th><th>Selected Date</th><th>Month Estimate</th></tr></thead><tbody id="khanaRowsV85"></tbody></table></div></div>
+  <div class="summary-grid-v84" id="khanaSummaryV85"></div><div class="pro-card"><div class="table-scroll"><table><thead><tr><th>Staff</th><th>Role</th><th>Meal Plan</th><th>مقررہ رقم</th><th>حاضری</th><th>مہینے کا کل</th></tr></thead><tbody id="khanaRowsV85"></tbody></table></div></div>
 </section>
 
 <section id="staffProfile" class="tab app-screen">
@@ -1188,7 +1188,7 @@ th,td{font-size:16px;line-height:1.55}
       <label>Role</label><input id="staffEditRoleV85" placeholder="Sales / Driver / Manager">
       <label>Address</label><textarea id="staffEditAddressV85" rows="3" required></textarea>
       <label>Phone Number / Password</label><input id="staffEditPhoneV85" inputmode="tel" required>
-      <div class="salary-inline-fields-v102"><h4>Salary Settings</h4><label>Monthly Salary (Rs)<input id="staffEditMonthlySalaryV102" type="number" min="0" step="1"></label><label>Daily Duty Hours<input id="staffEditDutyHoursV102" type="number" min="1" max="24" step="0.5" value="10"></label><label>Monthly Working Days<input id="staffEditWorkingDaysV102" type="number" min="1" max="31" step="1" value="30"></label><label>Overtime Rate (Rs/hour)<input id="staffEditOvertimeRateV102" type="number" min="0" step="1"></label><label>Per Point Rate (Rs)<input id="staffEditPointRateV102" type="number" min="0" step="1"></label></div>
+      <div class="salary-inline-fields-v102"><h4>Salary Settings</h4><label>Monthly Salary (Rs)<input id="staffEditMonthlySalaryV102" type="number" min="0" step="1"></label><label>Daily Duty Hours<input id="staffEditDutyHoursV102" type="number" min="1" max="24" step="0.5" value="10"></label><label>Monthly Working Days<input id="staffEditWorkingDaysV102" type="number" min="1" max="31" step="1" value="30"></label><label>Overtime Rate (Rs/hour)<input id="staffEditOvertimeRateV102" type="number" min="0" step="1"></label><label>Per Point Rate (Rs)<input id="staffEditPointRateV102" type="number" min="0" step="1"></label><div id="staffEditMealV109Fields" class="meal-slot-v109"></div></div>
       <label>Account Status</label>
       <select id="staffEditActiveV85"><option value="true">Active</option><option value="false">Inactive</option></select>
       <label class="staff-login-toggle"><input id="staffEditLoginEnabledV85" type="checkbox" checked> Staff login enabled</label>
@@ -1336,7 +1336,7 @@ th,td{font-size:16px;line-height:1.55}
 <div id="pdfPreviewModal" class="pdf-preview-modal" hidden><div class="pdf-preview-shell"><div class="pdf-preview-head"><div><span class="eyebrow">NOOR TRADERS HISAB</span><h2 id="pdfPreviewTitle">Report Preview</h2></div><button class="icon-close" type="button" onclick="closePdfPreviewV85()" aria-label="Close preview">×</button></div><iframe id="pdfPreviewFrame" title="PDF preview"></iframe><div class="pdf-preview-actions"><button class="primary" type="button" onclick="downloadPdfV85()">Download PDF</button><button class="soft" type="button" onclick="sharePdfV85()">Share / Send</button><button class="soft" type="button" onclick="printPdfPreviewV85()">Print</button><button class="soft" type="button" onclick="closePdfPreviewV85()">Close</button></div></div></div>
 <div id="entryEditModalV85" class="entry-edit-modal-v85" hidden><div class="entry-edit-card-v85"><div class="pro-card-head"><div><div class="eyebrow">EDIT ENTRY</div><h3>Update Transaction</h3></div><button type="button" class="icon-close" onclick="closeEntryEditV85()">×</button></div><form id="entryEditFormV85" class="entry-edit-form"><input type="date" id="editEntryDateV85"><input id="editEntryDetailV85" placeholder="Detail / Name"><select id="editEntryTypeV85"></select><select id="editEntrySubCategoryV85"></select><input id="editEntryAmountV85" type="number" min="0.01" step="0.01" required><input id="editEntryPhotoV85" type="file" accept="image/*" capture="environment"><div id="editEntryPhotoPreviewV85" class="quick-photo-preview" hidden></div><div class="row"><button class="primary" type="submit">Save Changes</button><button class="soft" type="button" onclick="closeEntryEditV85()">Cancel</button></div></form></div></div>
 
-<section id="settings" class="tab app-screen"><div class="grid"><div class="card span6"><h3>Full Migration Backup</h3><p class="muted">مکمل JSON backup download کریں یا restore کریں۔ Restore ہونے پر online data بھی sync ہوگا۔</p><div class="row"><button class="primary" onclick="backupAll()">Full Migration Backup Download</button><label class="soft" style="cursor:pointer">Backup Restore<input type="file" id="restoreFile" accept="application/json" style="display:none"></label></div></div><div class="card span6" data-nonstaff-v106="true" hidden inert aria-hidden="true"><h3>Expense Categories</h3><div class="row"><input id="newCat" placeholder="نئی category"><button class="soft" onclick="addCategory()">Add</button></div><div id="catList" style="margin-top:10px"></div></div><div class="card span12"><h3>Attendance Policy & Version</h3><div class="form"><div class="f3"><label>Shift Start</label><input id="policyShiftStartV84" type="time" value="09:00"></div><div class="f3"><label>Shift End (optional)</label><input id="policyShiftEndV84" type="time"></div><div class="f3"><label>Geofence Radius (m)</label><input id="policyRadiusV84" type="number" value="200"></div><div class="f3"><label>Variant</label><input id="policyVariantV84" value="Production"></div><div class="f12"><label>Check-In Instruction</label><input id="policyInstructionV84" value="سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔"></div><div class="f12 score-policy-editor"><label>Score Rules (minutes late → score)</label><div class="score-policy-grid"><span>≤10 min <input id="score10V84" type="number" value="10" min="0" max="10"></span><span>≤20 min <input id="score20V84" type="number" value="8" min="0" max="10"></span><span>≤30 min <input id="score30V84" type="number" value="6" min="0" max="10"></span><span>≤45 min <input id="score45V84" type="number" value="4" min="0" max="10"></span><span>Later <input id="scoreLateV84" type="number" value="2" min="0" max="10"></span></div></div><div class="f12"><button class="primary" type="button" onclick="saveAttendancePolicyV84()">Save Attendance Policy</button></div></div><div class="version-panel-v84"><span>Current Version <b id="settingsVersionV84">v107</b></span><span>Variant <b id="settingsVariantV84">Production</b></span><span id="settingsUpdateV84">Up to date</span><button class="soft update-now-v85" type="button" onclick="forceAppUpdateV85()">Check / Update Now</button></div></div><div class="card span6"><h3>مالک کا پاس ورڈ</h3><p class="muted">یوزر نیم: <b>admin</b></p><form id="ownerPasswordForm" class="vertical-form"><label for="ownerOldPassword">موجودہ پاس ورڈ</label><input id="ownerOldPassword" type="password" autocomplete="current-password" required><label for="ownerNewPassword">نیا پاس ورڈ — کم از کم 6 حروف</label><input id="ownerNewPassword" type="password" autocomplete="new-password" minlength="6" required><label for="ownerConfirmPassword">نیا پاس ورڈ دوبارہ درج کریں</label><input id="ownerConfirmPassword" type="password" autocomplete="new-password" minlength="6" required><button id="ownerPasswordBtn" class="primary" type="submit">پاس ورڈ تبدیل کریں</button><div id="ownerPasswordMessage" class="login-message" role="status" aria-live="polite"></div></form></div><div class="card span12"><h3>Storage</h3><p>یہ version <b>Firebase Firestore</b> کے ساتھ online sync کرتا ہے اور browser <b>localStorage</b> کو offline/local cache کے طور پر رکھتا ہے۔</p><button class="danger" onclick="resetAll()">صرف اس Browser کا Local Cache صاف کریں</button></div></div></section>
+<section id="settings" class="tab app-screen"><div class="grid"><div class="card span6"><h3>Full Migration Backup</h3><p class="muted">مکمل JSON backup download کریں یا restore کریں۔ Restore ہونے پر online data بھی sync ہوگا۔</p><div class="row"><button class="primary" onclick="backupAll()">Full Migration Backup Download</button><label class="soft" style="cursor:pointer">Backup Restore<input type="file" id="restoreFile" accept="application/json" style="display:none"></label></div></div><div class="card span6" data-nonstaff-v106="true" hidden inert aria-hidden="true"><h3>Expense Categories</h3><div class="row"><input id="newCat" placeholder="نئی category"><button class="soft" onclick="addCategory()">Add</button></div><div id="catList" style="margin-top:10px"></div></div><div class="card span12"><h3>Attendance Policy & Version</h3><div class="form"><div class="f3"><label>Shift Start</label><input id="policyShiftStartV84" type="time" value="09:00"></div><div class="f3"><label>Shift End (optional)</label><input id="policyShiftEndV84" type="time"></div><div class="f3"><label>Geofence Radius (m)</label><input id="policyRadiusV84" type="number" value="200"></div><div class="f3"><label>Variant</label><input id="policyVariantV84" value="Production"></div><div class="f12"><label>Check-In Instruction</label><input id="policyInstructionV84" value="سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔"></div><div class="f12 score-policy-editor"><label>Score Rules (minutes late → score)</label><div class="score-policy-grid"><span>≤10 min <input id="score10V84" type="number" value="10" min="0" max="10"></span><span>≤20 min <input id="score20V84" type="number" value="8" min="0" max="10"></span><span>≤30 min <input id="score30V84" type="number" value="6" min="0" max="10"></span><span>≤45 min <input id="score45V84" type="number" value="4" min="0" max="10"></span><span>Later <input id="scoreLateV84" type="number" value="2" min="0" max="10"></span></div></div><div class="f12"><button class="primary" type="button" onclick="saveAttendancePolicyV84()">Save Attendance Policy</button></div></div><div class="version-panel-v84"><span>Current Version <b id="settingsVersionV84">v109</b></span><span>Variant <b id="settingsVariantV84">Production</b></span><span id="settingsUpdateV84">Up to date</span><button class="soft update-now-v85" type="button" onclick="forceAppUpdateV85()">Check / Update Now</button></div></div><div class="card span6"><h3>مالک کا پاس ورڈ</h3><p class="muted">یوزر نیم: <b>admin</b></p><form id="ownerPasswordForm" class="vertical-form"><label for="ownerOldPassword">موجودہ پاس ورڈ</label><input id="ownerOldPassword" type="password" autocomplete="current-password" required><label for="ownerNewPassword">نیا پاس ورڈ — کم از کم 6 حروف</label><input id="ownerNewPassword" type="password" autocomplete="new-password" minlength="6" required><label for="ownerConfirmPassword">نیا پاس ورڈ دوبارہ درج کریں</label><input id="ownerConfirmPassword" type="password" autocomplete="new-password" minlength="6" required><button id="ownerPasswordBtn" class="primary" type="submit">پاس ورڈ تبدیل کریں</button><div id="ownerPasswordMessage" class="login-message" role="status" aria-live="polite"></div></form></div><div class="card span12"><h3>Storage</h3><p>یہ version <b>Firebase Firestore</b> کے ساتھ online sync کرتا ہے اور browser <b>localStorage</b> کو offline/local cache کے طور پر رکھتا ہے۔</p><button class="danger" onclick="resetAll()">صرف اس Browser کا Local Cache صاف کریں</button></div></div></section>
 <section id="staffSalary" class="tab app-screen">
   <div class="pro-card">
     <div class="pro-card-head">
@@ -1351,7 +1351,7 @@ th,td{font-size:16px;line-height:1.55}
       <table class="salary-table-v101">
         <thead><tr>
           <th>#</th><th>Name</th><th>Monthly Salary</th><th>Working Hours</th><th>Overtime</th>
-          <th>Points</th><th>Bonus</th><th>Advance</th><th>Final Salary</th><th></th>
+          <th>Points</th><th>Bonus</th><th>کھانا (تنخواہ میں)</th><th>Advance</th><th>Final Salary</th><th></th>
         </tr></thead>
         <tbody id="salaryRowsV101"></tbody>
       </table>
@@ -1580,6 +1580,20 @@ var NTDraftsV101=(function(){
 window.NTDraftsV101=NTDraftsV101;
 </script>
 <script>
+function mealConfigV109(salary={},staff={}){
+ const legacy=Number(staff.mealAmount||staff.khanaAmount||0);
+ const mode=['daily','monthly','none'].includes(salary.mealMode)?salary.mealMode:legacy>0?(staff.meal==='monthly'?'monthly':'daily'):'none';
+ return {mealMode:mode,mealRate:Math.max(0,Number(salary.mealRate??legacy)||0),mealInSalary:salary.mealInSalary===true};
+}
+function mealAmountV109(cfg,recs){
+ const mealDays=new Set(recs.filter(a=>a.checkIn||a.checkInTime).map(a=>a.date)).size;
+ const mealTotal=cfg.mealMode==='monthly'?cfg.mealRate:cfg.mealMode==='daily'?cfg.mealRate*mealDays:0;
+ return {mealDays,mealTotal,mealSalary:cfg.mealInSalary?mealTotal:0};
+}
+function mealFieldsV109(prefix,cfg={}){
+ return `<fieldset class="meal-fields-v109" lang="ur" dir="rtl"><legend>🍽 کھانے کے پیسے</legend><label>طریقہ<select id="${prefix}Mode"><option value="none" ${(cfg.mealMode||'none')==='none'?'selected':''}>نہیں</option><option value="daily" ${cfg.mealMode==='daily'?'selected':''}>روزانہ / Daily</option><option value="monthly" ${cfg.mealMode==='monthly'?'selected':''}>ماہانہ / Monthly</option></select></label><label>رقم (روپے)<input id="${prefix}Rate" type="number" min="0" step="0.01" value="${Number(cfg.mealRate||0)}"></label><label class="meal-check-v109"><input id="${prefix}Include" type="checkbox" ${cfg.mealInSalary?'checked':''}> تنخواہ میں شامل کریں</label><small>روزانہ: فی حاضر دن رقم۔ ماہانہ: پورے مہینے کی مقررہ رقم۔ الگ ادا کرتے ہیں تو تنخواہ میں شامل نہ کریں۔</small></fieldset>`;
+}
+function readMealV109(prefix){const mode=document.getElementById(prefix+'Mode').value,rate=Number(document.getElementById(prefix+'Rate').value||0);if(!Number.isFinite(rate)||rate<0)throw Error('کھانے کی رقم درست درج کریں');return {mealMode:mode,mealRate:rate,mealInSalary:document.getElementById(prefix+'Include').checked}}
 const KEY='noor-traders-v79-standalone';
 const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Karachi'}).format(new Date());
 const defaults={entries:[],categories:['بجلی کا بل','گیس / پانی','کرایہ','تنخواہ','چائے / کھانا','ٹرانسپورٹ','مرمت','موبائل / انٹرنیٹ','گھر کا خرچ','قرض / ادائیگی','فیس / ٹیکس','پیکنگ','دیگر'],subCategories:{sale:['Cash Sale','Credit Sale','Retail','Wholesale','Other'],collection:['Customer Wasooli','Account Recovery','Other'],expense:['Shop Expense','Salary','Transport','Electricity','Food','Other'],account:['Bank Transfer','Account Deposit','Other'],cash_out:['Supplier Payment','Cash Given','Other']},stockItems:['صوفی گھی','صوفی آئل','صوفی آئل کی بڑی بوتل','صوفی آئل کی چھوٹی بوتل','مومن آئل کی بوتل','مومن آئل','مجاہد آئل کا پیکٹ','چینی','چاول بابا','چاول سپر','چاول سٹیم','سیلا چاول','دال ماش','گڑ','شکر','مجاہد گھی','شفیع گھی','ڈالڈا گھی','ڈالڈا آئل','بادام','لپٹن پتی','سپرِیم پتی','لائف شیمپو'].map((name,i)=>({id:i+1,name,unit:['چینی','چاول بابا','چاول سپر','چاول سٹیم','سیلا چاول','دال ماش','گڑ','شکر','بادام'].includes(name)?'کلو':'عدد',rate:0})),stockRecords:{},staff:[],attendance:{},purchases:[],batches:[]};
@@ -2011,7 +2025,7 @@ function renderV84Dashboard(){const d=dashDate.value||today(),es=db.entries.filt
 function toggleStaffCreateV84(show){staffCreateV84.classList.toggle('show',show)}
 staffPhoneV84.oninput=()=>staffPasswordV84.textContent=normPhoneV84(staffPhoneV84.value)||'Phone Number';
 staffPhotoV84.onchange=async()=>{const f=staffPhotoV84.files?.[0];staffPhotoDataV84=f?await fileData(f,360):'';staffPhotoPreviewV84.textContent=staffPhotoDataV84?'':'👤';staffPhotoPreviewV84.style.backgroundImage=staffPhotoDataV84?`url("${staffPhotoDataV84}")`:''};
-staffFormV84.onsubmit=async e=>{e.preventDefault();const phone=normPhoneV84(staffPhoneV84.value);if(phone.length<10)return alert('Phone Number درست درج کریں');if(db.staff.some(s=>normPhoneV84(s.phone||s.id)===phone))return alert('یہ Phone Number پہلے موجود ہے');const salary={monthlySalary:Number(staffMonthlySalaryV102.value||0),dutyHours:Number(staffDutyHoursV102.value||10),workingDays:Number(staffWorkingDaysV102.value||30),overtimeRate:Number(staffOvertimeRateV102.value||0),pointRate:Number(staffPointRateV102.value||0)};const s={id:phone,name:staffNameV84.value.trim(),role:staffRoleV84.value.trim(),address:staffAddressV84.value.trim(),phone,photo:staffPhotoDataV84||'',active:true,loginEnabled:staffLoginEnabledV84.checked,salary,salaryExtras:[],createdAt:Date.now()};db.salaryConfig??={};db.salaryExtras??={};db.salaryConfig[phone]=salary;db.salaryExtras[phone]=[];db.staff.push(s);save();await window.noorStaffSystem?.upsertAccount(s);staffFormV84.reset();staffDutyHoursV102.value='10';staffWorkingDaysV102.value='30';staffLoginEnabledV84.checked=true;staffPhotoDataV84='';staffPhotoPreviewV84.textContent='👤';staffPhotoPreviewV84.style.backgroundImage='';window.NTStaffCreateDraftV101&&window.NTStaffCreateDraftV101.clear();toggleStaffCreateV84(false)};
+staffFormV84.onsubmit=async e=>{e.preventDefault();const phone=normPhoneV84(staffPhoneV84.value);if(phone.length<10)return alert('Phone Number درست درج کریں');if(db.staff.some(s=>normPhoneV84(s.phone||s.id)===phone))return alert('یہ Phone Number پہلے موجود ہے');const salary={monthlySalary:Number(staffMonthlySalaryV102.value||0),dutyHours:Number(staffDutyHoursV102.value||10),workingDays:Number(staffWorkingDaysV102.value||30),overtimeRate:Number(staffOvertimeRateV102.value||0),pointRate:Number(staffPointRateV102.value||0),...readMealV109('staffMealV109')};const s={id:phone,name:staffNameV84.value.trim(),role:staffRoleV84.value.trim(),address:staffAddressV84.value.trim(),phone,photo:staffPhotoDataV84||'',active:true,loginEnabled:staffLoginEnabledV84.checked,salary,salaryExtras:[],createdAt:Date.now()};db.salaryConfig??={};db.salaryExtras??={};db.salaryConfig[phone]=salary;db.salaryExtras[phone]=[];db.staff.push(s);save();await window.noorStaffSystem?.upsertAccount(s);staffFormV84.reset();staffDutyHoursV102.value='10';staffWorkingDaysV102.value='30';staffLoginEnabledV84.checked=true;staffPhotoDataV84='';staffPhotoPreviewV84.textContent='👤';staffPhotoPreviewV84.style.backgroundImage='';window.NTStaffCreateDraftV101&&window.NTStaffCreateDraftV101.clear();toggleStaffCreateV84(false)};
 staffSearchV84.oninput=renderStaffAccountsV84;
 function renderStaffCenterV84(){
   const staff=db.staff.filter(s=>s.active!==false);
@@ -2034,7 +2048,13 @@ function renderStaffCenterV84(){
   set('staffCenterOutMirror',out);
 }
 function renderStaffAccountsV84(){const q=(staffSearchV84.value||'').toLowerCase(),items=db.staff.filter(s=>`${s.name||''} ${s.phone||''} ${s.address||''} ${s.role||''}`.toLowerCase().includes(q));staffCountV84.textContent=`${db.staff.length} accounts`;histStaffV84.innerHTML='<option value="">All Staff</option>'+db.staff.map(s=>`<option value="${normPhoneV84(s.phone||s.id)}">${esc(s.name)} • ${esc(normPhoneV84(s.phone||s.id))}</option>`).join('');staffCardsV84.innerHTML=items.map(s=>{const p=normPhoneV84(s.phone||s.id),initials=(s.name||'?').split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase(),base=Number((db.salaryConfig||{})[p]?.monthlySalary??s.salary?.monthlySalary??0);return `<article class="staff-card-v84"><div class="staff-card-top"><div class="staff-card-avatar">${s.photo?`<img src="${s.photo}">`:esc(initials)}</div><div><h4>${esc(s.name)}</h4><span>${esc(s.role||'Staff')} • ${esc(p)}</span></div><span class="active-chip-v84">${s.active===false||s.loginEnabled===false?'Login Disabled':'Active'}</span></div><p>📍 ${esc(s.address||'—')}</p><div class="staff-card-salary-v102">💰 Monthly Salary = <b>${base?money(base):'مقرر نہیں'}</b></div><div class="staff-card-password">🔐 Default password = <b>${esc(p)}</b></div><div class="staff-card-actions"><button onclick="openStaffProfileV84('${p}')">View</button><button onclick="editStaffV84('${p}')">Edit</button><button class="soft" onclick="openSalaryDetailV101('${p}')">Salary</button><button class="soft" onclick="resetStaffPasswordV85('${p}')">Reset Password</button><button class="danger" onclick="deleteStaffV84('${p}')">Delete</button></div></article>`}).join('')||'<div class="empty-state-v84">No staff found</div>'}
-function renderKhanaAllowanceV85(){const date=khanaDateV85.value||today(),month=khanaMonthV85.value||date.slice(0,7),daysInMonth=new Date(Number(month.slice(0,4)),Number(month.slice(5,7)),0).getDate(),rows=db.staff.map(s=>{const daily=Number(s.mealAmount||s.khanaAmount||0),present=(window.noorStaffSystem?.getAttendanceForDate(date)?.get(normPhoneV84(s.phone||s.id))?.checkIn)||false;return{s,daily,present}}),dailyTotal=rows.filter(x=>x.present).reduce((sum,x)=>sum+x.daily,0),monthlyTotal=rows.reduce((sum,x)=>sum+x.daily,0)*daysInMonth;khanaSummaryV85.innerHTML=`<div><small>Selected Date</small><b>${money(dailyTotal)}</b></div><div><small>Monthly Estimate</small><b>${money(monthlyTotal)}</b></div><div><small>Staff Plans</small><b>${rows.filter(x=>x.daily>0).length}</b></div>`;khanaRowsV85.innerHTML=rows.map(x=>`<tr><td>${x.s.photo?`<img class="photo" src="${x.s.photo}">`:''} ${esc(x.s.name||'Staff')}</td><td>${esc(x.s.role||'Staff')}</td><td>${esc(x.s.meal||x.s.khanaPlan||'—')}</td><td>${money(x.daily)}</td><td>${x.present?'Present':'Absent'}</td><td>${money(x.daily*daysInMonth)}</td></tr>`).join('')||'<tr><td colspan="6">No staff</td></tr>'}
+function renderKhanaAllowanceV85(){
+ const date=khanaDateV85.value||today(),month=khanaMonthV85.value||date.slice(0,7);
+ const rows=db.staff.map(s=>{const phone=normPhoneV84(s.phone||s.id),cfg=mealConfigV109((db.salaryConfig||{})[phone]||s.salary||{},s),recs=(window.noorStaffSystem?.getAttendanceBetween(month+'-01',month+'-31')||[]).filter(a=>normPhoneV84(a.phone)===phone),amount=mealAmountV109(cfg,recs),a=window.noorStaffSystem?.getAttendanceForDate(date)?.get(phone)||{};return{s,cfg,...amount,present:!!(a.checkIn||a.checkInTime)}});
+ khanaSummaryV85.innerHTML=`<div><small>منتخب دن کا روزانہ کھانا</small><b>${money(rows.filter(x=>x.present&&x.cfg.mealMode==='daily').reduce((n,x)=>n+x.cfg.mealRate,0))}</b></div><div><small>مہینے کا کل کھانا</small><b>${money(rows.reduce((n,x)=>n+x.mealTotal,0))}</b></div><div><small>تنخواہ میں شامل</small><b>${money(rows.reduce((n,x)=>n+x.mealSalary,0))}</b></div>`;
+ khanaRowsV85.innerHTML=rows.map(x=>`<tr><td>${esc(x.s.name||'Staff')}</td><td>${esc(x.s.role||'Staff')}</td><td>${x.cfg.mealMode==='daily'?'روزانہ':x.cfg.mealMode==='monthly'?'ماہانہ':'نہیں'} · ${x.cfg.mealInSalary?'تنخواہ میں':'الگ'}</td><td>${money(x.cfg.mealRate)}</td><td>${x.present?'حاضر':'غیر حاضر'} · ${x.mealDays} دن</td><td>${money(x.mealTotal)}</td></tr>`).join('')||'<tr><td colspan="6">No staff</td></tr>';
+}
+
 khanaDateV85?.addEventListener('change',renderKhanaAllowanceV85);khanaMonthV85?.addEventListener('change',renderKhanaAllowanceV85);
 async function resetStaffPasswordV85(phone){const s=staffForPhoneV84(phone);if(!s.phone)return;if(confirm('Reset password to mobile number?')){s.loginEnabled=s.loginEnabled!==false;await window.noorStaffSystem?.upsertAccount(s);save()}}
 async function editStaffV84(phone){const s=staffForPhoneV84(phone);if(!s.phone&&!s.id)return;const name=prompt('Name',s.name||'');if(name===null)return;const address=prompt('Address',s.address||'');if(address===null)return;const np=normPhoneV84(prompt('Phone Number',normPhoneV84(s.phone||s.id)));if(!np)return;const old=normPhoneV84(s.phone||s.id);s.name=name.trim()||s.name;s.address=address.trim();s.phone=np;s.id=np;if(old!==np)await window.noorStaffSystem?.deleteAccount(old);await window.noorStaffSystem?.upsertAccount(s);save()}
@@ -2121,7 +2141,7 @@ function ntSetVersionStatusV101(latest){
   });
   return newer;
 }
-const APP_VERSION_V85='v107';
+const APP_VERSION_V85='v109';
 let currentPdfHtmlV85='';
 
 /* ===== AUTO UPDATE (v88) =====
@@ -2281,6 +2301,7 @@ function editStaffV84(phone){
   const s=staffForPhoneV84(phone);if(!s.phone&&!s.id)return;
   const p=normPhoneV84(s.phone||s.id);
   const salary=(db.salaryConfig||{})[p]||s.salary||{};
+  const meal=mealConfigV109(salary,s);document.getElementById('staffEditMealV109Mode').value=meal.mealMode;document.getElementById('staffEditMealV109Rate').value=meal.mealRate;document.getElementById('staffEditMealV109Include').checked=meal.mealInSalary;
   staffEditOldPhoneV85.value=p;staffEditNameV85.value=s.name||'';staffEditRoleV85.value=s.role||'';staffEditAddressV85.value=s.address||'';
   staffEditPhoneV85.value=p;staffEditActiveV85.value=String(s.active!==false);staffEditLoginEnabledV85.checked=s.loginEnabled!==false;staffEditPasswordV85.textContent=p;
   staffEditMonthlySalaryV102.value=Number(salary.monthlySalary||0)||'';staffEditDutyHoursV102.value=Number(salary.dutyHours||10);staffEditWorkingDaysV102.value=Number(salary.workingDays||30);staffEditOvertimeRateV102.value=Number(salary.overtimeRate||0)||'';staffEditPointRateV102.value=Number(salary.pointRate||0)||'';
@@ -2294,7 +2315,7 @@ staffEditFormV85?.addEventListener('submit',async e=>{
   if(newPhone.length<10)return alert('Phone Number درست درج کریں۔');
   if(db.staff.some(s=>normPhoneV84(s.phone||s.id)===newPhone&&normPhoneV84(s.phone||s.id)!==oldPhone))return alert('یہ Phone Number پہلے موجود ہے۔');
   const s=staffForPhoneV84(oldPhone);if(!s.phone&&!s.id)return;
-  const salary={monthlySalary:Number(staffEditMonthlySalaryV102.value||0),dutyHours:Number(staffEditDutyHoursV102.value||10),workingDays:Number(staffEditWorkingDaysV102.value||30),overtimeRate:Number(staffEditOvertimeRateV102.value||0),pointRate:Number(staffEditPointRateV102.value||0)};
+  const salary={monthlySalary:Number(staffEditMonthlySalaryV102.value||0),dutyHours:Number(staffEditDutyHoursV102.value||10),workingDays:Number(staffEditWorkingDaysV102.value||30),overtimeRate:Number(staffEditOvertimeRateV102.value||0),pointRate:Number(staffEditPointRateV102.value||0),...readMealV109('staffEditMealV109')};
   const salaryExtras=[...((db.salaryExtras||{})[oldPhone]||s.salaryExtras||[])];
   const updated={...s,id:newPhone,phone:newPhone,name:staffEditNameV85.value.trim(),role:staffEditRoleV85.value.trim(),address:staffEditAddressV85.value.trim(),photo:staffEditPhotoDataV85||s.photo||'',active:staffEditActiveV85.value==='true',loginEnabled:staffEditLoginEnabledV85.checked,salary,salaryExtras,updatedAt:Date.now()};
   const saveButton=staffEditFormV85.querySelector('[type=submit]');saveButton.disabled=true;
@@ -2321,7 +2342,7 @@ function renderStaffProfileV84(){
   const scores=rows.map(attScoreV84).filter(x=>x!=null),late=rows.filter(a=>(a.minutesLate||0)>10).length,ms=currentMonthStaffStatsV85(s,rows);
   const d=today(),ta=rows.find(a=>a.date===d)||{},st=attendanceStatusV84(ta);
   const shift=policyV84.shiftStart||'09:00',shiftEnd=policyV84.shiftEnd||'—';
-  const khanaDaily=Number(s.mealAmount||s.khanaAmount||0);
+  const mealCfg=mealConfigV109((db.salaryConfig||{})[phone]||s.salary||{},s),profileMeal=mealAmountV109(mealCfg,rows.filter(a=>a.date?.startsWith(today().slice(0,7))));
   profileTitleV84.textContent=s.name||phone;
   staffProfileBodyV84.innerHTML=`
   <div class="profile-hero-v84">
@@ -2354,8 +2375,8 @@ function renderStaffProfileV84(){
     <div><small>Hazir / Ghair-hazir</small><strong>${ms.present} / ${ms.absent}</strong></div>
     <div><small>Average Score</small><strong>${scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—'}</strong></div>
     <div><small>Late Din</small><strong>${late}</strong></div>
-    <div><small>Khana (rozana)</small><strong>${money(khanaDaily)}</strong></div>
-    <div><small>Khana (is mahine)</small><strong>${money(khanaDaily*ms.present)}</strong></div>
+    <div><small>کھانا (${mealCfg.mealMode==='monthly'?'ماہانہ':mealCfg.mealMode==='daily'?'روزانہ':'نہیں'})</small><strong>${money(mealCfg.mealRate)}</strong></div>
+    <div><small>کھانا (اس مہینے)</small><strong>${money(profileMeal.mealTotal)}</strong></div>
   </div>
   <div class="pro-card">
     <div class="pro-card-head"><h3>Poori Attendance History</h3><small>${rows.length} records</small></div>
@@ -2379,6 +2400,7 @@ document.querySelectorAll('#mobileDockV84 [data-go]').forEach(b=>b.onclick=()=>g
 window.addEventListener('online',()=>{document.body.classList.remove('offline-v84')});window.addEventListener('offline',()=>{document.body.classList.add('offline-v84')});
 
 setTimeout(()=>{if(!window.noorAuthReady){const m=document.getElementById('loginMessage');if(m)m.textContent='لاگ اِن سروس لوڈ نہیں ہو سکی۔ انٹرنیٹ چیک کرکے Sync / Update Now دبائیں۔'}},20000);
+document.getElementById('staffMealV109Fields').innerHTML=mealFieldsV109('staffMealV109');document.getElementById('staffEditMealV109Fields').innerHTML=mealFieldsV109('staffEditMealV109');
 setupDates();renderNavigation(location.hash.slice(1)||'dashboard');goScreen(location.hash.slice(1)||'dashboard',true);renderAll();setTimeout(renderQuickEntryV85,0);
 
 </script>
@@ -2675,6 +2697,7 @@ function reportDocument({tasks,photos=new Map(),title='Staff Picture & Points Re
     <tr><th>عام کام کے گھنٹے</th><td>${hm(salary.normalMin)}</td><th>گھنٹوں کی تنخواہ</th><td>${rs(salary.normalSalary)}</td></tr>
     <tr><th>اوور ٹائم</th><td>${hm(salary.otMin)}</td><th>اوور ٹائم رقم</th><td>+ ${rs(salary.overtimeAmount)}</td></tr>
     <tr><th>پوائنٹس</th><td>${Number(salary.points||0)} (حاضری ${Number(salary.attPoints||0)} + کام ${Number(salary.taskPoints||0)})</td><th>پوائنٹس کی رقم</th><td>+ ${rs(salary.pointsAmount)}</td></tr>
+    <tr><th>کھانے کے پیسے</th><td>${rs(salary.mealTotal)}</td><th>تنخواہ میں شامل کھانا</th><td>+ ${rs(salary.mealSalary)}</td></tr>
     <tr><th>مالک کی شامل کردہ رقم</th><td>+ ${rs(salary.bonus)}</td><th>Advance / کٹوتی</th><td>− ${rs(salary.advance)}</td></tr>
   </tbody></table>${salary.openDays?`<p class="warn">${Number(salary.openDays)} دن کا Check-Out نہیں ہوا، اس لیے ان کے گھنٹے تنخواہ میں شامل نہیں ہوئے۔</p>`:''}</section>`:'';
   return `<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>${e(title)}</title><style>@page{size:A4;margin:13mm}body{font:14px/1.65 Arial,sans-serif;color:#17302d;padding:12px}h1{font-size:24px;color:#0f766e}h2{font-size:19px}h3{margin:0;font-size:17px}table{width:100%;border-collapse:collapse;margin:14px 0}th,td{border:1px solid #d2dedb;padding:8px;text-align:right}th{background:#eaf4f0}article{border-top:2px solid #b8d9ce;padding:15px 0;break-inside:auto}article h3{break-after:avoid}p{margin:6px 0}.note{white-space:pre-wrap;overflow-wrap:anywhere}.totals{background:#eaf4f0;padding:14px}.photos{display:block}figure{display:inline-block;vertical-align:top;width:46%;margin:8px 1%;break-inside:avoid}img{display:block;width:100%;max-height:95mm;object-fit:contain}figcaption{font-size:12px;text-align:center}thead{display:table-header-group}.attendance{font-size:11px}.attendance th,.attendance td{padding:5px;overflow-wrap:anywhere}.salary-report{break-before:page}.salary-total{display:flex;justify-content:space-between;gap:18px;background:#0f766e;color:#fff;padding:14px;border-radius:10px}.salary-total span,.salary-total b{display:block}.salary-total b{font-size:22px}.warn{color:#92400e;background:#fff7ed;padding:8px}@media print{body{padding:0}article{box-shadow:none}}</style></head><body><h1>Noor Traders Gulyana</h1><h2>${e(title)}</h2><p>${e(subtitle)}</p><div class="totals">کل کام: ${totals.total} • منظور شدہ: ${totals.approved} • منظوری باقی: ${totals.pending}<br><b>منظور شدہ ٹاسک پوائنٹس: ${totals.points}</b> / مقررہ ${totals.possible}<br>صرف منظور شدہ کام کے پوائنٹس جمع کیے گئے ہیں۔ تاریخ کا حساب کام کی مقررہ تاریخ سے ہے۔</div><table><thead><tr><th>ملازم</th><th>کام</th><th>منظور</th><th>ٹاسک پوائنٹس</th></tr></thead><tbody>${people||'<tr><td colspan="4">اس مدت میں کوئی کام نہیں۔</td></tr>'}</tbody></table>${evidence}${att}${sal}</body></html>`;
@@ -3233,7 +3256,7 @@ const staffAttendanceCol=collection(fs,"businesses",BUSINESS_ID,"staffAttendance
 const staffSessionsCol=collection(fs,"businesses",BUSINESS_ID,"staffSessions");
 const STAFF_SESSION_KEY="noor-traders-staff-session";
 const staffConfigDoc=doc(fs,"businesses",BUSINESS_ID,"staffConfig","main");
-let staffConfig={shiftStart:'09:00',shiftEnd:'',radius:200,variant:'Production',instruction:'سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔',scores:{m10:10,m20:8,m30:6,m45:4,late:2},version:'v107'};
+let staffConfig={shiftStart:'09:00',shiftEnd:'',radius:200,variant:'Production',instruction:'سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔',scores:{m10:10,m20:8,m30:6,m45:4,late:2},version:'v109'};
 
 async function upsertAccount(account){
   const phone=normalizePhone(account.phone||account.id);
@@ -3311,7 +3334,7 @@ function getAttendanceForDate(date){
 function getAttendanceBetween(from,to){
   return [...ownerStaffAttendance.values()].filter(a=>(!from||a.date>=from)&&(!to||a.date<=to)).map(normalizeAttendanceV103).sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.checkInTs||0)-(b.checkInTs||0));
 }
-async function saveConfig(cfg){staffConfig={...staffConfig,...clean(cfg),scores:{...staffConfig.scores,...(cfg.scores||{})},version:'v107'};await setDoc(staffConfigDoc,staffConfig,{merge:true});window.applyPolicyV84?.(staffConfig)}
+async function saveConfig(cfg){staffConfig={...staffConfig,...clean(cfg),scores:{...staffConfig.scores,...(cfg.scores||{})},version:'v109'};await setDoc(staffConfigDoc,staffConfig,{merge:true});window.applyPolicyV84?.(staffConfig)}
 function getAttendanceById(id){return ownerStaffAttendance.get(id)||null}
 async function updateAttendance(id,patch){return window.noorStaffUpgrades.attendance(id,patch)}
 async function deleteAttendance(id){return window.noorStaffUpgrades.attendance(id,{},true)}
@@ -3344,7 +3367,7 @@ function renderStaffProfile(){
 }
 let ownAttendanceUnsub=null;
 function startStaffOwnListener(){
-  staffUnsubs.push(onSnapshot(staffConfigDoc,s=>{if(s.exists()){staffConfig={...staffConfig,...clean(s.data()),scores:{...staffConfig.scores,...(s.data().scores||{})}};const radius=staffConfig.radius||SHOP.radius;staffRuleText.textContent=`Selfie لازمی + Noor Traders سے زیادہ سے زیادہ ${radius}m`;staffInstructionText.textContent=staffConfig.instruction||staffInstructionText.textContent;staffVersionLabel.textContent='v107'}}));
+  staffUnsubs.push(onSnapshot(staffConfigDoc,s=>{if(s.exists()){staffConfig={...staffConfig,...clean(s.data()),scores:{...staffConfig.scores,...(s.data().scores||{})}};const radius=staffConfig.radius||SHOP.radius;staffRuleText.textContent=`Selfie لازمی + Noor Traders سے زیادہ سے زیادہ ${radius}m`;staffInstructionText.textContent=staffConfig.instruction||staffInstructionText.textContent;staffVersionLabel.textContent='v109'}}));
   staffUnsubs.push(onSnapshot(doc(staffAccountsCol,currentStaffPhone),s=>{if(s.exists()){currentStaff={...clean(s.data()),phone:currentStaffPhone};window.currentStaffAccountV101=currentStaff;renderStaffProfile();window.renderStaffSalaryV101?.()}}));
   if(ownAttendanceUnsub)try{ownAttendanceUnsub()}catch{}
   const q=query(staffAttendanceCol,where("phone","==",currentStaffPhone));
@@ -3424,6 +3447,45 @@ window.noorTasks=installTaskUI({service:taskService,getStaff:()=>window.getNoorD
 /* BEGIN V104 STAFF MODULE */
 const StaffUpgradesV104=(()=>{
 
+// Urdu speech-to-text: only reviewed text is submitted; no audio is stored.
+function installUrduDictation({form,status,win=window}){
+ const doc=form.ownerDocument,field=form.elements.reason;
+ const box=doc.createElement('div');box.className='su-dictation';box.setAttribute('lang','ur');box.setAttribute('dir','rtl');
+ box.innerHTML='<button type="button" data-dictate>🎙 بول کر اردو لکھیں</button><button type="button" data-dictate-stop hidden>بولنا بند کریں</button><p data-dictate-status role="status" aria-live="polite"></p><p data-dictate-preview dir="auto"></p><small>اردو میں بولیں، پھر لکھا ہوا متن دیکھ کر درست کریں اور بھیجیں۔ آواز سے لکھنے کے لیے انٹرنیٹ درکار ہو سکتا ہے۔</small>';
+ field.closest('label').after(box);
+ const start=box.querySelector('[data-dictate]'),stop=box.querySelector('[data-dictate-stop]'),message=box.querySelector('[data-dictate-status]'),preview=box.querySelector('[data-dictate-preview]'),submit=form.querySelector('[type=submit]');
+ const Recognition=win.SpeechRecognition||win.webkitSpeechRecognition;
+ let recognition=null,generation=0,active=false;
+ function idle(){active=false;start.disabled=!Recognition;stop.hidden=true;field.readOnly=false;submit.disabled=false;preview.textContent=''}
+ function reset(){generation++;const old=recognition;recognition=null;try{old?.abort()}catch{}idle();message.textContent=''}
+ if(!Recognition){start.disabled=true;message.textContent='اس براؤزر میں آواز سے لکھنے کی سہولت نہیں۔ Chrome میں کھولیں یا یہاں خود لکھیں۔'}
+ start.onclick=()=>{
+  if(!Recognition||active)return;
+  if(win.isSecureContext===false){message.textContent='مائیک استعمال کرنے کے لیے ایپ HTTPS پر کھولیں۔';return}
+  const ticket=++generation,seen=new Set();let received=false,failed=false;
+  const r=new Recognition();recognition=r;r.lang='ur-PK';r.continuous=true;r.interimResults=true;
+  active=true;start.disabled=true;stop.hidden=false;field.readOnly=true;submit.disabled=true;status.textContent='';message.textContent='سن رہے ہیں… اردو میں بولیں۔';
+  r.onresult=event=>{
+   if(ticket!==generation)return;let interim='';
+   for(let i=event.resultIndex;i<event.results.length;i++){
+    const result=event.results[i],text=String(result[0]?.transcript||'').trim();
+    if(result.isFinal&&!seen.has(i)){
+     seen.add(i);if(!text)continue;
+     const prefix=field.value&& !/\s$/.test(field.value)?' ':'';
+     if((field.value+prefix+text).length>field.maxLength){failed=true;message.textContent='متن کی حد پوری ہو گئی ہے۔ مختصر کر کے دوبارہ بولیں۔';r.stop();continue}
+     field.value+=prefix+text;received=true;field.dispatchEvent(new win.Event('input',{bubbles:true}));
+    }else if(!result.isFinal)interim+=text+' ';
+   }
+   preview.textContent=interim;
+  };
+  r.onerror=event=>{if(ticket!==generation)return;failed=true;const labels={'not-allowed':'مائیک کی اجازت نہیں ملی۔ براؤزر کی settings میں اجازت دیں یا خود لکھیں۔','service-not-allowed':'آواز سے لکھنے کی اجازت نہیں ملی۔ آپ خود لکھ سکتے ہیں۔','audio-capture':'مائیک دستیاب نہیں۔ مائیک چیک کریں۔','network':'آواز سے لکھنے کا رابطہ نہیں ہو سکا۔ انٹرنیٹ چیک کریں۔','no-speech':'آواز سنائی نہیں دی۔ دوبارہ کوشش کریں۔','language-not-supported':'اس براؤزر میں اردو کی پہچان دستیاب نہیں۔ خود لکھیں یا دوسرا براؤزر استعمال کریں۔'};message.textContent=labels[event.error]||'آواز سے لکھنا رک گیا۔ دوبارہ کوشش کریں یا خود لکھیں۔';idle()};
+  r.onend=()=>{if(ticket!==generation)return;recognition=null;idle();if(!failed)message.textContent=received?'لکھا ہوا متن دیکھ کر درست کریں، پھر مالک کو بھیجیں۔':'کوئی متن نہیں ملا۔ دوبارہ بولیں یا خود لکھیں۔'};
+  try{r.start()}catch{failed=true;idle();message.textContent='مائیک شروع نہیں ہوا۔ دوبارہ کوشش کریں یا خود لکھیں۔'}
+ };
+ stop.onclick=()=>{try{recognition?.stop();stop.hidden=true;message.textContent='آخری الفاظ لکھے جا رہے ہیں…'}catch{reset()}};
+ return {reset,isActive:()=>active};
+}
+
 /* Additive Staff v104. Existing screens remain available. */
 function staffStatusV104(account, attendance={}, requests=[], date, schedule={}) {
   const checked=attendance.checkIn||attendance.checkInTime;
@@ -3458,7 +3520,8 @@ function installStaffUpgrades({fs,auth,sdk,getStaff,getAttendance,getConfig,isOw
  ownBox.innerHTML='<h2>Aaj / آج</h2><div id="suOwnSummary"></div><details><summary>Chhutti / Attendance correction ki request</summary><form id="suRequest"><label>Request<select name="kind"><option value="leave">Chhutti</option><option value="correction">Bhoola checkout / attendance correction</option></select></label><div class="su-grid"><label>Date<input name="date" type="date" required></label><label>Leave end date<input name="to" type="date" required></label></div><label>Correction: check-in<input name="checkIn" type="time"></label><label>Correction: check-out<input name="checkOut" type="time"></label><label>Wajah<textarea name="reason" maxlength="1000" required></textarea></label><button>Request bhejein</button></form></details><p id="suOwnMessage" role="status"></p><div id="suOwnRequests"></div>';
  const suggestionBox=document.createElement('details');suggestionBox.className='su-row';suggestionBox.setAttribute('lang','ur');suggestionBox.setAttribute('dir','rtl');suggestionBox.innerHTML='<summary>💡 کام بہتر بنانے کے لیے میری رائے</summary><p>اپنی تجویز لکھیں۔ یہ آپ کے نام کے ساتھ مالک کی اطلاعات میں جائے گی۔</p><form id="suSuggestion"><label>میری تجویز<textarea name="reason" lang="ur" dir="auto" maxlength="1000" rows="4" placeholder="آپ کے خیال میں کام کیسے بہتر ہو سکتا ہے؟" required></textarea></label><button type="submit">مالک کو رائے بھیجیں</button></form><p id="suSuggestionStatus" role="status"></p>';
  ownBox.append(suggestionBox);
- $('suSuggestion').onsubmit=async e=>{e.preventDefault();const f=e.currentTarget,button=f.querySelector('button'),reason=f.elements.reason.value.trim();if(!reason)return;const ticket=epoch;if(session?.role!=='staff')return;button.disabled=true;$('suSuggestionStatus').textContent='رائے بھیجی جا رہی ہے…';try{const id=doc(col('staffRequests')).id,payload={phone:session.phone,kind:'suggestion',date:today(),to:today(),checkIn:'',checkOut:'',reason,status:'pending',createdAt:Date.now(),by:auth.currentUser.uid};await runTransaction(fs,async tx=>tx.set(ref('staffRequests',id),payload));if(ticket!==epoch)return;f.reset();$('suSuggestionStatus').textContent='آپ کی رائے مالک کو بھیج دی گئی ہے۔'}catch(e){if(ticket===epoch)$('suSuggestionStatus').textContent='رائے نہیں بھیجی جا سکی۔ انٹرنیٹ چیک کر کے دوبارہ کوشش کریں۔'}finally{button.disabled=false}};
+ const dictation=installUrduDictation({form:$('suSuggestion'),status:$('suSuggestionStatus')});
+ $('suSuggestion').onsubmit=async e=>{e.preventDefault();const f=e.currentTarget,button=f.querySelector('[type=submit]'),reason=f.elements.reason.value.trim();if(dictation.isActive()||!reason)return;const ticket=epoch;if(session?.role!=='staff')return;button.disabled=true;$('suSuggestionStatus').textContent='رائے بھیجی جا رہی ہے…';try{const id=doc(col('staffRequests')).id,payload={phone:session.phone,kind:'suggestion',date:today(),to:today(),checkIn:'',checkOut:'',reason,status:'pending',createdAt:Date.now(),by:auth.currentUser.uid};await runTransaction(fs,async tx=>tx.set(ref('staffRequests',id),payload));if(ticket!==epoch)return;f.reset();$('suSuggestionStatus').textContent='آپ کی رائے مالک کو بھیج دی گئی ہے۔'}catch(e){if(ticket===epoch)$('suSuggestionStatus').textContent='رائے نہیں بھیجی جا سکی۔ انٹرنیٹ چیک کر کے دوبارہ کوشش کریں۔'}finally{button.disabled=false}};
  function suggestions(){return owner()?data.staffRequests.filter(r=>r.kind==='suggestion').sort((a,b)=>b.createdAt-a.createdAt):[]}
  function suggestionHtml(){return '<section lang="ur" dir="rtl"><h3>💡 ملازمین کی آراء</h3>'+ (suggestions().map(r=>requestRow(r,true)).join('')||'<p>ابھی کوئی رائے موصول نہیں ہوئی۔</p>')+'</section>'}
  async function markSuggestionsRead(){guard();for(const r of suggestions().filter(r=>r.status==='pending'))await write('staffRequests',r.id,{status:'reviewed',reviewedBy:auth.currentUser.uid,reviewedAt:Date.now()},'رائے پڑھ لی گئی')}
@@ -3506,7 +3569,7 @@ function installStaffUpgrades({fs,auth,sdk,getStaff,getAttendance,getConfig,isOw
  $('staffTopNavV99')?.prepend(shortcuts);shortcuts.addEventListener('click',e=>{const b=e.target.closest('[data-short]');if(b){tab=b.dataset.short;window.goScreen('staffCenter');render()}});
 
  for(const name of ['saveSalaryCfgV101','addSalaryExtraV101','deleteSalaryExtraV101']){const original=window[name];if(original)window[name]=async function(...args){try{return await original.apply(this,args)}catch(e){alert('Salary save nahi hui: '+(e.message||'Dobara koshish karein'))}}}
- function stop(){epoch++;suggestionBaseline=false;knownSuggestions.clear();$('suSuggestion').reset();$('suSuggestionStatus').textContent='';unsubs.forEach(u=>u());unsubs=[];session=null;loaded.clear();for(const k in data)data[k]=[];ownerBox.hidden=ownBox.hidden=true;$('suContent').innerHTML='';$('suOwnRequests').innerHTML='';$('suOwnSummary').innerHTML='';$('suRequest').reset()}
+ function stop(){epoch++;dictation.reset();suggestionBaseline=false;knownSuggestions.clear();$('suSuggestion').reset();$('suSuggestionStatus').textContent='';unsubs.forEach(u=>u());unsubs=[];session=null;loaded.clear();for(const k in data)data[k]=[];ownerBox.hidden=ownBox.hidden=true;$('suContent').innerHTML='';$('suOwnRequests').innerHTML='';$('suOwnSummary').innerHTML='';$('suRequest').reset()}
  function start(s){stop();session=s;const token=epoch;for(const n of Object.keys(data)){if(!owner()&&n==='staffAudit'){loaded.add(n);continue}const q=owner()?col(n):query(col(n),where('phone','==',s.phone));unsubs.push(onSnapshot(q,snap=>{if(token!==epoch)return;data[n]=[];snap.forEach(d=>data[n].push({id:d.id,...d.data()}));loaded.add(n);render();if(n==='staffRequests'&&owner()){
  const rows=suggestions(),ids=new Set(rows.map(r=>r.id));
  if(!snap.metadata?.fromCache){if(suggestionBaseline){const added=rows.filter(r=>!knownSuggestions.has(r.id)&&r.status==='pending');if(added.length)window.noorTasks?.suggestionNotice?.({...added[0],staffName:person(added[0].phone).name})}knownSuggestions=ids;suggestionBaseline=true}
@@ -3515,7 +3578,7 @@ function installStaffUpgrades({fs,auth,sdk,getStaff,getAttendance,getConfig,isOw
  return {start,stop,render,schedule,snapshot,write,suggestionHtml,suggestionCount:()=>suggestions().filter(r=>r.status==='pending').length,markSuggestionsRead,async log(type,id,before,after,reason){guard();await runTransaction(fs,async tx=>audit(tx,type,id,before,after,reason))},async attendance(id,patch,remove=false){guard();await runTransaction(fs,async tx=>{const r=ref('staffAttendance',id),s=await tx.get(r);if(remove)tx.delete(r);else tx.set(r,patch,{merge:true});audit(tx,'attendance',id,s.exists()?s.data():null,remove?null:patch,patch.ownerNote||'Owner attendance edit')})}};
 }
 
-return {staffStatusV104,installStaffUpgrades};
+return {installUrduDictation,staffStatusV104,installStaffUpgrades};
 })();
 /* END V104 STAFF MODULE */
 window.noorStaffUpgrades=StaffUpgradesV104.installStaffUpgrades({fs,auth,sdk:{collection,doc,query,where,onSnapshot,runTransaction},getStaff:()=>window.getNoorDb?.().staff||[],getAttendance:getAttendanceBetween,getConfig:()=>staffConfig,isOwner:isOwnerUser});
@@ -4009,6 +4072,8 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
 #staffPortal summary{cursor:pointer;font-size:16px;padding:8px 0}
 #staffPortal input[type=password],#staffPortal input[type=tel],#staffPortal input[type=time],#staffPortal input[type=number]{font-family:Arial,sans-serif!important;direction:ltr}
 
+.meal-slot-v109{grid-column:1/-1;width:100%}.meal-fields-v109{border:1px solid #d6e5dc;border-radius:12px;padding:14px;margin:12px 0;min-width:0}.meal-fields-v109 legend{font-weight:700}.meal-fields-v109 label{display:block;margin:10px 0}.meal-fields-v109 input:not([type=checkbox]),.meal-fields-v109 select{width:100%;box-sizing:border-box}.meal-fields-v109 .meal-check-v109{display:flex;align-items:center;gap:8px}.meal-fields-v109 input[type=checkbox]{width:20px!important;min-height:20px!important;height:20px;flex:none}.meal-fields-v109 small{display:block;line-height:1.8}
+
 </style>
 <script>
 /* ========== NOOR TRADERS V101 WIRING ==========
@@ -4060,7 +4125,7 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
     };
 
     /* ---------- Draft: New Staff Account ---------- */
-    var createGuard=NTDraftsV101.guard({key:'staffCreate',fields:['staffNameV84','staffRoleV84','staffAddressV84','staffPhoneV84','staffMonthlySalaryV102','staffDutyHoursV102','staffWorkingDaysV102','staffOvertimeRateV102','staffPointRateV102','staffLoginEnabledV84']});
+    var createGuard=NTDraftsV101.guard({key:'staffCreate',fields:['staffNameV84','staffRoleV84','staffAddressV84','staffPhoneV84','staffMonthlySalaryV102','staffDutyHoursV102','staffWorkingDaysV102','staffOvertimeRateV102','staffPointRateV102','staffMealV109Mode','staffMealV109Rate','staffMealV109Include','staffLoginEnabledV84']});
     window.NTStaffCreateDraftV101=createGuard;
     var form=$('staffFormV84');
     if(form){
@@ -4085,7 +4150,7 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
     /* ---------- Draft: Staff Edit (usi ملازم کے لیے) ---------- */
     var editGuard=NTDraftsV101.guard({
       key:'staffEdit',
-      fields:['staffEditNameV85','staffEditRoleV85','staffEditAddressV85','staffEditPhoneV85','staffEditMonthlySalaryV102','staffEditDutyHoursV102','staffEditWorkingDaysV102','staffEditOvertimeRateV102','staffEditPointRateV102','staffEditActiveV85','staffEditLoginEnabledV85'],
+      fields:['staffEditNameV85','staffEditRoleV85','staffEditAddressV85','staffEditPhoneV85','staffEditMonthlySalaryV102','staffEditDutyHoursV102','staffEditWorkingDaysV102','staffEditOvertimeRateV102','staffEditPointRateV102','staffEditMealV109Mode','staffEditMealV109Rate','staffEditMealV109Include','staffEditActiveV85','staffEditLoginEnabledV85'],
       tag:function(){ var el=$('staffEditOldPhoneV85'); return el?el.value:'' }
     });
     window.NTStaffEditDraftV101=editGuard;
@@ -4146,6 +4211,7 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
     const staff=(db.staff||[]).find(s=>normPhoneV84(s.phone||s.id)===phone)||{};
     const d=(db.salaryConfig||{})[phone]||staff.salary||{};
     return {
+      ...mealConfigV109(d,staff),
       monthlySalary:Number(d.monthlySalary||0),
       dutyHours:Number(d.dutyHours||10),
       workingDays:Number(d.workingDays||30),
@@ -4206,10 +4272,11 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
     const extras=extrasFor(phone).filter(x=>x.month===month);
     const sum=k=>extras.filter(x=>x.kind===k).reduce((n,x)=>n+Number(x.amount||0),0);
     const bonus=sum('bonus'),advance=sum('advance');
-    const final=normalSalary+overtimeAmount+pointsAmount+bonus-advance;
+    const meal=mealAmountV109(cfg,recs);
+    const final=normalSalary+overtimeAmount+pointsAmount+bonus+meal.mealSalary-advance;
     return {phone,month,periodLabel:monthLabel(month),from,to,...cfg,expectedHours,hourly,otRate,recs,daysWorked,openDays,
             normalMin,otMin,normalSalary,overtimeAmount,attPoints,taskPoints,points,pointsAmount,
-            extras,bonus,advance,final};
+            extras,bonus,advance,...meal,final};
   }
   window.salaryCalcV101=calc;
   window.salaryCalcV102=calc;
@@ -4244,6 +4311,7 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
       <td>${r.otMin?hm(r.otMin)+' • '+money(r.overtimeAmount):'—'}</td>
       <td>${r.points?r.points+' • '+money(r.pointsAmount):'—'}</td>
       <td>${r.bonus?money(r.bonus):'—'}</td>
+      <td>${money(r.mealSalary)}</td>
       <td>${r.advance?money(r.advance):'—'}</td>
       <td><b>${money(r.final)}</b></td>
       <td><button class="soft" type="button" onclick="openSalaryDetailV101('${phone}')">Detail</button></td>
@@ -4293,6 +4361,7 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
         <label>Monthly Working Days<input id="salCfgDaysV101" type="number" min="1" max="31" step="1" value="${r.workingDays}"></label>
         <label>Overtime Rate (Rs/hour) <small>خالی = عام hourly rate</small><input id="salCfgOtV101" type="number" min="0" step="1" value="${r.overtimeRate||''}"></label>
         <label>Per Point Rate (Rs)<input id="salCfgPointV101" type="number" min="0" step="1" value="${r.pointRate||''}"></label>
+        ${mealFieldsV109('salMealV109',cfgFor(phone))}
         <button class="primary" type="button" onclick="saveSalaryCfgV101()">Save Settings</button>
       </div>
       <div class="salary-panel-v101">
@@ -4309,7 +4378,7 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
           <tr><td>Total Points</td><td>${r.points} <small class="muted">(Attendance ${r.attPoints} + Tasks ${r.taskPoints})</small></td></tr>
           <tr><td>Per Point Rate</td><td>${money(r.pointRate)}</td></tr>
           <tr class="salary-sub-v101"><td>Points Amount</td><td>+ ${money(r.pointsAmount)}</td></tr>
-          <tr class="salary-sub-v101"><td>Malik Added Amount</td><td>+ ${money(r.bonus)}</td></tr>
+          <tr class="salary-sub-v101"><td>کھانے کے پیسے <small>${r.mealMode==='daily'?`${r.mealDays||0} حاضر دن × ${money(r.mealRate)}`:r.mealMode==='monthly'?'ماہانہ مقررہ':'مقرر نہیں'}</small></td><td>${money(r.mealTotal)} <small>${r.mealInSalary?'تنخواہ میں شامل':'الگ / شامل نہیں'}</small></td></tr><tr class="salary-sub-v101"><td>Malik Added Amount</td><td>+ ${money(r.bonus)}</td></tr>
           <tr class="salary-sub-v101"><td>Advance / Deduction</td><td>− ${money(r.advance)}</td></tr>
           <tr class="salary-total-v101"><td>Final Payable Salary</td><td>${money(r.final)}</td></tr>
         </tbody></table>
@@ -4331,7 +4400,7 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
 
     <div class="salary-panel-v101">
       <h4>Month-wise History</h4>
-      <div class="table-scroll"><table><thead><tr><th>Month</th><th>Normal Hours</th><th>Overtime</th><th>Points</th><th>Bonus</th><th>Advance</th><th>Final</th></tr></thead><tbody>${hist}</tbody></table></div>
+      <div class="table-scroll"><table><thead><tr><th>Month</th><th>Normal Hours</th><th>Overtime</th><th>Points</th><th>Bonus</th><th>کھانا (تنخواہ میں)</th><th>Advance</th><th>Final</th></tr></thead><tbody>${hist}</tbody></table></div>
     </div>`;
   }
 
@@ -4342,7 +4411,7 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
       dutyHours:Number($('salCfgDutyV101').value||10),
       workingDays:Number($('salCfgDaysV101').value||30),
       overtimeRate:Number($('salCfgOtV101').value||0),
-      pointRate:Number($('salCfgPointV101').value||0)
+      pointRate:Number($('salCfgPointV101').value||0),...readMealV109('salMealV109')
     });
     renderDetail();
     window.toastV97&&toastV97('✅ Salary settings save ho gayi');
@@ -4379,17 +4448,17 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
     const month=$('salaryMonthV101')?.value||curMonth();
     const rows=activeStaff().map(s=>({s,r:calc(normPhoneV84(s.phone||s.id),month)}));
     const total=rows.reduce((n,x)=>n+x.r.final,0);
-    const html=rows.map(({s,r})=>`<tr><td>${esc(s.name||'')}</td><td>${money(r.monthlySalary)}</td><td>${hm(r.normalMin)}</td><td>${hm(r.otMin)}</td><td>${money(r.overtimeAmount)}</td><td>${r.points}</td><td>${money(r.pointsAmount)}</td><td>${money(r.bonus)}</td><td>${money(r.advance)}</td><td><b>${money(r.final)}</b></td></tr>`).join('');
+    const html=rows.map(({s,r})=>`<tr><td>${esc(s.name||'')}</td><td>${money(r.monthlySalary)}</td><td>${hm(r.normalMin)}</td><td>${hm(r.otMin)}</td><td>${money(r.overtimeAmount)}</td><td>${r.points}</td><td>${money(r.pointsAmount)}</td><td>${money(r.bonus)}</td><td>${money(r.mealSalary)}</td><td>${money(r.advance)}</td><td><b>${money(r.final)}</b></td></tr>`).join('');
     printWindowV84('Salary Sheet',monthLabel(month),
       `<div><span>Staff</span><b>${rows.length}</b></div><div><span>Total Payable</span><b>${money(total)}</b></div><div><span>Month</span><b>${monthLabel(month)}</b></div><div><span>Generated</span><b>${today()}</b></div>`,
-      ['Name','Base','Normal Hours','OT Hours','OT Amount','Points','Points Rs','Bonus','Advance','Final'],html);
+      ['Name','Base','Normal Hours','OT Hours','OT Amount','Points','Points Rs','Bonus','Khana in salary','Advance','Final'],html);
   };
 
   /* ---------- staff ka apna (read-only) salary view ---------- */
   function staffCalc(month){
     const frozen=window.staffFinalSalaryV104?.(window.currentStaffAccountV101?.phone,month);if(frozen)return frozen;
     const acc=window.currentStaffAccountV101||null;
-    const cfg={monthlySalary:Number(acc?.salary?.monthlySalary||0),dutyHours:Number(acc?.salary?.dutyHours||10),
+    const cfg={...mealConfigV109(acc?.salary||{},acc||{}),monthlySalary:Number(acc?.salary?.monthlySalary||0),dutyHours:Number(acc?.salary?.dutyHours||10),
                workingDays:Number(acc?.salary?.workingDays||30),overtimeRate:Number(acc?.salary?.overtimeRate||0),
                pointRate:Number(acc?.salary?.pointRate||0)};
     const {from,to}=monthRange(month);
@@ -4414,9 +4483,10 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
     const sum=k=>extras.filter(x=>x.kind===k).reduce((n,x)=>n+Number(x.amount||0),0);
     const bonus=sum('bonus'),advance=sum('advance');
     const normalSalary=(normalMin/60)*hourly,overtimeAmount=(otMin/60)*otRate,pointsAmount=points*cfg.pointRate;
-    return {month,periodLabel:monthLabel(month),...cfg,expectedHours,hourly,otRate,daysWorked,openDays,normalMin,otMin,normalSalary,overtimeAmount,
+    const meal=mealAmountV109(cfg,recs);
+    return {month,periodLabel:monthLabel(month),...cfg,...meal,expectedHours,hourly,otRate,daysWorked,openDays,normalMin,otMin,normalSalary,overtimeAmount,
             attPoints,taskPoints,points,pointsAmount,extras,bonus,advance,
-            final:normalSalary+overtimeAmount+pointsAmount+bonus-advance};
+            final:normalSalary+overtimeAmount+pointsAmount+bonus+meal.mealSalary-advance};
   }
   function monthForReport(from='',to=''){
     const a=/^\d{4}-\d{2}/.test(from)?from.slice(0,7):'',b=/^\d{4}-\d{2}/.test(to)?to.slice(0,7):'';
@@ -4434,7 +4504,7 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
     const mEl=$('staffSalaryMonthV101'); if(mEl&&!mEl.value)mEl.value=curMonth();
     const month=mEl?.value||curMonth();
     const r=staffCalc(month);
-    if(!r.monthlySalary){
+    if(!r.monthlySalary&&!r.mealTotal){
       box.innerHTML='<p class="muted">آپ کی تنخواہ ابھی مالک نے مقرر نہیں کی۔ مقرر ہوتے ہی یہاں خود آ جائے گی۔</p>';
       return;
     }
@@ -4443,7 +4513,7 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
         <div><small>Working Hours</small><b>${hm(r.normalMin)}</b><span>${r.daysWorked} دن • ضرورت ${r.expectedHours}h</span></div>
         <div><small>Overtime</small><b>${hm(r.otMin)}</b><span>${money(r.overtimeAmount)}</span></div>
         <div><small>Points</small><b>${r.points}</b><span>${money(r.pointsAmount)}</span></div>
-        <div><small>Bonus</small><b>${money(r.bonus)}</b><span>مالک کی طرف سے</span></div>
+        <div><small>کھانے کے پیسے</small><b>${money(r.mealTotal)}</b><span>${r.mealInSalary?'تنخواہ میں شامل':'الگ / تنخواہ میں شامل نہیں'} · ${r.mealMode==='daily'?`${r.mealDays||0} حاضر دن`:r.mealMode==='monthly'?'ماہانہ':'مقرر نہیں'}</span></div><div><small>Bonus</small><b>${money(r.bonus)}</b><span>مالک کی طرف سے</span></div>
         <div><small>Advance</small><b>− ${money(r.advance)}</b><span>پیشگی / کٹوتی</span></div>
         <div class="staff-salary-final-v101"><small>${window.staffFinalSalaryV104?.(window.currentStaffAccountV101?.phone,month)?'Final Salary':'Estimated Salary'}</small><b>${money(r.final)}</b><span>${monthLabel(month)}</span></div>
       </div>`;
@@ -4454,8 +4524,8 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
   }
   function salaryReportSection(month){
     const rows=salaryRows(month),total=rows.reduce((n,x)=>n+x.r.final,0);
-    const body=rows.map(({s,r})=>`<tr><td>${esc(s.name||'Staff')}</td><td>${money(r.monthlySalary)}</td><td>${hm(r.normalMin)}</td><td>${money(r.normalSalary)}</td><td>${hm(r.otMin)} / ${money(r.overtimeAmount)}</td><td>${r.points} / ${money(r.pointsAmount)}</td><td>${money(r.bonus)}</td><td>${money(r.advance)}</td><td><b>${money(r.final)}</b></td></tr>`).join('');
-    return `<section class="salary-report-section-v102"><h2>Salary / تنخواہ — ${monthLabel(month)}</h2><p class="salary-report-total-v102">تمام ملازمین کی قابلِ ادائیگی تنخواہ: <b>${money(total)}</b></p><table><thead><tr><th>ملازم</th><th>ماہانہ تنخواہ</th><th>کام کے گھنٹے</th><th>گھنٹوں کی رقم</th><th>Overtime</th><th>Points / رقم</th><th>مالک کی رقم</th><th>Advance</th><th>Final Salary</th></tr></thead><tbody>${body||'<tr><td colspan="9">کوئی ملازم نہیں</td></tr>'}</tbody></table><p>فارمولا: کام کے گھنٹوں کی تنخواہ + Overtime + (Attendance/Task Points × فی پوائنٹ رقم) + مالک کی شامل کردہ رقم − Advance/کٹوتی۔</p></section>`;
+    const body=rows.map(({s,r})=>`<tr><td>${esc(s.name||'Staff')}</td><td>${money(r.monthlySalary)}</td><td>${hm(r.normalMin)}</td><td>${money(r.normalSalary)}</td><td>${hm(r.otMin)} / ${money(r.overtimeAmount)}</td><td>${r.points} / ${money(r.pointsAmount)}</td><td>${money(r.bonus)}</td><td>${money(r.mealSalary)}</td><td>${money(r.advance)}</td><td><b>${money(r.final)}</b></td></tr>`).join('');
+    return `<section class="salary-report-section-v102"><h2>Salary / تنخواہ — ${monthLabel(month)}</h2><p class="salary-report-total-v102">تمام ملازمین کی قابلِ ادائیگی تنخواہ: <b>${money(total)}</b></p><table><thead><tr><th>ملازم</th><th>ماہانہ تنخواہ</th><th>کام کے گھنٹے</th><th>گھنٹوں کی رقم</th><th>Overtime</th><th>Points / رقم</th><th>مالک کی رقم</th><th>کھانا (تنخواہ میں)</th><th>Advance</th><th>Final Salary</th></tr></thead><tbody>${body||'<tr><td colspan="10">کوئی ملازم نہیں</td></tr>'}</tbody></table><p>فارمولا: کام کے گھنٹوں کی تنخواہ + Overtime + (Attendance/Task Points × فی پوائنٹ رقم) + مالک کی شامل کردہ رقم + تنخواہ میں شامل کھانا − Advance/کٹوتی۔</p></section>`;
   }
 
   /* Salary ko Staff Profile ke andar bhi dikhaya gaya hai. */
@@ -4463,7 +4533,7 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
   if(typeof baseProfileRender==='function')window.renderStaffProfileV84=function(){
     const result=baseProfileRender.apply(this,arguments),phone=normPhoneV84(currentProfilePhoneV84||'');if(!phone)return result;
     const month=window.profileSalaryMonthV102||curMonth(),r=calc(phone,month),box=$('staffProfileBodyV84'),anchor=box?.querySelector('.profile-kpis-v84');if(!anchor)return result;
-    anchor.insertAdjacentHTML('afterend',`<div class="pro-card profile-salary-v102"><div class="pro-card-head"><div><div class="eyebrow">ATTENDANCE + SALARY</div><h3>${monthLabel(month)} تنخواہ</h3><small>ہر ملازم کی الگ Salary، کام کے گھنٹے، Overtime اور Points کا حساب</small></div><div class="row"><input id="profileSalaryMonthV102" type="month" value="${month}"><button class="soft" type="button" onclick="openSalaryDetailV101('${phone}')">Salary Settings / Detail</button></div></div><div class="profile-salary-grid-v102"><div><small>مقررہ ماہانہ</small><b>${r.monthlySalary?money(r.monthlySalary):'مقرر نہیں'}</b></div><div><small>Working Hours</small><b>${hm(r.normalMin)}</b></div><div><small>Overtime</small><b>${hm(r.otMin)} / ${money(r.overtimeAmount)}</b></div><div><small>Points × Rate</small><b>${r.points} × ${money(r.pointRate)} = ${money(r.pointsAmount)}</b></div><div><small>مالک کی رقم</small><b>+ ${money(r.bonus)}</b></div><div><small>Advance / کٹوتی</small><b>− ${money(r.advance)}</b></div><div class="final"><small>Final Salary</small><b>${money(r.final)}</b></div></div>${r.openDays?`<p class="muted">${r.openDays} دن Check-Out کے بغیر ہیں؛ ان کے گھنٹے ابھی شامل نہیں ہوئے۔</p>`:''}</div>`);
+    anchor.insertAdjacentHTML('afterend',`<div class="pro-card profile-salary-v102"><div class="pro-card-head"><div><div class="eyebrow">ATTENDANCE + SALARY</div><h3>${monthLabel(month)} تنخواہ</h3><small>ہر ملازم کی الگ Salary، کام کے گھنٹے، Overtime اور Points کا حساب</small></div><div class="row"><input id="profileSalaryMonthV102" type="month" value="${month}"><button class="soft" type="button" onclick="openSalaryDetailV101('${phone}')">Salary Settings / Detail</button></div></div><div class="profile-salary-grid-v102"><div><small>مقررہ ماہانہ</small><b>${r.monthlySalary?money(r.monthlySalary):'مقرر نہیں'}</b></div><div><small>Working Hours</small><b>${hm(r.normalMin)}</b></div><div><small>Overtime</small><b>${hm(r.otMin)} / ${money(r.overtimeAmount)}</b></div><div><small>Points × Rate</small><b>${r.points} × ${money(r.pointRate)} = ${money(r.pointsAmount)}</b></div><div><small>کھانے کے پیسے</small><b>${money(r.mealTotal)}</b><small>${r.mealInSalary?'تنخواہ میں شامل':'الگ'}</small></div><div><small>مالک کی رقم</small><b>+ ${money(r.bonus)}</b></div><div><small>Advance / کٹوتی</small><b>− ${money(r.advance)}</b></div><div class="final"><small>Final Salary</small><b>${money(r.final)}</b></div></div>${r.openDays?`<p class="muted">${r.openDays} دن Check-Out کے بغیر ہیں؛ ان کے گھنٹے ابھی شامل نہیں ہوئے۔</p>`:''}</div>`);
     $('profileSalaryMonthV102')?.addEventListener('change',e=>{window.profileSalaryMonthV102=e.target.value;window.renderStaffProfileV84()});return result;
   };
 
