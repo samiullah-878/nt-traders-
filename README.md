@@ -1,3 +1,7 @@
+v114: Staff / Duty > Sab ki default shift. Save changes default followers; check Apply All to reset custom staff too. Individual staff can choose custom or return to default. New staff follows default automatically.
+
+v113: New Staff form includes required shift start/end. Missing checkout list includes shifts that ended today; overnight shifts use next day. No automatic attendance closure. Owner can correct actual time or staff can request correction. Existing staff: Staff / Duty settings.
+
 v112: Attendance Save stays visible below scrolling fields. Checkout refreshes owner attendance screens; failures show a retry message. Existing attendance is preserved. Upload files in the same site folder.
 
 # v111 — Staff search fix

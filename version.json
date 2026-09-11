@@ -1,6 +1,6 @@
 {
-  "version": "v112",
+  "version": "v114",
   "variant": "Production",
   "buildDate": "2026-09-11",
-  "notes": "Visible attendance Save footer; live owner attendance refresh; confirmed checkout with retry errors and actual record ID; legacy time normalization."
+  "notes": "Shared default shift with optional apply-to-all and per-staff custom/default selection; new staff defaults to shared shift."
 }

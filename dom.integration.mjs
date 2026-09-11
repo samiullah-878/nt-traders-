@@ -120,7 +120,7 @@ assert.deepEqual(errors,[]);console.log('PASS full UI: profile assignment → 2 
  assert.equal(o.f.records.get(base+'/staffAttendance/2026-09-08_'+phone).checkOut,'19:00');
  assert.ok([...o.f.records.keys()].some(k=>k.includes('/staffAudit/')));
  o.w.document.querySelector('[data-tab="staff"]').click();const schedule=o.w.document.querySelector('[data-schedule]');
- schedule.elements.shiftStart.value='10:00';schedule.elements.grace.value='15';schedule.elements.off.value='5';schedule.elements.reason.value='New shift';schedule.dispatchEvent(new o.w.Event('submit',{bubbles:true,cancelable:true}));await delay();
+ schedule.elements.shiftMode.value='custom';schedule.elements.shiftStart.value='10:00';schedule.elements.grace.value='15';schedule.elements.off.value='5';schedule.elements.reason.value='New shift';schedule.dispatchEvent(new o.w.Event('submit',{bubbles:true,cancelable:true}));await delay();
  assert.equal(o.f.records.get(base+'/staffSchedules/'+phone).shiftStart,'10:00');
  o.w.document.querySelector('[data-tab="salary"]').click();o.w.document.querySelector('[data-final]').click();await delay();
  const payrollPath=base+'/staffPayroll/2026-09_'+phone,payroll=o.f.records.get(payrollPath);assert.equal(payroll.state,'final');
@@ -221,11 +221,11 @@ assert.deepEqual(errors,[]);console.log('PASS full UI: profile assignment → 2 
 {
  const {w,f,errors}=await boot('owner'),newPhone='03000000009',alerts=[];w.alert=t=>alerts.push(t);
  const form=w.document.getElementById('staffFormV84');
- function fill(){w.document.getElementById('staffNameV84').value='New colleague';w.document.getElementById('staffPhoneV84').value=newPhone;w.document.getElementById('staffAddressV84').value='Shop';}
+ function fill(){w.document.getElementById('staffDefaultShiftV114').checked=false;w.toggleCreateShiftV114();w.document.getElementById('staffShiftStartV113').value='09:00';w.document.getElementById('staffShiftEndV113').value='19:00';w.document.getElementById('staffNameV84').value='New colleague';w.document.getElementById('staffPhoneV84').value=newPhone;w.document.getElementById('staffAddressV84').value='Shop';}
  fill();f.failNextCommit();form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await delay();
  assert.equal(f.records.has(base+'/staffAccounts/'+newPhone),false);assert.equal(w.getNoorDb().staff.some(s=>s.phone===newPhone),false,'failed create must not create local ghost');assert.equal(w.document.getElementById('staffPhoneV84').value,newPhone);
  form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await delay();
- assert.equal(f.records.get(base+'/staffAccounts/'+newPhone).name,'New colleague');assert.equal(w.getNoorDb().staff.filter(s=>s.phone===newPhone).length,1);
+ assert.equal(f.records.get(base+'/staffSchedules/'+newPhone).shiftEnd,'19:00');assert.equal(f.records.get(base+'/staffAccounts/'+newPhone).name,'New colleague');assert.equal(w.getNoorDb().staff.filter(s=>s.phone===newPhone).length,1);
  fill();w.document.getElementById('staffNameV84').value='Overwrite attempt';form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await delay();assert.equal(f.records.get(base+'/staffAccounts/'+newPhone).name,'New colleague');assert.ok(alerts.at(-1).includes('New colleague'),'real duplicate names existing account');
  const orphan='03000000008';w.db.staff.push({id:orphan,phone:orphan,name:'Local unfinished'});w.document.getElementById('staffPhoneV84').value=orphan;w.document.getElementById('staffNameV84').value='Recovered';form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await delay();assert.equal(f.records.get(base+'/staffAccounts/'+orphan).name,'Recovered');
  w.document.querySelector('[data-tab="instructions"]').click();const instructions=w.document.getElementById('suInstructions');instructions.elements.opening.value='دکان صاف کریں\nسامان ترتیب دیں';instructions.elements.closing.value='لائٹس بند کریں\nتالے چیک کریں';instructions.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await delay();
@@ -280,4 +280,23 @@ assert.deepEqual(errors,[]);console.log('PASS full UI: profile assignment → 2 
  assert.ok(w.staffTodayOut.textContent!=='—');
  assert.equal(w.staffCheckOutBtn.disabled,true);
  await w.happyDOM.abort();console.log('PASS v112 checkout error, retry, legacy ID and staff display');
+}
+
+{
+ const {w}=await boot('staff');
+ assert.equal(w.staffCheckInBtn.disabled,false,'old attendance does not block a new day check-in');
+ await w.happyDOM.abort();console.log('PASS next day Check-In remains available');
+}
+
+{
+ const {w,f}=await boot('owner');
+ w.document.querySelector('[data-tab="staff"]').click();
+ async function defaults(start,end,all=false){const form=w.document.getElementById('suDefaultShift');form.elements.shiftStart.value=start;form.elements.shiftEnd.value=end;form.elements.applyAll.checked=all;form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await delay();}
+ await defaults('08:00','18:00');assert.equal(w.noorStaffUpgrades.schedule(phone).shiftStart,'08:00');
+ let form=w.document.querySelector('[data-schedule]');form.elements.shiftMode.value='custom';form.elements.shiftStart.value='10:00';form.elements.shiftEnd.value='20:00';form.elements.reason.value='Individual shift';form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await delay();
+ await defaults('09:00','19:00');assert.equal(w.noorStaffUpgrades.schedule(phone).shiftStart,'10:00','custom preserved');
+ await defaults('09:30','19:30',true);assert.equal(w.noorStaffUpgrades.schedule(phone).shiftStart,'09:30','apply all resets override');
+ await defaults('08:30','18:30');assert.equal(w.noorStaffUpgrades.schedule(phone).shiftStart,'08:30','default followers stay linked');
+ assert.equal(w.document.getElementById('staffDefaultShiftV114').checked,true);
+ await w.happyDOM.abort();console.log('PASS v114 default shift, custom override, apply all and linked updates');
 }
