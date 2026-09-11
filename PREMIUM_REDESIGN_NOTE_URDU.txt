@@ -1,0 +1,15 @@
+Noor Workforce Premium Redesign
+
+اس ZIP میں موجود system/logic کو برقرار رکھتے ہوئے premium UI skin شامل کی گئی ہے۔
+اہم تبدیلیاں:
+- Navy + Champagne Gold premium branding
+- Premium Login / Owner header
+- بہتر Staff cards
+- Executive Attendance KPI cards
+- صاف tables/status pills
+- Premium Staff Profile + Salary emphasis
+- Staff portal premium styling
+- Mobile navigation polish
+
+اہم نئی فائل: premium-workforce.css
+index.html کے آخر میں یہ stylesheet شامل ہے۔
