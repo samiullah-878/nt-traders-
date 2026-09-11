@@ -1,6 +1,6 @@
 {
-  "version": "v109",
+  "version": "v112",
   "variant": "Production",
-  "buildDate": "2026-09-10",
-  "notes": "Daily/monthly food allowance in Staff Add/Edit and salary settings, optional inclusion in salary, matching staff/owner breakdowns and reports. Existing finalized salaries preserved."
+  "buildDate": "2026-09-11",
+  "notes": "Visible attendance Save footer; live owner attendance refresh; confirmed checkout with retry errors and actual record ID; legacy time normalization."
 }

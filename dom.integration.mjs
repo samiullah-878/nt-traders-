@@ -217,3 +217,67 @@ assert.deepEqual(errors,[]);console.log('PASS full UI: profile assignment → 2 
  assert.deepEqual(errors,[]);assert.deepEqual(staff.errors,[]);
  console.log('PASS v109 meal Add/Edit fields, persistence to staff account, monthly salary inclusion, matching staff/PDF and exclusion');
 }
+
+{
+ const {w,f,errors}=await boot('owner'),newPhone='03000000009',alerts=[];w.alert=t=>alerts.push(t);
+ const form=w.document.getElementById('staffFormV84');
+ function fill(){w.document.getElementById('staffNameV84').value='New colleague';w.document.getElementById('staffPhoneV84').value=newPhone;w.document.getElementById('staffAddressV84').value='Shop';}
+ fill();f.failNextCommit();form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await delay();
+ assert.equal(f.records.has(base+'/staffAccounts/'+newPhone),false);assert.equal(w.getNoorDb().staff.some(s=>s.phone===newPhone),false,'failed create must not create local ghost');assert.equal(w.document.getElementById('staffPhoneV84').value,newPhone);
+ form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await delay();
+ assert.equal(f.records.get(base+'/staffAccounts/'+newPhone).name,'New colleague');assert.equal(w.getNoorDb().staff.filter(s=>s.phone===newPhone).length,1);
+ fill();w.document.getElementById('staffNameV84').value='Overwrite attempt';form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await delay();assert.equal(f.records.get(base+'/staffAccounts/'+newPhone).name,'New colleague');assert.ok(alerts.at(-1).includes('New colleague'),'real duplicate names existing account');
+ const orphan='03000000008';w.db.staff.push({id:orphan,phone:orphan,name:'Local unfinished'});w.document.getElementById('staffPhoneV84').value=orphan;w.document.getElementById('staffNameV84').value='Recovered';form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await delay();assert.equal(f.records.get(base+'/staffAccounts/'+orphan).name,'Recovered');
+ w.document.querySelector('[data-tab="instructions"]').click();const instructions=w.document.getElementById('suInstructions');instructions.elements.opening.value='دکان صاف کریں\nسامان ترتیب دیں';instructions.elements.closing.value='لائٹس بند کریں\nتالے چیک کریں';instructions.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await delay();
+ const config=f.records.get(base+'/staffConfig/main');assert.equal(config.shopOpeningInstructions,'دکان صاف کریں\nسامان ترتیب دیں');
+ const staff=await boot('staff',[[base+'/staffConfig/main',config]]);assert.ok(staff.w.document.getElementById('suShopRoutines').textContent.includes('تالے چیک کریں'));assert.equal(staff.w.document.querySelectorAll('#suShopRoutines li').length,4);
+ assert.deepEqual(errors,[]);assert.deepEqual(staff.errors,[]);console.log('PASS v110 failed-create retry, double-click, named duplicate, local orphan recovery, owner instructions to staff');
+}
+
+{
+ const other='03000000002',person={...fixture,id:other,phone:other,name:'Ali Shop'};
+ const {w,f,errors}=await boot('owner',[[base+'/staff/'+other,person],[base+'/staffAccounts/'+other,person]]);
+ w.goScreen('staffAccounts');const listSearch=w.document.getElementById('staffSearchV84');listSearch.value='  ali  ';listSearch.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(w.document.querySelectorAll('#staffCardsV84 .staff-card-v84').length,1);assert.ok(w.document.getElementById('staffCardsV84').textContent.includes('Ali Shop'));
+ for(const q of [other.replace(/[0-9]/g,n=>String.fromCharCode(1776+Number(n))),'+92 300-0000002']){listSearch.value=q;listSearch.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(w.document.querySelectorAll('#staffCardsV84 .staff-card-v84').length,1)}
+ w.goScreen('staffCenter');let search=w.document.getElementById('suSearch');search.focus();search.value='ali';search.setSelectionRange(3,3);search.dispatchEvent(new w.Event('input',{bubbles:true}));
+ assert.equal([...w.document.querySelectorAll('#suPeople [data-search]')].filter(el=>!el.hidden).length,1);
+ await f.sdk.setDoc(f.sdk.doc({},base,'staffAttendance','live-search'),{phone,date:'2026-09-10',checkIn:'09:00'});await delay();
+ search=w.document.getElementById('suSearch');assert.equal(search.value,'ali');assert.equal(w.document.activeElement,search);assert.equal(search.selectionStart,3);assert.equal([...w.document.querySelectorAll('#suPeople [data-search]')].filter(el=>!el.hidden).length,1);
+ search.value='no such employee';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(w.document.getElementById('suSearchEmpty').hidden,false);
+ const quick=w.document.getElementById('staffQuickSearchV89');quick.value='Ali';w.renderStaffQuickSearchV89();assert.equal(w.document.querySelectorAll('#staffQuickResultsV89 button').length,1);assert.equal(w.document.getElementById('staffProfile').classList.contains('active'),false,'typing never opens profile');
+ // Execute the real rendered click handler at the test DOM boundary.
+ w.eval(w.document.querySelector('#staffQuickResultsV89 button').getAttribute('onclick'));assert.ok(w.document.getElementById('staffProfile').classList.contains('active'));assert.ok(w.document.getElementById('profileTitleV84').textContent.includes('Ali Shop'));
+ assert.deepEqual(errors,[]);console.log('PASS v111 Staff List/Overview/quick search, formatted/Urdu phone, live-refresh focus/query, empty results and explicit profile selection');
+}
+
+// v112: refresh visible owner tables when checkout arrives; Save stays outside scroll form.
+{
+ const {w,f}=await boot('owner');
+ w.histFromV84.value=w.histToV84.value='2026-09-08';
+ await f.sdk.setDoc(f.sdk.doc({},base+'/staffAttendance/attendance'),{checkOut:'21:15'},{merge:true});await delay();
+ assert.ok(w.histRowsV84.textContent.includes('21:15'),'history refreshes without navigation');
+ w.openAttendanceEditV84('attendance',phone);
+ const save=w.document.getElementById('attendanceSaveV112');
+ assert.equal(save.getAttribute('form'),'attendanceEditFormV84');
+ assert.equal(w.attendanceEditFormV84.contains(save),false);
+ w.editAttOutV84.value='21:30';
+ await w.attendanceEditFormV84.onsubmit({preventDefault(){}});await delay();
+ assert.equal(f.records.get(base+'/staffAttendance/attendance').checkOut,'21:30');
+ assert.equal(w.attendanceEditModalV84.hidden,true);
+ await w.happyDOM.abort();console.log('PASS v112 owner live checkout refresh and attendance Save');
+}
+{
+ const date=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Karachi'}).format(new Date());
+ const path=base+'/staffAttendance/legacy-id';
+ const {w,f}=await boot('staff',[[path,{phone,date,checkInTime:'09:00'}]]);
+ assert.equal(w.staffCheckOutBtn.disabled,false,'legacy check-in is recognized');
+ Object.defineProperty(w.navigator,'geolocation',{configurable:true,value:{getCurrentPosition(_ok,fail){fail(Error('No GPS'))}}});
+ f.failNextCommit();w.staffCheckOutBtn.click();await delay();
+ assert.ok(w.staffActionMessage.textContent.includes('محفوظ نہیں ہوا'));
+ assert.equal(w.staffCheckOutBtn.disabled,false,'failure can retry');
+ w.staffCheckOutBtn.click();await delay();
+ assert.ok(f.records.get(path).checkOut,'checkout updates actual attendance document');
+ assert.ok(w.staffTodayOut.textContent!=='—');
+ assert.equal(w.staffCheckOutBtn.disabled,true);
+ await w.happyDOM.abort();console.log('PASS v112 checkout error, retry, legacy ID and staff display');
+}

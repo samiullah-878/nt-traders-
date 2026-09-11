@@ -1,3 +1,25 @@
+v112: Attendance Save stays visible below scrolling fields. Checkout refreshes owner attendance screens; failures show a retry message. Existing attendance is preserved. Upload files in the same site folder.
+
+# v111 — Staff search fix
+
+Staff List, Staff Control Overview aur quick search mein naam/mobile ki matching behtar ki gayi hai. Extra spaces, uppercase/lowercase, Urdu/Arabic digits aur +92/0092 formatted Pakistani mobile numbers supported hain. Naam likhne se profile khud select nahi hoti; result par click karein.
+
+Overview ki search query aur cursor live data refresh ke baad bhi rehte hain. Quick-search results data load/update par refresh hote hain. No-match message Overview mein dikhai deta hai. Overview ke Hazir/Late filters search par bhi apply hote hain; sab staff dhoondne ke liye “Sab” select karein.
+
+Upload index.html, sw.js aur version.json, phir Sync dabayein. Is fix ke liye Firestore rules nahi badle. Live publish nahi kiya gaya.
+
+---
+
+# v110 — Staff save fix + daily shop instructions
+
+Owner: Staff Control → “دکان کی ہدایات”. Dukan kholne aur band karne ki instructions alag likhein, har line par ek hidayat. Save ke baad sab staff ko apni screen par “روزانہ دکان کی ہدایات” mein dono sections milte hain. Editable starter instructions supplied. Yeh instructions hain; automatic task assignment ya completion points nahi badalte.
+
+Staff create now commits the account and staff record atomically online before updating the local list. A failed create leaves the form available to retry without creating a local duplicate. Repeated clicks while saving are blocked. A local-only unfinished record can be completed if the online account does not exist. A real online duplicate is protected and its name is shown; search is set to that phone in Staff List. No existing online account is overwritten or deleted by the new create flow. The screenshot's exact live record could not be inspected; the faulty local-before-online save order was identified and corrected in source.
+
+Validation: existing DOM workflows plus failed-create/retry, repeated click, named duplicate protection, local-only recovery and owner instructions appearing for staff passed with synthetic Firebase SDK. No production records changed. No live publish performed. Upload index.html, sw.js and version.json. No additional rules change beyond the included prior rules.
+
+---
+
 # v109 — Khane ke paise Daily / Monthly
 
 Staff Add/Edit ke Salary Settings mein “کھانے کے پیسے” section hai: None, Daily ya Monthly; raqam; aur “تنخواہ میں شامل کریں”. Salary detail/settings mein bhi yahi options hain.

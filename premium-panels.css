@@ -175,3 +175,14 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
 #staffPortal input[type=password],#staffPortal input[type=tel],#staffPortal input[type=time],#staffPortal input[type=number]{font-family:Arial,sans-serif!important;direction:ltr}
 
 .meal-slot-v109{grid-column:1/-1;width:100%}.meal-fields-v109{border:1px solid #d6e5dc;border-radius:12px;padding:14px;margin:12px 0;min-width:0}.meal-fields-v109 legend{font-weight:700}.meal-fields-v109 label{display:block;margin:10px 0}.meal-fields-v109 input:not([type=checkbox]),.meal-fields-v109 select{width:100%;box-sizing:border-box}.meal-fields-v109 .meal-check-v109{display:flex;align-items:center;gap:8px}.meal-fields-v109 input[type=checkbox]{width:20px!important;min-height:20px!important;height:20px;flex:none}.meal-fields-v109 small{display:block;line-height:1.8}
+
+/* v112: action stays outside the independently scrolling attendance form. */
+#attendanceEditModalV84{padding:12px;padding-bottom:max(12px,env(safe-area-inset-bottom));overflow:hidden}
+#attendanceEditModalV84 .modal-card-v84{display:flex;flex-direction:column;overflow:hidden;max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);padding:16px;width:min(560px,100%);min-height:0}
+#attendanceEditModalV84 .modal-head-v84{flex:none}
+#attendanceEditFormV84{flex:1 1 auto;overflow-y:auto;min-height:0;overscroll-behavior:contain;padding:0 4px 12px}
+#attendanceEditFormV84 input{min-height:44px;padding:10px;font-size:16px}
+#attendanceEditFormV84 input[type=time],#attendanceEditFormV84 input[type=date]{direction:ltr;min-width:0;width:100%}
+#attendanceEditModalV84 .attendance-actions-v112{flex:none;background:#fff;padding-top:10px;border-top:1px solid #dce8e7}
+#attendanceSaveV112{width:100%;min-height:48px}
+#attendanceSaveStatusV112{margin:0;font-size:14px}
