@@ -1,6 +1,6 @@
 {
-  "version": "v114",
+  "version": "v115",
   "variant": "Production",
   "buildDate": "2026-09-11",
-  "notes": "Shared default shift with optional apply-to-all and per-staff custom/default selection; new staff defaults to shared shift."
+  "notes": "Owner attendance edit ab phone save karta hai (report mein Absent ka masla); ghalat Check-Out time ki warning; staff profile aur edit form ke dabbe chhote."
 }
