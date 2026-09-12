@@ -873,7 +873,7 @@ th,td{font-size:16px;line-height:1.55}
 
     <div class="auth-card">
       <div class="login-card-title"><span class="brand-mark mini">NT</span><div><h2>Noor Traders Staff</h2><p>Business & Staff System</p></div></div>
-      <div class="login-build-strip"><span class="variant-badge">Production</span><span>Version: <b id="loginVersionLabel">v118</b></span><span id="loginUpdateStatus" class="sync-state"><i class="status-dot"></i>Syncing...</span></div>
+      <div class="login-build-strip"><span class="variant-badge">Production</span><span>Version: <b id="loginVersionLabel">v115</b></span><span id="loginUpdateStatus" class="sync-state"><i class="status-dot"></i>Syncing...</span></div>
       <button type="button" class="sync-now-btn-v91" onclick="forceAppUpdateV85()">🔄 Sync / Update Now</button>
       <div class="auth-role-tabs" role="tablist" aria-label="اکاؤنٹ منتخب کریں">
         <button id="ownerLoginTab" class="auth-role active" type="button" role="tab" aria-selected="true" aria-controls="ownerLoginPane" data-auth-role="owner">مالک</button>
@@ -921,7 +921,7 @@ th,td{font-size:16px;line-height:1.55}
     <button id="staffLogoutBtn" class="staff-logout">Logout</button>
   </div>
 
-  <main class="staff-portal-main"><div class="staff-build-banner"><span>Version <b id="staffVersionLabel">v118</b> • Production</span><span id="staffUpdateState">Latest</span></div>
+  <main class="staff-portal-main"><div class="staff-build-banner"><span>Version <b id="staffVersionLabel">v115</b> • Production</span><span id="staffUpdateState">Latest</span></div>
     <section class="staff-profile-hero">
       <div class="staff-profile-left">
         <div id="staffPortalAvatar" class="portal-avatar">👤</div>
@@ -1015,7 +1015,7 @@ th,td{font-size:16px;line-height:1.55}
 
 <div class="app" id="ownerApp" hidden style="display:none">
 <div class="top">
-  <div><div class="nt-role-label">NOOR TRADERS • مالک کا پینل</div><h1>Noor Traders Staff</h1><small>Gulyana • <b id="headerVersionLabel">v118</b> • کاروبار آپ کی نظر میں</small></div>
+  <div><div class="nt-role-label">NOOR TRADERS • مالک کا پینل</div><h1>Noor Traders Staff</h1><small>Gulyana • <b id="headerVersionLabel">v115</b> • کاروبار آپ کی نظر میں</small></div>
   <div class="cloud-box">
     <b id="todayLabel"></b><br>
     <small id="cloudStatus">Firebase سے رابطہ ہو رہا ہے…</small>
@@ -1125,7 +1125,7 @@ th,td{font-size:16px;line-height:1.55}
     <div class="staff-summary-card staff-summary-absent"><span class="summary-icon">○</span><div><small>Absent Today</small><b id="staffCenterAbsent">0</b><em>Needs attention</em></div></div>
     <div class="staff-summary-card staff-summary-out"><span class="summary-icon">↗</span><div><small>Checked Out</small><b id="staffCenterOut">0</b><em>Shift completed</em></div></div>
   </div>
-  <div class="staff-center-summary pro-card staff-live-summary"><div class="pro-card-head"><div><div class="eyebrow">LIVE SNAPSHOT</div><h3>آج کی Staff Activity</h3></div><button class="soft" onclick="goScreen('attendanceToday')">Refresh</button></div><div class="staff-center-stats"><div><small>Total Staff</small><b id="staffCenterCount">0 accounts</b></div><div><small>Present</small><b id="staffCenterPresentMirror">0</b></div><div><small>Absent</small><b id="staffCenterAbsentMirror">0</b></div><div><small>Late</small><b id="staffCenterLate">0</b></div><div><small>Checked Out</small><b id="staffCenterOutMirror">0</b></div></div></div>
+  <div class="staff-center-summary pro-card staff-live-summary"><div class="pro-card-head"><div><div class="eyebrow">LIVE SNAPSHOT</div><h3>آج کی Staff Activity</h3></div><button class="soft" onclick="renderStaffCenterV84();window.noorStaffUpgrades?.render()">Refresh</button></div><div class="staff-center-stats"><div><small>Total Staff</small><b id="staffCenterCount">0 accounts</b></div><div><small>Hazir + Late</small><b id="staffCenterPresentMirror">0</b></div><div><small>Absent</small><b id="staffCenterAbsentMirror">0</b></div><div><small>Late</small><b id="staffCenterLate">0</b></div><div><small>Checked Out</small><b id="staffCenterOutMirror">0</b></div></div></div>
   </section>
 
 <section id="staffTasks" class="tab app-screen nt-tasks">
@@ -1336,7 +1336,7 @@ th,td{font-size:16px;line-height:1.55}
 <div id="pdfPreviewModal" class="pdf-preview-modal" hidden><div class="pdf-preview-shell"><div class="pdf-preview-head"><div><span class="eyebrow">NOOR TRADERS HISAB</span><h2 id="pdfPreviewTitle">Report Preview</h2></div><button class="icon-close" type="button" onclick="closePdfPreviewV85()" aria-label="Close preview">×</button></div><iframe id="pdfPreviewFrame" title="PDF preview"></iframe><div class="pdf-preview-actions"><button class="primary" type="button" onclick="downloadPdfV85()">Download PDF</button><button class="soft" type="button" onclick="sharePdfV85()">Share / Send</button><button class="soft" type="button" onclick="printPdfPreviewV85()">Print</button><button class="soft" type="button" onclick="closePdfPreviewV85()">Close</button></div></div></div>
 <div id="entryEditModalV85" class="entry-edit-modal-v85" hidden><div class="entry-edit-card-v85"><div class="pro-card-head"><div><div class="eyebrow">EDIT ENTRY</div><h3>Update Transaction</h3></div><button type="button" class="icon-close" onclick="closeEntryEditV85()">×</button></div><form id="entryEditFormV85" class="entry-edit-form"><input type="date" id="editEntryDateV85"><input id="editEntryDetailV85" placeholder="Detail / Name"><select id="editEntryTypeV85"></select><select id="editEntrySubCategoryV85"></select><input id="editEntryAmountV85" type="number" min="0.01" step="0.01" required><input id="editEntryPhotoV85" type="file" accept="image/*" capture="environment"><div id="editEntryPhotoPreviewV85" class="quick-photo-preview" hidden></div><div class="row"><button class="primary" type="submit">Save Changes</button><button class="soft" type="button" onclick="closeEntryEditV85()">Cancel</button></div></form></div></div>
 
-<section id="settings" class="tab app-screen"><div class="grid"><div class="card span6"><h3>Full Migration Backup</h3><p class="muted">مکمل JSON backup download کریں یا restore کریں۔ Restore ہونے پر online data بھی sync ہوگا۔</p><div class="row"><button class="primary" onclick="backupAll()">Full Migration Backup Download</button><label class="soft" style="cursor:pointer">Backup Restore<input type="file" id="restoreFile" accept="application/json" style="display:none"></label></div></div><div class="card span6" data-nonstaff-v106="true" hidden inert aria-hidden="true"><h3>Expense Categories</h3><div class="row"><input id="newCat" placeholder="نئی category"><button class="soft" onclick="addCategory()">Add</button></div><div id="catList" style="margin-top:10px"></div></div><div class="card span12"><h3>Attendance Policy & Version</h3><div class="form"><div class="f3"><label>Shift Start</label><input id="policyShiftStartV84" type="time" value="09:00"></div><div class="f3"><label>Shift End (optional)</label><input id="policyShiftEndV84" type="time"></div><div class="f3"><label>Geofence Radius (m)</label><input id="policyRadiusV84" type="number" value="200"></div><div class="f3"><label>Variant</label><input id="policyVariantV84" value="Production"></div><div class="f12"><label>Check-In Instruction</label><input id="policyInstructionV84" value="سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔"></div><div class="f12 score-policy-editor"><label>Score Rules (minutes late → score)</label><div class="score-policy-grid"><span>≤10 min <input id="score10V84" type="number" value="10" min="0" max="10"></span><span>≤20 min <input id="score20V84" type="number" value="8" min="0" max="10"></span><span>≤30 min <input id="score30V84" type="number" value="6" min="0" max="10"></span><span>≤45 min <input id="score45V84" type="number" value="4" min="0" max="10"></span><span>Later <input id="scoreLateV84" type="number" value="2" min="0" max="10"></span></div></div><div class="f12"><button class="primary" type="button" onclick="saveAttendancePolicyV84()">Save Attendance Policy</button></div></div><div class="version-panel-v84"><span>Current Version <b id="settingsVersionV84">v118</b></span><span>Variant <b id="settingsVariantV84">Production</b></span><span id="settingsUpdateV84">Up to date</span><button class="soft update-now-v85" type="button" onclick="forceAppUpdateV85()">Check / Update Now</button></div></div><div class="card span6"><h3>مالک کا پاس ورڈ</h3><p class="muted">یوزر نیم: <b>admin</b></p><form id="ownerPasswordForm" class="vertical-form"><label for="ownerOldPassword">موجودہ پاس ورڈ</label><input id="ownerOldPassword" type="password" autocomplete="current-password" required><label for="ownerNewPassword">نیا پاس ورڈ — کم از کم 6 حروف</label><input id="ownerNewPassword" type="password" autocomplete="new-password" minlength="6" required><label for="ownerConfirmPassword">نیا پاس ورڈ دوبارہ درج کریں</label><input id="ownerConfirmPassword" type="password" autocomplete="new-password" minlength="6" required><button id="ownerPasswordBtn" class="primary" type="submit">پاس ورڈ تبدیل کریں</button><div id="ownerPasswordMessage" class="login-message" role="status" aria-live="polite"></div></form></div><div class="card span12"><h3>Storage</h3><p>یہ version <b>Firebase Firestore</b> کے ساتھ online sync کرتا ہے اور browser <b>localStorage</b> کو offline/local cache کے طور پر رکھتا ہے۔</p><button class="danger" onclick="resetAll()">صرف اس Browser کا Local Cache صاف کریں</button></div></div></section>
+<section id="settings" class="tab app-screen"><div class="grid"><div class="card span6"><h3>Full Migration Backup</h3><p class="muted">مکمل JSON backup download کریں یا restore کریں۔ Restore ہونے پر online data بھی sync ہوگا۔</p><div class="row"><button class="primary" onclick="backupAll()">Full Migration Backup Download</button><label class="soft" style="cursor:pointer">Backup Restore<input type="file" id="restoreFile" accept="application/json" style="display:none"></label></div></div><div class="card span6" data-nonstaff-v106="true" hidden inert aria-hidden="true"><h3>Expense Categories</h3><div class="row"><input id="newCat" placeholder="نئی category"><button class="soft" onclick="addCategory()">Add</button></div><div id="catList" style="margin-top:10px"></div></div><div class="card span12"><h3>Attendance Policy & Version</h3><div class="form"><div class="f3"><label>Shift Start</label><input id="policyShiftStartV84" type="time" value="09:00"></div><div class="f3"><label>Shift End (optional)</label><input id="policyShiftEndV84" type="time"></div><div class="f3"><label>Geofence Radius (m)</label><input id="policyRadiusV84" type="number" value="200"></div><div class="f3"><label>Variant</label><input id="policyVariantV84" value="Production"></div><div class="f12"><label>Check-In Instruction</label><input id="policyInstructionV84" value="سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔"></div><div class="f12 score-policy-editor"><label>Score Rules (minutes late → score)</label><div class="score-policy-grid"><span>≤10 min <input id="score10V84" type="number" value="10" min="0" max="10"></span><span>≤20 min <input id="score20V84" type="number" value="8" min="0" max="10"></span><span>≤30 min <input id="score30V84" type="number" value="6" min="0" max="10"></span><span>≤45 min <input id="score45V84" type="number" value="4" min="0" max="10"></span><span>Later <input id="scoreLateV84" type="number" value="2" min="0" max="10"></span></div></div><div class="f12"><button class="primary" type="button" onclick="saveAttendancePolicyV84()">Save Attendance Policy</button></div></div><div class="version-panel-v84"><span>Current Version <b id="settingsVersionV84">v115</b></span><span>Variant <b id="settingsVariantV84">Production</b></span><span id="settingsUpdateV84">Up to date</span><button class="soft update-now-v85" type="button" onclick="forceAppUpdateV85()">Check / Update Now</button></div></div><div class="card span6"><h3>مالک کا پاس ورڈ</h3><p class="muted">یوزر نیم: <b>admin</b></p><form id="ownerPasswordForm" class="vertical-form"><label for="ownerOldPassword">موجودہ پاس ورڈ</label><input id="ownerOldPassword" type="password" autocomplete="current-password" required><label for="ownerNewPassword">نیا پاس ورڈ — کم از کم 6 حروف</label><input id="ownerNewPassword" type="password" autocomplete="new-password" minlength="6" required><label for="ownerConfirmPassword">نیا پاس ورڈ دوبارہ درج کریں</label><input id="ownerConfirmPassword" type="password" autocomplete="new-password" minlength="6" required><button id="ownerPasswordBtn" class="primary" type="submit">پاس ورڈ تبدیل کریں</button><div id="ownerPasswordMessage" class="login-message" role="status" aria-live="polite"></div></form></div><div class="card span12"><h3>Storage</h3><p>یہ version <b>Firebase Firestore</b> کے ساتھ online sync کرتا ہے اور browser <b>localStorage</b> کو offline/local cache کے طور پر رکھتا ہے۔</p><button class="danger" onclick="resetAll()">صرف اس Browser کا Local Cache صاف کریں</button></div></div></section>
 <section id="staffSalary" class="tab app-screen">
   <div class="pro-card">
     <div class="pro-card-head">
@@ -2026,7 +2026,7 @@ const legacyDashQuickForm=document.getElementById('dashQuickForm');if(legacyDash
 function attMapV84(date){return window.noorStaffSystem?.getAttendanceForDate(date)||new Map()}
 function staffForPhoneV84(phone){return db.staff.find(s=>normPhoneV84(s.phone||s.id)===normPhoneV84(phone))||{}}
 function attScoreV84(a){const n=Number(a.finalScore??a.autoScore);return Number.isFinite(n)?n:null}
-function renderV84Dashboard(){const d=dashDate.value||today(),es=db.entries.filter(x=>x.date===d);const sale=sum(es,'sale'),coll=sum(es,'collection'),exp=sum(es,'expense')+sum(es,'shop_goods'),acc=sum(es,'account'),ct=sum(es,'change_today'),cy=sum(es,'change_yesterday'),cash=sum(es,'cash'),cashout=sum(es,'cash_out');dashSale.textContent=money(sale);dashCollection.textContent=money(coll);dashExpense.textContent=money(exp);dashCash.textContent=money(sale+coll+cy+cash-exp-ct-acc-cashout);const amap=attMapV84(d),staff=db.staff.filter(s=>s.active!==false);let present=0,late=0,scores=[];const list=staff.map(s=>{const p=normPhoneV84(s.phone||s.id),a=amap.get(p)||{},checkedIn=!!(a.checkIn||a.checkInTime),checkedOut=!!(a.checkOut||a.checkOutTime);if(checkedIn)present++;if((a.minutesLate||a.lateMinutes||a.late||0)>10)late++;const sc=attScoreV84(a);if(sc!=null)scores.push(sc);return {s,a,p,checkedIn,checkedOut}});dashPresent.textContent=present;dashAbsentSmall.textContent=`Absent ${Math.max(0,staff.length-present)}`;dashScore.textContent=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1)+'/10':'—';dashLateSmall.textContent=`Late ${late}`;dashStaffList.innerHTML=list.slice(0,8).map(({s,a,checkedIn,checkedOut})=>`<div><span class="mini-avatar">${s.photo?`<img src="${s.photo}">`:esc((s.name||'?')[0])}</span><b>${esc(s.name||'Staff')}</b><em class="${checkedIn?'ok':'bad'}">${checkedIn?(checkedOut?'Out':'Present'):'Absent'}</em></div>`).join('')||'<p class="muted">No staff accounts</p>'}
+function renderV84Dashboard(){const d=dashDate.value||today(),es=db.entries.filter(x=>x.date===d);const sale=sum(es,'sale'),coll=sum(es,'collection'),exp=sum(es,'expense')+sum(es,'shop_goods'),acc=sum(es,'account'),ct=sum(es,'change_today'),cy=sum(es,'change_yesterday'),cash=sum(es,'cash'),cashout=sum(es,'cash_out');dashSale.textContent=money(sale);dashCollection.textContent=money(coll);dashExpense.textContent=money(exp);dashCash.textContent=money(sale+coll+cy+cash-exp-ct-acc-cashout);const amap=attMapV84(d),staff=db.staff.filter(s=>s.active!==false);let present=0,late=0,scores=[];const list=staff.map(s=>{const p=normPhoneV84(s.phone||s.id),a=amap.get(p)||{},checkedIn=!!(a.checkIn||a.checkInTime),checkedOut=!!(a.checkOut||a.checkOutTime);if(checkedIn)present++;if(window.noorStaffUpgrades?.activityRows(d).find(x=>x.p===p)?.status==='late')late++;const sc=attScoreV84(a);if(sc!=null)scores.push(sc);return {s,a,p,checkedIn,checkedOut}});dashPresent.textContent=present;dashAbsentSmall.textContent=`Absent ${window.noorStaffUpgrades?.activityRows(d).filter(x=>x.status==='absent').length??Math.max(0,staff.length-present)}`;dashScore.textContent=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1)+'/10':'—';dashLateSmall.textContent=`Late ${late}`;dashStaffList.innerHTML=list.slice(0,8).map(({s,a,checkedIn,checkedOut})=>`<div><span class="mini-avatar">${s.photo?`<img src="${s.photo}">`:esc((s.name||'?')[0])}</span><b>${esc(s.name||'Staff')}</b><em class="${checkedIn?'ok':'bad'}">${checkedIn?(checkedOut?'Out':'Present'):'Absent'}</em></div>`).join('')||'<p class="muted">No staff accounts</p>'}
 
 function toggleStaffCreateV84(show){staffCreateV84.classList.toggle('show',show)}
 staffPhoneV84.oninput=()=>staffPasswordV84.textContent=normPhoneV84(staffPhoneV84.value)||'Phone Number';
@@ -2063,23 +2063,22 @@ staffFormV84.onsubmit=async e=>{
 };
 staffSearchV84.oninput=renderStaffAccountsV84;
 function renderStaffCenterV84(){
-  const staff=db.staff.filter(s=>s.active!==false);
-  const total=staff.length;
-  const date=todayAttDateV84?.value||today();
-  const attendanceMap=attMapV84(date);
-  const records=staff.map(s=>attendanceMap.get(normPhoneV84(s.phone||s.id))||{});
-  const present=records.filter(x=>x.checkIn||x.checkInTime).length;
-  const late=records.filter(x=>Number(x.minutesLate||x.lateMinutes||x.late||0)>10).length;
-  const out=records.filter(x=>x.checkOut||x.checkOutTime).length;
+  const date=today();
+  const rows=window.noorStaffUpgrades?.activityRows(date)||db.staff.filter(s=>s.active!==false).map(s=>({a:attMapV84(date).get(normPhoneV84(s.phone||s.id))||{}}));
+  const total=rows.length;
+  const present=rows.filter(x=>x.status==='present'||x.status==='late'||(!x.status&&(x.a.checkIn||x.a.checkInTime))).length;
+  const late=rows.filter(x=>x.status==='late').length;
+  const absent=rows.filter(x=>x.status==='absent'||(!x.status&&!x.a.checkIn&&!x.a.checkInTime)).length;
+  const out=rows.filter(x=>x.a.checkOut||x.a.checkOutTime).length;
   const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value};
   set('staffCenterCount',`${total} accounts`);
   set('staffCenterTotal',total);
   set('staffCenterPresent',present);
-  set('staffCenterAbsent',Math.max(total-present,0));
+  set('staffCenterAbsent',absent);
   set('staffCenterLate',late);
   set('staffCenterOut',out);
   set('staffCenterPresentMirror',present);
-  set('staffCenterAbsentMirror',Math.max(total-present,0));
+  set('staffCenterAbsentMirror',absent);
   set('staffCenterOutMirror',out);
 }
 function renderStaffAccountsV84(){const q=(staffSearchV84.value||'').toLowerCase(),items=db.staff.filter(s=>staffMatchesV111(s,q));staffCountV84.textContent=`${db.staff.length} accounts`;histStaffV84.innerHTML='<option value="">All Staff</option>'+db.staff.map(s=>`<option value="${normPhoneV84(s.phone||s.id)}">${esc(s.name)} • ${esc(normPhoneV84(s.phone||s.id))}</option>`).join('');staffCardsV84.innerHTML=items.map(s=>{const p=normPhoneV84(s.phone||s.id),initials=(s.name||'?').split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase(),base=Number((db.salaryConfig||{})[p]?.monthlySalary??s.salary?.monthlySalary??0);return `<article class="staff-card-v84"><div class="staff-card-top"><div class="staff-card-avatar">${s.photo?`<img src="${s.photo}">`:esc(initials)}</div><div><h4>${esc(s.name)}</h4><span>${esc(s.role||'Staff')} • ${esc(p)}</span></div><span class="active-chip-v84">${s.active===false||s.loginEnabled===false?'Login Disabled':'Active'}</span></div><p>📍 ${esc(s.address||'—')}</p><div class="staff-card-salary-v102">💰 Monthly Salary = <b>${base?money(base):'مقرر نہیں'}</b></div><div class="staff-card-password">🔐 Default password = <b>${esc(p)}</b></div><div class="staff-card-actions"><button onclick="openStaffProfileV84('${p}')">View</button><button onclick="editStaffV84('${p}')">Edit</button><button class="soft" onclick="openSalaryDetailV101('${p}')">Salary</button><button class="soft" onclick="resetStaffPasswordV85('${p}')">Reset Password</button><button class="danger" onclick="deleteStaffV84('${p}')">Delete</button></div></article>`}).join('')||'<div class="empty-state-v84">No staff found</div>'}
@@ -2096,8 +2095,8 @@ async function editStaffV84(phone){const s=staffForPhoneV84(phone);if(!s.phone&&
 async function deleteStaffV84(phone){const p=normPhoneV84(phone),s=staffForPhoneV84(p);if(confirm(`${s.name||p} delete کریں؟`)){db.staff=db.staff.filter(x=>normPhoneV84(x.phone||x.id)!==p);if(db.salaryConfig)delete db.salaryConfig[p];if(db.salaryExtras)delete db.salaryExtras[p];save();await window.noorStaffSystem?.deleteAccount(p)}}
 function openStaffProfileV84(phone){currentProfilePhoneV84=normPhoneV84(phone);goScreen('staffProfile')}
 
-function attendanceStatusV84(a){if(!a.checkIn)return 'Absent';if(a.checkOut)return 'Checked Out';return (a.minutesLate||0)>10?'Late':'Present'}
-function renderTodayAttendanceV84(){const d=todayAttDateV84.value||today(),amap=attMapV84(d),q=(todayAttSearchV84.value||'').toLowerCase(),f=todayAttFilterV84.value;let list=db.staff.map(s=>{const p=normPhoneV84(s.phone||s.id),a=amap.get(p)||{};return{s,p,a}});let present=list.filter(x=>x.a.checkIn).length,out=list.filter(x=>x.a.checkOut).length,late=list.filter(x=>(x.a.minutesLate||0)>10).length,scores=list.map(x=>attScoreV84(x.a)).filter(x=>x!=null);todayTotalV84.textContent=db.staff.length;todayPresentV84.textContent=present;todayAbsentV84.textContent=Math.max(0,db.staff.length-present);todayLateV84.textContent=late;todayOutV84.textContent=out;todayAvgScoreV84.textContent=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—';list=list.filter(x=>{const text=`${x.s.name||''} ${x.p}`.toLowerCase();if(q&&!text.includes(q))return false;const st=attendanceStatusV84(x.a);if(f==='present')return !!x.a.checkIn;if(f==='absent')return !x.a.checkIn;if(f==='late')return (x.a.minutesLate||0)>10;if(f==='out')return !!x.a.checkOut;return true});list.sort((x,y)=>{if(!!x.a.checkIn!==!!y.a.checkIn)return x.a.checkIn?-1:1;return (x.a.checkInTs||9e15)-(y.a.checkInTs||9e15)});todayAttRowsV84.innerHTML=list.map((x,i)=>{const st=attendanceStatusV84(x.a),sc=attScoreV84(x.a);return `<tr><td>${i+1}</td><td><div class="table-staff-v84"><span>${x.s.photo?`<img src="${x.s.photo}">`:esc((x.s.name||'?')[0])}</span><div><b>${esc(x.s.name||'Staff')}</b><small>${esc(x.p)}</small></div></div></td><td><span class="status-v84 ${st.toLowerCase().replaceAll(' ','-')}">${st}</span></td><td>${esc(x.a.checkIn||'—')}</td><td>${x.a.checkIn?`${Math.max(0,Math.round(x.a.minutesLate||0))} min`:'—'}</td><td><b>${sc==null?'—':sc+'/10'}</b></td><td>${esc(x.a.checkOut||'—')}</td><td><div class="gps-proof-v84">${x.a.checkInDistance!=null?`📍 ${Math.round(x.a.checkInDistance)}m`:'—'}${x.a.selfie?`<img src="${x.a.selfie}">`:''}</div></td><td><button class="soft" onclick="openAttendanceEditV84('${x.a.id||`${d}_${x.p}`}','${x.p}')">Edit</button></td></tr>`}).join('')||'<tr><td colspan="9">No staff</td></tr>'}
+function attendanceStatusV84(a){if(!(a.checkIn||a.checkInTime))return 'Absent';if(a.checkOut||a.checkOutTime)return 'Checked Out';const row=window.noorStaffUpgrades?.activityRows(a.date||today()).find(x=>x.p===normPhoneV84(a.phone));return (row?row.status==='late':(a.minutesLate||0)>10)?'Late':'Present'}
+function renderTodayAttendanceV84(){const d=todayAttDateV84.value||today(),amap=attMapV84(d),q=(todayAttSearchV84.value||'').toLowerCase(),f=todayAttFilterV84.value;let list=window.noorStaffUpgrades?.activityRows(d)||db.staff.filter(s=>s.active!==false).map(s=>{const p=normPhoneV84(s.phone||s.id),a=amap.get(p)||{};return{s,p,a}});let present=list.filter(x=>x.a.checkIn).length,out=list.filter(x=>x.a.checkOut).length,late=list.filter(x=>x.status?x.status==='late':(x.a.minutesLate||0)>10).length,scores=list.map(x=>attScoreV84(x.a)).filter(x=>x!=null);todayTotalV84.textContent=list.length;todayPresentV84.textContent=present;todayAbsentV84.textContent=list.filter(x=>x.status?x.status==='absent':!x.a.checkIn).length;todayLateV84.textContent=late;todayOutV84.textContent=out;todayAvgScoreV84.textContent=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—';list=list.filter(x=>{const text=`${x.s.name||''} ${x.p}`.toLowerCase();if(q&&!text.includes(q))return false;const st=attendanceStatusV84(x.a);if(f==='present')return !!x.a.checkIn;if(f==='absent')return x.status?x.status==='absent':!x.a.checkIn;if(f==='late')return x.status?x.status==='late':(x.a.minutesLate||0)>10;if(f==='out')return !!x.a.checkOut;return true});list.sort((x,y)=>{if(!!x.a.checkIn!==!!y.a.checkIn)return x.a.checkIn?-1:1;return (x.a.checkInTs||9e15)-(y.a.checkInTs||9e15)});todayAttRowsV84.innerHTML=list.map((x,i)=>{const st=attendanceStatusV84(x.a),sc=attScoreV84(x.a);return `<tr><td>${i+1}</td><td><div class="table-staff-v84"><span>${x.s.photo?`<img src="${x.s.photo}">`:esc((x.s.name||'?')[0])}</span><div><b>${esc(x.s.name||'Staff')}</b><small>${esc(x.p)}</small></div></div></td><td><span class="status-v84 ${st.toLowerCase().replaceAll(' ','-')}">${st}</span></td><td>${esc(x.a.checkIn||'—')}</td><td>${x.a.checkIn?`${Math.max(0,Math.round(x.a.minutesLate||0))} min`:'—'}</td><td><b>${sc==null?'—':sc+'/10'}</b></td><td>${esc(x.a.checkOut||'—')}</td><td><div class="gps-proof-v84">${x.a.checkInDistance!=null?`📍 ${Math.round(x.a.checkInDistance)}m`:'—'}${x.a.selfie?`<img src="${x.a.selfie}">`:''}</div></td><td><button class="soft" onclick="openAttendanceEditV84('${x.a.id||`${d}_${x.p}`}','${x.p}')">Edit</button></td></tr>`}).join('')||'<tr><td colspan="9">No staff</td></tr>'}
 function ownerCurrentTimeV85(){return new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'})}
 function ownerAttendanceRowsV85(){const d=todayAttDateV84.value||today(),amap=attMapV84(d);return db.staff.filter(s=>s.active!==false).map(s=>{const phone=normPhoneV84(s.phone||s.id);return{s,phone,a:amap.get(phone)||{}}})}
 function renderTodayAttendanceV85(){const d=todayAttDateV84.value||today(),rows=ownerAttendanceRowsV85(),present=rows.filter(x=>x.a.checkIn).length,out=rows.filter(x=>x.a.checkOut).length,scores=rows.map(x=>attScoreV84(x.a)).filter(x=>x!=null);todayTotalV84.textContent=rows.length;todayPresentV84.textContent=present;todayAbsentV84.textContent=Math.max(0,rows.length-present);todayOutV84.textContent=out;todayAvgScoreV84.textContent=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—';todayAttRowsV84.innerHTML=rows.map(({s,phone,a},i)=>{const checked=!!a.checkIn;const photo=s.photo?`<img src="${s.photo}" alt="">`:esc((s.name||'?')[0]);return `<tr data-owner-phone="${phone}"><td>${i+1}</td><td><div class="table-staff-v84"><span>${photo}</span><div><b>${esc(s.name||'Staff')}</b><small>${esc(s.role||'Staff')} • ${esc(phone)}</small></div></div></td><td><label class="attendance-check"><input class="owner-present-v85" type="checkbox" ${checked?'checked':''}> Present</label><span class="owner-absent-v85">${checked?'':'Absent'}</span></td><td><div class="manual-time-v85"><input class="owner-checkin-v85" type="time" value="${to24hV85(a.checkIn||'')}"><button type="button" class="soft" onclick="setOwnerTimeV85(this,'in')">Use Current Time</button></div></td><td><div class="manual-time-v85"><input class="owner-checkout-v85" type="time" value="${to24hV85(a.checkOut||'')}"><button type="button" class="soft" onclick="setOwnerTimeV85(this,'out')">Use Current Time</button></div></td><td class="wh-cell-v101">${whTextV101(a)}</td><td>${a.selfie?`<img class="attendance-selfie" src="${a.selfie}" alt="Attendance selfie">`:'—'}</td><td><input class="owner-score-v85 score-box" type="number" min="0" max="10" value="${attScoreV84(a)??''}"><button type="button" class="soft" onclick="openAttendanceEditV84('${a.id||`${d}_${phone}`}','${phone}')">Edit</button></td></tr>`}).join('')||'<tr><td colspan="8">No active staff</td></tr>'}
@@ -2115,7 +2114,7 @@ scoreDateV84.onchange=renderScoresV84;
 
 function renderStaffProfileV84(){if(!currentProfilePhoneV84)return;const s=staffForPhoneV84(currentProfilePhoneV84);const rows=(window.noorStaffSystem?.getAttendanceBetween('0000-00-00','9999-99-99')||[]).filter(a=>normPhoneV84(a.phone)===currentProfilePhoneV84).sort((a,b)=>(b.date||'').localeCompare(a.date||''));const scores=rows.map(attScoreV84).filter(x=>x!=null),late=rows.filter(a=>(a.minutesLate||0)>10).length;profileTitleV84.textContent=s.name||currentProfilePhoneV84;staffProfileBodyV84.innerHTML=`<div class="profile-hero-v84"><div class="profile-avatar-v84">${s.photo?`<img src="${s.photo}">`:esc((s.name||'?')[0])}</div><div><h3>${esc(s.name||'Staff')}</h3><p>📱 ${esc(currentProfilePhoneV84)} • 📍 ${esc(s.address||'—')}</p></div><button class="soft" onclick="printIndividualStaffV84('${currentProfilePhoneV84}')">📄 Individual PDF</button></div><div class="profile-kpis-v84"><div><small>Records</small><strong>${rows.length}</strong></div><div><small>Late Days</small><strong>${late}</strong></div><div><small>Avg Score</small><strong>${scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—'}</strong></div><div><small>10/10 Days</small><strong>${rows.filter(a=>attScoreV84(a)===10).length}</strong></div></div><div class="pro-card"><div class="table-scroll"><table><thead><tr><th>Date</th><th>Check-In</th><th>Late</th><th>Score</th><th>Check-Out</th><th>Distance</th></tr></thead><tbody>${rows.map(a=>`<tr><td>${a.date}</td><td>${a.checkIn||'—'}</td><td>${Math.max(0,Math.round(a.minutesLate||0))}m</td><td>${attScoreV84(a)??'—'}</td><td>${a.checkOut||'—'}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+'m':'—'}</td></tr>`).join('')}</tbody></table></div></div>`}
 
-function openAttendanceEditV84(id,phone){const a=(window.noorStaffSystem?.getAttendanceById?.(id))||(window.noorStaffSystem?.getAttendanceBetween('0000-00-00','9999-99-99')||[]).find(x=>(x.id||`${x.date}_${normPhoneV84(x.phone)}`)===id)||{};editAttIdV84.value=a.id||id;editAttIdV84.dataset.phone=normPhoneV84(phone||a.phone||String(id||'').split('_')[1]||'');editAttIdV84.dataset.exists=(a.id||a.date)?'1':'';editAttStaffV84.value=(staffForPhoneV84(phone).name||phone);editAttDateV84.value=a.date||today();editAttInV84.value=to24hV84(a.checkIn||'');editAttOutV84.value=to24hV84(a.checkOut||'');editAttAutoScoreV84.value=a.autoScore??'';editAttFinalScoreV84.value=attScoreV84(a)??'';editAttNoteV84.value=a.ownerNote||'';document.getElementById('attendanceSaveStatusV112').textContent='';attendanceEditModalV84.hidden=false}
+function openAttendanceEditV84(id,phone){const a=(window.noorStaffSystem?.getAttendanceById?.(id))||(window.noorStaffSystem?.getAttendanceBetween('0000-00-00','9999-99-99')||[]).find(x=>(x.id||`${x.date}_${normPhoneV84(x.phone)}`)===id)||{};editAttIdV84.value=id;editAttStaffV84.value=(staffForPhoneV84(phone).name||phone);editAttDateV84.value=a.date||today();editAttInV84.value=to24hV84(a.checkIn||'');editAttOutV84.value=to24hV84(a.checkOut||'');editAttAutoScoreV84.value=a.autoScore??'';editAttFinalScoreV84.value=attScoreV84(a)??'';editAttNoteV84.value=a.ownerNote||'';document.getElementById('attendanceSaveStatusV112').textContent='';attendanceEditModalV84.hidden=false}
 function closeAttendanceEditV84(){attendanceEditModalV84.hidden=true}
 function to24hV84(v){const m=String(v||'').match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);if(!m)return'';let h=+m[1];const min=m[2],ap=(m[3]||'').toUpperCase();if(ap==='PM'&&h<12)h+=12;if(ap==='AM'&&h===12)h=0;return String(h).padStart(2,'0')+':'+min}
 attendanceEditFormV84.onsubmit=async e=>{
@@ -2123,43 +2122,28 @@ attendanceEditFormV84.onsubmit=async e=>{
   const button=document.getElementById('attendanceSaveV112'),status=document.getElementById('attendanceSaveStatusV112');
   if(button.disabled)return;button.disabled=true;status.textContent='محفوظ ہو رہا ہے…';
   try{
-  /* V115: phone ab record mein save hota hai (pehle nahi hota tha, is liye report mein Absent aata tha). */
-  const phone=editAttIdV84.dataset.phone||'',exists=editAttIdV84.dataset.exists==='1',date=editAttDateV84.value;
-  const checkIn=editAttInV84.value||null,checkOut=editAttOutV84.value||null;
-  const minsV115=t=>{const [h,m]=String(t).split(':').map(Number);return h*60+m};
-  if(!date){status.textContent='Date chunein.';return}
-  if(checkOut&&!checkIn){status.textContent='Pehle Check-In ka waqt likhein.';return}
-  if(checkIn&&checkOut){
-    let d=minsV115(checkOut)-minsV115(checkIn);if(d<0)d+=1440;
-    if(d===0||d>16*60){status.textContent=`Check-Out ${checkOut} ghalat lag raha hai (Check-In ${checkIn} ke baad ${Math.floor(d/60)} ghante). Dopahar 2:35 ke liye 14:35 (PM) chunein.`;return}
-    if(minsV115(checkOut)<minsV115(checkIn)&&!confirm(`Check-Out ${checkOut} raat 12 ke baad ka waqt hai. Kya yeh raat ki shift hai? Agar dopahar ka waqt hai to Cancel karke PM chunein.`)){status.textContent='';return}
-  }
-  const id=exists?editAttIdV84.value:(phone?`${date}_${phone}`:editAttIdV84.value);
-  const duty=(phone&&window.noorStaffUpgrades?.schedule?.(phone))||{},shift=duty.shiftStart||policyV84.shiftStart||'09:00',grace=Number(duty.grace??10);
+  const id=editAttIdV84.value,checkIn=editAttInV84.value||null,shift=policyV84.shiftStart||'09:00';
   let minutesLate=0,autoScore=null;
   if(checkIn){
-    minutesLate=Math.max(0,minsV115(checkIn)-minsV115(shift));
-    const s=policyV84.scores||{},counted=Math.max(0,minutesLate-grace+10);
-    autoScore=counted<=10?+(s.m10??10):counted<=20?+(s.m20??8):counted<=30?+(s.m30??6):counted<=45?+(s.m45??4):+(s.late??2);
+    const [h,m]=checkIn.split(':').map(Number),[sh,sm]=shift.split(':').map(Number);
+    minutesLate=Math.max(0,(h*60+m)-(sh*60+sm));
+    const s=policyV84.scores||{};
+    autoScore=minutesLate<=10?+(s.m10??10):minutesLate<=20?+(s.m20??8):minutesLate<=30?+(s.m30??6):minutesLate<=45?+(s.m45??4):+(s.late??2);
   }
-  const patch={
-    date,checkIn,checkOut,
-    minutesLate,autoScore,shiftStart:shift,
+  await window.noorStaffSystem?.updateAttendance(id,{
+    date:editAttDateV84.value,checkIn,checkOut:editAttOutV84.value||null,
+    minutesLate,autoScore,
     finalScore:editAttFinalScoreV84.value===''?autoScore:+editAttFinalScoreV84.value,
-    attendanceStatus:checkIn?'present':'absent',
     ownerNote:editAttNoteV84.value,editedAt:Date.now(),editedBy:'ADMIN'
-  };
-  if(phone)patch.phone=phone;
-  if(!exists)patch.id=id;
-  await window.noorStaffSystem?.updateAttendance(id,patch);
+  });
   closeAttendanceEditV84();renderTodayAttendanceV84();renderAttendanceHistoryV84();renderScoresV84();
   }catch(error){status.textContent='محفوظ نہیں ہوا۔ انٹرنیٹ / لاگ اِن چیک کر کے دوبارہ Save کریں۔';}
   finally{button.disabled=false}
 };
 
 function printWindowV84(title,subtitle,summary,headers,rows){const w=window.open('','_blank');w.document.write(`<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{font-family:Arial,sans-serif;padding:28px;color:#142033}.brand{border-bottom:3px solid #0f766e;padding-bottom:14px}.brand h1{margin:0;color:#0f766e}.brand p{margin:5px 0;color:#64748b}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:18px 0}.summary div{border:1px solid #dce5ec;border-radius:10px;padding:10px}.summary span{font-size:10px;color:#64748b;display:block}.summary b{font-size:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #d5dee6;padding:7px;text-align:right;font-size:10px}th{background:#eef5f4;color:#0f5f59}.foot{margin-top:18px;font-size:9px;color:#64748b}@media print{body{padding:10px}}</style></head><body><div class="brand"><h1>Noor Traders Gulyana</h1><p>${esc(title)} • ${esc(subtitle)}</p></div><div class="summary">${summary}</div><table><thead><tr>${headers.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table><div class="foot">Generated from Noor Traders Staff ${V84_VERSION} • ${V84_VARIANT}</div><script>setTimeout(()=>window.print(),450)<\/script></body></html>`);w.document.close()}
-function dailyReportDataV84(d){const m=attMapV84(d),list=db.staff.map(s=>{const p=normPhoneV84(s.phone||s.id),a=m.get(p)||{};return{s,p,a}});const present=list.filter(x=>x.a.checkIn).length,late=list.filter(x=>(x.a.minutesLate||0)>10).length,out=list.filter(x=>x.a.checkOut).length,scores=list.map(x=>attScoreV84(x.a)).filter(x=>x!=null);return{list,present,absent:db.staff.length-present,late,out,avg:scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—'}}
-function printDailyAttendanceV84(){const d=todayAttDateV84.value||today(),r=dailyReportDataV84(d),summary=`<div><span>Total Staff</span><b>${db.staff.length}</b></div><div><span>Present</span><b>${r.present}</b></div><div><span>Absent</span><b>${r.absent}</b></div><div><span>Late / Avg Score</span><b>${r.late} / ${r.avg}</b></div>`,rows=r.list.map(x=>`<tr><td>${x.s.photo?`<img src="${x.s.photo}" style="width:34px;height:34px;object-fit:cover;border-radius:6px">`:'—'}</td><td>${esc(x.s.name)}</td><td>${esc(x.s.role||'Staff')}</td><td>${esc(x.p)}</td><td>${attendanceStatusV84(x.a)}</td><td>${esc(x.a.checkIn||'—')}</td><td>${esc(x.a.checkOut||'—')}</td><td>${whTextV101(x.a)}</td><td>${x.a.selfie?`<img src="${x.a.selfie}" style="width:34px;height:34px;object-fit:cover;border-radius:6px">`:'—'}</td><td>${attScoreV84(x.a)??'—'}</td><td>${esc(x.a.ownerNote||'—')}</td></tr>`).join('');printWindowV84('Daily Attendance Report',d,summary,['Profile','Name','Role','Phone','Status','Check-In','Check-Out','Working Hours','Selfie','Score','Notes'],rows)}
+function dailyReportDataV84(d){const m=attMapV84(d),list=window.noorStaffUpgrades?.activityRows(d)||db.staff.filter(s=>s.active!==false).map(s=>{const p=normPhoneV84(s.phone||s.id),a=m.get(p)||{};return{s,p,a}});const present=list.filter(x=>x.a.checkIn).length,late=list.filter(x=>x.status?x.status==='late':(x.a.minutesLate||0)>10).length,out=list.filter(x=>x.a.checkOut).length,scores=list.map(x=>attScoreV84(x.a)).filter(x=>x!=null);return{list,present,absent:list.filter(x=>x.status?x.status==='absent':!x.a.checkIn).length,late,out,avg:scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—'}}
+function printDailyAttendanceV84(){const d=todayAttDateV84.value||today(),r=dailyReportDataV84(d),summary=`<div><span>Total Staff</span><b>${r.list.length}</b></div><div><span>Present</span><b>${r.present}</b></div><div><span>Absent</span><b>${r.absent}</b></div><div><span>Late / Avg Score</span><b>${r.late} / ${r.avg}</b></div>`,rows=r.list.map(x=>`<tr><td>${x.s.photo?`<img src="${x.s.photo}" style="width:34px;height:34px;object-fit:cover;border-radius:6px">`:'—'}</td><td>${esc(x.s.name)}</td><td>${esc(x.s.role||'Staff')}</td><td>${esc(x.p)}</td><td>${attendanceStatusV84(x.a)}</td><td>${esc(x.a.checkIn||'—')}</td><td>${esc(x.a.checkOut||'—')}</td><td>${whTextV101(x.a)}</td><td>${x.a.selfie?`<img src="${x.a.selfie}" style="width:34px;height:34px;object-fit:cover;border-radius:6px">`:'—'}</td><td>${attScoreV84(x.a)??'—'}</td><td>${esc(x.a.ownerNote||'—')}</td></tr>`).join('');printWindowV84('Daily Attendance Report',d,summary,['Profile','Name','Role','Phone','Status','Check-In','Check-Out','Working Hours','Selfie','Score','Notes'],rows)}
 function printHistoryReportV84(){const from=histFromV84.value||today(),to=histToV84.value||today(),phone=histStaffV84.value;let data=(window.noorStaffSystem?.getAttendanceBetween(from,to)||[]).filter(a=>!phone||normPhoneV84(a.phone)===phone);const scores=data.map(attScoreV84).filter(x=>x!=null),summary=`<div><span>Records</span><b>${data.length}</b></div><div><span>Late</span><b>${data.filter(a=>(a.minutesLate||0)>10).length}</b></div><div><span>Avg Score</span><b>${scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—'}</b></div><div><span>Period</span><b>${from} → ${to}</b></div>`,rows=data.map(a=>`<tr><td>${a.date}</td><td>${esc(staffForPhoneV84(a.phone).name||a.name||a.phone)}</td><td>${a.checkIn||'—'}</td><td>${Math.max(0,Math.round(a.minutesLate||0))}</td><td>${attScoreV84(a)??'—'}</td><td>${a.checkOut||'—'}</td><td>${whTextV101(a)}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+'m':'—'}</td></tr>`).join('');printWindowV84('Attendance History Report',`${from} to ${to}`,summary,['Date','Staff','Check-In','Late','Score','Check-Out','Working Hours','Distance'],rows)}
 function printIndividualStaffV84(phone){const s=staffForPhoneV84(phone),data=(window.noorStaffSystem?.getAttendanceBetween('0000-00-00','9999-99-99')||[]).filter(a=>normPhoneV84(a.phone)===normPhoneV84(phone)),scores=data.map(attScoreV84).filter(x=>x!=null),summary=`<div><span>Staff</span><b>${esc(s.name||phone)}</b></div><div><span>Records</span><b>${data.length}</b></div><div><span>Late Days</span><b>${data.filter(a=>(a.minutesLate||0)>10).length}</b></div><div><span>Avg Score</span><b>${scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—'}</b></div>`,rows=data.map(a=>`<tr><td>${a.date}</td><td>${a.checkIn||'—'}</td><td>${Math.max(0,Math.round(a.minutesLate||0))}</td><td>${attScoreV84(a)??'—'}</td><td>${a.checkOut||'—'}</td><td>${a.checkInDistance!=null?Math.round(a.checkInDistance)+'m':'—'}</td></tr>`).join('');printWindowV84('Individual Staff Attendance',`${s.name||phone} • ${normPhoneV84(phone)}`,summary,['Date','Check-In','Late','Score','Check-Out','Distance'],rows)}
 
@@ -2196,7 +2180,7 @@ function ntSetVersionStatusV101(latest){
   });
   return newer;
 }
-const APP_VERSION_V85='v118';
+const APP_VERSION_V85='v115';
 let currentPdfHtmlV85='';
 
 /* ===== AUTO UPDATE (v88) =====
@@ -3311,7 +3295,7 @@ const staffAttendanceCol=collection(fs,"businesses",BUSINESS_ID,"staffAttendance
 const staffSessionsCol=collection(fs,"businesses",BUSINESS_ID,"staffSessions");
 const STAFF_SESSION_KEY="noor-traders-staff-session";
 const staffConfigDoc=doc(fs,"businesses",BUSINESS_ID,"staffConfig","main");
-let staffConfig={shiftStart:'09:00',shiftEnd:'',radius:200,variant:'Production',instruction:'سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔',scores:{m10:10,m20:8,m30:6,m45:4,late:2},version:'v118'};
+let staffConfig={shiftStart:'09:00',shiftEnd:'',radius:200,variant:'Production',instruction:'سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔',scores:{m10:10,m20:8,m30:6,m45:4,late:2},version:'v115'};
 
 async function upsertAccount(account){
   const phone=normalizePhone(account.phone||account.id);
@@ -3389,10 +3373,7 @@ function refreshOwnerAttendanceSummariesV103(){
 }
 function normalizeAttendanceV103(value){
   const a=clean(value||{});
-  /* V115: purane owner-edit records mein phone nahi tha; id "YYYY-MM-DD_phone" se le lein. */
-  const idPhone=(String(a.id||'').match(/^\d{4}-\d{2}-\d{2}_(.+)$/)||[])[1]||'';
   return {...a,
-    phone:a.phone||idPhone,
     checkIn:a.checkIn||a.checkInTime||'',
     checkOut:a.checkOut||a.checkOutTime||'',
     minutesLate:Number(a.minutesLate??a.lateMinutes??a.late??0)
@@ -3400,13 +3381,13 @@ function normalizeAttendanceV103(value){
 }
 function getAttendanceForDate(date){
   const m=new Map();
-  for(const a of ownerStaffAttendance.values())if(a.date===date){const n=normalizeAttendanceV103(a);m.set(normalizePhone(n.phone),n)}
+  for(const a of ownerStaffAttendance.values())if(a.date===date)m.set(normalizePhone(a.phone),normalizeAttendanceV103(a));
   return m;
 }
 function getAttendanceBetween(from,to){
   return [...ownerStaffAttendance.values()].filter(a=>(!from||a.date>=from)&&(!to||a.date<=to)).map(normalizeAttendanceV103).sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.checkInTs||0)-(b.checkInTs||0));
 }
-async function saveConfig(cfg){staffConfig={...staffConfig,...clean(cfg),scores:{...staffConfig.scores,...(cfg.scores||{})},version:'v118'};await setDoc(staffConfigDoc,staffConfig,{merge:true});window.applyPolicyV84?.(staffConfig);window.noorStaffUpgrades?.render()}
+async function saveConfig(cfg){staffConfig={...staffConfig,...clean(cfg),scores:{...staffConfig.scores,...(cfg.scores||{})},version:'v115'};await setDoc(staffConfigDoc,staffConfig,{merge:true});window.applyPolicyV84?.(staffConfig);window.noorStaffUpgrades?.render()}
 function getAttendanceById(id){const a=ownerStaffAttendance.get(id);return a?normalizeAttendanceV103(a):null}
 async function updateAttendance(id,patch){return window.noorStaffUpgrades.attendance(id,patch)}
 async function deleteAttendance(id){return window.noorStaffUpgrades.attendance(id,{},true)}
@@ -3440,7 +3421,7 @@ function renderStaffProfile(){
 let ownAttendanceUnsub=null;
 let checkoutBusyV112=false;
 function startStaffOwnListener(){
-  staffUnsubs.push(onSnapshot(staffConfigDoc,s=>{if(s.exists()){staffConfig={...staffConfig,...clean(s.data()),scores:{...staffConfig.scores,...(s.data().scores||{})}};const radius=staffConfig.radius||SHOP.radius;staffRuleText.textContent=`Selfie لازمی + Noor Traders سے زیادہ سے زیادہ ${radius}m`;staffInstructionText.textContent=staffConfig.instruction||staffInstructionText.textContent;staffVersionLabel.textContent='v118';window.noorStaffUpgrades?.render()}}));
+  staffUnsubs.push(onSnapshot(staffConfigDoc,s=>{if(s.exists()){staffConfig={...staffConfig,...clean(s.data()),scores:{...staffConfig.scores,...(s.data().scores||{})}};const radius=staffConfig.radius||SHOP.radius;staffRuleText.textContent=`Selfie لازمی + Noor Traders سے زیادہ سے زیادہ ${radius}m`;staffInstructionText.textContent=staffConfig.instruction||staffInstructionText.textContent;staffVersionLabel.textContent='v115';window.noorStaffUpgrades?.render()}}));
   staffUnsubs.push(onSnapshot(doc(staffAccountsCol,currentStaffPhone),s=>{if(s.exists()){currentStaff={...clean(s.data()),phone:currentStaffPhone};window.currentStaffAccountV101=currentStaff;renderStaffProfile();window.renderStaffSalaryV101?.()}}));
   if(ownAttendanceUnsub)try{ownAttendanceUnsub()}catch{}
   const q=query(staffAttendanceCol,where("phone","==",currentStaffPhone));
@@ -3600,7 +3581,7 @@ function installStaffUpgrades({fs,auth,sdk,getStaff,getAttendance,getConfig,isOw
  const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Karachi'}).format(new Date());
  let suggestionBaseline=false,knownSuggestions=new Set();
  let session=null,unsubs=[],data={staffRequests:[],staffSchedules:[],staffPayroll:[],staffAudit:[]},loaded=new Set(),filter='all',tab='overview',epoch=0,searchQuery='';
- const names={present:'Hazir',late:'Late',absent:'Ghair hazir',leave:'Chhutti',off:'Weekly off'};
+ const names={present:'Hazir (waqt par)',late:'Late',absent:'Ghair hazir',leave:'Chhutti',off:'Weekly off'};
  const owner=()=>session?.role==='owner'&&isOwner(auth.currentUser);
  const schedule=p=>{const base=getConfig(),own=data.staffSchedules.find(x=>x.id===p);return !own?base:own.useDefaultShift?{...base,...own,shiftStart:base.shiftStart,shiftEnd:base.shiftEnd}:{...base,...own}};
  const payment=(p,m)=>data.staffPayroll.find(x=>x.id===`${m}_${p}`);
@@ -3631,7 +3612,12 @@ function installStaffUpgrades({fs,auth,sdk,getStaff,getAttendance,getConfig,isOw
  function audit(tx,type,id,before,after,reason){const ar=doc(col('staffAudit'));tx.set(ar,{type,target:id,before:JSON.stringify(before||null),after:JSON.stringify(after||null),reason,by:auth.currentUser.uid,at:Date.now()})}
  async function write(n,id,patch,reason){guard();await runTransaction(fs,async tx=>{const r=ref(n,id),old=await tx.get(r);tx.set(r,patch,{merge:true});audit(tx,n,id,old.exists()?old.data():null,patch,reason)})}
  function person(p){return getStaff().find(s=>String(s.phone||s.id)===p)||{phone:p,name:p}}
- function render(){if(!session)return;const active=document.activeElement,focused=active?.id==='suSearch',selection=focused?[active.selectionStart,active.selectionEnd]:null;ownerBox.hidden=!owner();ownBox.hidden=owner();if(owner()){renderOwner();applySearch();if(focused&&$('suSearch')){$('suSearch').focus({preventScroll:true});try{$('suSearch').setSelectionRange(...selection)}catch{}}}else renderOwn()}
+ function activityRows(date=today()){
+ const norm=window.normPhoneV84||((v)=>{let n=String(v||'').replace(/\D/g,'');if(n.startsWith('92')&&n.length>=12)n='0'+n.slice(2);if(n.length===10&&n.startsWith('3'))n='0'+n;return n});
+ const map=window.noorStaffSystem?.getAttendanceForDate(date)||new Map(getAttendance(date,date).map(a=>[norm(a.phone),a]));
+ return getStaff().filter(s=>s.active!==false).map(s=>{s={...s,phone:norm(s.phone||s.id)};const a=map.get(s.phone)||{};return {s,p:s.phone,a,status:staffStatusV104(s,a,data.staffRequests.map(r=>({...r,phone:norm(r.phone)})),date,schedule(s.phone))}});
+ }
+ function render(){if(!session)return;if(owner())window.renderStaffCenterV84?.();const active=document.activeElement,focused=active?.id==='suSearch',selection=focused?[active.selectionStart,active.selectionEnd]:null;ownerBox.hidden=!owner();ownBox.hidden=owner();if(owner()){renderOwner();applySearch();if(focused&&$('suSearch')){$('suSearch').focus({preventScroll:true});try{$('suSearch').setSelectionRange(...selection)}catch{}}}else renderOwn()}
  function applySearch(){let count=0;ownerBox.querySelectorAll('[data-search]').forEach(el=>{const matches=window.staffMatchesV111?window.staffMatchesV111({name:el.dataset.search,phone:el.dataset.phoneSearch},searchQuery):el.dataset.search.includes(searchQuery.toLowerCase().trim());el.hidden=!matches;if(matches)count++});const empty=$('suSearchEmpty');if(empty)empty.hidden=count>0;}
 
  function renderOwner(){
@@ -3639,7 +3625,7 @@ function installStaffUpgrades({fs,auth,sdk,getStaff,getAttendance,getConfig,isOw
   const box=$('suContent');if(loaded.size<4){box.textContent='Staff controls load ho rahe hain…';return}
   const staff=getStaff().filter(s=>s.active!==false).map(s=>({...s,phone:String(s.phone||s.id)}));
   if(tab==='overview'){
-   const rows=staff.map(s=>({s,a:getAttendance(today(),today()).find(a=>a.phone===s.phone)||{}})).map(x=>({...x,status:staffStatusV104(x.s,x.a,data.staffRequests,today(),schedule(x.s.phone))}));
+   const rows=activityRows();
    box.innerHTML=`<div class="su-grid">${[['all','Sab'],...Object.entries(names)].map(([k,v])=>`<button data-filter="${k}" aria-pressed="${filter===k}">${v}<br><b>${rows.filter(x=>k==='all'||x.status===k).length}</b></button>`).join('')}</div><label>Staff search<input id="suSearch" type="search" value="${escape(searchQuery)}" placeholder="نام یا موبائل نمبر" aria-label="Staff search"></label><div id="suPeople">${rows.filter(x=>filter==='all'||x.status===filter).map(({s,a,status})=>`<div class="su-row" data-search="${escape((s.name+' '+s.phone).toLowerCase())}" data-phone-search="${escape(s.phone)}"><b>${escape(s.name)}</b> · ${names[status]} ${checkoutDueV113(a,schedule(s.phone))?'<strong> · Check-out baqi / چیک آؤٹ باقی</strong>':''}<p>${escape(a.checkIn||'—')} → ${escape(a.checkOut||'—')} · ${escape(window.whTextV101?.(a)||'')}</p><button data-profile="${escape(s.phone)}">Poora profile</button></div>`).join('')||''}</div><p id="suSearchEmpty" role="status" hidden>اس تلاش / فلٹر میں کوئی اسٹاف نہیں ملا۔</p><details><summary>Check-out baqi (${getAttendance('0000-00-00',today()).filter(a=>checkoutDueV113(a,schedule(a.phone))).length})</summary>${getAttendance('0000-00-00',today()).filter(a=>checkoutDueV113(a,schedule(a.phone))).map(a=>`<p>${escape(person(a.phone).name)} · ${escape(a.date)} <button data-att="${escape(a.id||a.date+'_'+a.phone)}" data-phone="${escape(a.phone)}">Correction</button></p>`).join('')}</details><button data-tasks>Pending picture approvals</button>`;
   } else if(tab==='staff'){
    box.innerHTML=`<form id="suDefaultShift"><h3>Sab ki default shift / سب کی شفٹ</h3><div class="su-grid"><label>Shuru<input name="shiftStart" type="time" value="${escape(getConfig().shiftStart||'09:00')}" required></label><label>Khatam<input name="shiftEnd" type="time" value="${escape(getConfig().shiftEnd||'')}" required></label></div><label><input type="checkbox" name="applyAll"> Sab staff ko default par karein (alag timings bhi hata dein)</label><p>Default badalne se default wale staff ki timing badlegi. Alag timing wale staff waise hi rahenge.</p><button>Save default shift</button></form>`+staff.map(s=>{const c=schedule(s.phone),own=data.staffSchedules.find(x=>x.id===s.phone);return `<details class="su-row"><summary>${escape(s.name)} · Duty settings</summary><button data-profile="${escape(s.phone)}">Profile / salary / pictures</button><form data-schedule="${escape(s.phone)}"><label>Shift ka tareeqa<select name="shiftMode"><option value="default" ${!own||own.useDefaultShift?'selected':''}>Sab ki default timing</option><option value="custom" ${own&&!own.useDefaultShift?'selected':''}>Is staff ki alag timing</option></select></label><div class="su-grid"><label>Duty start<input type="time" name="shiftStart" value="${escape(c.shiftStart||'09:00')}" required></label><label>Duty end<input type="time" name="shiftEnd" value="${escape(c.shiftEnd||'')}"></label><label>Grace minutes<input name="grace" type="number" min="0" max="120" value="${Number(c.grace??10)}" required></label></div><label>Weekly off<select name="off"><option value="">None</option>${['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map((d,i)=>`<option value="${i}" ${(c.weeklyOff||[]).includes(i)?'selected':''}>${d}</option>`).join('')}</select></label><label>Tabdeeli ki wajah<input name="reason" maxlength="500" required></label><button>Save duty</button></form></details>`}).join('');
@@ -3680,7 +3666,7 @@ function installStaffUpgrades({fs,auth,sdk,getStaff,getAttendance,getConfig,isOw
  if(!snap.metadata?.fromCache){if(suggestionBaseline){const added=rows.filter(r=>!knownSuggestions.has(r.id)&&r.status==='pending');if(added.length)window.noorTasks?.suggestionNotice?.({...added[0],staffName:person(added[0].phone).name})}knownSuggestions=ids;suggestionBaseline=true}
  window.noorTasks?.refreshNotifications?.();
  }if(n==='staffPayroll'){window.renderSalaryV101?.();window.renderStaffSalaryV101?.()}},err=>message('Naye Staff controls load nahi hue. Updated Firestore rules publish karein, phir refresh. '+err.code,true)))}$('suRequest').elements.date.value=$('suRequest').elements.to.value=today();render()}
- return {start,stop,render,schedule,snapshot,write,suggestionHtml,suggestionCount:()=>suggestions().filter(r=>r.status==='pending').length,markSuggestionsRead,async log(type,id,before,after,reason){guard();await runTransaction(fs,async tx=>audit(tx,type,id,before,after,reason))},async attendance(id,patch,remove=false){guard();await runTransaction(fs,async tx=>{const r=ref('staffAttendance',id),s=await tx.get(r);if(remove)tx.delete(r);else tx.set(r,patch,{merge:true});audit(tx,'attendance',id,s.exists()?s.data():null,remove?null:patch,patch.ownerNote||'Owner attendance edit')})}};
+ return {start,stop,render,schedule,activityRows,snapshot,write,suggestionHtml,suggestionCount:()=>suggestions().filter(r=>r.status==='pending').length,markSuggestionsRead,async log(type,id,before,after,reason){guard();await runTransaction(fs,async tx=>audit(tx,type,id,before,after,reason))},async attendance(id,patch,remove=false){guard();await runTransaction(fs,async tx=>{const r=ref('staffAttendance',id),s=await tx.get(r);if(remove)tx.delete(r);else tx.set(r,patch,{merge:true});audit(tx,'attendance',id,s.exists()?s.data():null,remove?null:patch,patch.ownerNote||'Owner attendance edit')})}};
 }
 
 return {installUrduDictation,checkoutDueV113,staffStatusV104,installStaffUpgrades};
@@ -4670,309 +4656,6 @@ body{background:#f1f5f1!important;background-image:radial-gradient(ellipse at 8%
     renderSalary();
     if(typeof currentProfilePhoneV84!=='undefined'&&currentProfilePhoneV84)window.renderStaffProfileV84?.();
   });
-})();
-</script>
-<style id="compactV115">
-/* V115: Staff profile ke dabbe chhote */
-.profile-today-grid-v89{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
-.profile-kpis-v84{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;margin-bottom:8px!important}
-.profile-today-grid-v89>div,.profile-kpis-v84>div{padding:6px 8px!important;min-height:0!important;border-radius:10px!important;box-shadow:none!important}
-.profile-today-grid-v89 small,.profile-kpis-v84 small{font-size:10.5px!important;line-height:1.35!important;margin:0!important}
-.profile-today-grid-v89 b,.profile-kpis-v84 strong{font-size:14px!important;line-height:1.35!important;margin-top:2px!important}
-.profile-today-grid-v89 b,.profile-kpis-v84 strong{display:inline-block!important;unicode-bidi:plaintext}
-/* V115: Edit Attendance form chhota; Check-In/Out aur Score saath saath */
-#attendanceEditFormV84{gap:6px!important}
-#attendanceEditFormV84 .two-col-v84{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}
-#attendanceEditFormV84 label{font-size:13px!important;margin:0!important;line-height:1.4!important}
-#attendanceEditFormV84 input,#attendanceEditFormV84 textarea{min-height:38px!important;padding:6px 10px!important;font-size:15px!important;border-radius:10px!important;margin-top:2px!important}
-#attendanceEditFormV84 textarea{min-height:52px!important;height:52px!important}
-#attendanceEditModalV84 .modal-head-v84 h3{font-size:18px!important;margin:0!important}
-#attendanceEditModalV84 .attendance-actions-v112 button{min-height:42px!important;padding:8px!important}
-#attendanceSaveStatusV112{color:#b91c1c;font-size:13px;margin:4px 0}
-</style>
-<style id="profileRedV116">
-/* V116: Staff Profile — chhote dabbe. V117 se rang poori app ke theme (--t-accent) se aata hai. */
-#staffProfileBodyV84{--box-accent:var(--t-accent-dark,#1d4ed8);--box-line:var(--t-line,#e5e9f0);--box-soft:var(--t-accent-50,#eff6ff)}
-#staffProfileBodyV84 .profile-today-grid-v89>div,#staffProfileBodyV84 .profile-kpis-v84>div,#staffProfileBodyV84 .profile-salary-grid-v102>div,#ownerApp #staffProfileBodyV84 .nt-stats>div{background:#fff!important;border:1px solid var(--box-line)!important;border-inline-start:3px solid var(--box-accent)!important;border-radius:10px!important;padding:6px 9px!important;min-height:0!important;box-shadow:0 1px 3px rgba(127,29,29,.07)!important}
-#staffProfileBodyV84 .profile-today-grid-v89 small,#staffProfileBodyV84 .profile-kpis-v84 small,#staffProfileBodyV84 .profile-salary-grid-v102 small,#ownerApp #staffProfileBodyV84 .nt-stats>div{color:#7c6f6f!important;font-size:10.5px!important;font-weight:600!important;line-height:1.35!important}
-#staffProfileBodyV84 .profile-today-grid-v89 b,#staffProfileBodyV84 .profile-kpis-v84 strong,#staffProfileBodyV84 .profile-salary-grid-v102 b,#ownerApp #staffProfileBodyV84 .nt-stats b{color:var(--box-accent)!important;font-size:15px!important;font-weight:800!important;line-height:1.35!important;margin-top:2px!important;display:inline-block!important;unicode-bidi:plaintext}
-#staffProfileBodyV84 .profile-today-grid-v89,#staffProfileBodyV84 .profile-kpis-v84,#staffProfileBodyV84 .profile-salary-grid-v102{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
-#ownerApp #staffProfileBodyV84 .nt-stats{gap:6px!important;margin:8px 0!important}
-#staffProfileBodyV84 .profile-salary-v102{background:#fff!important;border-color:var(--box-line)!important}
-#staffProfileBodyV84 .profile-salary-grid-v102 .final{grid-column:1/-1;background:var(--t-accent,#2563eb)!important;border-color:var(--t-accent,#2563eb)!important}
-#staffProfileBodyV84 .profile-salary-grid-v102 .final small,#staffProfileBodyV84 .profile-salary-grid-v102 .final b{color:#fff!important}
-#staffProfileBodyV84 .profile-salary-grid-v102 .final b{font-size:18px!important}
-#ownerApp #staffProfileBodyV84 .nt-stats b{display:block!important;font-size:17px!important}
-#staffProfileBodyV84 .profile-salary-grid-v102>div:not(.final) b{font-size:13.5px!important}
-#staffProfileBodyV84 .profile-avatar-v84{background:var(--box-soft)!important;color:var(--box-accent)!important;border:1px solid var(--box-line)!important}
-#ownerApp #staffProfileBodyV84 .profile-hero-v84 h3{color:var(--box-accent)!important}
-#staffProfileBodyV84 .profile-actions-v89{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;margin:8px 0 10px!important}
-#staffProfileBodyV84 .profile-actions-v89 button{background:#fff!important;color:var(--box-accent)!important;border:1px solid var(--box-line)!important;min-height:38px!important;padding:6px 8px!important;font-size:12.5px!important;line-height:1.3!important;border-radius:10px!important;box-shadow:none!important}
-#staffProfileBodyV84 .profile-actions-v89 button:first-child{grid-column:1/-1;background:var(--t-accent,#2563eb)!important;color:#fff!important;border:0!important;font-size:14px!important;min-height:42px!important}
-#staffProfileBodyV84 .profile-actions-v89 button.danger{background:var(--box-soft)!important}
-</style>
-<style id="themeV117">
-/* ===== V117 THEME — saaf "SaaS" design, poori app ek rang =====
-   Rang badalna ho to sirf yeh 4 lines badlein (--t-accent ...). */
-:root{
- --t-accent:#2563eb;--t-accent-dark:#1d4ed8;--t-accent-50:#eff6ff;--t-accent-100:#dbeafe;
- --t-navy:#0f172a;--t-navy-2:#1e293b;
- --t-bg:#f4f6fa;--t-card:#fff;--t-line:#e5e9f0;--t-line-2:#d5dce6;
- --t-text:#0f172a;--t-muted:#64748b;--t-danger:#dc2626;
- --t-shadow:0 1px 2px rgba(15,23,42,.05);--t-r:12px;
-}
-/* 1. Page */
-html body{background:var(--t-bg)!important;background-image:none!important;color:var(--t-text)}
-html body :is(#ownerApp,#staffPortal){color:var(--t-text)}
-
-/* 2. Upar ki patti, neeche ka menu, side menu — gehra navy */
-html body #ownerApp .top,html body #staffPortal .staff-topbar{background:var(--t-navy)!important;background-image:none!important;color:#fff!important;border:0!important;box-shadow:none!important}
-html body #ownerApp .top *{color:inherit}
-html body #ownerApp #mobileDockV84,html body .mobile-dock-v84{background:var(--t-navy)!important;border-radius:14px!important;box-shadow:0 8px 24px rgba(15,23,42,.28)!important}
-html body .mobile-dock-v84 button{color:#cbd5e1!important;background:transparent!important}
-html body .mobile-dock-v84 button.active,html body .mobile-dock-v84 button[aria-current]{color:#fff!important;background:rgba(255,255,255,.08)!important}
-html body #ownerApp .nav{background:#fff!important;background-image:none!important;color:var(--t-text)!important;border-color:var(--t-line)!important;box-shadow:var(--t-shadow)!important}
-html body #ownerApp .nav .nav-back-button{background:#fff!important;color:var(--t-text)!important;border:1px solid var(--t-line-2)!important;box-shadow:none!important}
-html body #ownerApp .nav.mobile-open{background:#fff!important;color:var(--t-text)!important;border-color:var(--t-line)!important}
-html body #ownerApp .nav.mobile-open :is(.nav-category-toggle,.nav-category-items button){background:transparent!important;color:var(--t-text)!important;border-color:var(--t-line)!important;box-shadow:none!important}
-html body #ownerApp .nav button.active,html body #ownerApp .nav.mobile-open button.active{background:var(--t-accent)!important;color:#fff!important}
-
-/* 3. Dabbe / cards — safed, patla kinara */
-html body :is(#ownerApp,#staffPortal,#loginGate) :is(.card,.pro-card,.screen-head,.quick-entry-workspace,.staff-card-v84,.profile-hero-v84,.nt-card,.nt-staff-panel,.portal-card,.accounts-hero,.account-create-card,.login-card,.auth-card,.salary-panel-v101,.store-location-card,.shop-geofence-box,.rank-card-v84,.staff-form,.attendance-head,.profile-salary-v102){background:var(--t-card)!important;background-image:none!important;border:1px solid var(--t-line)!important;border-radius:var(--t-r)!important;box-shadow:var(--t-shadow)!important}
-
-/* 4. Chhote hisaab wale dabbe (KPI) — safed, ek taraf rang ki patti, rangeen hindse */
-html body :is(#ownerApp,#staffPortal) :is(.staff-summary-card,.account-kpi,.portal-stat,.staff-center-stats>div,.summary-grid-v84>div,.attendance-kpi-grid>div,.salary-summary-v101>div,.staff-salary-grid-v101>div,.nt-stats>div,.dash-kpi,.att-kpi,.stat){background:var(--t-card)!important;background-image:none!important;border:1px solid var(--t-line)!important;border-inline-start:3px solid var(--t-accent)!important;border-radius:10px!important;box-shadow:var(--t-shadow)!important;color:var(--t-muted)!important;min-height:0!important;padding:8px 10px!important}
-html body :is(#ownerApp,#staffPortal) :is(.staff-summary-card,.account-kpi,.portal-stat,.staff-center-stats>div,.summary-grid-v84>div,.attendance-kpi-grid>div,.salary-summary-v101>div,.staff-salary-grid-v101>div,.nt-stats>div,.dash-kpi,.att-kpi,.stat) :is(b,strong){color:var(--t-accent-dark)!important;font-size:18px!important;line-height:1.3!important;font-weight:800!important;unicode-bidi:plaintext}
-html body :is(#ownerApp,#staffPortal) :is(.staff-summary-card,.account-kpi,.portal-stat,.staff-center-stats>div,.summary-grid-v84>div,.attendance-kpi-grid>div,.salary-summary-v101>div,.staff-salary-grid-v101>div,.nt-stats>div) :is(small,em,span:not(.summary-icon)){color:var(--t-muted)!important;font-size:11px!important}
-html body #ownerApp .staff-summary-card .summary-icon{width:34px!important;height:34px!important;border-radius:10px!important;font-size:16px!important;background:var(--t-accent-50)!important;color:var(--t-accent)!important}
-html body :is(#ownerApp,#staffPortal) :is(.salary-summary-v101 .salary-final-v101,.staff-salary-grid-v101 .staff-salary-final-v101,.profile-salary-grid-v102 .final){background:var(--t-accent)!important;border-color:var(--t-accent)!important}
-html body :is(#ownerApp,#staffPortal) :is(.salary-summary-v101 .salary-final-v101,.staff-salary-grid-v101 .staff-salary-final-v101) :is(small,em,b,strong,span:not(.x)){color:#fff!important}
-
-/* 5. Menu ke tiles aur category chips */
-html body #ownerApp .staff-feature-card{background:var(--t-card)!important;background-image:none!important;border:1px solid var(--t-line)!important;border-radius:10px!important;box-shadow:none!important;color:var(--t-text)!important;min-height:0!important;padding:10px 6px!important}
-html body #ownerApp .staff-feature-card b{color:var(--t-text)!important;font-size:12px!important}
-html body #ownerApp .staff-feature-card .feature-icon{background:transparent!important;color:var(--t-accent)!important;font-size:18px!important}
-html body #ownerApp .staff-feature-card[aria-current="page"],html body #ownerApp .staff-feature-card.staff-feature-primary[aria-current="page"]{border-color:var(--t-accent)!important;background:var(--t-accent-50)!important;outline:1px solid var(--t-accent)!important;outline-offset:0!important}
-html body #ownerApp .staff-cat-chip-v87{background:var(--t-card)!important;color:var(--t-text)!important;border:1px solid var(--t-line-2)!important;box-shadow:none!important;border-radius:999px!important}
-html body #ownerApp .staff-cat-chip-v87.active{background:var(--t-navy)!important;color:#fff!important;border-color:var(--t-navy)!important}
-
-/* 6. Buttons */
-html body :is(#ownerApp,#staffPortal,#loginGate,.modal-v84) :is(button.primary,.primary:not(.staff-feature-card),.nt-primary,.checkin-btn,.portal-checkin,.sync-now-btn-v91,#ntQuickUpload){background:var(--t-accent)!important;background-image:none!important;color:#fff!important;border:1px solid var(--t-accent)!important;box-shadow:none!important;border-radius:10px!important}
-html body :is(#ownerApp,#staffPortal,#loginGate,.modal-v84) :is(button.soft,.soft,.portal-secondary,.staff-card-actions button,.att-actions button,.page-back){background:var(--t-card)!important;background-image:none!important;color:var(--t-text)!important;border:1px solid var(--t-line-2)!important;box-shadow:none!important;border-radius:10px!important}
-html body :is(#ownerApp,#staffPortal,.modal-v84) :is(button.danger,.danger){background:var(--t-card)!important;background-image:none!important;color:var(--t-danger)!important;border:1px solid #fecaca!important;box-shadow:none!important;border-radius:10px!important}
-html body :is(#ownerApp,#staffPortal) :is(.checkout-btn,.portal-checkout){background:var(--t-navy)!important;background-image:none!important;color:#fff!important;border:0!important;border-radius:10px!important}
-html body :is(#ownerApp,#staffPortal,#loginGate) :is(button.primary,button.soft,button.danger,.page-back){min-height:40px;padding:8px 14px!important;font-weight:700!important}
-html body .update-banner-v88 button{background:var(--t-accent)!important;color:#fff!important}
-
-/* 7. Form: input / select / textarea */
-html body :is(#ownerApp,#staffPortal,#loginGate,.modal-v84) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=color]),select,textarea){background:#fff!important;border:1px solid var(--t-line-2)!important;border-radius:10px!important;box-shadow:none!important;color:var(--t-text)!important}
-html body :is(#ownerApp,#staffPortal,#loginGate,.modal-v84) :is(input,select,textarea):focus{outline:none!important;border-color:var(--t-accent)!important;box-shadow:0 0 0 3px var(--t-accent-100)!important}
-html body :is(#ownerApp,#staffPortal,#loginGate,.modal-v84) :is(input,select,textarea):disabled{background:#f8fafc!important;color:var(--t-muted)!important}
-
-/* 8. Tick box ki jagah ON/OFF switch */
-html body :is(#ownerApp,#staffPortal,.modal-v84) input[type=checkbox]{-webkit-appearance:none!important;appearance:none!important;position:relative!important;flex:none!important;width:38px!important;min-width:38px!important;height:22px!important;min-height:0!important;padding:0!important;margin:0 4px!important;border:0!important;border-radius:999px!important;background:#cbd5e1!important;cursor:pointer;vertical-align:middle;transition:background .15s;box-shadow:none!important}
-html body :is(#ownerApp,#staffPortal,.modal-v84) input[type=checkbox]::before{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.3);transition:transform .15s}
-html body :is(#ownerApp,#staffPortal,.modal-v84) input[type=checkbox]:checked{background:var(--t-accent)!important}
-html body :is(#ownerApp,#staffPortal,.modal-v84) input[type=checkbox]:checked::before{transform:translateX(16px)}
-html body :is(#ownerApp,#staffPortal,.modal-v84) input[type=checkbox]:disabled{opacity:.5}
-
-/* 9. Tables */
-html body :is(#ownerApp,#staffPortal) :is(th,thead th){background:#f8fafc!important;background-image:none!important;color:var(--t-muted)!important;font-weight:700!important;border-color:var(--t-line)!important}
-html body :is(#ownerApp,#staffPortal) tbody tr:not(.row-absent):not(.row-present){background:#fff!important}
-html body :is(#ownerApp,#staffPortal) td{border-color:var(--t-line)!important}
-
-/* 10. Headings */
-html body :is(#ownerApp,#staffPortal) :is(.screen-head h2,.pro-card-head h3,.card h3,.profile-hero-v84 h3,.staff-card-v84 h4){color:var(--t-text)!important}
-html body :is(#ownerApp,#staffPortal) :is(.screen-head .eyebrow,.pro-card-head .eyebrow,.eyebrow){color:var(--t-accent)!important;letter-spacing:1px!important}
-html body :is(#ownerApp,#staffPortal) :is(.screen-head p,.muted){color:var(--t-muted)!important}
-html body #ownerApp .pro-card-head{border-bottom-color:var(--t-line)!important}
-
-/* 11. Avatar */
-html body :is(#ownerApp,#staffPortal) :is(.profile-avatar-v84,.staff-card-avatar,.staff-avatar,.account-avatar,.mini-avatar,.portal-avatar,.staff-initials){background:var(--t-accent-50)!important;background-image:none!important;color:var(--t-accent)!important}
-
-/* 12. Popup / modal */
-html body .modal-v84{background:rgba(15,23,42,.45)!important}
-html body :is(.modal-card-v84,.nt-dialog-card,.nt-cam-card-v101){background:#fff!important;border:1px solid var(--t-line)!important;border-radius:14px!important;box-shadow:0 20px 50px rgba(15,23,42,.25)!important}
-
-/* 13. Login */
-html body .login-gate{background:var(--t-bg)!important;background-image:none!important}
-html body #loginGate .auth-role.active{background:var(--t-accent)!important;color:#fff!important;border-color:var(--t-accent)!important}
-
-/* 14. Chhoti tafseeli cheezein */
-html body #staffPortal .staff-profile-hero{background:var(--t-navy)!important;background-image:none!important;border:0!important;border-radius:var(--t-r)!important;box-shadow:var(--t-shadow)!important}
-html body #ownerApp :is(.staff-card-salary-v102,.staff-card-password,.password-auto-box,.phone-password-hint){background:#f8fafc!important;background-image:none!important;border:1px solid var(--t-line)!important;color:var(--t-text)!important}
-html body #ownerApp .staff-feature-card.staff-feature-primary:not([aria-current]){background:var(--t-card)!important;color:var(--t-text)!important;border-color:var(--t-line)!important}
-html body #staffPortal .staff-profile-hero .store-location-card{background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.14)!important;box-shadow:none!important}
-html body #staffPortal .nt-staff-nav{background:#fff!important;background-image:none!important;border:1px solid var(--t-line)!important;box-shadow:var(--t-shadow)!important}
-html body #staffPortal .nt-staff-nav button{color:var(--t-muted)!important;background:transparent!important;box-shadow:none!important}
-html body #staffPortal .nt-staff-nav button:is(.active,[aria-current],[aria-selected="true"]){background:var(--t-accent-50)!important;color:var(--t-accent-dark)!important}
-html body #ownerApp .nav .nav-back-button~*{color:var(--t-text)}
-</style>
-<style id="layoutV118">
-/* ===== V118 LAYOUT: neeli upar patti, naya Home, neeche 5 tabs, More menu ===== */
-#ownerApp>.top,#ownerApp>#nav,#ownerApp>.software-strip,#staffCatTabsV87,#staffFeatureGridV87,#ownerApp .page-back,#ownerApp .page-back-wrap,#staffCenter .staff-dashboard-heading{display:none!important}
-body:not([data-scr="staffCenter"]) #staffTopNavV99{display:none!important}
-#appBarV118{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:6px;min-height:56px;padding:6px 8px;margin:0 0 10px;background:#1d4ed8;color:#fff;box-shadow:0 2px 8px rgba(15,23,42,.18)}
-#appBarV118 .ab-btn{position:relative;flex:none;width:40px;height:40px;min-height:0;padding:0;border:0;border-radius:10px;background:transparent;color:#fff;display:grid;place-items:center;box-shadow:none}
-#appBarV118 .ab-btn:active{background:rgba(255,255,255,.15)}
-#appBarV118 svg{width:22px;height:22px}
-#appBarV118 .ab-logo{flex:none;width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.16);display:grid;place-items:center;font-weight:800;font-size:13px;margin:0 4px}
-#appBarV118 .ab-title{flex:1;min-width:0;line-height:1.25}
-#appBarV118 .ab-title b{display:block;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
-#appBarV118 .ab-title small{display:block;font-size:11px;color:rgba(255,255,255,.78)}
-#appBarV118 .ab-count{position:absolute;top:3px;right:3px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;line-height:17px;text-align:center}
-#appBarV118 .ab-count:not(.has-unread){display:none}
-body[data-scr="staffCenter"] #abBackV118,body:not([data-scr="staffCenter"]) #abLogoV118,body:not([data-scr="staffCenter"]) #abSubV118{display:none}
-#homeV118{margin:0 0 12px}
-#homeV118 .staff-summary-cards,#homeV118 .home-icons-v118{direction:ltr}
-html body #ownerApp #staffTopNavV99{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0 0 8px!important;min-height:0!important}
-html body #ownerApp #staffTopNavV99 .su-nav{display:flex;gap:6px;overflow-x:auto;padding:2px 0}
-html body #ownerApp #staffTopNavV99 .su-nav button{flex:none;background:#fff!important;border:1px solid #d5dce6!important;color:#0f172a!important;border-radius:999px!important;min-height:34px;padding:4px 12px!important;font-size:12.5px!important;box-shadow:none!important}
-html body #ownerApp #homeV118 .staff-summary-cards{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;margin:0 0 12px!important}
-html body #ownerApp #homeV118 .staff-summary-card{border:0!important;border-radius:14px!important;padding:12px!important;min-height:0!important;color:#fff!important;box-shadow:0 4px 12px rgba(15,23,42,.10)!important;display:flex!important;flex-direction:row-reverse;align-items:flex-start;justify-content:space-between;gap:6px}
-html body #ownerApp #homeV118 .staff-summary-card::before,html body #ownerApp #homeV118 .staff-summary-card::after{display:none!important}
-html body #ownerApp #homeV118 .staff-summary-total{background:#2563eb!important}
-html body #ownerApp #homeV118 .staff-summary-present{background:#16a34a!important}
-html body #ownerApp #homeV118 .staff-summary-absent{background:#dc2626!important}
-html body #ownerApp #homeV118 .staff-summary-out{background:#ea580c!important}
-html body #ownerApp #homeV118 .staff-summary-card :is(small,em,b,strong,span,div){color:#fff!important;text-align:left}
-html body #ownerApp #homeV118 .staff-summary-card small{font-size:12px!important;font-weight:600!important;opacity:.95}
-html body #ownerApp #homeV118 .staff-summary-card b{font-size:26px!important;line-height:1.15!important;font-weight:800!important;margin:2px 0!important}
-html body #ownerApp #homeV118 .staff-summary-card em{font-size:10.5px!important;opacity:.85}
-html body #ownerApp #homeV118 .staff-summary-card .summary-icon{background:rgba(255,255,255,.2)!important;color:#fff!important;width:32px!important;height:32px!important;border-radius:9px!important;font-size:15px!important;flex:none}
-#homeV118 .home-icons-v118{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-#homeV118 .hi-v118{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-height:92px;padding:12px 6px;background:#fff;border:1px solid #e5e9f0;border-radius:14px;box-shadow:0 1px 3px rgba(15,23,42,.05);color:#0f172a;font-size:13px;font-weight:700}
-#homeV118 .hi-v118:active{transform:scale(.98)}
-#homeV118 .hi-v118 i{width:44px;height:44px;border-radius:12px;display:grid;place-items:center}
-#homeV118 .hi-v118 svg{width:24px;height:24px}
-.c-blue-v118{background:#eff6ff;color:#2563eb}.c-green-v118{background:#ecfdf5;color:#16a34a}.c-violet-v118{background:#f5f3ff;color:#7c3aed}.c-orange-v118{background:#fff7ed;color:#ea580c}.c-slate-v118{background:#f1f5f9;color:#334155}.c-red-v118{background:#fef2f2;color:#dc2626}
-html body #ownerApp #mobileDockV84{display:grid!important;grid-template-columns:repeat(5,1fr)!important;position:fixed!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;height:auto!important;min-height:60px!important;padding:4px 4px calc(4px + env(safe-area-inset-bottom))!important;margin:0!important;background:#fff!important;border:0!important;border-top:1px solid #e5e9f0!important;border-radius:0!important;box-shadow:0 -2px 12px rgba(15,23,42,.06)!important;z-index:9990!important;direction:ltr}
-html body #ownerApp #mobileDockV84 button{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:2px;min-height:50px!important;padding:0!important;border:0!important;border-radius:10px!important;background:transparent!important;color:#64748b!important;box-shadow:none!important;font-size:11px!important}
-html body #ownerApp #mobileDockV84 button svg{width:22px;height:22px}
-html body #ownerApp #mobileDockV84 button span{font-size:11px!important;font-weight:600!important;margin:0!important;color:inherit!important}
-html body #ownerApp #mobileDockV84 button.on{color:#1d4ed8!important}
-html body #ownerApp{padding-bottom:78px!important}
-#moreSheetV118{position:fixed;inset:0;z-index:9995}
-#moreSheetV118[hidden]{display:none!important}
-#moreSheetV118 .ms-bg{position:absolute;inset:0;background:rgba(15,23,42,.45)}
-#moreSheetV118 .ms-panel{position:absolute;left:0;right:0;bottom:0;max-height:86vh;overflow-y:auto;background:#fff;border-radius:18px 18px 0 0;padding:10px 12px calc(14px + env(safe-area-inset-bottom));direction:ltr;box-shadow:0 -10px 30px rgba(15,23,42,.2)}
-#moreSheetV118 .ms-head{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 10px;border-bottom:1px solid #e5e9f0;margin-bottom:8px}
-#moreSheetV118 .ms-head b{font-size:17px;color:#0f172a}
-#moreSheetV118 .ms-x{width:36px;height:36px;min-height:0;padding:0;border:0;border-radius:10px;background:#f1f5f9;color:#0f172a;font-size:20px;line-height:1}
-#moreSheetV118 .ms-item{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:6px 6px;margin:0;border:0;border-bottom:1px solid #f1f5f9;border-radius:0;background:transparent;color:#0f172a;font-size:14px;font-weight:600;text-align:left;box-shadow:none}
-#moreSheetV118 .ms-item i{flex:none;width:38px;height:38px;border-radius:10px;display:grid;place-items:center}
-#moreSheetV118 .ms-item svg{width:20px;height:20px}
-#moreSheetV118 .ms-item span{flex:1}
-#moreSheetV118 .ms-item .ms-chev{width:16px;height:16px;color:#94a3b8}
-#moreSheetV118 #msAccountV118{direction:rtl;margin:0 0 6px}
-#moreSheetV118 #msAccountV118 .cloud-box{background:#f8fafc!important;border:1px solid #e5e9f0!important;border-radius:12px!important;padding:10px!important;color:#0f172a!important;box-shadow:none!important}
-#moreSheetV118 #msAccountV118 .cloud-box *{color:#0f172a}
-#moreSheetV118 #msAccountV118 .top-logout{background:#fff!important;border:1px solid #d5dce6!important;color:#0f172a!important;border-radius:9px!important;min-height:36px;padding:6px 12px!important}
-#moreSheetV118 #msAccountV118 #logoutBtn{color:#dc2626!important;border-color:#fecaca!important}
-body.ms-open-v118{overflow:hidden}
-</style>
-<script id="layoutScriptV118">
-(function(){
-  var app=document.getElementById('ownerApp');if(!app||typeof window.goScreen!=='function')return;
-  var $=function(id){return document.getElementById(id)};
-  var P={
-    back:'<path d="M15 18l-6-6 6-6"/>',
-    menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
-    bell:'<path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3H4a4 4 0 0 0 2-3v-3a7 7 0 0 1 4-6"/><path d="M9 17v1a3 3 0 0 0 6 0v-1"/>',
-    sync:'<path d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4"/><path d="M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4"/>',
-    home:'<path d="M5 12H3l9-9 9 9h-2"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/><path d="M9 21v-6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6"/>',
-    users:'<circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75M21 21v-2a4 4 0 0 0-3-3.85"/>',
-    cash:'<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/>',
-    file:'<path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M9 13h6M9 17h6"/>',
-    dots:'<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>',
-    check:'<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M16 3v4M8 3v4M4 11h16"/><path d="M9 16l2 2 4-4"/>',
-    chart:'<path d="M3 3v18h18"/><path d="M8 17V11M13 17V7M18 17v-4"/>',
-    star:'<path d="M12 17.75l-6.17 3.24 1.18-6.87-5-4.87 6.9-1 3.09-6.25 3.09 6.25 6.9 1-5 4.87 1.18 6.87z"/>',
-    gear:'<path d="M10.3 4.3c.4-1.8 3-1.8 3.4 0a1.7 1.7 0 0 0 2.6 1.1c1.5-.9 3.3.8 2.4 2.4a1.7 1.7 0 0 0 1 2.5c1.8.4 1.8 3 0 3.4a1.7 1.7 0 0 0-1 2.6c.9 1.5-.9 3.3-2.4 2.4a1.7 1.7 0 0 0-2.6 1c-.4 1.8-3 1.8-3.4 0a1.7 1.7 0 0 0-2.5-1c-1.6.9-3.3-.9-2.4-2.4a1.7 1.7 0 0 0-1.1-2.6c-1.8-.4-1.8-3 0-3.4a1.7 1.7 0 0 0 1.1-2.5c-.9-1.6.8-3.3 2.4-2.4a1.7 1.7 0 0 0 2.5-1.1z"/><circle cx="12" cy="12" r="3"/>',
-    plus:'<circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2M19 8v6M16 11h6"/>',
-    user:'<circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>',
-    photo:'<path d="M15 8h.01"/><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 16l5-5c.9-.9 2.1-.9 3 0l5 5"/><path d="M14 14l1-1c.9-.9 2.1-.9 3 0l3 3"/>',
-    food:'<path d="M4 3v7a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2V3M6.5 3v18M17 3v18M17 3a4 4 0 0 0-4 4v5h4"/>',
-    pdf:'<path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M12 11v6M9 14l3 3 3-3"/>',
-    backup:'<path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>',
-    chev:'<path d="M9 6l6 6-6 6"/>'
-  };
-  var svg=function(n){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+P[n]+'</svg>'};
-  var TITLES={staffCenter:'Noor Traders Gulyana',staffAccounts:'Staff List',staffProfile:'Staff Profile',staffTasks:'Kaam / Tasveerein',attendanceToday:'Attendance',attendanceHistory:'Attendance Report',scores:'Scores',staffKhana:'Khana Allowance',staffSalary:'Salary',staffSalaryDetail:'Salary Details',staffReports:'Reports',settings:'Settings',backup:'Backup'};
-  var TAB={staffCenter:'home',staffAccounts:'staff',staffProfile:'staff',staffSalary:'salary',staffSalaryDetail:'salary',staffReports:'report',attendanceHistory:'report'};
-  var go=function(id,extra){closeMore();window.goScreen(id);if(extra)setTimeout(function(){try{extra()}catch(e){console.warn(e)}},30)};
-
-  /* 1. Upar ki neeli patti */
-  var bar=document.createElement('header');bar.id='appBarV118';bar.setAttribute('dir','ltr');
-  bar.innerHTML='<button type="button" class="ab-btn" id="abBackV118" aria-label="Back">'+svg('back')+'</button><span class="ab-logo" id="abLogoV118">NT</span><div class="ab-title"><b id="abTitleV118">Noor Traders Gulyana</b><small id="abSubV118">Staff Panel</small></div><button type="button" class="ab-btn" data-notice-open aria-label="Notifications">'+svg('bell')+'<span class="ab-count" data-notice-count>0</span></button><button type="button" class="ab-btn" id="abSyncV118" aria-label="Sync">'+svg('sync')+'</button><button type="button" class="ab-btn" id="abMenuV118" aria-label="More">'+svg('menu')+'</button>';
-  app.prepend(bar);
-  $('abBackV118').onclick=function(){if(history.length>1)history.back();else go('staffCenter')};
-  $('abSyncV118').onclick=function(){if(typeof window.forceAppUpdateV85==='function')window.forceAppUpdateV85()};
-  $('abMenuV118').onclick=function(){openMore()};
-
-  /* 2. Neeche 5 tabs */
-  var dock=$('mobileDockV84');
-  if(dock){
-    dock.innerHTML=[['home','staffCenter','home','Home'],['staff','staffAccounts','users','Staff'],['salary','staffSalary','cash','Salary'],['report','staffReports','file','Report'],['more','','dots','More']].map(function(t){return '<button type="button" data-tab-v118="'+t[0]+'" data-go-v118="'+t[1]+'">'+svg(t[2])+'<span>'+t[3]+'</span></button>'}).join('');
-    dock.onclick=function(e){var b=e.target.closest('button[data-tab-v118]');if(!b)return;if(b.dataset.tabV118==='more')openMore();else go(b.dataset.goV118)};
-  }
-
-  /* 3. Naya Home */
-  var home=document.createElement('div');home.id='homeV118';
-  var ICONS=[['attendanceToday','check','blue','Attendance'],['staffAccounts','users','blue','Staff List'],['staffSalary','cash','green','Salary'],['attendanceHistory','file','violet','Attendance Report'],['scores','star','orange','Scores'],['settings','gear','slate','Settings']];
-  home.innerHTML='<div class="home-icons-v118">'+ICONS.map(function(t){return '<button type="button" class="hi-v118" data-go-v118="'+t[0]+'"><i class="c-'+t[2]+'-v118">'+svg(t[1])+'</i>'+t[3]+'</button>'}).join('')+'</div>';
-  home.onclick=function(e){var b=e.target.closest('[data-go-v118]');if(b)go(b.dataset.goV118)};
-  function layoutHome(){
-    var sc=$('staffCenter');if(!sc)return;
-    if(sc.firstElementChild!==home)sc.prepend(home);
-    var cards=sc.querySelector('.staff-summary-cards');
-    if(cards&&cards.parentElement!==home)home.prepend(cards);
-  }
-  layoutHome();
-  var sc0=$('staffCenter');
-  if(sc0&&window.MutationObserver)new MutationObserver(function(){if(sc0.firstElementChild!==home)layoutHome()}).observe(sc0,{childList:true});
-
-  /* 4. More menu (saare hisse ek jagah) */
-  var MORE=[
-    ['Home','home','blue',function(){go('staffCenter')}],
-    ['Staff List','users','blue',function(){go('staffAccounts')}],
-    ['Add Staff','plus','green',function(){go('staffAccounts',function(){window.toggleStaffCreateV84&&window.toggleStaffCreateV84(true)})}],
-    ['Staff Profile','user','blue',function(){go('staffProfile')}],
-    ['Attendance (Check In / Out)','check','green',function(){go('attendanceToday')}],
-    ['Attendance Report','file','violet',function(){go('attendanceHistory')}],
-    ['Reports & Summary (PDF)','pdf','violet',function(){go('attendanceHistory',function(){window.printHistoryReportV84&&window.printHistoryReportV84()})}],
-    ['Kaam / Tasveer Report','photo','orange',function(){go('staffTasks')}],
-    ['Scores & Ranking','star','orange',function(){go('scores')}],
-    ['Khana Allowance','food','orange',function(){go('staffKhana')}],
-    ['Salary','cash','green',function(){go('staffSalary')}],
-    ['Staff Reports','chart','violet',function(){go('staffReports')}],
-    ['Settings','gear','slate',function(){go('settings')}],
-    ['Backup','backup','slate',function(){go('backup')}]
-  ];
-  var sheet=document.createElement('div');sheet.id='moreSheetV118';sheet.hidden=true;
-  sheet.innerHTML='<div class="ms-bg"></div><div class="ms-panel" role="dialog" aria-label="More"><div class="ms-head"><b>More</b><button type="button" class="ms-x" aria-label="Close">×</button></div><div id="msAccountV118"></div><div class="ms-list">'+MORE.map(function(m,i){return '<button type="button" class="ms-item" data-ms="'+i+'"><i class="c-'+m[2]+'-v118">'+svg(m[1])+'</i><span>'+m[0]+'</span>'+svg('chev').replace('<svg ','<svg class="ms-chev" ')+'</button>'}).join('')+'</div></div>';
-  app.appendChild(sheet);
-  var cloud=app.querySelector('.top .cloud-box');if(cloud)$('msAccountV118').appendChild(cloud);
-  sheet.onclick=function(e){if(e.target.closest('.ms-x')||e.target.classList.contains('ms-bg')){closeMore();return}var b=e.target.closest('[data-ms]');if(b)MORE[+b.dataset.ms][3]()};
-  function openMore(){sheet.hidden=false;document.body.classList.add('ms-open-v118')}
-  function closeMore(){sheet.hidden=true;document.body.classList.remove('ms-open-v118')}
-  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!sheet.hidden)closeMore()});
-
-  /* 5. Har page par patti ka naam / tab update */
-  function update(){
-    var act=document.querySelector('#ownerApp .tab.active'),id=act?act.id:'staffCenter';
-    document.body.setAttribute('data-scr',id);
-    $('abTitleV118').textContent=TITLES[id]||'Noor Traders Gulyana';
-    var t=TAB[id]||'';
-    if(dock)dock.querySelectorAll('button[data-tab-v118]').forEach(function(b){b.classList.toggle('on',b.dataset.tabV118===t)});
-    if(id==='staffCenter')layoutHome();
-  }
-  var orig=window.goScreen;
-  var wrapped=function(){closeMore();var r=orig.apply(this,arguments);try{update()}catch(e){console.warn(e)}return r};
-  window.goScreen=wrapped;try{goScreen=wrapped}catch(e){}
-  var toTop=function(){window.scrollTo(0,0)};
-  window.scrollToScreenV94=toTop;try{scrollToScreenV94=toTop}catch(e){}
-  update();
 })();
 </script>
 </body></html>

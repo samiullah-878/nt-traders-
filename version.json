@@ -1,6 +1,1 @@
-{
-  "version": "v118",
-  "variant": "Production",
-  "buildDate": "2026-09-11",
-  "notes": "Naya layout (hissa 1): neeli upar patti, naya Home (4 dabbe + 6 icon), neeche 5 tabs, More menu. Features wahi."
-}
+{"version":"v115","variant":"Production","buildDate":"2026-09-12","notes":"Unified current-day Staff Control and Live Snapshot attendance source and shift-aware status; normalized phone matching."}

@@ -1,0 +1,5 @@
+STAFF APP ONLY - apply over v114. Replace included files in the Staff repository, then Sync / Update; version should show v115. Do not upload to Blue Khata. No Firebase rules/password/data changes.
+
+Fixed: Live Snapshot always uses today; Staff Control and summary share normalized phone matching and attendance map. Shift-aware Late classification shared with daily attendance/report. Leave/off excluded from Absent. Present label clarified as Hazir + Late; Overview Hazir is on-time. Refresh updates summaries.
+
+Validation: 34 automated checks passed; full synthetic DOM integration passed login/navigation, tasks/photos/approval/PDF, attendance save/checkout, next-day check-in, duty/default shift, salary/payment, requests, notifications and search. Production Firebase rules/network, physical Android camera/GPS and actual printing not tested.
