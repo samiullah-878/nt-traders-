@@ -1,1 +1,1 @@
-{"version":"v115","variant":"Production","buildDate":"2026-09-12","notes":"Unified current-day Staff Control and Live Snapshot attendance source and shift-aware status; normalized phone matching."}
+{"version":"v116","variant":"Production","buildDate":"2026-09-15","notes":"Staff screens ki nai tarteeb: oper compact button bar, neeche screen; naya date-wise Mukammal Report + PDF (salary, khana, check-in/out, ghair hazri)."}

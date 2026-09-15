@@ -873,7 +873,7 @@ th,td{font-size:16px;line-height:1.55}
 
     <div class="auth-card">
       <div class="login-card-title"><span class="brand-mark mini">NT</span><div><h2>Noor Traders Staff</h2><p>Business & Staff System</p></div></div>
-      <div class="login-build-strip"><span class="variant-badge">Production</span><span>Version: <b id="loginVersionLabel">v115</b></span><span id="loginUpdateStatus" class="sync-state"><i class="status-dot"></i>Syncing...</span></div>
+      <div class="login-build-strip"><span class="variant-badge">Production</span><span>Version: <b id="loginVersionLabel">v116</b></span><span id="loginUpdateStatus" class="sync-state"><i class="status-dot"></i>Syncing...</span></div>
       <button type="button" class="sync-now-btn-v91" onclick="forceAppUpdateV85()">🔄 Sync / Update Now</button>
       <div class="auth-role-tabs" role="tablist" aria-label="اکاؤنٹ منتخب کریں">
         <button id="ownerLoginTab" class="auth-role active" type="button" role="tab" aria-selected="true" aria-controls="ownerLoginPane" data-auth-role="owner">مالک</button>
@@ -921,7 +921,7 @@ th,td{font-size:16px;line-height:1.55}
     <button id="staffLogoutBtn" class="staff-logout">Logout</button>
   </div>
 
-  <main class="staff-portal-main"><div class="staff-build-banner"><span>Version <b id="staffVersionLabel">v115</b> • Production</span><span id="staffUpdateState">Latest</span></div>
+  <main class="staff-portal-main"><div class="staff-build-banner"><span>Version <b id="staffVersionLabel">v116</b> • Production</span><span id="staffUpdateState">Latest</span></div>
     <section class="staff-profile-hero">
       <div class="staff-profile-left">
         <div id="staffPortalAvatar" class="portal-avatar">👤</div>
@@ -1015,7 +1015,7 @@ th,td{font-size:16px;line-height:1.55}
 
 <div class="app" id="ownerApp" hidden style="display:none">
 <div class="top">
-  <div><div class="nt-role-label">NOOR TRADERS • مالک کا پینل</div><h1>Noor Traders Staff</h1><small>Gulyana • <b id="headerVersionLabel">v115</b> • کاروبار آپ کی نظر میں</small></div>
+  <div><div class="nt-role-label">NOOR TRADERS • مالک کا پینل</div><h1>Noor Traders Staff</h1><small>Gulyana • <b id="headerVersionLabel">v116</b> • کاروبار آپ کی نظر میں</small></div>
   <div class="cloud-box">
     <b id="todayLabel"></b><br>
     <small id="cloudStatus">Firebase سے رابطہ ہو رہا ہے…</small>
@@ -1088,7 +1088,17 @@ th,td{font-size:16px;line-height:1.55}
   <div class="split-layout"><div class="pro-card entry-form-card"><h3>نئی Account Entry</h3><form id="accountFormV84" class="vertical-form"><label>Date</label><input id="accountDateV84" type="date"><label>Detail</label><input id="accountNoteV84"><label>Amount</label><input id="accountAmountV84" type="number" required><button class="primary">Save</button></form></div><div class="pro-card"><div class="pro-card-head"><h3>History</h3><input id="accountFilterDateV84" type="date"></div><div class="table-scroll"><table><thead><tr><th>Detail</th><th>Amount</th><th>Action</th></tr></thead><tbody id="accountRowsV84"></tbody></table></div><div class="screen-total">Total <b id="accountTotalV84">Rs 0</b></div></div></div>
 </section>
 
-<div id="staffTopNavV99" aria-label="Staff shortcuts" hidden><div class="staff-cat-tabs-v87" id="staffCatTabsV87">
+<div id="staffTopNavV99" aria-label="Staff shortcuts" hidden><div class="sh-bar-v116" id="shBarV116">
+    <button type="button" data-screen="staffCenter" onclick="goScreen('staffCenter')">⌂ Dashboard</button>
+    <button type="button" data-screen="attendanceToday" onclick="goScreen('attendanceToday')">✓ Aaj Hazri</button>
+    <button type="button" data-screen="attendanceHistory" onclick="goScreen('attendanceHistory')">📅 History</button>
+    <button type="button" data-screen="staffAccounts" onclick="goScreen('staffAccounts')">👥 Staff</button>
+    <button type="button" data-screen="staffSalary" onclick="goScreen('staffSalary')">₨ Salary</button>
+    <button type="button" data-screen="staffKhana" onclick="goScreen('staffKhana')">🍽 Khana</button>
+    <button type="button" data-screen="staffFullReport" class="sh-accent-v116" onclick="goScreen('staffFullReport')">📄 Report / PDF</button>
+    <button type="button" class="sh-more-v116" id="shMoreV116" aria-expanded="false" onclick="toggleStaffMoreV116()">⋯ Sab</button>
+  </div>
+  <div class="sh-drawer-v116" id="shDrawerV116" hidden><div class="staff-cat-tabs-v87" id="staffCatTabsV87">
     <button class="staff-cat-chip-v87 active" data-cat="all" onclick="filterStaffCatV87('all')">📋 Sab</button>
     <button class="staff-cat-chip-v87" data-cat="staff" onclick="filterStaffCatV87('staff')">👥 Staff</button>
     <button class="staff-cat-chip-v87" data-cat="hazri" onclick="filterStaffCatV87('hazri')">✓ Hazri</button>
@@ -1105,7 +1115,7 @@ th,td{font-size:16px;line-height:1.55}
     <button data-screen="staffKhana" class="staff-feature-card" data-cat="performance" onclick="goScreen('staffKhana')"><span class="feature-icon">🍽</span><span><b>Khana Allowance</b><small>Daily and monthly meal allowance totals</small></span><strong>→</strong></button>
     <button data-screen="staffReports" class="staff-feature-card" data-cat="reports" onclick="goScreen('staffReports')"><span class="feature-icon">▤</span><span><b>Staff Reports</b><small>Date range reports for all staff</small></span><strong>→</strong></button>
     <button data-screen="attendanceHistory" class="staff-feature-card" data-cat="reports" onclick="goScreen('attendanceHistory');printHistoryReportV84()"><span class="feature-icon">▣</span><span><b>Reports & Summary</b><small>Daily/monthly staff reports and exports</small></span><strong>→</strong></button>
-  </div></div>
+  </div></div></div>
 <section id="staffCenter" class="tab app-screen staff-center-screen">
   <div class="screen-head staff-dashboard-heading">
     <div><div class="eyebrow">PEOPLE OPERATIONS</div><h2>Staff Dashboard</h2><p>ملازمین، حاضری، location اور performance ایک ہی جگہ</p></div>
@@ -1329,6 +1339,28 @@ th,td{font-size:16px;line-height:1.55}
 <section id="manufacturing" class="tab app-screen" data-nonstaff-v106="true" hidden inert aria-hidden="true"><div class="grid"><div class="card span12"><h3>Batch Cost / Manufacturing</h3><form id="batchForm" class="form"><div class="f3"><label>تاریخ</label><input id="bDate" type="date"></div><div class="f3"><label>Batch نام</label><input id="bName"></div><div class="f3"><label>Product</label><input id="bProduct"></div><div class="f3"><label>Batch KG</label><input id="bKg" type="number" step="0.01"></div><div class="f4"><label>Material Cost</label><input id="bMaterial" type="number"></div><div class="f4"><label>Extra / Labour</label><input id="bExtra" type="number"></div><div class="f4" style="align-self:end"><button class="primary">Batch Save</button></div></form></div><div class="card span12"><table><thead><tr><th>Date</th><th>Batch</th><th>Product</th><th>KG</th><th>Total Cost</th><th>Cost/KG</th><th></th></tr></thead><tbody id="batchRows"></tbody></table></div></div></section>
 
 <section id="salesReports" class="tab app-screen" data-nonstaff-v106="true" hidden inert aria-hidden="true"><div class="grid"><div class="card span12"><h3>Sales Reports</h3><div class="report-group-links"><span>Daily Sale</span><span>Date-wise Sale</span><span>Monthly Sale</span><span>Wasooli</span><span>Accounts Incoming</span><span>Cash / Change</span><span>Expenses</span><span>Purchase / Bills</span></div><div class="row"><input id="reportMonthSalesV84" type="month" style="width:auto"><button class="primary" onclick="renderSalesReportsV84()">Report بنائیں</button><button class="soft" onclick="previewReportV84('salesReports')">Preview PDF</button></div></div><div class="card span12" id="salesReportBoxV84"></div></div></section>
+<section id="staffFullReport" class="tab app-screen">
+  <div class="screen-head"><div><div class="eyebrow">STAFF • MUKAMMAL REPORT</div><h2>Date-wise Report / PDF</h2><p>Check-in, check-out, ghair hazri, khana aur salary — sab aik hi PDF mein</p></div></div>
+  <div class="pro-card">
+    <div class="fr-filters-v116">
+      <label>From<input id="frFromV116" type="date"></label>
+      <label>To<input id="frToV116" type="date"></label>
+      <label>Staff<select id="frStaffV116"><option value="">Sab staff</option></select></label>
+      <label>Salary month<input id="frMonthV116" type="month"></label>
+      <button class="primary" type="button" onclick="renderFullReportV116()">Report banayein</button>
+      <button class="soft" type="button" onclick="printFullReportV116()">📄 PDF / Print</button>
+    </div>
+    <div class="fr-quick-v116">
+      <button type="button" class="soft" onclick="frQuickV116('today')">Aaj</button>
+      <button type="button" class="soft" onclick="frQuickV116('week')">7 din</button>
+      <button type="button" class="soft" onclick="frQuickV116('month')">Is mahine</button>
+      <button type="button" class="soft" onclick="frQuickV116('last')">Pichla mahina</button>
+    </div>
+  </div>
+  <div class="fr-kpi-v116" id="frKpiV116"></div>
+  <div class="pro-card" id="frBodyV116"></div>
+</section>
+
 <section id="staffReports" class="tab app-screen"><div class="grid"><div class="card span12"><h3>Staff Reports</h3><div class="report-group-links"><span>Today Attendance</span><span>Attendance History</span><span>Scores / Ranking</span><span>Salary / تنخواہ</span><span>Working Hours</span><span>Overtime</span><span>Points Amount</span><span>Khana Allowance</span></div><div class="row"><label>From <input id="staffReportFromV84" type="date"></label><label>To <input id="staffReportToV84" type="date"></label><label>Salary Month <input id="staffSalaryReportMonthV102" type="month"></label><button class="primary" onclick="renderStaffReportsV84()">مکمل Report بنائیں</button><button class="soft" onclick="renderStaffReportsV84();previewReportV84('staffReports')">Attendance + Salary PDF</button><button class="soft" onclick="window.noorTasks?.report({from:staffReportFromV84.value,to:staffReportToV84.value})">📷 تصاویر اور پوائنٹس PDF</button></div></div><div class="card span12" id="staffReportBoxV84"></div></div></section>
 <section id="completeReport" class="tab app-screen" data-nonstaff-v106="true" hidden inert aria-hidden="true"><div class="grid"><div class="card span12 complete-report-card"><h2>Complete System Report</h2><p class="muted">Business، Staff، Stock، Purchases اور Production کی consolidated report</p><div class="complete-report-filters"><label>Filter<select id="systemReportFilterV84"><option value="today">Today</option><option value="date">Specific date</option><option value="range">From / To</option><option value="month">Month</option><option value="all">All history</option></select></label><label id="systemReportDateWrapV84">Date<input id="systemReportDateV84" type="date"></label><label id="systemReportFromWrapV84" hidden>From<input id="systemReportFromV84" type="date"></label><label id="systemReportToWrapV84" hidden>To<input id="systemReportToV84" type="date"></label><label id="systemReportMonthWrapV84" hidden>Month<input id="systemReportMonthV84" type="month"></label></div><div class="complete-report-actions"><button class="primary" onclick="generateCompleteSystemReportV84('preview')">Preview PDF</button><button class="soft" onclick="generateCompleteSystemReportV84('download')">Download PDF</button><button class="soft" onclick="generateCompleteSystemReportV84('share')">Share / Send PDF</button><button class="soft" onclick="generateCompleteSystemReportV84('print')">Print</button></div><div id="completeReportStatusV84" class="complete-report-status"></div></div></div></section>
 <section id="reports" class="tab app-screen" data-nonstaff-v106="true" hidden inert aria-hidden="true"><div class="grid"><div class="card span12"><h3>Reports</h3><div class="row"><button class="primary" onclick="goScreen('salesReports')">Sales Reports</button><button class="soft" onclick="goScreen('staffReports')">Staff Reports</button><button class="soft" onclick="goScreen('completeReport')">Complete System Report</button></div></div><div class="card span12"><h3>Monthly Report</h3><div class="row"><input id="reportMonth" type="month" style="width:auto"><button class="primary" onclick="renderReport()">Report بنائیں</button><button class="soft" onclick="window.print()">Print / PDF</button></div></div><div class="card span12" id="reportBox"></div></div></section>
@@ -1336,7 +1368,7 @@ th,td{font-size:16px;line-height:1.55}
 <div id="pdfPreviewModal" class="pdf-preview-modal" hidden><div class="pdf-preview-shell"><div class="pdf-preview-head"><div><span class="eyebrow">NOOR TRADERS HISAB</span><h2 id="pdfPreviewTitle">Report Preview</h2></div><button class="icon-close" type="button" onclick="closePdfPreviewV85()" aria-label="Close preview">×</button></div><iframe id="pdfPreviewFrame" title="PDF preview"></iframe><div class="pdf-preview-actions"><button class="primary" type="button" onclick="downloadPdfV85()">Download PDF</button><button class="soft" type="button" onclick="sharePdfV85()">Share / Send</button><button class="soft" type="button" onclick="printPdfPreviewV85()">Print</button><button class="soft" type="button" onclick="closePdfPreviewV85()">Close</button></div></div></div>
 <div id="entryEditModalV85" class="entry-edit-modal-v85" hidden><div class="entry-edit-card-v85"><div class="pro-card-head"><div><div class="eyebrow">EDIT ENTRY</div><h3>Update Transaction</h3></div><button type="button" class="icon-close" onclick="closeEntryEditV85()">×</button></div><form id="entryEditFormV85" class="entry-edit-form"><input type="date" id="editEntryDateV85"><input id="editEntryDetailV85" placeholder="Detail / Name"><select id="editEntryTypeV85"></select><select id="editEntrySubCategoryV85"></select><input id="editEntryAmountV85" type="number" min="0.01" step="0.01" required><input id="editEntryPhotoV85" type="file" accept="image/*" capture="environment"><div id="editEntryPhotoPreviewV85" class="quick-photo-preview" hidden></div><div class="row"><button class="primary" type="submit">Save Changes</button><button class="soft" type="button" onclick="closeEntryEditV85()">Cancel</button></div></form></div></div>
 
-<section id="settings" class="tab app-screen"><div class="grid"><div class="card span6"><h3>Full Migration Backup</h3><p class="muted">مکمل JSON backup download کریں یا restore کریں۔ Restore ہونے پر online data بھی sync ہوگا۔</p><div class="row"><button class="primary" onclick="backupAll()">Full Migration Backup Download</button><label class="soft" style="cursor:pointer">Backup Restore<input type="file" id="restoreFile" accept="application/json" style="display:none"></label></div></div><div class="card span6" data-nonstaff-v106="true" hidden inert aria-hidden="true"><h3>Expense Categories</h3><div class="row"><input id="newCat" placeholder="نئی category"><button class="soft" onclick="addCategory()">Add</button></div><div id="catList" style="margin-top:10px"></div></div><div class="card span12"><h3>Attendance Policy & Version</h3><div class="form"><div class="f3"><label>Shift Start</label><input id="policyShiftStartV84" type="time" value="09:00"></div><div class="f3"><label>Shift End (optional)</label><input id="policyShiftEndV84" type="time"></div><div class="f3"><label>Geofence Radius (m)</label><input id="policyRadiusV84" type="number" value="200"></div><div class="f3"><label>Variant</label><input id="policyVariantV84" value="Production"></div><div class="f12"><label>Check-In Instruction</label><input id="policyInstructionV84" value="سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔"></div><div class="f12 score-policy-editor"><label>Score Rules (minutes late → score)</label><div class="score-policy-grid"><span>≤10 min <input id="score10V84" type="number" value="10" min="0" max="10"></span><span>≤20 min <input id="score20V84" type="number" value="8" min="0" max="10"></span><span>≤30 min <input id="score30V84" type="number" value="6" min="0" max="10"></span><span>≤45 min <input id="score45V84" type="number" value="4" min="0" max="10"></span><span>Later <input id="scoreLateV84" type="number" value="2" min="0" max="10"></span></div></div><div class="f12"><button class="primary" type="button" onclick="saveAttendancePolicyV84()">Save Attendance Policy</button></div></div><div class="version-panel-v84"><span>Current Version <b id="settingsVersionV84">v115</b></span><span>Variant <b id="settingsVariantV84">Production</b></span><span id="settingsUpdateV84">Up to date</span><button class="soft update-now-v85" type="button" onclick="forceAppUpdateV85()">Check / Update Now</button></div></div><div class="card span6"><h3>مالک کا پاس ورڈ</h3><p class="muted">یوزر نیم: <b>admin</b></p><form id="ownerPasswordForm" class="vertical-form"><label for="ownerOldPassword">موجودہ پاس ورڈ</label><input id="ownerOldPassword" type="password" autocomplete="current-password" required><label for="ownerNewPassword">نیا پاس ورڈ — کم از کم 6 حروف</label><input id="ownerNewPassword" type="password" autocomplete="new-password" minlength="6" required><label for="ownerConfirmPassword">نیا پاس ورڈ دوبارہ درج کریں</label><input id="ownerConfirmPassword" type="password" autocomplete="new-password" minlength="6" required><button id="ownerPasswordBtn" class="primary" type="submit">پاس ورڈ تبدیل کریں</button><div id="ownerPasswordMessage" class="login-message" role="status" aria-live="polite"></div></form></div><div class="card span12"><h3>Storage</h3><p>یہ version <b>Firebase Firestore</b> کے ساتھ online sync کرتا ہے اور browser <b>localStorage</b> کو offline/local cache کے طور پر رکھتا ہے۔</p><button class="danger" onclick="resetAll()">صرف اس Browser کا Local Cache صاف کریں</button></div></div></section>
+<section id="settings" class="tab app-screen"><div class="grid"><div class="card span6"><h3>Full Migration Backup</h3><p class="muted">مکمل JSON backup download کریں یا restore کریں۔ Restore ہونے پر online data بھی sync ہوگا۔</p><div class="row"><button class="primary" onclick="backupAll()">Full Migration Backup Download</button><label class="soft" style="cursor:pointer">Backup Restore<input type="file" id="restoreFile" accept="application/json" style="display:none"></label></div></div><div class="card span6" data-nonstaff-v106="true" hidden inert aria-hidden="true"><h3>Expense Categories</h3><div class="row"><input id="newCat" placeholder="نئی category"><button class="soft" onclick="addCategory()">Add</button></div><div id="catList" style="margin-top:10px"></div></div><div class="card span12"><h3>Attendance Policy & Version</h3><div class="form"><div class="f3"><label>Shift Start</label><input id="policyShiftStartV84" type="time" value="09:00"></div><div class="f3"><label>Shift End (optional)</label><input id="policyShiftEndV84" type="time"></div><div class="f3"><label>Geofence Radius (m)</label><input id="policyRadiusV84" type="number" value="200"></div><div class="f3"><label>Variant</label><input id="policyVariantV84" value="Production"></div><div class="f12"><label>Check-In Instruction</label><input id="policyInstructionV84" value="سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔"></div><div class="f12 score-policy-editor"><label>Score Rules (minutes late → score)</label><div class="score-policy-grid"><span>≤10 min <input id="score10V84" type="number" value="10" min="0" max="10"></span><span>≤20 min <input id="score20V84" type="number" value="8" min="0" max="10"></span><span>≤30 min <input id="score30V84" type="number" value="6" min="0" max="10"></span><span>≤45 min <input id="score45V84" type="number" value="4" min="0" max="10"></span><span>Later <input id="scoreLateV84" type="number" value="2" min="0" max="10"></span></div></div><div class="f12"><button class="primary" type="button" onclick="saveAttendancePolicyV84()">Save Attendance Policy</button></div></div><div class="version-panel-v84"><span>Current Version <b id="settingsVersionV84">v116</b></span><span>Variant <b id="settingsVariantV84">Production</b></span><span id="settingsUpdateV84">Up to date</span><button class="soft update-now-v85" type="button" onclick="forceAppUpdateV85()">Check / Update Now</button></div></div><div class="card span6"><h3>مالک کا پاس ورڈ</h3><p class="muted">یوزر نیم: <b>admin</b></p><form id="ownerPasswordForm" class="vertical-form"><label for="ownerOldPassword">موجودہ پاس ورڈ</label><input id="ownerOldPassword" type="password" autocomplete="current-password" required><label for="ownerNewPassword">نیا پاس ورڈ — کم از کم 6 حروف</label><input id="ownerNewPassword" type="password" autocomplete="new-password" minlength="6" required><label for="ownerConfirmPassword">نیا پاس ورڈ دوبارہ درج کریں</label><input id="ownerConfirmPassword" type="password" autocomplete="new-password" minlength="6" required><button id="ownerPasswordBtn" class="primary" type="submit">پاس ورڈ تبدیل کریں</button><div id="ownerPasswordMessage" class="login-message" role="status" aria-live="polite"></div></form></div><div class="card span12"><h3>Storage</h3><p>یہ version <b>Firebase Firestore</b> کے ساتھ online sync کرتا ہے اور browser <b>localStorage</b> کو offline/local cache کے طور پر رکھتا ہے۔</p><button class="danger" onclick="resetAll()">صرف اس Browser کا Local Cache صاف کریں</button></div></div></section>
 <section id="staffSalary" class="tab app-screen">
   <div class="pro-card">
     <div class="pro-card-head">
@@ -1626,10 +1658,10 @@ const money=n=>'Rs '+Number(n||0).toLocaleString('en-PK',{maximumFractionDigits:
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const navCategories=[
-  {id:'staff',label:'👥 Staff',items:[['staffCenter','Staff Control'],['staffAccounts','Staff Accounts'],['staffTasks','Tasks / Picture Reports'],['attendanceToday','Today Attendance'],['scores','Scores / Ranking'],['staffKhana','Khana Allowance'],['attendanceHistory','Attendance History'],['staffSalary','Salary / تنخواہ'],['staffReports','Staff Reports']]},
+  {id:'staff',label:'👥 Staff',items:[['staffCenter','Staff Control'],['staffAccounts','Staff Accounts'],['staffTasks','Tasks / Picture Reports'],['attendanceToday','Today Attendance'],['scores','Scores / Ranking'],['staffKhana','Khana Allowance'],['attendanceHistory','Attendance History'],['staffSalary','Salary / تنخواہ'],['staffReports','Staff Reports'],['staffFullReport','📄 Mukammal Report / PDF']]},
   {id:'settings',label:'⚙️ Staff Settings',items:[['settings','Attendance / Settings'],['backup','Backup']]}
 ];
-const STAFF_SCREENS_V106=new Set(['staffCenter','staffAccounts','staffProfile','staffTasks','attendanceToday','attendanceHistory','scores','staffKhana','staffSalary','staffSalaryDetail','staffReports','settings','backup']);
+const STAFF_SCREENS_V106=new Set(['staffCenter','staffAccounts','staffProfile','staffTasks','attendanceToday','attendanceHistory','scores','staffKhana','staffSalary','staffSalaryDetail','staffReports','staffFullReport','settings','backup']);
 function renderNavigation(activeId='dashboard'){
   nav.innerHTML='<button class="nav-back-button" type="button" data-back>← Back</button>'+navCategories.map((cat,index)=>{
     const active=cat.items.some(x=>x[0]===activeId);
@@ -1644,7 +1676,7 @@ function goScreen(id,fromHistory=false){
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('#nav [data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));
   const el=document.getElementById(id);el.classList.add('active');
-  const staffBar=document.getElementById('staffTopNavV99'),staffScreens=['staffCenter','staffAccounts','staffProfile','attendanceToday','attendanceHistory','scores','staffKhana','staffReports','staffTasks','staffSalary','staffSalaryDetail'];
+  const staffBar=document.getElementById('staffTopNavV99'),staffScreens=['staffCenter','staffAccounts','staffProfile','attendanceToday','attendanceHistory','scores','staffKhana','staffReports','staffTasks','staffSalary','staffSalaryDetail','staffFullReport'];
   if(staffBar){staffBar.hidden=!staffScreens.includes(id);if(!staffBar.hidden){el.before(staffBar);staffBar.querySelectorAll('[data-screen]').forEach(b=>{if(b.dataset.screen===id)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')})}}
   document.getElementById('nav')?.classList.remove('mobile-open');
   renderNavigation(id);
@@ -1658,7 +1690,7 @@ function goScreen(id,fromHistory=false){
     }
   }
   if(!fromHistory)history.pushState({screen:id},'',`#${id}`);
-  if(id==='dashboard')renderV84Dashboard();if(id==='staffTasks')window.noorTasks?.refresh();if(id==='staffCenter')renderStaffCenterV84();if(id==='staffAccounts')renderStaffAccountsV84();if(id==='attendanceToday')renderTodayAttendanceV84();if(id==='attendanceHistory')renderAttendanceHistoryV84();if(id==='scores')renderScoresV84();if(id==='staffKhana')renderKhanaAllowanceV85();if(id==='staffProfile')renderStaffProfileV84();if(id==='staffReports')renderStaffReportsV84();if(id==='salesReports')renderSalesReportsV84();if(id==='completeReport')renderCompleteReportScreenV84();
+  if(id==='dashboard')renderV84Dashboard();if(id==='staffTasks')window.noorTasks?.refresh();if(id==='staffCenter')renderStaffCenterV84();if(id==='staffAccounts')renderStaffAccountsV84();if(id==='attendanceToday')renderTodayAttendanceV84();if(id==='attendanceHistory')renderAttendanceHistoryV84();if(id==='scores')renderScoresV84();if(id==='staffKhana')renderKhanaAllowanceV85();if(id==='staffProfile')renderStaffProfileV84();if(id==='staffReports')renderStaffReportsV84();if(id==='staffFullReport')window.openFullReportV116?.();if(id==='salesReports')renderSalesReportsV84();if(id==='completeReport')renderCompleteReportScreenV84();
   setTimeout(cleanEmptyBoxesV92,60);
   // Wait for the selected screen/form to finish rendering. Never target the long staff menu.
   if(screenScrollFrameV105!==null)cancelAnimationFrame(screenScrollFrameV105);
@@ -1956,7 +1988,233 @@ function reportRowsV84(rows,cols){return rows.length?rows.map(r=>`<tr>${r.map(v=
 function reportPeriodV84(){const mode=systemReportFilterV84.value||'today',now=today();if(mode==='all')return{from:'',to:'',label:'All available history'};if(mode==='month'){const m=systemReportMonthV84.value||now.slice(0,7);return{from:`${m}-01`,to:`${m}-31`,label:m}}if(mode==='range')return{from:systemReportFromV84.value||now,to:systemReportToV84.value||now,label:`${systemReportFromV84.value||now} → ${systemReportToV84.value||now}`};const d=mode==='date'?(systemReportDateV84.value||now):now;return{from:d,to:d,label:d}}
 function renderSalesReportsV84(){const m=reportMonthSalesV84.value||today().slice(0,7),rows=db.entries.filter(x=>x.date.startsWith(m)),types=[['Sale','sale'],['Wasooli','collection'],['Expenses','expense'],['Accounts Incoming','account'],['Cash / Change','cash'],['Cash Out','cash_out'],['Shop Goods','shop_goods']];salesReportBoxV84.innerHTML=`<h2>${m} Sales & Accounts Summary</h2><div class="summary-grid-v84">${types.map(([label,type])=>`<div><small>${label}</small><b>${money(sum(rows,type))}</b></div>`).join('')}</div><table><thead><tr><th>Date</th><th>Type</th><th>Detail</th><th>Amount</th></tr></thead><tbody>${reportRowsV84(rows.map(x=>[x.date,labelType(x.type),x.note,money(x.amount)]),4)}</tbody></table>`}
 function renderStaffReportsV84(){const from=staffReportFromV84.value||today(),to=staffReportToV84.value||from,rows=window.noorStaffSystem?.getAttendanceBetween(from,to)||[],present=new Set(rows.filter(x=>x.checkIn||x.checkInTime).map(x=>normPhoneV84(x.phone))),scores=rows.map(attScoreV84).filter(x=>x!=null);staffReportBoxV84.innerHTML=`<h2>${from} → ${to} Staff Summary</h2><div class="summary-grid-v84"><div><small>Total Staff</small><b>${db.staff.length}</b></div><div><small>Present Records</small><b>${present.size}</b></div><div><small>Absent Estimate</small><b>${Math.max(db.staff.length-present.size,0)}</b></div><div><small>Average Score</small><b>${scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—'}</b></div></div><table><thead><tr><th>Date</th><th>Staff</th><th>Check-In</th><th>Check-Out</th><th>Working Hours / کام کے گھنٹے</th><th>Score</th><th>Distance</th></tr></thead><tbody>${reportRowsV84(rows.map(x=>[x.date,staffForPhoneV84(x.phone).name||x.name||x.phone,x.checkIn||x.checkInTime,x.checkOut||x.checkOutTime,whTextV101(x),attScoreV84(x)??'—',x.checkInDistance!=null?Math.round(x.checkInDistance)+'m':'—']),7)}</tbody></table>`}
-function reportDocumentV85(title,body){return `<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{font-family:Inter,Arial,sans-serif;padding:28px;color:#172235;font-size:12px}h1{color:#075e59;margin:0}h2{color:#075e59;border-bottom:2px solid #dce8e7;padding-bottom:7px}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #dce4ec;padding:7px;text-align:right}th{background:#eef7f6;color:#075e59}.report-meta{color:#64748b;margin:5px 0 20px}@media print{body{padding:10px}}</style></head><body><h1>Noor Traders Staff</h1><p class="report-meta">${esc(title)} • Generated ${new Date().toLocaleString()}</p>${body}</body></html>`}
+function reportDocumentV85(title,body){return `<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{font-family:Inter,Arial,sans-serif;padding:28px;color:#172235;font-size:12px}h1{color:#075e59;margin:0}h2{color:#075e59;border-bottom:2px solid #dce8e7;padding-bottom:7px}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #dce4ec;padding:7px;text-align:right}th{background:#eef7f6;color:#075e59}.report-meta{color:#64748b;margin:5px 0 20px}@media print{body{padding:10px}}</style></head><body><h1>Noor Traders Staff</h1><p class="report-meta">${esc(title)} • Generated ${new Date().toLocaleString()}</p>${body}<style id="staffHubV116">
+/* ===== v116: Staff screens ki tarteeb — oper buttons, neeche screen ===== */
+#staffTopNavV99{position:sticky;top:0;z-index:40;background:linear-gradient(180deg,#f2f8f5 78%,rgba(242,248,245,0));padding:8px 0 10px;margin:0 0 12px}
+.sh-bar-v116{display:flex;gap:6px;overflow-x:auto;padding:2px 4px 4px;scrollbar-width:none;-ms-overflow-style:none}
+.sh-bar-v116::-webkit-scrollbar{display:none}
+.sh-bar-v116>button{flex:0 0 auto;min-height:42px;padding:9px 15px;border-radius:999px;border:1px solid #cfe0d7;background:#fff;color:#184f3d;font-weight:700;font-size:14px;white-space:nowrap;cursor:pointer;box-shadow:0 1px 2px rgba(20,60,45,.06)}
+.sh-bar-v116>button[aria-current="page"]{background:#184f3d;color:#fff;border-color:#184f3d}
+.sh-bar-v116>button.sh-accent-v116{background:#fff4e4;border-color:#efc78f;color:#96590f}
+.sh-bar-v116>button.sh-accent-v116[aria-current="page"]{background:#a9650d;border-color:#a9650d;color:#fff}
+.sh-bar-v116>button.sh-more-v116[aria-expanded="true"]{background:#dceae3;border-color:#a9c6b8}
+.sh-drawer-v116{margin-top:8px;border:1px solid #dceae3;border-radius:16px;background:#fff;padding:10px}
+.sh-drawer-v116 .staff-feature-grid{margin-top:8px}
+/* ===== v116: Mukammal report screen ===== */
+.fr-filters-v116{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.fr-filters-v116 label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:#3d5a4e;flex:1 1 140px}
+.fr-filters-v116 input,.fr-filters-v116 select{min-height:42px;padding:8px 10px;border:1px solid #cddcd4;border-radius:10px;width:100%}
+.fr-filters-v116 button{flex:1 1 150px;min-height:44px}
+.fr-quick-v116{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.fr-quick-v116 button{min-height:36px;padding:6px 14px;border-radius:999px}
+.fr-kpi-v116{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px;margin:12px 0}
+.fr-kpi-v116>div{background:#fff;border:1px solid #dceae3;border-radius:14px;padding:10px 12px}
+.fr-kpi-v116 small{display:block;color:#62796d;font-size:11px;margin-bottom:2px}
+.fr-kpi-v116 b{font-size:19px;color:#184f3d}
+.fr-scroll-v116{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.fr-table-v116{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
+.fr-table-v116 th,.fr-table-v116 td{border:1px solid #e1ece7;padding:7px 8px;text-align:left;white-space:nowrap}
+.fr-table-v116 th{background:#edf7f2;color:#0f5f4a;font-size:11.5px;text-transform:uppercase;letter-spacing:.02em}
+.fr-table-v116 tfoot td{background:#f6faf8;font-weight:700}
+.fr-sec-v116{margin-top:18px}
+.fr-sec-v116 h3{margin:0 0 4px;color:#184f3d}
+.fr-sec-v116 small{color:#62796d}
+.fr-present-v116{color:#12734f;font-weight:700}
+.fr-late-v116{color:#a9650d;font-weight:700}
+.fr-absent-v116{color:#b42318;font-weight:700}
+</style>
+<script>
+/* ============ v116: Staff hub tarteeb + Mukammal date-wise report/PDF ============ */
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]})};
+  var money=function(n){return 'Rs '+Math.round(Number(n||0)).toLocaleString('en-PK')};
+  var today=function(){return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Karachi'}).format(new Date())};
+  var norm=function(v){return window.normPhoneV84?window.normPhoneV84(v):String(v||'').replace(/\D/g,'')};
+  var hm=function(m){m=Math.max(0,Math.round(m||0));return Math.floor(m/60)+'h '+String(m%60).padStart(2,'0')+'m'};
+  var STATUS={present:['Hazir','fr-present-v116'],late:['Late','fr-late-v116'],absent:['Ghair hazir','fr-absent-v116']};
+
+  /* ---- top bar: "Sab" drawer ---- */
+  window.toggleStaffMoreV116=function(){
+    var d=$('shDrawerV116'),b=$('shMoreV116');if(!d||!b)return;
+    var open=d.hidden;d.hidden=!open;b.setAttribute('aria-expanded',open?'true':'false');
+    b.textContent=open?'✕ Band karein':'⋯ Sab';
+  };
+
+  /* ---- dates ---- */
+  function addDays(d,n){var t=new Date(d+'T12:00:00Z');t.setUTCDate(t.getUTCDate()+n);return t.toISOString().slice(0,10)}
+  function dateList(from,to){var out=[],d=from,guard=0;while(d<=to&&guard++<400){out.push(d);d=addDays(d,1)}return out}
+  function monthStart(d){return d.slice(0,8)+'01'}
+  function monthEnd(m){var y=+m.slice(0,4),mo=+m.slice(5,7);var last=new Date(Date.UTC(y,mo,0)).getUTCDate();return m+'-'+String(last).padStart(2,'0')}
+
+  window.frQuickV116=function(kind){
+    var t=today(),from=t,to=t;
+    if(kind==='week'){from=addDays(t,-6)}
+    else if(kind==='month'){from=monthStart(t)}
+    else if(kind==='last'){
+      var y=+t.slice(0,4),mo=+t.slice(5,7)-1;if(mo===0){mo=12;y--}
+      var m=y+'-'+String(mo).padStart(2,'0');from=m+'-01';to=monthEnd(m);
+    }
+    $('frFromV116').value=from;$('frToV116').value=to;$('frMonthV116').value=from.slice(0,7);
+    renderFullReportV116();
+  };
+
+  /* ---- data ---- */
+  function cfgFor(phone,staff){
+    if(window.salaryConfigForV102)try{return window.salaryConfigForV102(phone)}catch(e){}
+    var db=window.getNoorDb?window.getNoorDb():{};
+    var d=((db.salaryConfig||{})[phone])||staff.salary||{};
+    var meal=window.mealConfigV109?window.mealConfigV109(d,staff):{mealMode:'none',mealRate:0,mealInSalary:false};
+    return {mealMode:meal.mealMode,mealRate:meal.mealRate,mealInSalary:meal.mealInSalary,
+            monthlySalary:Number(d.monthlySalary||0),dutyHours:Number(d.dutyHours||10),
+            workingDays:Number(d.workingDays||30),overtimeRate:Number(d.overtimeRate||0),pointRate:Number(d.pointRate||0)};
+  }
+  function collect(){
+    var from=$('frFromV116').value||monthStart(today());
+    var to=$('frToV116').value||today();
+    if(to<from){var x=from;from=to;to=x}
+    var only=$('frStaffV116').value||'';
+    var db=window.getNoorDb?window.getNoorDb():{};
+    var staff=(db.staff||[]).filter(function(s){return s.active!==false})
+      .map(function(s){return Object.assign({},s,{phone:norm(s.phone||s.id)})});
+    if(only)staff=staff.filter(function(s){return s.phone===only});
+    var recs=(window.noorStaffSystem&&window.noorStaffSystem.getAttendanceBetween(from,to))||[];
+    var map={};recs.forEach(function(a){map[a.date+'|'+norm(a.phone)]=a});
+    var days=dateList(from,to).filter(function(d){return d<=today()});
+    var rows=[],per=[];
+    staff.forEach(function(s){
+      var cfg=cfgFor(s.phone,s);
+      var dutyMin=Math.max(0,Math.round(cfg.dutyHours*60));
+      var acc={staff:s,cfg:cfg,present:0,late:0,absent:0,open:0,normalMin:0,otMin:0,khana:0,points:0};
+      days.forEach(function(d){
+        var a=map[d+'|'+s.phone];
+        var inT=a&&(a.checkIn||a.checkInTime)||'';
+        var outT=a&&(a.checkOut||a.checkOutTime)||'';
+        var lateMin=a?Math.max(0,Math.round(a.minutesLate||0)):0;
+        var st=inT?(lateMin>10?'late':'present'):'absent';
+        var w=(a&&window.ntWorkMinutesV101)?window.ntWorkMinutesV101(a):null;
+        var khana=(inT&&cfg.mealMode==='daily')?Number(cfg.mealRate||0):0;
+        var sc=(a&&window.attScoreV84)?window.attScoreV84(a):null;
+        if(st==='absent'){acc.absent++}
+        else{
+          acc.present++;if(st==='late')acc.late++;acc.khana+=khana;
+          if(sc!=null)acc.points+=Number(sc);
+          if(w==null){if(inT&&!outT)acc.open++}
+          else{acc.normalMin+=dutyMin?Math.min(w,dutyMin):w;acc.otMin+=dutyMin?Math.max(0,w-dutyMin):0}
+        }
+        rows.push({date:d,name:s.name||s.phone,phone:s.phone,status:st,inT:inT||'—',outT:outT||'—',
+                   work:(w==null?(inT&&!outT?'Check-out baqi':'—'):hm(w)),late:lateMin,khana:khana});
+      });
+      var expected=cfg.dutyHours*cfg.workingDays;
+      var hourly=expected>0?cfg.monthlySalary/expected:0;
+      var otRate=cfg.overtimeRate>0?cfg.overtimeRate:hourly;
+      acc.hoursAmount=(acc.normalMin/60)*hourly;
+      acc.otAmount=(acc.otMin/60)*otRate;
+      acc.pointsAmount=acc.points*cfg.pointRate;
+      if(cfg.mealMode==='monthly')acc.khana=Number(cfg.mealRate||0);
+      acc.rangeTotal=acc.hoursAmount+acc.otAmount+acc.pointsAmount+(cfg.mealInSalary?acc.khana:0);
+      var month=($('frMonthV116').value)||from.slice(0,7);
+      acc.monthFinal=null;
+      if(window.salaryCalcV102)try{acc.monthFinal=window.salaryCalcV102(s.phone,month).final}catch(e){}
+      per.push(acc);
+    });
+    rows.sort(function(a,b){return a.date===b.date?a.name.localeCompare(b.name):a.date.localeCompare(b.date)});
+    return {from:from,to:to,days:days,rows:rows,per:per,month:($('frMonthV116').value)||from.slice(0,7)};
+  }
+
+  /* ---- tables ---- */
+  function dailyTable(d){
+    var body=d.rows.map(function(r){
+      var st=STATUS[r.status];
+      return '<tr><td>'+esc(r.date)+'</td><td>'+esc(r.name)+'</td><td class="'+st[1]+'">'+st[0]+'</td><td>'+esc(r.inT)+'</td><td>'+esc(r.outT)+'</td><td>'+esc(r.work)+'</td><td>'+(r.late?r.late+' min':'—')+'</td><td>'+(r.khana?money(r.khana):'—')+'</td></tr>';
+    }).join('')||'<tr><td colspan="8">Is date range mein koi record nahi.</td></tr>';
+    return '<table class="fr-table-v116"><thead><tr><th>Date</th><th>Staff</th><th>Halat</th><th>Check-In</th><th>Check-Out</th><th>Kaam ke ghante</th><th>Late</th><th>Khana</th></tr></thead><tbody>'+body+'</tbody></table>';
+  }
+  function staffTable(d){
+    var t={present:0,late:0,absent:0,normalMin:0,otMin:0,khana:0,hoursAmount:0,otAmount:0,pointsAmount:0,rangeTotal:0,monthFinal:0};
+    var body=d.per.map(function(a){
+      t.present+=a.present;t.late+=a.late;t.absent+=a.absent;t.normalMin+=a.normalMin;t.otMin+=a.otMin;
+      t.khana+=a.khana;t.hoursAmount+=a.hoursAmount;t.otAmount+=a.otAmount;t.pointsAmount+=a.pointsAmount;
+      t.rangeTotal+=a.rangeTotal;t.monthFinal+=Number(a.monthFinal||0);
+      return '<tr><td>'+esc(a.staff.name||a.staff.phone)+'</td><td>'+a.present+'</td><td>'+a.late+'</td><td>'+a.absent+'</td><td>'+hm(a.normalMin)+'</td><td>'+hm(a.otMin)+'</td><td>'+money(a.hoursAmount)+'</td><td>'+money(a.otAmount)+'</td><td>'+a.points+' / '+money(a.pointsAmount)+'</td><td>'+money(a.khana)+(a.cfg.mealInSalary?' <small>(salary mein)</small>':'')+'</td><td><b>'+money(a.rangeTotal)+'</b></td><td>'+(a.monthFinal==null?'—':money(a.monthFinal))+'</td></tr>';
+    }).join('')||'<tr><td colspan="12">Koi staff nahi.</td></tr>';
+    var foot='<tfoot><tr><td>Total</td><td>'+t.present+'</td><td>'+t.late+'</td><td>'+t.absent+'</td><td>'+hm(t.normalMin)+'</td><td>'+hm(t.otMin)+'</td><td>'+money(t.hoursAmount)+'</td><td>'+money(t.otAmount)+'</td><td>'+money(t.pointsAmount)+'</td><td>'+money(t.khana)+'</td><td>'+money(t.rangeTotal)+'</td><td>'+money(t.monthFinal)+'</td></tr></tfoot>';
+    return '<table class="fr-table-v116"><thead><tr><th>Staff</th><th>Hazir din</th><th>Late</th><th>Ghair hazir</th><th>Kaam ke ghante</th><th>Overtime</th><th>Ghanton ki raqam</th><th>OT raqam</th><th>Points / raqam</th><th>Khana</th><th>Range total</th><th>Mahine ki final salary</th></tr></thead><tbody>'+body+'</tbody>'+foot+'</table>';
+  }
+
+  window.renderFullReportV116=function(){
+    if(!$('frBodyV116'))return;
+    var d=collect();
+    var tot=d.per.reduce(function(n,a){return {p:n.p+a.present,l:n.l+a.late,ab:n.ab+a.absent,k:n.k+a.khana,s:n.s+a.rangeTotal,m:n.m+(a.normalMin+a.otMin)}},{p:0,l:0,ab:0,k:0,s:0,m:0});
+    $('frKpiV116').innerHTML=
+      '<div><small>Din</small><b>'+d.days.length+'</b></div>'+
+      '<div><small>Staff</small><b>'+d.per.length+'</b></div>'+
+      '<div><small>Hazri</small><b>'+tot.p+'</b></div>'+
+      '<div><small>Late</small><b>'+tot.l+'</b></div>'+
+      '<div><small>Ghair hazir</small><b>'+tot.ab+'</b></div>'+
+      '<div><small>Kaam ke ghante</small><b>'+hm(tot.m)+'</b></div>'+
+      '<div><small>Khana</small><b>'+money(tot.k)+'</b></div>'+
+      '<div><small>Range ki raqam</small><b>'+money(tot.s)+'</b></div>';
+    $('frBodyV116').innerHTML=
+      '<div class="fr-sec-v116"><h3>Staff ka khulasa</h3><small>'+esc(d.from)+' se '+esc(d.to)+' tak • salary month '+esc(d.month)+'</small><div class="fr-scroll-v116">'+staffTable(d)+'</div></div>'+
+      '<div class="fr-sec-v116"><h3>Date-wise tafseel</h3><small>Har din, har mulazim: check-in, check-out, ghair hazri aur khana</small><div class="fr-scroll-v116">'+dailyTable(d)+'</div></div>';
+    return d;
+  };
+
+  window.printFullReportV116=function(){
+    var d=window.renderFullReportV116();if(!d)return;
+    var w=window.open('','_blank');if(!w){alert('Browser ne naya window rok diya. Popup allow karein.');return}
+    var head='<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Staff Mukammal Report</title><style>'+
+      'body{font-family:Arial,Helvetica,sans-serif;padding:24px;color:#142033}'+
+      '.brand{border-bottom:3px solid #0f766e;padding-bottom:12px;margin-bottom:14px}'+
+      '.brand h1{margin:0;color:#0f766e;font-size:22px}.brand p{margin:4px 0;color:#5a6b7b;font-size:12px}'+
+      '.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}'+
+      '.kpi div{border:1px solid #dde6ec;border-radius:8px;padding:8px}'+
+      '.kpi span{display:block;font-size:10px;color:#64748b}.kpi b{font-size:16px;color:#0f5f4a}'+
+      'h2{color:#0f5f4a;font-size:15px;border-bottom:1px solid #dde6ec;padding-bottom:5px;margin:22px 0 6px}'+
+      'table{width:100%;border-collapse:collapse;font-size:10px}'+
+      'th,td{border:1px solid #d8e2e8;padding:5px;text-align:left}th{background:#eef6f3;color:#0f5f4a}'+
+      'tfoot td{background:#f5f9f7;font-weight:bold}'+
+      '.foot{margin-top:16px;font-size:9px;color:#64748b}'+
+      '@page{size:A4 landscape;margin:10mm}</style></head><body>';
+    var kpi=$('frKpiV116').innerHTML.replace(/<small>/g,'<span>').replace(/<\/small>/g,'</span>');
+    w.document.write(head+
+      '<div class="brand"><h1>Noor Traders — Staff Mukammal Report</h1><p>'+esc(d.from)+' se '+esc(d.to)+' tak • Salary month '+esc(d.month)+' • Banaya gaya '+esc(new Date().toLocaleString('en-PK'))+'</p></div>'+
+      '<div class="kpi">'+kpi+'</div>'+
+      '<h2>Staff ka khulasa — salary, khana, hazri</h2>'+staffTable(d)+
+      '<h2>Date-wise tafseel — check-in / check-out / ghair hazri</h2>'+dailyTable(d)+
+      '<div class="foot">Noor Traders Staff • Report sirf padhne ke liye hai.</div>'+
+      '<scr'+'ipt>setTimeout(function(){window.print()},500)</scr'+'ipt></body></html>');
+    w.document.close();
+  };
+
+  window.openFullReportV116=function(){
+    var f=$('frFromV116'),t=$('frToV116'),m=$('frMonthV116'),sel=$('frStaffV116');
+    if(!f)return;
+    if(!f.value)f.value=monthStart(today());
+    if(!t.value)t.value=today();
+    if(!m.value)m.value=f.value.slice(0,7);
+    var db=window.getNoorDb?window.getNoorDb():{};
+    var keep=sel.value;
+    sel.innerHTML='<option value="">Sab staff</option>'+(db.staff||[]).map(function(s){
+      var p=norm(s.phone||s.id);return '<option value="'+esc(p)+'">'+esc(s.name||p)+' • '+esc(p)+'</option>';
+    }).join('');
+    sel.value=keep;
+    window.renderFullReportV116();
+  };
+
+  document.addEventListener('DOMContentLoaded',function(){
+    ['frFromV116','frToV116','frMonthV116','frStaffV116'].forEach(function(id){
+      var el=$(id);if(el)el.addEventListener('change',function(){window.renderFullReportV116()});
+    });
+    var dr=$('shDrawerV116');
+    if(dr)dr.addEventListener('click',function(e){
+      if(e.target.closest('.staff-feature-card')&&!dr.hidden)window.toggleStaffMoreV116();
+    });
+  });
+})();
+</script>
+</body></html>`}
 function openPdfPreviewV85(html,title){currentPdfHtmlV85=html;pdfPreviewTitle.textContent=title;pdfPreviewFrame.srcdoc=html;pdfPreviewModal.hidden=false}
 function closePdfPreviewV85(){pdfPreviewModal.hidden=true;pdfPreviewFrame.srcdoc='';currentPdfHtmlV85=''}
 function printPdfPreviewV85(){pdfPreviewFrame.contentWindow?.focus();pdfPreviewFrame.contentWindow?.print()}
@@ -2180,7 +2438,7 @@ function ntSetVersionStatusV101(latest){
   });
   return newer;
 }
-const APP_VERSION_V85='v115';
+const APP_VERSION_V85='v116';
 let currentPdfHtmlV85='';
 
 /* ===== AUTO UPDATE (v88) =====
@@ -3295,7 +3553,7 @@ const staffAttendanceCol=collection(fs,"businesses",BUSINESS_ID,"staffAttendance
 const staffSessionsCol=collection(fs,"businesses",BUSINESS_ID,"staffSessions");
 const STAFF_SESSION_KEY="noor-traders-staff-session";
 const staffConfigDoc=doc(fs,"businesses",BUSINESS_ID,"staffConfig","main");
-let staffConfig={shiftStart:'09:00',shiftEnd:'',radius:200,variant:'Production',instruction:'سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔',scores:{m10:10,m20:8,m30:6,m45:4,late:2},version:'v115'};
+let staffConfig={shiftStart:'09:00',shiftEnd:'',radius:200,variant:'Production',instruction:'سب لڑکے دھیان سے کام کریں۔ آپ کا Check-In time اور روزانہ Score record ہو رہا ہے۔',scores:{m10:10,m20:8,m30:6,m45:4,late:2},version:'v116'};
 
 async function upsertAccount(account){
   const phone=normalizePhone(account.phone||account.id);
@@ -3387,7 +3645,7 @@ function getAttendanceForDate(date){
 function getAttendanceBetween(from,to){
   return [...ownerStaffAttendance.values()].filter(a=>(!from||a.date>=from)&&(!to||a.date<=to)).map(normalizeAttendanceV103).sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.checkInTs||0)-(b.checkInTs||0));
 }
-async function saveConfig(cfg){staffConfig={...staffConfig,...clean(cfg),scores:{...staffConfig.scores,...(cfg.scores||{})},version:'v115'};await setDoc(staffConfigDoc,staffConfig,{merge:true});window.applyPolicyV84?.(staffConfig);window.noorStaffUpgrades?.render()}
+async function saveConfig(cfg){staffConfig={...staffConfig,...clean(cfg),scores:{...staffConfig.scores,...(cfg.scores||{})},version:'v116'};await setDoc(staffConfigDoc,staffConfig,{merge:true});window.applyPolicyV84?.(staffConfig);window.noorStaffUpgrades?.render()}
 function getAttendanceById(id){const a=ownerStaffAttendance.get(id);return a?normalizeAttendanceV103(a):null}
 async function updateAttendance(id,patch){return window.noorStaffUpgrades.attendance(id,patch)}
 async function deleteAttendance(id){return window.noorStaffUpgrades.attendance(id,{},true)}
@@ -3421,7 +3679,7 @@ function renderStaffProfile(){
 let ownAttendanceUnsub=null;
 let checkoutBusyV112=false;
 function startStaffOwnListener(){
-  staffUnsubs.push(onSnapshot(staffConfigDoc,s=>{if(s.exists()){staffConfig={...staffConfig,...clean(s.data()),scores:{...staffConfig.scores,...(s.data().scores||{})}};const radius=staffConfig.radius||SHOP.radius;staffRuleText.textContent=`Selfie لازمی + Noor Traders سے زیادہ سے زیادہ ${radius}m`;staffInstructionText.textContent=staffConfig.instruction||staffInstructionText.textContent;staffVersionLabel.textContent='v115';window.noorStaffUpgrades?.render()}}));
+  staffUnsubs.push(onSnapshot(staffConfigDoc,s=>{if(s.exists()){staffConfig={...staffConfig,...clean(s.data()),scores:{...staffConfig.scores,...(s.data().scores||{})}};const radius=staffConfig.radius||SHOP.radius;staffRuleText.textContent=`Selfie لازمی + Noor Traders سے زیادہ سے زیادہ ${radius}m`;staffInstructionText.textContent=staffConfig.instruction||staffInstructionText.textContent;staffVersionLabel.textContent='v116';window.noorStaffUpgrades?.render()}}));
   staffUnsubs.push(onSnapshot(doc(staffAccountsCol,currentStaffPhone),s=>{if(s.exists()){currentStaff={...clean(s.data()),phone:currentStaffPhone};window.currentStaffAccountV101=currentStaff;renderStaffProfile();window.renderStaffSalaryV101?.()}}));
   if(ownAttendanceUnsub)try{ownAttendanceUnsub()}catch{}
   const q=query(staffAttendanceCol,where("phone","==",currentStaffPhone));
@@ -3588,7 +3846,7 @@ function installStaffUpgrades({fs,auth,sdk,getStaff,getAttendance,getConfig,isOw
  const money=n=>'Rs '+Number(n||0).toLocaleString('en-PK',{maximumFractionDigits:2});
  function snapshot(p,m){const r=payment(p,m);return r?.state==='final'?structuredClone(r.snapshot):null}
  window.staffFinalSalaryV104=snapshot;
- const ownerBox=document.createElement('section');ownerBox.id='staffUpgradeOwner';ownerBox.className='su-panel';$('staffCenter').prepend(ownerBox);
+ const ownerBox=document.createElement('section');ownerBox.id='staffUpgradeOwner';ownerBox.className='su-panel';$('staffCenter').append(ownerBox);
  const ownBox=document.createElement('section');ownBox.id='staffUpgradeOwn';ownBox.className='su-panel';$('staffTaskPanelV99').before(ownBox);
  const style=document.createElement('style');style.textContent='.su-panel{background:#fff;border:1px solid #d2e4dc;border-radius:18px;padding:16px;margin:12px 0;color:#183e30}.su-nav,.su-grid{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.su-grid>*{flex:1 1 130px}.su-panel button{min-height:44px;border:1px solid #ccdcd3;border-radius:10px;padding:9px 13px;cursor:pointer}.su-panel button[aria-pressed=true]{background:#184f3d;color:white}.su-panel label{display:block;margin:8px 0}.su-panel input,.su-panel select,.su-panel textarea{width:100%;max-width:100%;padding:10px;border:1px solid #b9cec1;border-radius:8px}.su-row{border-top:1px solid #e3ece6;padding:12px 0;overflow-wrap:anywhere}.su-row p{margin:6px 0}.su-panel details{padding:8px 0}.su-panel small{color:#536a5c}.su-error{color:#a32424}.su-panel [hidden]{display:none!important}@media(max-width:500px){.su-grid>*{flex-basis:42%}.su-panel{padding:12px}.su-nav button{flex:1 1 40%}}';document.head.append(style);
  ownerBox.innerHTML='<h2>Staff Control</h2><div class="su-nav" id="suNav"></div><p id="suMessage" role="status"></p><div id="suContent"></div>';
