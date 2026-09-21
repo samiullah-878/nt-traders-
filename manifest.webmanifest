@@ -1,11 +1,13 @@
 {
-  "name": "Noor Traders Staff",
-  "short_name": "NT Staff",
+  "name": "Noor Traders Hazri",
+  "short_name": "NT Hazri",
+  "description": "Staff ki hazri aur salary ka register",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#edf3f8",
-  "theme_color": "#0f766e",
-  "lang": "ur",
-  "dir": "rtl"
+  "background_color": "#eef1f7",
+  "theme_color": "#1b2a4a",
+  "lang": "ur-Latn",
+  "dir": "ltr",
+  "icons": [{ "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
 }

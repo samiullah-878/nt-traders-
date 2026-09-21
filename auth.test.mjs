@@ -1,199 +1,96 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import { createAuthController, normalizePhone, parseLogin, OWNER_EMAILS } from '../auth-controller.js';
+import test from 'node:test'; import assert from 'node:assert/strict';
+import { createAuthController, parseLogin, loginErrorMessage, withRetry } from './auth.js';
+import { fakeSdk, memoryStorage, B } from './test-fake-sdk.mjs';
 
-const FIRST = '03000000001', SECOND = '03000000002';
-const fault = code => Object.assign(new Error(code), { code });
-const tick = () => new Promise(resolve => setImmediate(resolve));
-function deferred() {
-  let resolve;
-  const promise = new Promise(done => { resolve = done; });
-  return { promise, resolve };
-}
-function fixture(options = {}) {
-  const auth = { currentUser: null };
-  let listener = () => {}, sequence = 0;
-  const sessions = new Map(), profiles = new Map([
-    [FIRST, { name: 'First employee', phone: FIRST, active: true }],
-    [SECOND, { name: 'Second employee', phone: SECOND, active: true }]
-  ]);
-  const owners = new Map([[options.ownerEmail || OWNER_EMAILS[0], 'initial-password']]);
-  const events = [], errors = [], calls = [];
-  let view = null;
-  const notify = user => { auth.currentUser = user; listener(user); };
-  const sdk = {
-    onAuthStateChanged(_auth, callback) { listener = callback; queueMicrotask(() => listener(auth.currentUser)); return () => { listener = () => {}; }; },
-    async signInWithEmailAndPassword(_auth, email, password) {
-      calls.push(['owner-login', email]);
-      if (owners.get(email) !== password) throw fault('auth/invalid-credential');
-      if (options.signInDelay) await options.signInDelay.promise;
-      const user = { uid: 'owner-uid', email, isAnonymous: false };
-      notify(user); return { user };
-    },
-    async signInAnonymously() {
-      calls.push(['staff-login']);
-      if (options.authError) throw fault(options.authError);
-      const user = { uid: `anonymous-${++sequence}`, isAnonymous: true };
-      notify(user); return { user };
-    },
-    async signOut() { calls.push(['logout']); notify(null); },
-    EmailAuthProvider: { credential(email, password) { return { email, password }; } },
-    async reauthenticateWithCredential(user, credential) {
-      calls.push(['reauthenticate']);
-      if (owners.get(user.email) !== credential.password) throw fault('auth/invalid-credential');
-    },
-    async updatePassword(user, password) { calls.push(['change-password']); owners.set(user.email, password); }
+const tick = () => new Promise(r => setTimeout(r, 5));
+function setup({ records = new Map(), initialUser = null, storage = memoryStorage() } = {}) {
+  const f = fakeSdk({ records, initialUser }), events = [];
+  const doc = p => ({ path: B + p });
+  const accounts = {
+    async getSession(uid) { if (f.fail.read) { const e = f.fail.read; f.fail.read = null; throw e; } return records.get(B + 'staffSessions/' + uid) || null; },
+    async getAccount(phone) { const a = records.get(B + 'staffAccounts/' + phone); return a ? { ...a, phone } : null; },
+    async createSession(uid, phone) { if (!records.get(B + 'staffAccounts/' + phone)) throw Object.assign(new Error('denied'), { code: 'permission-denied' }); await f.sdk.setDoc(doc('staffSessions/' + uid), { phone, createdAt: 1 }); }
   };
-  const controller = createAuthController({
-    auth, sdk,
-    accounts: {
-      async createSession(uid, phone) {
-        if (options.sessionDelay) await options.sessionDelay.promise;
-        if (options.sessionError) throw fault(options.sessionError);
-        sessions.set(uid, { phone });
-      },
-      async getSession(uid) { calls.push(['read-session', uid]); if(options.sessionReadError)throw fault(options.sessionReadError); return sessions.get(uid); },
-      async getAccount(phone) { return profiles.get(phone); }
-    },
-    onReset() { view = null; events.push('hidden'); },
-    onSession(session) { view = session; events.push(`${session.role}:${session.phone || session.user.uid}`); },
-    onError(error) { errors.push(error.code); }
-  });
-  return { auth, controller, profiles, sessions, events, errors, calls, notify, owners, get view() { return view; } };
+  const c = createAuthController({ auth: f.auth, sdk: f.sdk, accounts, storage, wait: async () => {}, onReset: () => events.push('reset'), onSession: s => events.push(s), onError: e => events.push({ error: e.code }) });
+  return { f, c, events, storage, records };
 }
+const staffRecords = () => new Map([[B + 'staffAccounts/03001234567', { name: 'Ali', phone: '03001234567' }]]);
 
-test('the same admin username resolves separately for the selected owner and staff roles', () => {
-  assert.equal(parseLogin({ role: 'owner', username: ' Admin ', password: '1234' }).role, 'owner');
-  assert.deepEqual(parseLogin({ role: 'staff', username: 'admin', password: FIRST }), { role: 'staff', phone: FIRST });
+test('login form: staff sirf number; malik khali username = admin', () => {
+  assert.deepEqual(parseLogin({ role: 'staff', password: '0300-1234567' }), { role: 'staff', phone: '03001234567' });
+  assert.deepEqual(parseLogin({ role: 'staff', username: 'admin', password: '+923001234567' }), { role: 'staff', phone: '03001234567' });
+  assert.throws(() => parseLogin({ role: 'staff', password: '12345' }), { code: 'login/staff-phone' });
+  assert.equal(parseLogin({ role: 'owner', username: '', password: 'x' }).emails.length, 3);
+  assert.deepEqual(parseLogin({ role: 'owner', username: 'HP6235@gmail.com', password: 'x' }).emails, ['hp6235@gmail.com']);
+  assert.throws(() => parseLogin({ role: 'owner', username: 'koi@aur.com', password: 'x' }), { code: 'login/owner-username' });
+  assert.throws(() => parseLogin({ role: 'owner', password: '' }), { code: 'login/password-required' });
 });
-test('mobile passwords preserve the leading zero and support Pakistani international and Urdu formats', () => {
-  for (const value of [FIRST, '+92 300 0000001', '00923000000001', '3000000001', '۰۳۰۰۰۰۰۰۰۰۱']) {
-    assert.equal(normalizePhone(value), FIRST);
-  }
-  assert.equal(normalizePhone(`wrong${FIRST}`), '');
-  assert.throws(() => parseLogin({ role: 'staff', username: 'admin', password: '1234' }));
-  assert.throws(() => parseLogin({ role: 'staff', username: SECOND, password: FIRST }));
+test('staff login: session banta hai, account milta hai', async () => {
+  const { c, events, records } = setup({ records: staffRecords() }); await tick();
+  await c.login({ role: 'staff', password: '03001234567' });
+  const s = events.at(-1); assert.equal(s.role, 'staff'); assert.equal(s.phone, '03001234567'); assert.equal(s.account.name, 'Ali');
+  assert.equal([...records.keys()].filter(k => k.includes('staffSessions')).length, 1);
 });
-test('owner login opens only the owner panel', async () => {
-  const f = fixture();
-  await f.controller.login({ role: 'owner', username: 'admin', password: 'initial-password' });
-  assert.equal(f.view.role, 'owner');
-  assert.equal(f.calls.some(call => call[0] === 'staff-login'), false);
-});
-test('legacy owner credentials still work through the admin alias', async () => {
-  const f = fixture({ ownerEmail: OWNER_EMAILS[1] });
-  await f.controller.login({ role: 'owner', username: 'admin', password: 'initial-password' });
-  assert.equal(f.view.user.email, OWNER_EMAILS[1]);
-});
-test('a wrong owner password never falls back to anonymous staff access', async () => {
-  const f = fixture();
-  await assert.rejects(f.controller.login({ role: 'owner', username: 'admin', password: FIRST }), { code: 'auth/invalid-credential' });
-  assert.equal(f.view, null);
+test('staff login: number register nahi → saaf paigham, koi session nahi', async () => {
+  const { c, f } = setup(); await tick();
+  await assert.rejects(c.login({ role: 'staff', password: '03001234567' }), e => /register nahi/.test(loginErrorMessage(e)));
   assert.equal(f.auth.currentUser, null);
-  assert.equal(f.calls.some(call => call[0] === 'staff-login'), false);
 });
-test('anonymous auth event arriving before a slow session write does not sign the employee out', async () => {
-  const sessionDelay = deferred(), f = fixture({ sessionDelay });
-  const login = f.controller.login({ role: 'staff', username: 'admin', password: FIRST });
-  await tick();
-  assert.equal(f.view, null);
-  assert.ok(f.auth.currentUser?.isAnonymous);
-  assert.equal(f.calls.filter(call => call[0] === 'logout').length, 0);
-  sessionDelay.resolve(); await login;
-  assert.equal(f.view.phone, FIRST);
-  assert.equal(f.events.filter(event => event.startsWith('staff:')).length, 1);
-  assert.equal(f.events.some(event => event.startsWith('owner:')), false);
+test('staff login: band account → andar nahi', async () => {
+  const records = staffRecords(); records.get(B + 'staffAccounts/03001234567').loginEnabled = false;
+  const { c } = setup({ records }); await tick();
+  await assert.rejects(c.login({ role: 'staff', password: '03001234567' }), { code: 'login/staff-disabled' });
 });
-test('two staff members on the same browser receive different sessions and the correct profiles', async () => {
-  const f = fixture();
-  await f.controller.login({ role: 'staff', username: 'admin', password: FIRST });
-  const firstUid = f.view.user.uid;
-  await f.controller.logout();
-  await f.controller.login({ role: 'staff', username: 'admin', password: SECOND });
-  assert.notEqual(f.view.user.uid, firstUid);
-  assert.equal(f.view.account.name, 'Second employee');
-  assert.equal(f.sessions.get(f.view.user.uid).phone, SECOND);
+test('kamzor internet: khud dobara koshish, phir kamyab', async () => {
+  const { c, f, events } = setup({ records: staffRecords() }); await tick();
+  f.fail.signIn.push(Object.assign(new Error('net'), { code: 'auth/network-request-failed' }), Object.assign(new Error('net'), { code: 'auth/network-request-failed' }));
+  await c.login({ role: 'staff', password: '03001234567' });
+  assert.equal(events.at(-1).role, 'staff');
 });
-test('restoring a session uses the phone bound to the Firebase UID', async () => {
-  const f = fixture(); await tick();
-  f.sessions.set('restored-uid', { phone: SECOND });
-  f.notify({ uid: 'restored-uid', isAnonymous: true }); await tick();
-  assert.equal(f.view.phone, SECOND);
+test('withRetry: ghalat password par dobara koshish nahi', async () => {
+  let n = 0; await assert.rejects(withRetry(async () => { n++; throw Object.assign(new Error('x'), { code: 'auth/invalid-credential' }); }, { wait: async () => {} })); assert.equal(n, 1);
+  n = 0; await assert.rejects(withRetry(async () => { n++; throw Object.assign(new Error('x'), { code: 'unavailable' }); }, { wait: async () => {} })); assert.equal(n, 3);
 });
-test('an unfinished anonymous session fails closed instead of showing any panel', async () => {
-  const f = fixture(); await tick();
-  f.notify({ uid: 'unfinished-uid', isAnonymous: true }); await tick();
-  assert.equal(f.view, null); assert.equal(f.auth.currentUser, null);
-  assert.ok(f.errors.includes('login/staff-session'));
+test('malik login: chalne wali email yaad rehti hai, agli dafa sirf aik koshish', async () => {
+  const storage = memoryStorage(); let { c, f, events } = setup({ storage }); await tick();
+  await c.login({ role: 'owner', username: 'admin', password: 'malik-ka-password' });
+  assert.equal(events.at(-1).role, 'owner'); assert.deepEqual(f.sdk.attempts, ['admin@nt-traders.firebaseapp.com', 'hp6235@gmail.com']);
+  ({ c, f, events } = setup({ storage })); await tick();
+  await c.login({ role: 'owner', username: '', password: 'malik-ka-password' });
+  assert.deepEqual(f.sdk.attempts, ['hp6235@gmail.com']);
 });
-test('temporary offline restore preserves the staff identity and resumes when connectivity returns', async () => {
-  const options = { sessionReadError: 'unavailable' }, f = fixture(options); await tick();
-  f.sessions.set('offline-staff', { phone: FIRST });
-  f.notify({ uid: 'offline-staff', isAnonymous: true }); await tick();
-  assert.equal(f.view, null);
-  assert.equal(f.auth.currentUser.uid, 'offline-staff');
-  options.sessionReadError = null;
-  await f.controller.resume();
-  assert.equal(f.view.phone, FIRST);
-  assert.equal(f.auth.currentUser.uid, 'offline-staff');
+test('malik login: ghalat password aur too-many-requests ke paigham', async () => {
+  const { c, f } = setup(); await tick();
+  await assert.rejects(c.login({ role: 'owner', password: 'ghalat' }), e => loginErrorMessage(e) === 'Password ghalat hai.');
+  f.fail.signIn.push(Object.assign(new Error('x'), { code: 'auth/too-many-requests' }));
+  await assert.rejects(c.login({ role: 'owner', password: 'malik-ka-password' }), e => /10-15 minute/.test(loginErrorMessage(e)));
 });
-test('an unrelated Firebase email account cannot become owner', async () => {
-  const f = fixture(); await tick();
-  f.notify({ uid: 'unrelated', email: 'other@example.test', isAnonymous: false }); await tick();
-  assert.equal(f.view, null); assert.equal(f.auth.currentUser, null);
-  assert.ok(f.errors.includes('login/owner-required'));
+test('app dobara kholna: staff cache se foran andar, internet na ho tab bhi', async () => {
+  const storage = memoryStorage(), records = staffRecords();
+  const first = setup({ records, storage }); await tick();
+  await first.c.login({ role: 'staff', password: '03001234567' });
+  const user = first.f.auth.currentUser;
+  const second = setup({ records, storage, initialUser: user });
+  second.f.fail.read = Object.assign(new Error('offline'), { code: 'unavailable' });
+  await tick(); await tick();
+  const s = second.events.find(e => e.role === 'staff'); assert.ok(s); assert.equal(s.fromCache, true); assert.equal(s.phone, '03001234567');
+  assert.equal(second.events.some(e => e.error), false);
 });
-test('missing, inactive and login-disabled staff accounts cannot sign in', async () => {
-  for (const profile of [null, { active: false }, { loginEnabled: false }]) {
-    const f = fixture();
-    if (profile) f.profiles.set(FIRST, profile); else f.profiles.delete(FIRST);
-    await assert.rejects(f.controller.login({ role: 'staff', username: 'admin', password: FIRST }), { code: 'login/staff-disabled' });
-    assert.equal(f.view, null); assert.equal(f.auth.currentUser, null);
-  }
+test('app dobara kholna: malik ne login band kar diya → bahar', async () => {
+  const storage = memoryStorage(), records = staffRecords();
+  const first = setup({ records, storage }); await tick();
+  await first.c.login({ role: 'staff', password: '03001234567' });
+  records.get(B + 'staffAccounts/03001234567').active = false;
+  const second = setup({ records, storage, initialUser: first.f.auth.currentUser }); await tick(); await tick(); await tick();
+  assert.equal(second.events.at(-1).error, 'login/staff-disabled'); assert.equal(second.f.auth.currentUser, null);
 });
-test('provider and Firestore failures leave both protected panels closed', async () => {
-  for (const options of [{ authError: 'auth/operation-not-allowed' }, { sessionError: 'permission-denied' }]) {
-    const f = fixture(options);
-    await assert.rejects(f.controller.login({ role: 'staff', username: 'admin', password: FIRST }));
-    assert.equal(f.view, null); assert.equal(f.auth.currentUser, null);
-  }
+test('doosre larke ka cache kabhi istemal nahi hota', async () => {
+  const storage = memoryStorage(); storage.setItem('nt-hazri-session-v200', JSON.stringify({ uid: 'kisi-aur-ka', phone: '03009999999', account: { name: 'X' } }));
+  const { events } = setup({ records: staffRecords(), storage, initialUser: { uid: 'anon-naya', isAnonymous: true } }); await tick(); await tick();
+  assert.equal(events.some(e => e.role === 'staff'), false); assert.equal(events.at(-1).error, 'login/staff-session');
 });
-test('Logout while a staff session is being saved cancels its late completion', async () => {
-  const sessionDelay = deferred(), f = fixture({ sessionDelay });
-  const login = f.controller.login({ role: 'staff', username: 'admin', password: FIRST });
-  const rejected = assert.rejects(login, { code: 'login/cancelled' });
-  await tick(); await f.controller.logout(); sessionDelay.resolve(); await rejected;
-  assert.equal(f.view, null); assert.equal(f.auth.currentUser, null);
-});
-test('Logout before a slow owner sign-in finishes does not reopen the owner panel', async () => {
-  const signInDelay = deferred(), f = fixture({ signInDelay });
-  const login = f.controller.login({ role: 'owner', username: 'admin', password: 'initial-password' });
-  const rejected = assert.rejects(login, { code: 'login/cancelled' });
-  await tick(); await f.controller.logout(); signInDelay.resolve(); await rejected;
-  assert.equal(f.view, null); assert.equal(f.auth.currentUser, null);
-});
-test('concurrent submit is rejected without creating two staff sessions', async () => {
-  const sessionDelay = deferred(), f = fixture({ sessionDelay });
-  const login = f.controller.login({ role: 'staff', username: 'admin', password: FIRST });
-  await assert.rejects(f.controller.login({ role: 'staff', username: 'admin', password: SECOND }), { code: 'login/busy' });
-  sessionDelay.resolve(); await login;
-  assert.equal(f.sessions.size, 1); assert.equal(f.view.phone, FIRST);
-});
-test('owner password change verifies the old password and the new password works after logout', async () => {
-  const f = fixture();
-  await f.controller.login({ role: 'owner', username: 'admin', password: 'initial-password' });
-  await assert.rejects(f.controller.changePassword('incorrect', 'changed-password'), { code: 'auth/invalid-credential' });
-  assert.equal(f.calls.some(call => call[0] === 'change-password'), false);
-  await assert.rejects(f.controller.changePassword('initial-password', '1234'), { code: 'auth/weak-password' });
-  await f.controller.changePassword('initial-password', 'changed-password');
-  await f.controller.logout();
-  await assert.rejects(f.controller.login({ role: 'owner', username: 'admin', password: 'initial-password' }));
-  await f.controller.login({ role: 'owner', username: 'admin', password: 'changed-password' });
-  assert.equal(f.view.role, 'owner');
-});
-test('staff cannot change the owner password', async () => {
-  const f = fixture();
-  await f.controller.login({ role: 'staff', username: 'admin', password: FIRST });
-  await assert.rejects(f.controller.changePassword('initial-password', 'changed-password'), { code: 'login/owner-required' });
-  assert.equal(f.calls.some(call => call[0] === 'change-password'), false);
+test('logout: cache saaf', async () => {
+  const { c, storage, events } = setup({ records: staffRecords() }); await tick();
+  await c.login({ role: 'staff', password: '03001234567' }); assert.ok(storage.getItem('nt-hazri-session-v200'));
+  await c.logout(); assert.equal(storage.getItem('nt-hazri-session-v200'), null); assert.equal(events.at(-1), 'reset');
 });

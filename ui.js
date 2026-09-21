@@ -1,0 +1,193 @@
+// ui.js — chhote UI auzaar jo malik aur staff dono screens istemal karti hain.
+import { esc, SHOP, haversine, hasArabic } from './core.js';
+
+export const $ = (sel, root = document) => root.querySelector(sel);
+export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+
+const PATHS = {
+  search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/>',
+  pdf: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/>',
+  left: '<path d="m15 6-6 6 6 6"/>', right: '<path d="m9 6 6 6-6 6"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>', close: '<path d="M6 6l12 12M18 6 6 18"/>',
+  out: '<path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="M16 8l4 4-4 4M20 12H9"/>',
+  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  book: '<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8h6"/>',
+  wallet: '<path d="M4 7a2 2 0 0 1 2-2h11v4"/><path d="M4 7v10a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1H6a2 2 0 0 1-2-2z"/><circle cx="16" cy="14" r="1.2"/>',
+  people: '<circle cx="9" cy="9" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 6.2a3 3 0 0 1 0 5.6M17.5 14.4A5 5 0 0 1 20.5 19"/>',
+  alert: '<path d="M12 4 3 19h18z"/><path d="M12 10v4M12 17h.01"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>', edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
+  camera: '<path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/>',
+  pin: '<path d="M12 21s7-6.2 7-11a7 7 0 0 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+  note: '<path d="M6 4h12v16l-3-2-3 2-3-2-3 2z"/><path d="M9 9h6M9 13h6"/>', share: '<path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>',
+  down: '<path d="M12 4v11M8 11l4 4 4-4"/><path d="M5 19h14"/>', phone: '<path d="M6 3h3l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 4 5a2 2 0 0 1 2-2z"/>'
+};
+export function icon(name, size = 20) {
+  return `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${PATHS[name] || ''}</svg>`;
+}
+/** Urdu lipi wala matn apne font aur dir ke sath. */
+export function nameHtml(text) {
+  const t = String(text ?? '');
+  return hasArabic(t) ? `<span class="ur" dir="rtl" lang="ur">${esc(t)}</span>` : esc(t);
+}
+export function avatar(account, size = '') {
+  const name = String(account?.name || '?').trim();
+  const initials = hasArabic(name) ? name.slice(0, 1) : name.split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
+  return account?.photo
+    ? `<span class="avatar ${size}"><img src="${esc(account.photo)}" alt="" loading="lazy"></span>`
+    : `<span class="avatar ${size}" aria-hidden="true">${esc(initials || '?')}</span>`;
+}
+
+/* ---------- toast ---------- */
+let toastTimer;
+export function toast(message, kind = '') {
+  const el = $('#toast'); if (!el) return;
+  el.textContent = message; el.className = 'toast show ' + kind;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.className = 'toast'; }, kind === 'bad' ? 6000 : 3200);
+}
+export function errorText(error) {
+  if (!error) return 'Kuch ghalat ho gaya. Dobara koshish karein.';
+  if (error.code === 'permission-denied') return 'Ijazat nahi mili. Login dobara karein; phir bhi na ho to Firestore rules check karein.';
+  if (['unavailable', 'deadline-exceeded', 'app/slow-network'].includes(error.code)) return 'Internet kamzor hai. Signal check kar ke dobara koshish karein.';
+  return error.message || 'Kuch ghalat ho gaya. Dobara koshish karein.';
+}
+/** Button ko masroof dikhata hai, ghalti ho to saaf paigham. */
+export async function busy(button, fn, doneMessage = '') {
+  const label = button?.innerHTML;
+  if (button) { if (button.disabled) return; button.disabled = true; button.classList.add('is-busy'); }
+  try { const result = await fn(); if (doneMessage) toast(doneMessage, 'ok'); return result; }
+  catch (error) { console.error(error); toast(errorText(error), 'bad'); return undefined; }
+  finally { if (button?.isConnected) { button.disabled = false; button.classList.remove('is-busy'); button.innerHTML = label; } }
+}
+
+/* ---------- sheets (neeche se uthne wala panel) ---------- */
+const stack = [];
+export function openSheet({ title = '', render, wide = false, onClose, id = '' }) {
+  const host = $('#sheetHost');
+  const wrap = document.createElement('div');
+  wrap.className = 'sheet-wrap'; wrap.dataset.sheet = id;
+  wrap.innerHTML = `<div class="sheet-backdrop" data-sheet-close></div>
+    <section class="sheet ${wide ? 'wide' : ''}" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+      <header class="sheet-head"><h2></h2><button type="button" class="icon-btn" data-sheet-close aria-label="Band karein">${icon('close')}</button></header>
+      <div class="sheet-body"></div>
+    </section>`;
+  const api = {
+    id, el: wrap, body: $('.sheet-body', wrap),
+    setTitle(t) { $('h2', wrap).innerHTML = t; },
+    refresh(force = false) {
+      if (!render) return;
+      const active = document.activeElement;
+      if (!force && active && wrap.contains(active) && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)) return;
+      const scroll = api.body.scrollTop; api.body.innerHTML = render(api); api.body.scrollTop = scroll;
+    },
+    close() {
+      const i = stack.indexOf(api); if (i < 0) return;
+      stack.splice(i, 1); wrap.remove(); onClose?.();
+      if (!stack.length) document.body.classList.remove('sheet-open');
+    }
+  };
+  api.setTitle(title);
+  wrap.addEventListener('click', e => { if (e.target.closest('[data-sheet-close]')) api.close(); });
+  host.append(wrap); stack.push(api); document.body.classList.add('sheet-open');
+  api.refresh(true);
+  requestAnimationFrame(() => wrap.classList.add('in'));
+  return api;
+}
+export function refreshSheets() { for (const s of [...stack]) s.refresh(); }
+export function closeSheets() { for (const s of [...stack]) s.close(); }
+export function topSheet() { return stack[stack.length - 1] || null; }
+if (typeof document !== 'undefined') document.addEventListener('keydown', e => { if (e.key === 'Escape') topSheet()?.close(); });
+
+export function formValues(form) {
+  const out = {};
+  for (const el of form.elements) {
+    if (!el.name) continue;
+    if (el.type === 'checkbox') out[el.name] = el.checked;
+    else if (el.type === 'radio') { if (el.checked) out[el.name] = el.value; }
+    else out[el.name] = el.value;
+  }
+  return out;
+}
+
+/* ---------- tasveer ---------- */
+export function fileToDataUrl(file, max = 420, quality = 0.7) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Tasveer parhi nahi ja saki.'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Tasveer khul nahi saki.'));
+      img.onload = () => {
+        const scale = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement('canvas');
+        c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        resolve(c.toDataURL('image/jpeg', quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+/** Live camera se selfie (gallery se purani tasveer nahi lag sakti). Camera na khule to phone ka camera app khulta hai. */
+export function takeSelfie() {
+  return new Promise((resolve, reject) => {
+    let stream = null, done = false;
+    const finish = (value, error) => { if (done) return; done = true; try { stream?.getTracks().forEach(t => t.stop()); } catch { /* ignore */ } sheet.close(); error ? reject(error) : resolve(value); };
+    const sheet = openSheet({
+      title: 'Selfie lein', id: 'selfie',
+      render: () => `<div class="cam"><video id="camVideo" playsinline autoplay muted></video><p class="hint" id="camHint">Camera khul raha hai…</p>
+        <div class="btn-row"><button type="button" class="btn btn-primary btn-lg" id="camShot" disabled>${icon('camera')} Tasveer lein</button></div>
+        <input id="camFile" type="file" accept="image/*" capture="user" hidden></div>`,
+      onClose: () => finish(null, Object.assign(new Error('Selfie nahi li gayi.'), { code: 'app/cancelled' }))
+    });
+    const video = $('#camVideo', sheet.el), shot = $('#camShot', sheet.el), hint = $('#camHint', sheet.el), file = $('#camFile', sheet.el);
+    file.onchange = async () => { const f = file.files?.[0]; if (!f) return; try { finish(await fileToDataUrl(f)); } catch (e) { finish(null, e); } };
+    const fallback = () => { hint.textContent = 'Camera seedha nahi khula. Neeche button se phone ka camera kholein.'; video.hidden = true; shot.disabled = false; shot.innerHTML = icon('camera') + ' Camera kholein'; shot.onclick = () => file.click(); };
+    shot.onclick = () => {
+      const size = Math.min(video.videoWidth, video.videoHeight) || 420, scale = Math.min(1, 420 / size), c = document.createElement('canvas');
+      c.width = Math.round(video.videoWidth * scale); c.height = Math.round(video.videoHeight * scale);
+      c.getContext('2d').drawImage(video, 0, 0, c.width, c.height);
+      finish(c.toDataURL('image/jpeg', 0.7));
+    };
+    if (!navigator.mediaDevices?.getUserMedia) { fallback(); return; }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 } }, audio: false }).then(s => {
+      if (done) { s.getTracks().forEach(t => t.stop()); return; }
+      stream = s; video.srcObject = s; hint.textContent = 'Chehra saaf nazar aaye, phir button dabayein.';
+      video.onloadedmetadata = () => { shot.disabled = false; };
+    }).catch(fallback);
+  });
+}
+
+/* ---------- GPS ---------- */
+function position(options) { return new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, options)); }
+export async function getGps() {
+  if (!navigator.geolocation) throw new Error('Is phone/browser mein location ki sahulat nahi.');
+  let p;
+  try { p = await position({ enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }); }
+  catch (error) {
+    if (error.code === 1) throw new Error('Location ki ijazat band hai. Browser ki settings mein is site ke liye Location "Allow" karein.');
+    try { p = await position({ enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 }); }
+    catch { throw new Error('Location nahi mili. Phone ka GPS/Location on karein, khuli jagah aa kar dobara dabayein.'); }
+  }
+  const { latitude: lat, longitude: lng, accuracy } = p.coords;
+  return { lat, lng, accuracy, distance: haversine(lat, lng, SHOP.lat, SHOP.lng) };
+}
+
+/* ---------- PDF dena ---------- */
+export function deliverPdf({ doc, filename }) {
+  const blob = doc.output('blob'), url = URL.createObjectURL(blob);
+  const file = typeof File !== 'undefined' ? new File([blob], filename, { type: 'application/pdf' }) : null;
+  const canShare = !!(file && navigator.canShare?.({ files: [file] }));
+  const sheet = openSheet({
+    title: 'PDF tayyar hai', id: 'pdf',
+    render: () => `<p class="pdf-name">${icon('pdf')} <span>${esc(filename)}</span></p>
+      <div class="btn-col">
+        ${canShare ? `<button type="button" class="btn btn-primary btn-lg" id="pdfShare">${icon('share')} WhatsApp / Share</button>` : ''}
+        <a class="btn ${canShare ? 'btn-ghost' : 'btn-primary'} btn-lg" href="${url}" download="${esc(filename)}">${icon('down')} Download</a>
+        <a class="btn btn-ghost btn-lg" href="${url}" target="_blank" rel="noopener">Khol kar dekhein</a>
+      </div>`,
+    onClose: () => setTimeout(() => URL.revokeObjectURL(url), 60000)
+  });
+  const share = $('#pdfShare', sheet.el);
+  if (share) share.onclick = () => navigator.share({ files: [file], title: filename }).catch(() => { /* user ne band kiya */ });
+  return sheet;
+}

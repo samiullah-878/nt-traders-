@@ -1,6 +1,6 @@
 {
-  "version": "v118",
+  "version": "v200",
   "variant": "Production",
-  "buildDate": "2026-09-11",
-  "notes": "Naya layout (hissa 1): neeli upar patti, naya Home (4 dabbe + 6 icon), neeche 5 tabs, More menu. Features wahi."
+  "buildDate": "2026-09-21",
+  "notes": "Nayi saaf app: sirf Hazri + Salary. Naya login, naya layout, asal PDF, smart talash."
 }

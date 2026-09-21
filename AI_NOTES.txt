@@ -1,0 +1,146 @@
+NOOR TRADERS HAZRI — AI NOTES
+=============================
+Version: v200   Tareekh: 2026-09-21
+Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
+Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+1. IS UPDATE MEIN KYA HUA (v118 -> v200)
+------------------------------------------------------------
+Malik ki farmaish: bugs khatam, login aksar fail hoti thi, sirf Hazri + Salary rakho baqi sab hatao,
+har staff par PDF button, aaj ki sab larkon ki hazri ki PDF, fonts theek, layout bilkul naya,
+smart search, "AI based" layout, user friendly.
+
+Purani app (v118) ko patch karne ke bajaye NAYI SAAF APP likhi gayi:
+- Purani index.html 927 KB thi, V84 se V118 tak ke patch aik doosre ke upar (127 versioned functions),
+  premium-panels.css 449 KB, fonts 5 jagah se set the (600 KB base64 Nastaliq bhi). Isi liye bugs khatam nahi hote the.
+- Nayi app ~200 KB apna code + 400 KB PDF library (sirf pehli PDF par load hoti hai).
+
+HATAYA GAYA (sirf screen se; Firebase ka data NAHI mitaya):
+  sales / hisab entries, stock, purchases, batches, tasks + task pictures + task points, notifications,
+  suggestions (staff ki raaye), dukaan kholne/band karne ki hidayat, Urdu awaaz se likhna, change-history screen.
+  -> Ye data Firestore mein waise hi para hai. Wapas chahiye ho to alag app mein dikhaya ja sakta hai.
+  -> Task points salary mein ab nahi jurte (taskPoints hamesha 0). Hazri ke points (autoScore/finalScore) × pointRate ab bhi jurte hain.
+
+LOGIN FAIL HONE KI WAJUHAT JO MILIN AUR THEEK KIN:
+  a) Malik "admin" likhta tha to app har dafa 3 emails try karti thi -> Firebase "too-many-requests" block.
+     Ab: jo email aik dafa chal jaye wo yaad (localStorage 'nt-hazri-owner-email') aur pehle wohi try hoti hai.
+  b) Staff login 3 qadam (anonymous sign-in -> session likhna -> account parhna); kamzor net par beech mein toot jata tha.
+     Ab: har qadam withRetry (3 koshish, sirf network wali ghaltiyon par).
+  c) App dobara kholne par kisi bhi chhoti network ghalti par login screen aa jati thi.
+     Ab: staff ka session localStorage mein (uid ke sath) -> foran andar, tasdeeq peeche. Network ghalti par bahar nahi nikalta;
+     sirf tab nikalta hai jab server bataye ke account band/delete hai.
+  d) "Username admin + password = phone" wala uljha tareeqa. Ab staff sirf mobile number likhta hai.
+  e) Saaf Roman-Urdu paigham har ghalti ke liye (auth.js -> loginErrorMessage).
+
+------------------------------------------------------------
+2. FILES (sab aik hi folder mein — malik GitHub web par flat upload karta hai)
+------------------------------------------------------------
+index.html        chhota shell + boot paigham (12 s mein na khule to "Dobara kholein")
+boot.js           asal Firebase SDK (gstatic 12.18.0) import kar ke startApp() ko deta hai
+app.js            login screen, malik/staff panel chalana, aik jagah se clicks/forms (data-action / data-form / data-change / data-input), update check
+core.js           sirf hisab: phone, Pakistan ka waqt, status, salary formula, smart search. DOM/Firebase nahi.
+auth.js           login controller (retry, cache, owner email yaad)
+data.js           Firestore listeners + saare likhne ke kaam
+owner.js          malik ki screens (Hazri / Salary / Staff + sheets)
+staffview.js      staff ki screens (Check-In/Out, meri hazri, meri salary, request)
+ui.js             icons, sheet (neeche se uthne wala panel), toast, selfie camera, GPS, PDF share
+pdf.js            4 PDF: rozana hazri, staff ka mahina (hazri + salary), mahine ka register, salary sheet
+styles.css        AKELA stylesheet
+sw.js             service worker (network pehle, cache 'nt-hazri-v200'; purane 'noor-traders-*' cache mitata hai)
+manifest.webmanifest, icon.svg, version.json
+archivo-latin.woff2, naskh-arabic-400.woff2, naskh-arabic-700.woff2   fonts (repo ke andar)
+jspdf.umd.min.js (2.5.2), jspdf.plugin.autotable.min.js (3.8.4)       PDF library
+firebase-config.js, firestore.rules, firebase.json, firestore.indexes.json, pages.yml, .nojekyll, .gitignore   PURANI WAISI HI (koi tabdeeli nahi)
+*.test.mjs, test-fake-sdk.mjs, package.json     tests (npm install; npm test)  — 36 tests pass
+LICENSES.txt, README.md
+
+PURANE REPO SE YE FILES DELETE KARNI HAIN (ab kaam ki nahi):
+  premium-panels.css, premium-workforce.css, staff-tasks.css, staff-tasks.js, staff-upgrades.js,
+  task-model.js, task-service.js, task-notifications.js, firebase-sync.js, auth-controller.js, build-inline.mjs,
+  attendance-live.test.mjs, dom.integration.mjs, fake-sdk.mjs, firestore.rules.mjs, notifications.test.mjs,
+  salary.test.mjs, shift-checkout.test.mjs, staff-upgrades.test.mjs, task-rules.mjs, tasks.test.mjs,
+  Noto-Nastaliq-Urdu-OFL.txt, FIREBASE_SETUP_URDU.md, LOCATION_REFERENCE.md, PREMIUM_REDESIGN_NOTE_URDU.txt,
+  SETUP_V84_URDU.md, SETUP_V85_URDU.md, START_HERE_URDU.md, UPDATE_ONLY.txt
+  (index.html, app.js, styles.css, sw.js, manifest, version.json, README.md, package.json, auth.test.mjs naye se badal jati hain)
+  Note: purani build-inline.mjs ab NAHI chalani — nayi app build ke baghair chalti hai.
+
+------------------------------------------------------------
+3. DATA MODEL (Firestore: businesses/noor-traders/...)  — purana hi, koi migration nahi
+------------------------------------------------------------
+staffAccounts/{phone}   name, role, address, phone, photo(dataURL), active, loginEnabled, joinDate(NAYA, ikhtiyari),
+                        salary{monthlySalary,dutyHours,workingDays,overtimeRate,pointRate,mealMode,mealRate,mealInSalary},
+                        salaryExtras[{id,month,kind:'bonus'|'advance',amount,note,date,by,at}]
+staff/{phone}           purani copy — saveStaff ab bhi likhta hai (purani hisab app ke liye)
+settings/main           purani hisab app; salaryConfig.{phone} / salaryExtras.{phone} best-effort updateDoc se barabar rakhe jate hain
+staffSessions/{uid}     sirf {phone, createdAt} (rules isi par chalte hain)
+staffConfig/main        shiftStart, shiftEnd, radius, instruction, scores{m10,m20,m30,m45,late}
+staffSchedules/{phone}  phone, useDefaultShift, shiftStart, shiftEnd, grace, weeklyOff[0-6, 0=Itwar]
+staffAttendance/{date_phone}  date, phone, name, checkIn, checkOut, checkInTs, checkOutTs, selfie, checkInLat/Lng/Accuracy/Distance,
+                        minutesLate, autoScore, finalScore, shiftStart, ownerNote, editedAt, editedBy, manual
+                        WAQT: naya record 24-ghante "HH:MM" mein likhta hai; purane "9:05 am" bhi parhe jate hain (core.parseTime). Screen par 12-ghante.
+staffRequests/{id}      staff sirf ye keys likh sakta hai: phone,kind,date,to,checkIn,checkOut,reason,status,createdAt,by (rules). kind leave|correction.
+                        Malik khud chutti lagaye to status:'approved' ke sath banta hai.
+staffPayroll/{month_phone}  state draft|final, snapshot (final ke waqt jama hisab), paid, payments[]
+staffAudit/{id}         har malik ki tabdeeli ka record (type, target, before, after, reason, by, at) — screen nahi, sirf record
+
+------------------------------------------------------------
+4. QAWAID (rules of logic)
+------------------------------------------------------------
+Status (core.statusFor): checkIn hai -> late agar (checkIn − shiftStart) > grace, warna present.
+  Checkin nahi -> manzoor chutti = leave; weeklyOff = off; AAJ shift+grace se pehle = waiting ("Abhi nahi aaya"); warna absent.
+  joinDate se pehle aur aane wale din = na (ginti mein nahi).
+Check-out baqi: shiftEnd guzar gaya aur checkOut khali (raat ki shift ke liye agla din). shiftEnd na ho to 24 ghante.
+Raat ki shift: openRecord() 16 ghante tak ka khula record deta hai, is liye aadhi raat ke baad bhi Check-Out lagta hai.
+Kaam ke minute: checkOut − checkIn, aadhi raat paar theek; 0 ya 16 ghante se zyada = ghalat, nahi gina jata.
+Salary (purani app wala formula, badla nahi):
+  hourly = monthlySalary / (dutyHours × workingDays)
+  har din: normal = min(kaam, dutyHours), overtime = baqi
+  final = normal×hourly + OT×(overtimeRate ya hourly) + points×pointRate + bonus + khana(agar mealInSalary) − advance
+  mahina "final" ho to snapshot hi dikhta hai (hazri badalne se nahi badalta). Final se pehle koi Check-Out baqi ho to final nahi hota.
+  Final mahine mein advance/bonus nahi likha/hataya ja sakta — pehle "Dobara kholein".
+  Payment sirf final ke baad, aur baqi se zyada nahi.
+Check-In: live selfie + GPS lazmi, dukaan (32.7979125, 73.956984375) se radius (default 200m) ke andar.
+  Server 12 s mein jawab na de to "phone mein mehfooz, signal aate hi jayegi" (Firestore persistent cache).
+
+------------------------------------------------------------
+5. "SMART / AI" KE BAARE MEIN — IMAANDARI SE
+------------------------------------------------------------
+Ye cloud AI nahi hai, app ke andar ke qawaid (rules) hain, is liye internet ke baghair aur muft chalte hain:
+- Smart talash (core.parseQuery/smartSearch): naam (1-2 harf ki ghalti maaf), number, tareekh ("15 sep", "12/9", "kal", "aaj",
+  "is hafte", "pichle mahine", "december"), status ("late", "ghair hazir", "nahi aaya", "chutti"), "checkout baqi",
+  "salary baqi", "advance". Misal: "late is hafte", "ali pichle mahine".
+- "Tawajju chahiye" (owner.js attention): Check-Out baqi, jawab baqi requests, is hafte 3+ dafa late, pichle mahine ki salary final nahi (mahine ki 1-10 tareekh).
+- Qataarein khud tarteeb: Check-Out baqi > Late > abhi nahi aaya > ghair hazir > hazir > chutti.
+
+------------------------------------------------------------
+6. LAYOUT / DESIGN
+------------------------------------------------------------
+Roman Urdu UI, LTR. Rang: ink blue #1b2a4a, zameen #eef1f7; hara=hazir, narangi=late, surkh=ghair hazir, jamni=chutti.
+Pehchan: kaghaz wale hazri register jaisi lakeerein + surkh hashiya (margin line) + halki tirchi "stamp" status.
+Mobile: neeche 3 tab (Hazri / Salary / Staff); upar talash. Desktop (860px+): tab upar.
+Font: Archivo (Roman + ginti) + Noto Naskh Arabic (sirf Urdu lipi wale naamon ke liye). Doosra koi font nahi.
+PDF mein Urdu lipi wala matn tasveer bana kar lagta hai (jsPDF Urdu font nahi banata).
+
+------------------------------------------------------------
+7. UPLOAD KA TAREEQA (malik ke liye)
+------------------------------------------------------------
+1) GitHub repo kholein -> "Add file" -> "Upload files" -> zip ke andar ki SAB files ek sath daal dein (folder nahi, sirf files) -> Commit.
+2) Upar wali list ki purani files delete karein (har file kholein -> ... -> Delete file).
+3) 1-2 minute baad app kholein; neeche/login par "v200" likha aaye.
+Firebase mein kuch nahi badalna. Firestore rules waise hi hain. Authentication mein "Anonymous" aur "Email/Password" dono ON rehne chahiye.
+
+------------------------------------------------------------
+8. KYA TEST HUA, KYA NAHI
+------------------------------------------------------------
+Hua: 36 automated tests (hisab, status, salary, talash, login ke saare raaste, aur poori app naqli Firebase + happy-dom par:
+  login -> hazri -> hazri durust -> request manzoor -> talash -> naya staff -> advance -> final -> payment -> staff check-in/out -> request).
+  4 PDF Node mein ban kar tasveer ki shakal mein dekhi gayin.
+Nahi hua (yahan mumkin nahi tha): asal Firebase/rules ke sath, asal phone ka camera aur GPS, asal browser mein dekhna (layout).
+  -> Pehli dafa chalate waqt in cheezon ko dhyan se dekhein.
+
+------------------------------------------------------------
+9. AGLE KAAM / KHULE SAWAL
+------------------------------------------------------------
+- Malik ka pehla message "...user friendly bi ho or es ka" par kat gaya tha; baqi hissa abhi maloom nahi.
+- Staff ka number badalna: abhi nahi hota (naya staff banao, purana band karo). Chahiye ho to hazri records move karne wala feature banana hoga.

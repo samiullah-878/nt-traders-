@@ -1,0 +1,131 @@
+// Poori app naqli Firebase + happy-dom par: login se le kar salary final tak. Asal browser ka badal nahi, lekin runtime ghaltiyan pakarta hai.
+import test from 'node:test'; import assert from 'node:assert/strict';
+import { Window } from 'happy-dom';
+import { fakeSdk, memoryStorage, B } from './test-fake-sdk.mjs';
+
+const win = new Window({ url: 'https://example.test/app/' });
+Object.assign(globalThis, { window: win, document: win.document, File: win.File, requestAnimationFrame: fn => setTimeout(fn, 0) });
+Object.defineProperty(globalThis, 'navigator', { value: win.navigator, configurable: true, writable: true });
+win.confirm = () => true; globalThis.confirm = win.confirm;
+win.fetch = async () => ({ ok: true, json: async () => ({ version: 'v200' }) });
+win.scrollTo = () => {};
+win.document.body.innerHTML = '<div id="app" data-screen="boot"></div><div id="sheetHost"></div><div id="toast"></div>';
+const { startApp } = await import('./app.js');
+const C = await import('./core.js');
+
+const today = C.pkDate(), month = today.slice(0, 7), yesterday = C.addDays(today, -1);
+const records = new Map([
+  [B + 'staffConfig/main', { shiftStart: '09:00', shiftEnd: '19:00', radius: 200 }],
+  [B + 'staffAccounts/03001234567', { name: 'Ali Raza', phone: '03001234567', role: 'Salesman', salary: { monthlySalary: 30000, dutyHours: 10, workingDays: 30 } }],
+  [B + 'staffAccounts/03007654321', { name: 'بلال احمد', phone: '03007654321', role: 'Helper', salary: { monthlySalary: 24000, dutyHours: 10, workingDays: 30 } }],
+  [B + `staffAttendance/${today}_03001234567`, { date: today, phone: '03001234567', checkIn: '9:25 am', checkOut: '', autoScore: 6 }],
+  [B + `staffRequests/r1`, { phone: '03007654321', kind: 'leave', date: today, to: today, checkIn: '', checkOut: '', reason: 'Bimar', status: 'pending', createdAt: 5, by: 'x' }]
+]);
+if (yesterday.slice(0, 7) === month) records.set(B + `staffAttendance/${yesterday}_03001234567`, { date: yesterday, phone: '03001234567', checkIn: '09:00', checkOut: '19:30', autoScore: 10 });
+const fake = fakeSdk({ records }), storage = memoryStorage();
+const app = startApp({ sdk: fake.sdk, firebaseConfig: {}, storage, win });
+const doc = win.document, $ = s => doc.querySelector(s), $$ = s => [...doc.querySelectorAll(s)];
+const settle = async (n = 6) => { for (let i = 0; i < n; i++) await new Promise(r => setTimeout(r, 4)); };
+const click = async sel => { const el = typeof sel === 'string' ? $(sel) : sel; assert.ok(el, 'nahi mila: ' + sel); el.dispatchEvent(new win.MouseEvent('click', { bubbles: true, cancelable: true })); await settle(); };
+const submit = async form => { form.dispatchEvent(new win.Event('submit', { bubbles: true, cancelable: true })); await settle(10); };
+const fill = (form, values) => { for (const [k, v] of Object.entries(values)) { const el = form.elements[k] || form.querySelector(`[name=${k}]`); assert.ok(el, 'field nahi: ' + k); if (el.type === 'checkbox') el.checked = v; else el.value = v; } };
+const toastText = () => $('#toast').textContent;
+
+test('login screen khulti hai, staff tab pehle', async () => {
+  await settle();
+  assert.equal($('#app').dataset.screen, 'login'); assert.ok($('input[name=phone]'));
+});
+test('ghalat number par saaf paigham', async () => {
+  fill($('form[data-form=login]'), { phone: '123' }); await submit($('form[data-form=login]'));
+  assert.match($('.login-error').textContent, /mobile number/);
+});
+test('malik login → Hazri tab, qataarein, tawajju', async () => {
+  await click('[data-action=login-role][data-arg=owner]');
+  fill($('form[data-form=login]'), { password: 'malik-ka-password' }); await submit($('form[data-form=login]'));
+  assert.equal($('#app').dataset.screen, 'owner');
+  assert.equal($$('.register .row').length, 2);
+  assert.match($('.register').textContent, /Ali Raza/); assert.match($('.register').textContent, /Late 25m/);
+  assert.ok($('.ur'), 'Urdu naam apne font class ke sath');
+  assert.match($('.attention').textContent, /request/);
+  assert.ok($$('.row-pdf').length === 2, 'har staff par PDF button');
+});
+test('filter, din badalna, mahine ka jaal', async () => {
+  await click('[data-action=filter][data-arg=late]'); assert.equal($$('.register .row').length, 1);
+  await click('[data-action=filter][data-arg=all]');
+  await click('[data-action=step][data-arg="-1"]'); assert.ok($('[data-action=today]'));
+  await click('[data-action=today]');
+  await click('[data-action=view][data-arg=month]'); assert.ok($('table.grid')); assert.equal($$('table.grid tbody tr').length, 2);
+  await click('[data-action=view][data-arg=day]');
+});
+test('profile sheet → hazri durust → save', async () => {
+  await click('.row-main[data-phone="03001234567"]'); assert.ok($('[data-sheet=profile]'));
+  assert.match($('[data-sheet=profile]').textContent, /Hazir/);
+  await click(`[data-sheet=profile] [data-action=edit-att][data-date="${today}"]`);
+  const form = $('form[data-form=att]'); assert.equal(form.elements.checkIn.value, '09:25');
+  fill(form, { checkOut: '19:45', note: 'Bhool gaya tha' }); await submit(form);
+  assert.equal(records.get(B + `staffAttendance/${today}_03001234567`).checkOut, '19:45'); assert.match(toastText(), /save/);
+  assert.ok([...records.keys()].some(k => k.includes('staffAudit')));
+  await click('[data-sheet=profile] [data-sheet-close]'); assert.equal($('[data-sheet=profile]'), null);
+});
+test('request manzoor → staff chutti par', async () => {
+  await click('[data-action=requests]'); await click('[data-action=req][data-arg=approved]');
+  assert.equal(records.get(B + 'staffRequests/r1').status, 'approved');
+  await click('[data-sheet=requests] [data-sheet-close]');
+  assert.match($('.register').textContent, /Chutti/);
+});
+test('smart talash', async () => {
+  await click('[data-action=search]'); const input = $('#smartInput'); input.value = 'late aaj'; input.dispatchEvent(new win.Event('input', { bubbles: true })); await settle();
+  assert.match($('#smartResults').textContent, /1 record/); assert.match($('#smartResults').textContent, /Ali Raza/);
+  await click('[data-sheet=search] .chip[data-arg="salary baqi"]'); assert.match($('#smartResults').textContent, /staff/);
+  input.value = 'بلال'; input.dispatchEvent(new win.Event('input', { bubbles: true })); await settle(); assert.match($('#smartResults').textContent, /1 staff/);
+  await click('[data-sheet=search] [data-sheet-close]');
+});
+test('naya staff + settings', async () => {
+  await click('[data-action=tab][data-arg=staff]'); await click('[data-action=staff-new]');
+  const form = $('form[data-form=staff]'); fill(form, { name: 'Usman', phone: '0311-1112223', role: 'Helper', monthlySalary: '20000' }); await submit(form);
+  const saved = records.get(B + 'staffAccounts/03111112223'); assert.equal(saved.name, 'Usman'); assert.equal(saved.salary.monthlySalary, 20000); assert.equal(saved.joinDate, today);
+  assert.ok(records.get(B + 'staffSchedules/03111112223')); assert.ok(records.get(B + 'staff/03111112223'));
+  assert.equal($('[data-sheet=staff-form]'), null);
+  await click('[data-action=staff-new]'); fill($('form[data-form=staff]'), { name: 'Dobara', phone: '03111112223' }); await submit($('form[data-form=staff]'));
+  assert.match(toastText(), /pehle se mojood/); await click('[data-sheet=staff-form] [data-sheet-close]');
+  await click('[data-action=settings]'); fill($('form[data-form=settings]'), { shiftStart: '10:00', radius: '150' }); await submit($('form[data-form=settings]'));
+  assert.equal(records.get(B + 'staffConfig/main').shiftStart, '10:00'); assert.equal(records.get(B + 'staffConfig/main').radius, 150);
+});
+test('salary: advance → final → payment', async () => {
+  await click('[data-action=tab][data-arg=salary]'); assert.ok($('.totals'));
+  await click('.row-main[data-action=salary][data-phone="03001234567"]');
+  const extra = $('form[data-form=extra]'); fill(extra, { kind: 'advance', amount: '500', note: 'Kharcha' }); await submit(extra);
+  assert.equal(records.get(B + 'staffAccounts/03001234567').salaryExtras.length, 1);
+  assert.match($('[data-sheet=salary]').textContent, /Advance/);
+  await click('[data-sheet=salary] [data-action=final]');
+  const pay = records.get(B + `staffPayroll/${month}_03001234567`); assert.equal(pay.state, 'final'); assert.equal(pay.snapshot.advance, 500);
+  const payment = $('form[data-form=payment]'); assert.ok(payment, 'final ke baad payment form'); fill(payment, { amount: '100' }); await submit(payment);
+  assert.equal(records.get(B + `staffPayroll/${month}_03001234567`).paid, 100);
+  assert.equal($('form[data-form=extra]'), null, 'final mahine mein advance band');
+  await click('[data-sheet=salary] [data-sheet-close]');
+});
+test('logout → staff login → check-in / check-out', async () => {
+  await click('[data-action=tab][data-arg=staff]'); await click('[data-action=logout]'); await settle();
+  assert.equal($('#app').dataset.screen, 'login');
+  await click('[data-action=login-role][data-arg=staff]');
+  fill($('form[data-form=login]'), { phone: '0311 1112223' }); await submit($('form[data-form=login]')); await settle(10);
+  assert.equal($('#app').dataset.screen, 'staff'); assert.match($('.brand').textContent, /Usman/);
+  assert.ok($('[data-action=check-in]'), 'Check-In button');
+  const r = await app.data.checkIn({ selfie: 'data:image/jpeg;base64,AAAA', gps: { lat: 32.7979, lng: 73.9569, accuracy: 10, distance: 12 } }); assert.equal(r.queued, false); await settle();
+  assert.ok(records.get(B + `staffAttendance/${today}_03111112223`).checkIn);
+  await assert.rejects(app.data.checkIn({ selfie: 'x', gps: { distance: 900 } }), /door/);
+  assert.ok($('[data-action=check-out]'), 'ab Check-Out button');
+  Object.defineProperty(win.navigator, 'geolocation', { value: undefined, configurable: true });
+  await click('[data-action=check-out]'); await settle(10);
+  assert.ok(records.get(B + `staffAttendance/${today}_03111112223`).checkOut); assert.match($('.punch').textContent, /mukammal/);
+});
+test('staff: request bhejna (sirf rules wali keys), salary tab', async () => {
+  await click('[data-action=tab][data-arg=request]');
+  const form = $('form[data-form=request]'); fill(form, { reason: 'Shadi hai' }); await submit(form);
+  const req = [...records].find(([k, v]) => k.includes('staffRequests/') && v.reason === 'Shadi hai')[1];
+  assert.deepEqual(Object.keys(req).sort(), ['by', 'checkIn', 'checkOut', 'createdAt', 'date', 'kind', 'phone', 'reason', 'status', 'to']);
+  await click('[data-action=tab][data-arg=salary]'); assert.match($('.calc').textContent, /Mahana salary/);
+  await click('[data-action=tab][data-arg=hazri]'); assert.ok($('.days'));
+});
+
+test.after(async () => { app.data.stop(); await win.happyDOM.abort(); win.close(); });
