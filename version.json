@@ -1,6 +1,6 @@
 {
-  "version": "v201",
+  "version": "v203",
   "variant": "Production",
   "buildDate": "2026-09-21",
-  "notes": "Nayi saaf app: sirf Hazri + Salary. Naya login, naya layout, asal PDF, smart talash."
+  "notes": "Tez app: login screen foran, save foran, GitHub/Firebase links."
 }

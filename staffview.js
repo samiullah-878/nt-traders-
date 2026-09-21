@@ -3,7 +3,7 @@ import {
   APP_VERSION, STATUS_LABEL, DAY_SHORT, SHOP, esc, money, hm, fmtTime, pkDate, pkMinutes, addMonths, weekday, monthLabel, dateLabel, shortDate,
   monthSummary, openRecord, workMinutes, parseTime, checkoutDue, shiftMinutes
 } from './core.js';
-import { icon, avatar, nameHtml, toast, busy, takeSelfie, getGps, deliverPdf, errorText } from './ui.js';
+import { icon, avatar, nameHtml, toast, busy, takeSelfie, getGps, deliverPdf, errorText, timeField, IN_TICKETS, OUT_TICKETS } from './ui.js';
 import { loadPdfLib, browserTextImages, staffMonthPdf } from './pdf.js';
 
 export function createStaffView({ data, rerender, logout, checkUpdate }) {
@@ -94,7 +94,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate }) {
         <input type="hidden" name="kind" value="${kind}">
         ${kind === 'leave'
           ? `<div class="two"><label>Kab se<input name="date" type="date" value="${esc(ui.reqDate || today)}" required></label><label>Kab tak<input name="to" type="date" value="${esc(ui.reqDate || today)}" required></label></div>`
-          : `<label>Kis din ki hazri<input name="date" type="date" value="${esc(ui.reqDate || today)}" max="${today}" required></label><div class="two"><label>Sahi aane ka waqt<input name="checkIn" type="time"></label><label>Sahi jane ka waqt<input name="checkOut" type="time"></label></div><p class="hint">Jo waqt theek hai use khali chhor dein.</p>`}
+          : `<label>Kis din ki hazri<input name="date" type="date" value="${esc(ui.reqDate || today)}" max="${today}" required></label>${timeField('checkIn', '', { label: 'Sahi aane ka waqt', tickets: IN_TICKETS, optional: true })}${timeField('checkOut', '', { label: 'Sahi jane ka waqt', tickets: OUT_TICKETS, optional: true })}<p class="hint">Jo waqt theek hai use khali chhor dein.</p>`}
         <label>Wajah<textarea name="reason" rows="3" maxlength="1000" required placeholder="${kind === 'leave' ? 'Chutti kyun chahiye' : 'Maslan: Check-Out karna bhool gaya'}"></textarea></label>
         <div class="btn-row"><button class="btn btn-primary btn-lg">Malik ko bhejein</button></div></form></section>
       <h2 class="section-label">Meri requests</h2>

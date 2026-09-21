@@ -32,6 +32,7 @@ export function fakeSdk({ records = new Map(), initialUser = null, ownerPassword
     getDoc: async ref => snapshot(ref), getDocs: async ref => snapshot(ref),
     async setDoc(ref, data, options) { apply([['set', ref, data, options]]); }, async updateDoc(ref, data) { apply([['update', ref, data]]); }, async deleteDoc(ref) { apply([['delete', ref]]); },
     onSnapshot(ref, ...args) { const callback = args.find(a => typeof a === 'function'); const entry = { ref, callback }; listeners.add(entry); queueMicrotask(() => { if (listeners.has(entry)) callback(snapshot(ref)); }); return () => listeners.delete(entry); },
+    writeBatch() { const writes = []; return { set: (r, d, o) => writes.push(['set', r, d, o]), update: (r, d) => writes.push(['update', r, d]), delete: r => writes.push(['delete', r]), commit: async () => { await null; apply(writes); } }; },
     runTransaction(_fs, fn) { const result = chain.then(async () => { const writes = []; const ret = await fn({ get: async r => snapshot(r), set: (r, d, o) => writes.push(['set', r, d, o]), delete: r => writes.push(['delete', r]) }); apply(writes); return ret; }); chain = result.catch(() => {}); return result; },
     onAuthStateChanged(_a, callback) { authListeners.add(callback); queueMicrotask(() => callback(auth.currentUser)); return () => authListeners.delete(callback); },
     signOut: async () => setUser(null),

@@ -1,10 +1,10 @@
 // owner.js — malik ka panel: Hazri, Salary, Staff.
 import {
   APP_VERSION, STATUS_LABEL, STATUS_MARK, DAY_SHORT, SHOP, esc, money, hm, fmtTime, to24, pkDate, pkMinutes, pkTime24, addDays, addMonths, weekday,
-  monthDates, monthLabel, dateLabel, shortDate, weekRange, dayRows, countStatuses, monthSummary, smartSearch, salaryConfig, checkoutDue, isDate,
-  shiftMinutes, usesDefaultSalary, weekSummary, isClosed, loanCuts, workMinutes
+  monthDates, monthLabel, dateLabel, parseTime, shortDate, weekRange, dayRows, countStatuses, monthSummary, smartSearch, salaryConfig, checkoutDue, isDate,
+  shiftMinutes, usesDefaultSalary, weekSummary, isClosed, loanCuts, workMinutes, parseTime as C_parse
 } from './core.js';
-import { icon, avatar, nameHtml, toast, busy, openSheet, refreshSheets, fileToDataUrl, deliverPdf, $, errorText } from './ui.js';
+import { icon, avatar, nameHtml, toast, busy, openSheet, refreshSheets, fileToDataUrl, deliverPdf, $, errorText, timeField, IN_TICKETS, OUT_TICKETS } from './ui.js';
 import { loadPdfLib, browserTextImages, dailyPdf, staffMonthPdf, registerPdf, salarySheetPdf } from './pdf.js';
 
 const ORDER = { due: 0, late: 1, waiting: 2, absent: 3, loading: 3, present: 4, leave: 5, off: 6, closed: 6, na: 7 };
@@ -12,7 +12,7 @@ const FILTERS = [['all', 'Sab'], ['present', 'Hazir'], ['late', 'Late'], ['absen
 
 export function createOwnerView({ data, controller, rerender, logout, checkUpdate }) {
   const S = data.state;
-  const ui = { tab: 'hazri', view: 'day', date: pkDate(), month: pkDate().slice(0, 7), filter: 'all', salaryMonth: pkDate().slice(0, 7), staffQuery: '', showInactive: false };
+  const ui = { openTickets: new Set(), tab: 'hazri', view: 'day', date: pkDate(), month: pkDate().slice(0, 7), filter: 'all', salaryMonth: pkDate().slice(0, 7), staffQuery: '', showInactive: false };
   const activeStaff = () => S.staff.filter(s => s.active !== false);
   const context = () => ({ requests: S.requests, schedules: S.schedules, config: S.config, today: pkDate(), nowMin: pkMinutes(), now: Date.now() });
   // Hazri abhi Firebase se nahi aayi to "Ghair hazir" nahi, "Load ho rahi" dikhao (pehle yehi ghalat-fehmi hoti thi).
@@ -32,6 +32,8 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     : data.monthLoaded(month) ? '' : `<p class="loading-line">${esc(monthLabel(month))} ki hazri load ho rahi hai…</p>`;
 
   const resolveBase = () => data.scheduleFor('__default__');
+  // Aane ka waqt PM aur jane ka AM = shayad ghalti se raat ki duty save ho gayi (purane ghari wale picker ki wajah se)
+  const nightShift = c => { const a = C_parse(c.shiftStart), b = C_parse(c.shiftEnd); return a != null && b != null && a >= 12 * 60 && b < a; };
   /* ================= HAZRI ================= */
   function attention() {
     const today = pkDate(), items = [];
@@ -48,6 +50,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       const open = activeStaff().filter(s => data.calcFor(s, prev).daysWorked > 0 && data.payrollFor(s.phone, prev)?.state !== 'final');
       if (open.length) items.push({ tone: 'ink', icon: 'wallet', title: `${monthLabel(prev)} ki salary final nahi`, text: `${open.length} staff baqi`, action: 'salary-month', arg: prev });
     }
+    if (nightShift(S.config)) items.unshift({ tone: 'bad', icon: 'alert', title: `Default duty ghalat lag rahi hai: ${dutyText(resolveBase())}`, text: 'Daba kar AM / PM theek karein', action: 'settings', arg: '' });
     if (!items.length) return '';
     return `<section class="attention" aria-label="Tawajju chahiye"><h2 class="section-label">Tawajju chahiye</h2><div class="attention-list">${items.map(i =>
       `<button type="button" class="att-card tone-${i.tone}" data-action="${i.action}" data-arg="${esc(i.arg || '')}">${icon(i.icon, 22)}<span><b>${esc(i.title)}</b><small>${esc(i.text || '')}</small></span></button>`).join('')}</div></section>`;
@@ -67,16 +70,22 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       if (minutes != null) chips.push(`<span class="tag t-ink">${hm(minutes)}${duty && minutes > duty ? ' (+' + hm(minutes - duty) + ' OT)' : ''}</span>`);
       if (a.manual) chips.push('<span class="tag">Malik ne lagayi</span>');
     }
+    // Tickets: aik tap se Aaya / Gaya ka waqt. Bhool jane wale larke ke liye.
+    const key = s.phone + '|' + date, open = ui.openTickets.has(key);
+    const tix = (kind, list, current) => `<div class="tix"><span class="tix-label">${kind === 'in' ? 'Aaya' : 'Gaya'}:</span>${[...new Set(list.filter(Boolean))].sort().map(v =>
+      `<button type="button" class="tix-btn${current === v ? ' is-on' : ''}" data-action="tix" data-kind="${kind}" data-phone="${s.phone}" data-date="${date}" data-arg="${v}">${esc(fmtTime(v).replace(' am', '').replace(' pm', ''))}<small>${parseTime(v) >= 720 ? 'pm' : 'am'}</small></button>`).join('')}</div>`;
+    const inList = [to24(sch.shiftStart), ...IN_TICKETS], outList = [...OUT_TICKETS, to24(sch.shiftEnd)];
     let quick = '';
-    if (due) quick = `<button type="button" class="quick q-bad" data-action="close-due" data-arg="${esc(a.id)}">Duty ke waqt par band karein</button>`;
-    else if (['absent', 'waiting'].includes(status)) quick = `<button type="button" class="quick" data-action="quick-present" data-phone="${s.phone}" data-date="${date}">${icon('check', 16)} Hazir lagao</button>`;
+    if (['absent', 'waiting', 'loading'].includes(status) && status !== 'loading') quick = tix('in', inList, '');
+    else if (a.checkIn && !a.checkOut) quick = tix('out', outList, '') + (open ? tix('in', inList, to24(a.checkIn)) : `<button type="button" class="tix-more" data-action="tix-open" data-arg="${key}">Aaya badlein</button>`);
+    else if (a.checkIn) quick = open ? tix('in', inList, to24(a.checkIn)) + tix('out', outList, to24(a.checkOut)) : `<button type="button" class="tix-more" data-action="tix-open" data-arg="${key}">Waqt badlein</button>`;
     return `<li class="row s-${status}${due ? ' is-due' : ''}">
       <div class="row-col">
         <button type="button" class="row-main" data-action="profile" data-phone="${s.phone}" data-date="${date}">
           ${avatar(s)}<span class="row-text"><b>${nameHtml(s.name)}</b><small>${esc(s.role || 'Staff')}</small></span>
           <span class="stamp st-${status}">${esc(stamp)}</span>
         </button>
-        <div class="tags">${chips.join('')}${quick}</div>
+        <div class="tags">${chips.join('')}</div>${quick ? `<div class="tix-wrap">${quick}</div>` : ''}
       </div>
       <button type="button" class="row-pdf" data-action="pdf-staff" data-phone="${s.phone}" data-month="${date.slice(0, 7)}" aria-label="${esc(s.name)} ki PDF">${icon('pdf', 18)}<span>PDF</span></button>
     </li>`;
@@ -234,6 +243,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         <button type="button" class="tool" data-action="requests">${icon('note')}<span><b>Chutti / correction ki requests</b><small>${pend ? pend + ' ka jawab baqi' : 'Koi nayi request nahi'}</small></span>${pend ? `<em class="badge">${pend}</em>` : ''}</button>
         <button type="button" class="tool" data-action="settings">${icon('clock')}<span><b>Default duty aur default salary</b><small>${esc(dutyText(resolveBase()))} &nbsp;|&nbsp; ${S.config.salaryDefault?.monthlySalary ? money(S.config.salaryDefault.monthlySalary) : 'salary likhi nahi'} &nbsp;|&nbsp; ${Number(S.config.radius || SHOP.radius)}m</small></span></button>
         <button type="button" class="tool" data-action="password">${icon('edit')}<span><b>Malik ka password badlein</b></span></button>
+        <button type="button" class="tool" data-action="links">${icon('share')}<span><b>Update ke links</b><small>GitHub upload · Firebase rules</small></span></button>
         <button type="button" class="tool" data-action="khata">${icon('book')}<span><b>Advance / qarz ka khata</b></span></button>
         <button type="button" class="tool" data-action="diag">${icon('alert')}<span><b>App ki jaanch</b><small>Hazri na dikhe to is ka screenshot bhejein</small></span></button>
         <button type="button" class="tool" data-action="update">${icon('down')}<span><b>App update check karein</b><small>Abhi ${APP_VERSION}</small></span></button>
@@ -254,7 +264,8 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         <fieldset><legend>Duty ka waqt</legend>
           <label class="check"><input type="checkbox" name="useDefaultShift" ${!own || own.useDefaultShift !== false ? 'checked' : ''} data-change="toggle-box" data-arg="ownShift" data-invert="1"> Default duty (${esc(dutyText(resolveBase()))})</label>
           <div id="ownShift" class="sub-box" ${!own || own.useDefaultShift !== false ? 'hidden' : ''}>
-            <div class="two"><label>Shuru<input name="shiftStart" type="time" value="${esc(to24(sch.shiftStart) || '09:00')}"></label><label>Khatam<input name="shiftEnd" type="time" value="${esc(to24(sch.shiftEnd))}"></label></div>
+            ${timeField('shiftStart', to24(sch.shiftStart) || '09:15', { label: 'Duty shuru', tickets: IN_TICKETS })}
+            ${timeField('shiftEnd', to24(sch.shiftEnd) || '19:00', { label: 'Duty khatam', tickets: OUT_TICKETS })}
             <label>Late ki riayat (minute)<input name="grace" type="number" inputmode="numeric" min="0" max="120" value="${Number(sch.grace ?? 10)}"></label>
           </div>
           <label>Hafta-war chutti<select name="weeklyOff"><option value="">Koi nahi</option>${['Itwar', 'Peer', 'Mangal', 'Budh', 'Jumerat', 'Juma', 'Hafta'].map((d, i) => `<option value="${i}" ${(own?.weeklyOff || []).map(Number).includes(i) ? 'selected' : ''}>${d}</option>`).join('')}</select></label>
@@ -317,13 +328,13 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     return openSheet({
       id: 'att', title: 'Hazri durust karein',
       render(sh) {
-        const s = account(phone) || { name: phone }, a = data.attendanceBetween(date, date).find(x => x.phone === phone) || {};
+        const s = account(phone) || { name: phone }, a = data.attendanceBetween(date, date).find(x => x.phone === phone) || {}, sch = data.scheduleFor(phone);
         sh.setTitle(`${nameHtml(s.name)} <small>${esc(dateLabel(date))}</small>`);
         return `<form class="form" data-form="att" data-phone="${phone}" data-id="${esc(a.id || '')}">
           ${a.selfie ? `<div class="proof"><img src="${esc(a.selfie)}" alt="Check-In ki selfie"><p>${icon('pin', 16)} Dukaan se ${a.checkInDistance != null ? Math.round(a.checkInDistance) + 'm' : '—'}<br><small>Selfie Check-In ke waqt li gayi</small></p></div>` : ''}
           <label>Tareekh<input name="date" type="date" value="${date}" max="${pkDate()}" required ${a.id ? 'readonly' : ''}></label>
-          <div class="two"><label>Aaya<input name="checkIn" type="time" value="${esc(to24(a.checkIn))}" required></label><label>Gaya<input name="checkOut" type="time" value="${esc(to24(a.checkOut))}"></label></div>
-          <div class="btn-row"><button type="button" class="btn btn-ghost btn-sm" data-action="fill-time" data-arg="checkIn">Aane ka waqt = duty shuru</button><button type="button" class="btn btn-ghost btn-sm" data-action="fill-time" data-arg="checkOut">Jane ka waqt = abhi</button></div>
+          ${timeField('checkIn', to24(a.checkIn), { label: 'Aaya', tickets: [to24(sch.shiftStart), ...IN_TICKETS].sort(), now: date === pkDate() })}
+          ${timeField('checkOut', to24(a.checkOut), { label: 'Gaya', tickets: [...OUT_TICKETS, to24(sch.shiftEnd)].sort(), optional: true, now: date === pkDate() })}
           <label>Note <small>(kyun badla)</small><input name="note" value="${esc(a.ownerNote || '')}" maxlength="200"></label>
           <div class="btn-row sticky"><button class="btn btn-primary btn-lg">Save karein</button>${a.id ? `<button type="button" class="btn btn-ghost" data-action="att-delete" data-id="${esc(a.id)}">Hazri hatayein</button>` : ''}</div>
         </form>`;
@@ -358,7 +369,9 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       const hrs = shiftMinutes(resolveBase());
       return `<form class="form" data-form="settings">
       <fieldset id="setDuty"><legend>Default duty (sab par)</legend>
-        <div class="two"><label>Aane ka waqt<input name="shiftStart" type="time" value="${esc(to24(c.shiftStart) || '09:00')}" required></label><label>Jane ka waqt<input name="shiftEnd" type="time" value="${esc(to24(c.shiftEnd))}"></label></div>
+        ${timeField('shiftStart', to24(c.shiftStart) || '09:15', { label: 'Aane ka waqt', tickets: IN_TICKETS })}
+        ${timeField('shiftEnd', to24(c.shiftEnd) || '19:00', { label: 'Jane ka waqt', tickets: OUT_TICKETS })}
+        ${nightShift(c) ? `<p class="error-line">${icon('alert', 18)} <span>Abhi duty <b>${esc(dutyText(resolveBase()))}</b> save hai — ye raat ki duty lag rahi hai. Din ki duty ho to upar AM / PM theek kar ke Save karein.</span></p>` : ''}
         <p class="hint">${hrs ? 'Duty: <b>' + hm(hrs) + '</b> roz. Isi se default salary ke ghante bante hain.' : 'Jane ka waqt likhein taake roz ke ghante khud ban jayein.'}</p>
         <div class="two"><label>Late ki riayat (minute)<input name="grace" type="number" inputmode="numeric" min="0" max="120" value="${Number(c.grace ?? 10)}"></label>
         <label>Check-In ki had (meter)<input name="radius" type="number" inputmode="numeric" min="20" max="5000" value="${Number(c.radius || SHOP.radius)}" required></label></div>
@@ -395,6 +408,29 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       return rows.length ? `<p class="hint">Advance usi mahine ki salary se kat-ta hai. Qarz har mahine qist mein kat-ta hai. Naya advance ya qarz staff ki salary mein likhein.</p>
         <ol class="register">${rows.map(r => `<li class="row"><button type="button" class="row-main" data-action="salary" data-phone="${r.s.phone}" data-month="${month}">${avatar(r.s)}<span class="row-text"><b>${nameHtml(r.s.name)}</b><small>Is mahine advance ${money(r.advThis)} &nbsp;|&nbsp; Is saal ${money(r.advYear)}${r.loans.filter(l => l.remainingBefore).map(l => ` &nbsp;|&nbsp; Qarz qist ${money(l.perMonth)}`).join('')}</small></span><span class="amount"><b class="${r.owed ? 'txt-bad' : ''}">${money(r.owed)}</b><small>qarz baqi</small></span></button></li>`).join('')}</ol>`
         : '<p class="empty-line">Kisi ka koi advance ya qarz nahi.</p>';
+    } });
+  }
+  /** GitHub ka pata website ke address se: <user>.github.io/<repo>/  ->  github.com/<user>/<repo> */
+  function repoInfo() {
+    const host = location.hostname || '', seg = (location.pathname || '/').split('/').filter(Boolean)[0] || '';
+    if (/\.github\.io$/i.test(host)) { const user = host.split('.')[0]; return { user, repo: seg && !/\.html?$/.test(seg) ? seg : host }; }
+    return null;
+  }
+  function linksSheet() {
+    return openSheet({ id: 'links', title: 'Update ke links', render: () => {
+      const r = repoInfo(), gh = r ? `https://github.com/${r.user}/${r.repo}` : '', fb = `https://console.firebase.google.com/project/${data.projectId}`;
+      const link = (href, title, text) => `<a class="tool link-card" href="${esc(href)}" target="_blank" rel="noopener">${icon('share')}<span><b>${title}</b><small>${text}</small></span>${icon('right', 18)}</a>`;
+      return `<p class="hint">Naya update: zip ki saari files <b>GitHub upload</b> par daal kar "Commit changes" dabayein. 1-2 minute baad app khud nayi version le legi.</p>
+        <div class="panel tools">
+          ${gh ? link(gh + '/upload/main', '1. GitHub — files upload karein', esc(r.user + '/' + r.repo) + ' · main') : '<p class="hint pad">GitHub ka pata nahi mila (app github.io par nahi khuli).</p>'}
+          ${gh ? link(gh + '/actions', '2. GitHub — deploy check karein', 'Hara nishan = nayi version live') : ''}
+          ${gh ? link(gh, 'GitHub — poora repo', 'Files dekhna / purani file delete karna') : ''}
+          ${gh ? link(gh + '/blob/main/firestore.rules', 'firestore.rules file (GitHub)', 'Rules copy karne ke liye') : ''}
+          ${link(fb + '/firestore/rules', '3. Firebase — Firestore rules', 'Rules paste kar ke "Publish"')}
+          ${link(fb + '/authentication/providers', 'Firebase — login ki settings', 'Anonymous aur Email/Password dono ON')}
+          ${link(fb + '/firestore/databases/-default-/data', 'Firebase — data dekhein', 'Hazri ke records')}
+        </div>
+        <p class="hint">Is update (${esc(APP_VERSION)}) mein Firebase rules badalne ki zaroorat nahi.</p>`;
     } });
   }
   function diagSheet() {
@@ -487,7 +523,6 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     profile(el) { open('profile', () => profileSheet(el.dataset.phone, el.dataset.date)); },
     'profile-step'(el) { sheets.profile?.step(+el.dataset.arg); },
     'edit-att'(el) { open('att', () => attendanceSheet(el.dataset.phone, el.dataset.date)); },
-    'fill-time'(el) { const form = el.closest('form'), phone = form.dataset.phone; form.elements[el.dataset.arg].value = el.dataset.arg === 'checkIn' ? (to24(data.scheduleFor(phone).shiftStart) || '09:00') : pkTime24(); },
     async 'att-delete'(el) { if (!confirm('Is din ki hazri hata dein?')) return; await busy(el, async () => { await data.deleteAttendance(el.dataset.id, 'Malik ne hazri hatayi'); sheets.att?.close(); }, 'Hazri hata di'); },
     leave(el) { open('leave', () => leaveSheet(el.dataset.phone)); },
     async 'leave-cancel'(el) { if (!confirm('Ye chutti cancel karein?')) return; await busy(el, () => data.cancelLeave(el.dataset.id), 'Chutti cancel ho gayi'); },
@@ -496,6 +531,20 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     settings(el) { open('settings', () => settingsSheet(el?.dataset.arg || '')); },
     khata() { open('khata', khataSheet); },
     diag() { open('diag', diagSheet); },
+    links() { open('links', linksSheet); },
+    'tix-open'(el) { ui.openTickets.add(el.dataset.arg); rerender(); },
+    async tix(el) {
+      const { phone, date, kind, arg } = el.dataset, a = data.attendanceBetween(date, date).find(x => x.phone === phone);
+      await busy(el, async () => {
+        if (kind === 'in') {
+          if (a?.checkIn) await data.saveAttendance({ phone, date, checkIn: arg, checkOut: a.checkOut, note: a.ownerNote || 'Malik ne waqt badla' });
+          else await data.quickPresent(phone, date, arg);
+        } else {
+          if (!a?.checkIn) throw new Error('Pehle aane ka waqt lagayein.');
+          await data.saveAttendance({ phone, date, checkIn: a.checkIn, checkOut: arg, note: a.ownerNote || 'Malik ne Check-Out lagaya', finalScore: a.finalScore ?? '' });
+        }
+      }, `${account(phone)?.name || ''}: ${kind === 'in' ? 'Aaya' : 'Gaya'} ${fmtTime(arg)}`);
+    },
     async 'quick-present'(el) { await busy(el, () => data.quickPresent(el.dataset.phone, el.dataset.date), 'Hazir lag gayi'); },
     async 'quick-present-all'(el) {
       const date = el.dataset.arg, list = rowsFor(date).filter(r => ['absent', 'waiting'].includes(r.status));
@@ -592,7 +641,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     const pend = pending().length;
     const tabs = [['hazri', 'Hazri', 'book'], ['salary', 'Salary', 'wallet'], ['staff', 'Staff', 'people']];
     return `<header class="top"><div class="top-in">
-        <div class="brand"><span class="brand-mark" aria-hidden="true">NT</span><span><b>Noor Traders</b><small>Hazri register</small></span></div>
+        <div class="brand"><span class="brand-mark" aria-hidden="true">NT</span><span><b>Noor Traders</b><small>${S.pendingWrites ? `<span class="sync-pill">${icon('clock', 13)} ${S.pendingWrites} entry server par ja rahi</span>` : 'Hazri register'}</small></span></div>
         <nav class="tabs" aria-label="Hisse">${tabs.map(([k, label, ic]) => `<button type="button" data-action="tab" data-arg="${k}" aria-current="${ui.tab === k ? 'page' : 'false'}">${icon(ic, 22)}<span>${label}</span>${k === 'staff' && pend ? `<em class="badge">${pend}</em>` : ''}</button>`).join('')}</nav>
         <button type="button" class="search-btn" data-action="search">${icon('search', 18)}<span>Talash: naam, "late is hafte"…</span></button>
       </div></header>

@@ -9,22 +9,42 @@ import { $, icon, toast, formValues, closeSheets, refreshSheets, errorText } fro
 const ROLE_KEY = 'nt-hazri-last-role';
 const FIELD = /^(INPUT|TEXTAREA|SELECT)$/;
 
-export function startApp({ sdk, firebaseConfig, storage = safeLocalStorage(), win = window }) {
+const OWNER_IN_KEY = 'nt-hazri-owner-in';
+const STAFF_CACHE_KEY = 'nt-hazri-session-v200';
+
+/**
+ * sdk ya sdkPromise. Tez kholne ke liye boot.js Firebase ko peeche load karta hai (sdkPromise):
+ * jo pehle se login nahi, us ko login screen FORAN nazar aati hai, Firebase aane tak intezar nahi.
+ */
+export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalStorage(), win = window }) {
   const doc = win.document, root = $('#app', doc);
   let view = null, dirty = false, login = { role: storage?.getItem(ROLE_KEY) || 'staff', error: '', busy: false, showPass: false };
+  let data = null, controller = null;
+  const hint = () => { try { return !!(storage?.getItem(STAFF_CACHE_KEY) || storage?.getItem(OWNER_IN_KEY)); } catch { return false; } };
+  if (!hint()) showLogin();
 
-  const data = createData({
+  const ready = Promise.resolve(sdkPromise || sdk).then(realSdk => { build(realSdk); return true; }).catch(error => {
+    console.error(error); login.busy = false;
+    login.error = 'App ka Firebase hissa load nahi hua. Internet check kar ke page dobara kholein.'; showLogin(); return false;
+  });
+
+  function build(sdk) {
+  data = createData({
     sdk, firebaseConfig,
     onChange: () => { softRender(); view?.onData?.(); },
-    onProblem: (name, error) => { console.warn('data', name, error); if (error?.code === 'permission-denied') toast('Kuch data ki ijazat nahi mili (' + name + '). Logout kar ke dobara login karein.', 'bad'); }
+    onProblem: (name, error) => {
+      console.warn('data', name, error);
+      if (name === 'save' || name === 'queued-write') toast('Entry server par save nahi hui (' + (error?.code || 'error') + '). Internet check kar ke dobara karein.', 'bad');
+      else if (error?.code === 'permission-denied') toast('Kuch data ki ijazat nahi mili (' + name + '). Logout kar ke dobara login karein.', 'bad');
+    }
   });
-  const controller = createAuthController({
+  controller = createAuthController({
     auth: data.auth, sdk, accounts: data.accounts, storage,
-    onReset() { data.stop(); view = null; closeSheets(); login.busy = false; showLogin(); },
+    onReset() { data.stop(); view = null; closeSheets(); login.busy = false; try { storage?.removeItem(OWNER_IN_KEY); } catch { /* ignore */ } showLogin(); },
     onSession(session) {
       clearTimeout(win.__bootTimer);
       login.error = ''; login.busy = false;
-      try { storage?.setItem(ROLE_KEY, session.role); } catch { /* ignore */ }
+      try { storage?.setItem(ROLE_KEY, session.role); if (session.role === 'owner') storage?.setItem(OWNER_IN_KEY, '1'); } catch { /* ignore */ }
       const shared = { data, controller, rerender: render, logout: () => controller.logout().catch(e => toast(errorText(e), 'bad')), checkUpdate };
       if (session.role === 'owner') { data.startOwner(); view = createOwnerView(shared); }
       else { data.startStaff(session.phone, session.account); view = createStaffView(shared); }
@@ -33,10 +53,15 @@ export function startApp({ sdk, firebaseConfig, storage = safeLocalStorage(), wi
     },
     onError(error, role) { login.role = role || login.role; login.error = loginErrorMessage(error); login.busy = false; showLogin(); }
   });
+  }
 
   /* ---------- login screen ---------- */
   function showLogin() {
     clearTimeout(win.__bootTimer);
+    // Dobara banane par likha hua number/password na mite
+    const kept = {}; for (const el of root.querySelectorAll('form[data-form=login] input')) if (el.name) kept[el.name] = el.value;
+    const focused = doc.activeElement?.closest?.('form[data-form=login]') ? doc.activeElement.name : '';
+    queueMicrotask(() => { for (const [k, v] of Object.entries(kept)) { const el = root.querySelector(`form[data-form=login] input[name="${k}"]`); if (el && !el.value) el.value = v; } if (focused) root.querySelector(`form[data-form=login] input[name="${focused}"]`)?.focus(); });
     root.dataset.screen = 'login';
     const staff = login.role === 'staff';
     root.innerHTML = `<main class="login">
@@ -63,6 +88,7 @@ export function startApp({ sdk, firebaseConfig, storage = safeLocalStorage(), wi
     showLogin();
     const phoneInput = $('input[name=phone]', root); if (phoneInput) phoneInput.value = login.phoneDraft;
     try {
+      if (!(await ready)) throw Object.assign(new Error('sdk'), { code: 'auth/network-request-failed' });
       await controller.login(login.role === 'staff' ? { role: 'staff', password: v.phone } : { role: 'owner', username: v.username, password: v.password });
     } catch (error) {
       login.busy = false; login.error = loginErrorMessage(error); showLogin();
@@ -135,9 +161,9 @@ export function startApp({ sdk, firebaseConfig, storage = safeLocalStorage(), wi
   if (win.navigator?.serviceWorker && /^https?:$/.test(win.location?.protocol || '')) {
     win.navigator.serviceWorker.register('./sw.js').catch(() => { /* app SW ke baghair bhi chalti hai */ });
   }
-  win.setTimeout?.(() => checkUpdate(false), 4000);
+  win.setTimeout?.(() => checkUpdate(false), 1500);
 
-  return { data, controller, render, get view() { return view; } };
+  return { get data() { return data; }, get controller() { return controller; }, ready, render, get view() { return view; } };
 }
 
 function safeLocalStorage() { try { const s = window.localStorage; s.getItem('x'); return s; } catch { return null; } }

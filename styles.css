@@ -298,3 +298,30 @@ details summary{cursor:pointer;color:var(--ink-2);font-weight:600;padding:6px 0}
 .sync-line.is-wait{color:var(--late)}
 .pdf-list li{display:grid;gap:8px;padding:10px 0;border-bottom:1px solid var(--rule)}
 .pdf-list .pdf-name{font-size:.9375rem}
+
+/* ---------- v202: aasan time picker + Aaya/Gaya tickets ---------- */
+.tp{display:grid;gap:8px;padding:12px;border:1px solid var(--rule);border-radius:var(--r);background:#fafbfe}
+.tp-label{font-weight:650;font-size:.9375rem}
+.tp-show{font-size:1.75rem;font-weight:800;letter-spacing:-.02em;color:var(--ink);line-height:1.1}
+.tp-row{display:flex;align-items:center;gap:6px}
+.tp-row select{flex:1;min-width:0;min-height:50px;font-size:1.125rem;font-weight:700;text-align:center;padding:0 6px}
+.tp-colon{font-weight:800;font-size:1.25rem;color:var(--muted)}
+.tp-ap{display:flex;flex:none;border:1px solid #c5cede;border-radius:10px;overflow:hidden}
+.tp-ap button{min-width:56px;min-height:50px;border:0;background:var(--paper);font-weight:800;color:var(--muted)}
+.tp-ap button+button{border-left:1px solid #c5cede}
+.tp-ap button[aria-pressed=true]{background:var(--ink);color:#fff}
+.tp-tickets,.tix{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tp-tickets button{min-height:40px;padding:0 12px;border-radius:20px;border:1px solid #c5cede;background:var(--paper);font-weight:700;font-size:.875rem;color:var(--ink)}
+.tp-tickets button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.tp-tickets .tp-clear{color:var(--muted);font-weight:600}
+.tix-wrap{display:grid;gap:6px;padding:0 10px 12px 70px}
+.tix-label{font-size:.75rem;font-weight:700;color:var(--muted);min-width:38px}
+.tix-btn{display:inline-flex;align-items:baseline;gap:2px;min-height:34px;padding:0 10px;border-radius:17px;border:1.5px solid #c5cede;background:var(--paper);color:var(--ink);font-weight:750;font-size:.875rem}
+.tix-btn small{font-size:.6875rem;font-weight:600;color:var(--muted)}
+.tix-btn.is-on{background:var(--ink);border-color:var(--ink);color:#fff}.tix-btn.is-on small{color:#c3cde3}
+.tix-btn.is-busy{color:transparent}.tix-btn.is-busy small{visibility:hidden}
+.tix-more{justify-self:start;border:0;background:none;padding:2px 0;color:var(--ink-2);font-weight:650;font-size:.8125rem;text-decoration:underline;text-underline-offset:3px}
+
+/* ---------- v203 ---------- */
+.link-card{text-decoration:none}
+.sync-pill{display:inline-flex;align-items:center;gap:4px;color:#ffd48a;font-weight:600}

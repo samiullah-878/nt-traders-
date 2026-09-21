@@ -1,12 +1,12 @@
 // core.js — Noor Traders Hazri + Salary
 // Sirf hisab-kitab. Yahan na DOM hai na Firebase, is liye ye file Node mein test hoti hai.
 
-export const APP_VERSION = 'v201';
+export const APP_VERSION = 'v203';
 export const TZ = 'Asia/Karachi';
 export const BUSINESS_ID = 'noor-traders';
 export const SHOP = { name: 'Noor Traders Gulyana', lat: 32.7979125, lng: 73.956984375, radius: 200 };
 export const DEFAULT_CONFIG = {
-  shiftStart: '09:00', shiftEnd: '', radius: 200, grace: 10,
+  shiftStart: '09:15', shiftEnd: '19:00', radius: 200, grace: 10,
   instruction: '', closedDays: [],
   salaryDefault: { monthlySalary: 0, workingDays: 30, overtimeRate: 0, mode: 'hours', leavePaid: true, lateEvery: 0, lateFineDays: 0.5 },
   scores: { m10: 10, m20: 8, m30: 6, m45: 4, late: 2 }

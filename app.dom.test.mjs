@@ -121,7 +121,7 @@ test('v201: default duty + default salary settings', async () => {
 });
 test('v201: jaldi hazir, dukaan band, check-out band, qarz, slips, khata, jaanch', async () => {
   await click('[data-action=tab][data-arg=hazri]');
-  const quick = $('[data-action=quick-present][data-phone="03111112223"]'); assert.ok(quick, 'naye staff par Hazir lagao'); await click(quick);
+  const quick = $('[data-action=tix][data-kind=in][data-phone="03111112223"][data-arg="09:00"]'); assert.ok(quick, 'naye staff par Aaya ticket'); await click(quick);
   assert.equal(records.get(B + `staffAttendance/${today}_03111112223`).checkIn, '09:00');
   await click(`[data-action=toggle-closed][data-arg="${today}"]`);
   assert.equal(records.get(B + 'staffConfig/main').closedDays[0].date, today); assert.ok($('.closed-line'));
@@ -141,6 +141,42 @@ test('v201: jaldi hazir, dukaan band, check-out band, qarz, slips, khata, jaanch
   assert.match($('[data-sheet=diag]').textContent, new RegExp(today)); assert.match($('[data-sheet=diag]').textContent, /Aaj ke record/);
   await click('[data-sheet=diag] [data-sheet-close]');
 });
+test('v202: Aaya/Gaya tickets aur aasan time picker', async () => {
+  await click('[data-action=tab][data-arg=hazri]');
+  // Ali: aaya hai, gaya nahi -> Gaya tickets
+  const row = () => $('.row-main[data-phone="03001234567"]').closest('.row');
+  await click(row().querySelector('[data-action=tix-open]')); // Ali ka Gaya pehle se laga hai -> "Waqt badlein"
+  const out = row().querySelector('[data-action=tix][data-kind=out][data-arg="20:30"]'); assert.ok(out, 'Gaya 8:30 ka ticket');
+  await click(out); assert.equal(records.get(B + `staffAttendance/${today}_03001234567`).checkOut, '20:30');
+  await click(row().querySelector('[data-action=tix][data-kind=in][data-arg="09:15"]'));
+  assert.equal(records.get(B + `staffAttendance/${today}_03001234567`).checkIn, '09:15'); assert.equal(records.get(B + `staffAttendance/${today}_03001234567`).checkOut, '20:30');
+  // Naye staff (Usman) ki hazri hata kar Aaya ticket
+  await app.data.deleteAttendance(`${today}_03111112223`); await settle();
+  const inT = $('.row-main[data-phone="03111112223"]').closest('.row').querySelector('[data-action=tix][data-kind=in][data-arg="09:30"]'); assert.ok(inT, 'Aaya 9:30 ka ticket');
+  await click(inT); assert.equal(records.get(B + `staffAttendance/${today}_03111112223`).checkIn, '09:30');
+  // Time picker: 7 + PM = 19:xx, ticket, khali
+  await click(`[data-action=edit-att][data-phone="03001234567"][data-date="${today}"]`.replace('edit-att', 'profile'));
+  await click(`[data-sheet=profile] [data-action=edit-att][data-date="${today}"]`);
+  const box = [...doc.querySelectorAll('form[data-form=att] [data-tp]')][1], hidden = box.querySelector('input[type=hidden]');
+  box.querySelector('[data-tp-h]').value = '7'; box.querySelector('[data-tp-m]').value = '0'; // (happy-dom 'selected' theek nahi parhta, is liye minute khud)
+  box.querySelector('[data-tp-h]').dispatchEvent(new win.Event('change', { bubbles: true }));
+  await click(box.querySelector('[data-tp-ap="pm"]')); assert.equal(hidden.value, '19:00'); assert.match(box.querySelector('.tp-show').textContent, /7:00 PM/);
+  await click(box.querySelector('[data-tp-ap="am"]')); assert.equal(hidden.value, '07:00');
+  await submit($('form[data-form=att]')); assert.match(toastText(), /pehle hai/, 'Gaya aane se pehle nahi ho sakta');
+  await click(box.querySelector('[data-tp-set="21:00"]')); assert.equal(hidden.value, '21:00');
+  await click(box.querySelector('.tp-clear')); assert.equal(hidden.value, '');
+  await click(box.querySelector('[data-tp-set="19:30"]')); await submit($('form[data-form=att]'));
+  assert.equal(records.get(B + `staffAttendance/${today}_03001234567`).checkOut, '19:30');
+  await click('[data-sheet=profile] [data-sheet-close]');
+});
+test('v202: raat ki duty ghalti se save ho to warning', async () => {
+  await app.data.saveConfig({ shiftStart: '21:15', shiftEnd: '07:52', radius: 200 }); await settle();
+  assert.match($('.attention').textContent, /ghalat lag rahi/);
+  await click('.attention [data-action=settings]'); assert.match($('[data-sheet=settings]').textContent, /raat ki duty/);
+  const f = $('form[data-form=settings]'); await click(f.querySelector('[data-tp-set="09:15"]')); await click([...f.querySelectorAll('[data-tp]')][1].querySelector('[data-tp-set="19:00"]'));
+  await submit(f); assert.deepEqual([records.get(B + 'staffConfig/main').shiftStart, records.get(B + 'staffConfig/main').shiftEnd], ['09:15', '19:00']);
+  assert.equal($('.attention')?.textContent.includes('ghalat lag rahi') || false, false);
+});
 test('logout → staff login → check-in / check-out', async () => {
   records.delete(B + `staffAttendance/${today}_03111112223`); // upar malik ne hazri lagayi thi
   await click('[data-action=tab][data-arg=staff]'); await click('[data-action=logout]'); await settle();
@@ -148,7 +184,7 @@ test('logout → staff login → check-in / check-out', async () => {
   await click('[data-action=login-role][data-arg=staff]');
   fill($('form[data-form=login]'), { phone: '0311 1112223' }); await submit($('form[data-form=login]')); await settle(10);
   assert.equal($('#app').dataset.screen, 'staff'); assert.match($('.brand').textContent, /Usman/);
-  assert.ok($('[data-action=check-in]'), 'Check-In button'); assert.match($('.punch').textContent, /9h roz/);
+  assert.ok($('[data-action=check-in]'), 'Check-In button'); assert.match($('.punch').textContent, /9h 45m roz/);
   const r = await app.data.checkIn({ selfie: 'data:image/jpeg;base64,AAAA', gps: { lat: 32.7979, lng: 73.9569, accuracy: 10, distance: 12 } }); assert.equal(r.queued, false); await settle();
   assert.ok(records.get(B + `staffAttendance/${today}_03111112223`).checkIn);
   await assert.rejects(app.data.checkIn({ selfie: 'x', gps: { distance: 900 } }), /door/);

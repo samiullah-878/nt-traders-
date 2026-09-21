@@ -1,5 +1,5 @@
 // ui.js — chhote UI auzaar jo malik aur staff dono screens istemal karti hain.
-import { esc, SHOP, haversine, hasArabic } from './core.js';
+import { esc, SHOP, haversine, hasArabic, parseTime, fmtTime, pkTime24 } from './core.js';
 
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -140,13 +140,13 @@ export function takeSelfie() {
       onClose: () => finish(null, Object.assign(new Error('Selfie nahi li gayi.'), { code: 'app/cancelled' }))
     });
     const video = $('#camVideo', sheet.el), shot = $('#camShot', sheet.el), hint = $('#camHint', sheet.el), file = $('#camFile', sheet.el);
-    file.onchange = async () => { const f = file.files?.[0]; if (!f) return; try { finish(await fileToDataUrl(f)); } catch (e) { finish(null, e); } };
+    file.onchange = async () => { const f = file.files?.[0]; if (!f) return; try { finish(await fileToDataUrl(f, 320, 0.62)); } catch (e) { finish(null, e); } };
     const fallback = () => { hint.textContent = 'Camera seedha nahi khula. Neeche button se phone ka camera kholein.'; video.hidden = true; shot.disabled = false; shot.innerHTML = icon('camera') + ' Camera kholein'; shot.onclick = () => file.click(); };
     shot.onclick = () => {
-      const size = Math.min(video.videoWidth, video.videoHeight) || 420, scale = Math.min(1, 420 / size), c = document.createElement('canvas');
+      const size = Math.min(video.videoWidth, video.videoHeight) || 320, scale = Math.min(1, 320 / size), c = document.createElement('canvas');
       c.width = Math.round(video.videoWidth * scale); c.height = Math.round(video.videoHeight * scale);
       c.getContext('2d').drawImage(video, 0, 0, c.width, c.height);
-      finish(c.toDataURL('image/jpeg', 0.7));
+      finish(c.toDataURL('image/jpeg', 0.62)); // chhoti selfie = malik ki list jaldi
     };
     if (!navigator.mediaDevices?.getUserMedia) { fallback(); return; }
     navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 } }, audio: false }).then(s => {
@@ -192,4 +192,66 @@ export function deliverPdf(input) {
   const share = $('#pdfShare', sheet.el);
   if (share) share.onclick = () => navigator.share({ files, title: many ? 'Salary slips' : list[0].filename }).catch(() => { /* user ne band kiya */ });
   return sheet;
+}
+
+/* ---------- aasan time picker: Ghanta + Minute + AM/PM + tickets ---------- */
+export const IN_TICKETS = ['09:00', '09:15', '09:30', '10:00'];
+export const OUT_TICKETS = ['19:00', '19:30', '20:00', '20:30', '21:00'];
+const p2 = n => String(n).padStart(2, '0');
+function tpParts(v) {
+  const m = parseTime(v); if (m == null) return null;
+  const h = Math.floor(m / 60), mi = m % 60;
+  return { h12: (h % 12) || 12, mi, pm: h >= 12 };
+}
+/**
+ * Waqt chunne ka field. Asal value chhupe input mein "HH:MM" (24 ghante) jati hai, taake form aur Firebase wahi rahen.
+ * opts: { label, tickets:[HH:MM], optional:true (khali chhor sakte hain), now:true ("Abhi" ticket) }
+ */
+export function timeField(name, value, opts = {}) {
+  const t = tpParts(value), tickets = [...new Set((opts.tickets || []).filter(Boolean))];
+  const hours = Array.from({ length: 12 }, (_, i) => i + 1), mins = Array.from({ length: 60 }, (_, i) => i);
+  return `<div class="tp" data-tp data-optional="${opts.optional ? '1' : ''}">
+    ${opts.label ? `<span class="tp-label">${opts.label}</span>` : ''}
+    <input type="hidden" name="${esc(name)}" value="${t ? esc(pad24(value)) : ''}">
+    <div class="tp-show" aria-live="polite">${t ? esc(fmtTime(value)).toUpperCase() : (opts.optional ? 'Abhi khali' : 'Waqt chunein')}</div>
+    <div class="tp-row">
+      <select data-tp-h aria-label="Ghanta"><option value="">Ghanta</option>${hours.map(h => `<option value="${h}" ${t?.h12 === h ? 'selected' : ''}>${h}</option>`).join('')}</select>
+      <span class="tp-colon">:</span>
+      <select data-tp-m aria-label="Minute">${mins.map(m => `<option value="${m}" ${(t ? t.mi : 0) === m ? 'selected' : ''}>${p2(m)}</option>`).join('')}</select>
+      <span class="tp-ap" role="group" aria-label="AM ya PM"><button type="button" data-tp-ap="am" aria-pressed="${t ? !t.pm : 'false'}">AM</button><button type="button" data-tp-ap="pm" aria-pressed="${t ? t.pm : 'false'}">PM</button></span>
+    </div>
+    <div class="tp-tickets">${opts.now ? '<button type="button" data-tp-set="now">Abhi</button>' : ''}${tickets.map(v => `<button type="button" data-tp-set="${v}" aria-pressed="${t && pad24(value) === v}">${esc(fmtTime(v))}</button>`).join('')}${opts.optional ? '<button type="button" data-tp-set="" class="tp-clear">Khali</button>' : ''}</div>
+  </div>`;
+}
+function pad24(v) { const m = parseTime(v); return m == null ? '' : p2(Math.floor(m / 60)) + ':' + p2(m % 60); }
+function tpApply(box, value) {
+  const hidden = box.querySelector('input[type=hidden]'), show = box.querySelector('.tp-show');
+  hidden.value = value;
+  const t = tpParts(value);
+  box.querySelector('[data-tp-h]').value = t ? String(t.h12) : '';
+  box.querySelector('[data-tp-m]').value = String(t ? t.mi : 0);
+  for (const b of box.querySelectorAll('[data-tp-ap]')) b.setAttribute('aria-pressed', String(!!t && (b.dataset.tpAp === 'pm') === t.pm));
+  for (const b of box.querySelectorAll('[data-tp-set]')) b.setAttribute('aria-pressed', String(!!value && b.dataset.tpSet === value));
+  show.textContent = t ? fmtTime(value).toUpperCase() : (box.dataset.optional ? 'Abhi khali' : 'Waqt chunein');
+  hidden.dispatchEvent(new Event('change', { bubbles: true }));
+}
+function tpRead(box, forcePm) {
+  const h = Number(box.querySelector('[data-tp-h]').value), m = Number(box.querySelector('[data-tp-m]').value || 0);
+  if (!h) return '';
+  const pressed = box.querySelector('[data-tp-ap][aria-pressed=true]');
+  const pm = forcePm ?? (pressed ? pressed.dataset.tpAp === 'pm' : (h >= 1 && h <= 7) || h === 12); // AM/PM na chuna ho to dukaan ke hisab se andaza
+  const h24 = (h % 12) + (pm ? 12 : 0);
+  return p2(h24) + ':' + p2(m);
+}
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', e => {
+    const b = e.target.closest?.('[data-tp] [data-tp-ap], [data-tp] [data-tp-set]'); if (!b) return;
+    const box = b.closest('[data-tp]'); e.preventDefault();
+    if (b.dataset.tpAp) { if (!box.querySelector('[data-tp-h]').value) box.querySelector('[data-tp-h]').value = b.dataset.tpAp === 'pm' ? '7' : '9'; tpApply(box, tpRead(box, b.dataset.tpAp === 'pm')); }
+    else tpApply(box, b.dataset.tpSet === 'now' ? pkTime24() : b.dataset.tpSet);
+  });
+  document.addEventListener('change', e => {
+    const sel = e.target.closest?.('[data-tp] select'); if (!sel) return;
+    const box = sel.closest('[data-tp]'); tpApply(box, tpRead(box));
+  });
 }

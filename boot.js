@@ -1,23 +1,14 @@
-// boot.js — asal Firebase SDK yahan se aata hai. Baqi app sdk ko bahar se leti hai taake test ho sake.
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js';
-import {
-  getAuth, initializeAuth, indexedDBLocalPersistence, browserLocalPersistence, inMemoryPersistence,
-  signInWithEmailAndPassword, signInAnonymously, signOut, onAuthStateChanged,
-  EmailAuthProvider, reauthenticateWithCredential, updatePassword
-} from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js';
-import {
-  getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
-  collection, doc, onSnapshot, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, runTransaction, writeBatch
-} from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js';
-import { firebaseConfig } from './firebase-config.js';
+// boot.js — app ko jaldi kholta hai.
+// Apni chhoti files foran chalti hain; Firebase SDK (bara, ~300 KB) saath saath peeche load hota hai.
+// Service worker dusri dafa se in sab ko phone se deta hai (internet ka intezar nahi).
 import { startApp } from './app.js';
+import { firebaseConfig } from './firebase-config.js';
 
-startApp({
-  firebaseConfig,
-  sdk: {
-    initializeApp, getAuth, initializeAuth, indexedDBLocalPersistence, browserLocalPersistence, inMemoryPersistence,
-    signInWithEmailAndPassword, signInAnonymously, signOut, onAuthStateChanged, EmailAuthProvider, reauthenticateWithCredential, updatePassword,
-    getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
-    collection, doc, onSnapshot, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, runTransaction, writeBatch
-  }
-});
+const V = '12.18.0', base = `https://www.gstatic.com/firebasejs/${V}/`;
+const sdkPromise = Promise.all([
+  import(base + 'firebase-app.js'),
+  import(base + 'firebase-auth.js'),
+  import(base + 'firebase-firestore.js')
+]).then(([app, auth, firestore]) => ({ ...app, ...auth, ...firestore }));
+
+startApp({ firebaseConfig, sdkPromise });
