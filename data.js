@@ -189,8 +189,10 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       overtimeRate: Number(input.overtimeRate || 0), pointRate: Number(input.pointRate ?? old?.salary?.pointRate ?? 0),
       mealMode: ['daily', 'monthly', 'none'].includes(input.mealMode) ? input.mealMode : 'none', mealRate: Math.max(0, Number(input.mealRate || 0)), mealInSalary: !!input.mealInSalary
     };
+    const pin = String(input.pin ?? old?.pin ?? '').trim();
+    if (pin && !/^\d{4}$/.test(pin)) throw new Error('PIN 4 hindson ka ho (jaise 4821), ya khali chhor dein.');
     const account = clean({
-      name: String(input.name).trim(), role: String(input.role || 'Staff').trim() || 'Staff', address: String(input.address || '').trim(), phone,
+      name: String(input.name).trim(), pin, role: String(input.role || 'Staff').trim() || 'Staff', address: String(input.address || '').trim(), phone,
       photo: input.photo ?? old?.photo ?? '', active: input.active !== false, loginEnabled: input.loginEnabled !== false,
       joinDate: isDate(input.joinDate) ? input.joinDate : (old?.joinDate || (old ? '' : pkDate())),
       salary, salaryExtras: old?.salaryExtras || [], updatedAt: Date.now()
@@ -201,7 +203,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     });
     await fast(async tx => {
       tx.set(ref('staffAccounts', phone), account, { merge: true });
-      tx.set(ref('staff', phone), { ...account, id: phone }, { merge: true }); // purani hisab app ke liye
+      { const { pin: _pin, ...legacy } = account; tx.set(ref('staff', phone), { ...legacy, id: phone }, { merge: true }); } // purani hisab app ke liye (PIN nahi)
       tx.set(ref('staffSchedules', phone), schedule, { merge: true });
       if (JSON.stringify(old?.salary || null) !== JSON.stringify(salary)) audit(tx, 'salary settings', phone, old?.salary || null, salary, old ? 'Malik ne salary settings badli' : 'Naya staff');
     });
@@ -212,26 +214,40 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     guardOwner();
     await fast(async tx => {
       const r = ref('staffAccounts', phone), snap = await tx.get(r);
-      tx.delete(r); tx.delete(ref('staff', phone));
+      tx.delete(r); tx.delete(ref('staff', phone)); tx.delete(ref('staffSchedules', phone));
       audit(tx, 'staff delete', phone, snap.exists() ? { name: snap.data().name } : null, null, 'Malik ne staff delete kiya');
     });
   }
+  /** Sirf wohi hissa badalta hai jo form mein tha (duty, salary ya Check-In) — baqi waisa hi rehta hai. */
   async function saveConfig(patch) {
     guardOwner();
     const num = (v, d) => { const n = Number(v); return v === '' || v == null || !Number.isFinite(n) ? d : n; };
-    if (patch.shiftStart && patch.shiftEnd && patch.shiftStart === patch.shiftEnd) throw new Error('Duty shuru aur khatam ka waqt alag ho.');
-    const next = clean({
-      shiftStart: patch.shiftStart || '09:15', shiftEnd: patch.shiftEnd || '', grace: Math.max(0, num(patch.grace, 10)),
-      radius: Math.max(20, num(patch.radius, SHOP.radius)), instruction: String(patch.instruction || ''),
-      salaryDefault: {
-        monthlySalary: Math.max(0, num(patch.defSalary, 0)), workingDays: Math.min(31, Math.max(1, num(patch.defDays, 30))), overtimeRate: Math.max(0, num(patch.defOt, 0)),
-        mode: patch.salaryMode === 'days' ? 'days' : 'hours', leavePaid: patch.leavePaid !== false,
-        lateEvery: Math.max(0, Math.floor(num(patch.lateEvery, 0))), lateFineDays: Math.max(0, num(patch.lateFineDays, 0.5))
-      }
-    });
+    const has = k => Object.prototype.hasOwnProperty.call(patch, k);
+    const next = {};
+    if (has('shiftStart')) next.shiftStart = to24(patch.shiftStart) || '09:15';
+    if (has('shiftEnd')) next.shiftEnd = to24(patch.shiftEnd) || '';
+    const start = next.shiftStart ?? state.config.shiftStart, end = next.shiftEnd ?? state.config.shiftEnd;
+    if ((has('shiftStart') || has('shiftEnd')) && start && end && to24(start) === to24(end)) throw new Error('Duty shuru aur khatam ka waqt alag ho.');
+    if (has('grace')) next.grace = Math.max(0, num(patch.grace, 10));
+    if (has('radius')) next.radius = Math.max(20, num(patch.radius, SHOP.radius));
+    if (has('instruction')) next.instruction = String(patch.instruction || '');
+    const salaryKeys = ['defSalary', 'defDays', 'defOt', 'salaryMode', 'leavePaid', 'lateEvery', 'lateFineDays'];
+    if (salaryKeys.some(has)) {
+      const old = { ...DEFAULT_CONFIG.salaryDefault, ...(state.config.salaryDefault || {}) }, d = { ...old };
+      if (has('defSalary')) d.monthlySalary = Math.max(0, num(patch.defSalary, 0));
+      if (has('defDays')) d.workingDays = Math.min(31, Math.max(1, num(patch.defDays, 30)));
+      if (has('defOt')) d.overtimeRate = Math.max(0, num(patch.defOt, 0));
+      if (has('salaryMode')) d.mode = patch.salaryMode === 'days' ? 'days' : 'hours';
+      if (has('leavePaid')) d.leavePaid = patch.leavePaid !== false;
+      if (has('lateEvery')) d.lateEvery = Math.max(0, Math.floor(num(patch.lateEvery, 0)));
+      if (has('lateFineDays')) d.lateFineDays = Math.max(0, num(patch.lateFineDays, 0.5));
+      next.salaryDefault = d;
+    }
+    if (!Object.keys(next).length) return;
     await fast(async tx => {
-      tx.set(ref('staffConfig', 'main'), next, { merge: true });
-      audit(tx, 'settings', 'main', { shiftStart: state.config.shiftStart, shiftEnd: state.config.shiftEnd, radius: state.config.radius }, next, 'Malik ne settings badli');
+      tx.set(ref('staffConfig', 'main'), clean(next), { merge: true });
+      const before = {}; for (const k of Object.keys(next)) before[k] = state.config[k] ?? null;
+      audit(tx, 'settings', 'main', before, next, 'Malik ne settings badli');
     });
   }
 
@@ -279,14 +295,14 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   /** Bhoola hua Check-Out: duty khatam ke waqt par band. */
   async function closeCheckouts(rows) {
     guardOwner();
-    let n = 0;
+    let n = 0; const failed = [];
     for (const a of rows) {
       const sch = scheduleFor(a.phone), inT = to24(a.checkIn); if (!inT || a.checkOut) continue;
       const outT = to24(sch.shiftEnd) || endFrom(inT, a.phone);
-      await saveAttendance({ phone: a.phone, date: a.date, checkIn: inT, checkOut: outT, note: 'Check-Out bhool gaya — duty ke waqt par band', finalScore: a.finalScore ?? '' });
-      n++;
+      try { await saveAttendance({ phone: a.phone, date: a.date, checkIn: inT, checkOut: outT, note: 'Check-Out bhool gaya — duty ke waqt par band', finalScore: a.finalScore ?? '' }); n++; }
+      catch { failed.push(state.staff.find(s => s.phone === a.phone)?.name || a.phone); } // aik ghalat ho to baqi na rukein
     }
-    return n;
+    return { done: n, failed };
   }
 
   /* ---------- owner: attendance ---------- */
@@ -424,6 +440,59 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     });
   }
 
+  /* ---------- selfie: daba kar hi load ---------- */
+  const selfieCache = new Map();
+  async function getSelfie(a) {
+    if (!a) return '';
+    if (a.selfie) return a.selfie;
+    if (!a.hasSelfie || !a.id) return '';
+    if (selfieCache.has(a.id)) return selfieCache.get(a.id);
+    const snap = await sdk.getDoc(ref('staffSelfies', a.id));
+    const url = snap.exists() ? String(snap.data().selfie || '') : '';
+    selfieCache.set(a.id, url);
+    return url;
+  }
+  /** Aik din ki saari selfies (Aaj ki selfies wala safha). */
+  async function selfiesFor(date) {
+    guardOwner();
+    const out = new Map();
+    for (const a of attendanceBetween(date, date)) if (a.selfie) out.set(a.id, a.selfie);
+    const snap = await sdk.getDocs(sdk.query(col('staffSelfies'), sdk.where('date', '==', date)));
+    snap.forEach(d => { const v = d.data(); if (v?.selfie) { out.set(d.id, v.selfie); selfieCache.set(d.id, v.selfie); } });
+    return out;
+  }
+  /** Tabdeeli ki history: malik ki aakhri tabdeeliyan (staffAudit). */
+  async function auditLog(max = 150) {
+    guardOwner();
+    const q = sdk.orderBy && sdk.limit ? sdk.query(col('staffAudit'), sdk.orderBy('at', 'desc'), sdk.limit(max)) : col('staffAudit');
+    const snap = await sdk.getDocs(q), rows = [];
+    snap.forEach(d => rows.push({ id: d.id, ...clean(d.data()) }));
+    return rows.sort((a, b) => (b.at || 0) - (a.at || 0)).slice(0, max);
+  }
+  /** Purane records ki selfies alag karo (aik dafa). Malik ki list is ke baad bohat halki. */
+  async function migrateSelfies(onProgress = () => {}) {
+    guardOwner();
+    if (!sdk.deleteField) throw new Error('Is browser mein ye kaam nahi ho sakta.');
+    let moved = 0;
+    const month = pkDate().slice(0, 7);
+    for (let i = 0; i < 12; i++) {
+      const m = addMonths(month, -i), { from, to } = monthRange(m);
+      const snap = await sdk.getDocs(sdk.query(col('staffAttendance'), sdk.where('date', '>=', from), sdk.where('date', '<=', to)));
+      const rows = []; snap.forEach(d => { const v = d.data(); if (v.selfie) rows.push({ id: d.id, v }); });
+      for (let k = 0; k < rows.length; k += 100) {
+        const batch = sdk.writeBatch(fs);
+        for (const { id, v } of rows.slice(k, k + 100)) {
+          batch.set(ref('staffSelfies', id), { phone: normalizePhone(v.phone) || String(v.phone || ''), date: v.date || id.slice(0, 10), selfie: v.selfie, at: v.checkInTs || Date.now() });
+          batch.update(ref('staffAttendance', id), { selfie: sdk.deleteField(), hasSelfie: true });
+        }
+        await batch.commit();
+        moved += Math.min(100, rows.length - k);
+        onProgress(moved, m);
+      }
+    }
+    return moved;
+  }
+
   /* ---------- staff: check-in / out / request ---------- */
   async function checkIn({ selfie, gps }) {
     if (state.role !== 'staff') throw new Error('Staff login zaroori hai.');
@@ -435,19 +504,28 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     const start = parseTime(schedule.shiftStart) ?? 540;
     const minutesLate = Math.max(0, pkMinutes() - start);
     const autoScore = scoreForLate(Math.max(0, minutesLate - Number(schedule.grace ?? 10) + 10), state.config.scores);
-    const write = sdk.setDoc(ref('staffAttendance', id), clean({
-      id, date, phone, name: state.account?.name || '', address: state.account?.address || '',
-      checkIn: pkTime24(), checkInTs: Date.now(), checkInLat: gps.lat, checkInLng: gps.lng, checkInAccuracy: gps.accuracy, checkInDistance: gps.distance,
-      selfie, shopLat: SHOP.lat, shopLng: SHOP.lng, shopRadius: radius, minutesLate, autoScore, finalScore: autoScore, shiftStart: schedule.shiftStart || '09:00'
-    }), { merge: true });
+    // Selfie alag doc mein (staffSelfies) taake malik ki list halki rahe. serverAt = server ka asal waqt.
+    const write = sdk.setDoc(ref('staffAttendance', id), {
+      ...clean({
+        id, date, phone, name: state.account?.name || '', address: state.account?.address || '',
+        checkIn: pkTime24(), checkInTs: Date.now(), checkInLat: gps.lat, checkInLng: gps.lng, checkInAccuracy: gps.accuracy, checkInDistance: gps.distance,
+        hasSelfie: true, shopLat: SHOP.lat, shopLng: SHOP.lng, shopRadius: radius, minutesLate, autoScore, finalScore: autoScore, shiftStart: schedule.shiftStart || '09:15'
+      }),
+      serverAt: sdk.serverTimestamp ? sdk.serverTimestamp() : Date.now()
+    }, { merge: true });
+    sdk.setDoc(ref('staffSelfies', id), { phone, date, selfie, at: Date.now() }).catch(error => {
+      // Purane rules (v204 se pehle) staffSelfies nahi mante: selfie hazri ke record mein hi rakh do
+      if (error?.code === 'permission-denied') write.then(() => sdk.setDoc(ref('staffAttendance', id), { selfie, hasSelfie: false }, { merge: true })).catch(e => onProblem('queued-write', e));
+      else onProblem('queued-write', error);
+    });
     return settle(write);
   }
   async function checkOut(row, gps) {
     if (state.role !== 'staff') throw new Error('Staff login zaroori hai.');
     if (!row?.checkIn || row.checkOut) throw new Error('Check-In ka record nahi mila.');
-    const write = sdk.setDoc(ref('staffAttendance', row.id || `${row.date}_${state.phone}`), clean({
+    const write = sdk.setDoc(ref('staffAttendance', row.id || `${row.date}_${state.phone}`), { ...clean({
       phone: state.phone, checkOut: pkTime24(), checkOutTs: Date.now(), checkOutLat: gps?.lat ?? null, checkOutLng: gps?.lng ?? null, checkOutAccuracy: gps?.accuracy ?? null, checkOutDistance: gps?.distance ?? null
-    }), { merge: true });
+    }), outServerAt: sdk.serverTimestamp ? sdk.serverTimestamp() : Date.now() }, { merge: true });
     return settle(write);
   }
   /** Server ka jawab 2.5 second mein na aaye to hazri phone mein qataar mein rehti hai aur signal aate hi chali jati hai. */
@@ -472,11 +550,11 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
 
   return {
     auth, state, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
-    applyDefaultShiftAll, applyDefaultSalaryAll, toggleClosed, quickPresent, closeCheckouts,
+    applyDefaultShiftAll, applyDefaultSalaryAll, toggleClosed, quickPresent, closeCheckouts, getSelfie, migrateSelfies, selfiesFor, auditLog,
     accounts: {
       async getSession(uid) { const s = await sdk.getDoc(ref('staffSessions', uid)); return s.exists() ? s.data() : null; },
       async getAccount(phone) { const s = await sdk.getDoc(ref('staffAccounts', phone)); return s.exists() ? { ...s.data(), phone } : null; },
-      async createSession(uid, phone) { await sdk.setDoc(ref('staffSessions', uid), { phone, createdAt: Date.now() }); }
+      async createSession(uid, phone, pin = '') { await sdk.setDoc(ref('staffSessions', uid), pin ? { phone, createdAt: Date.now(), pin } : { phone, createdAt: Date.now() }); }
     },
     saveStaff, deleteStaff, saveConfig, saveAttendance, deleteAttendance, markLeave, cancelLeave, reviewRequest,
     addExtra, removeExtra, toggleFinal, addPayment, checkIn, checkOut, sendRequest

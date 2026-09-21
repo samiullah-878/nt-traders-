@@ -70,7 +70,9 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
         <div class="switch full" role="tablist" aria-label="Kaun login kar raha hai"><button type="button" role="tab" aria-selected="${staff}" data-action="login-role" data-arg="staff">Staff</button><button type="button" role="tab" aria-selected="${!staff}" data-action="login-role" data-arg="owner">Malik</button></div>
         <form class="form" data-form="login" novalidate>
           ${staff
-            ? `<label>Apna mobile number<input name="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="03001234567" maxlength="16" required ${login.busy ? 'disabled' : ''}></label><p class="hint">Wohi number likhein jo malik ne Staff list mein likha hai. Password ki zaroorat nahi.</p>`
+            ? `<label>Apna mobile number<input name="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="03001234567" maxlength="16" required ${login.busy ? 'disabled' : ''}></label>
+               <label>PIN <small>(sirf agar malik ne diya ho)</small><input name="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="4" pattern="[0-9]*" placeholder="••••" ${login.busy ? 'disabled' : ''}></label>
+               <p class="hint">Wohi number likhein jo malik ne Staff list mein likha hai.</p>`
             : `<label>Password<span class="pass"><input name="password" type="${login.showPass ? 'text' : 'password'}" autocomplete="current-password" required ${login.busy ? 'disabled' : ''}><button type="button" class="link" data-action="login-show">${login.showPass ? 'Chhupayein' : 'Dikhayein'}</button></span></label>
                <details><summary>Email se login (ikhtiyari)</summary><label>Email<input name="username" type="email" autocomplete="username" placeholder="khali = admin" ${login.busy ? 'disabled' : ''}></label></details>`}
           <p class="login-error" role="alert" ${login.error ? '' : 'hidden'}>${esc(login.error)}</p>
@@ -89,7 +91,7 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
     const phoneInput = $('input[name=phone]', root); if (phoneInput) phoneInput.value = login.phoneDraft;
     try {
       if (!(await ready)) throw Object.assign(new Error('sdk'), { code: 'auth/network-request-failed' });
-      await controller.login(login.role === 'staff' ? { role: 'staff', password: v.phone } : { role: 'owner', username: v.username, password: v.password });
+      await controller.login(login.role === 'staff' ? { role: 'staff', password: v.phone, pin: v.pin } : { role: 'owner', username: v.username, password: v.password });
     } catch (error) {
       login.busy = false; login.error = loginErrorMessage(error); showLogin();
       const again = $('input[name=phone]', root); if (again) again.value = login.phoneDraft;

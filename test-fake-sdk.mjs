@@ -14,14 +14,20 @@ export function fakeSdk({ records = new Map(), initialUser = null, ownerPassword
   }
   function emit(paths) { for (const entry of listeners) if (paths.some(p => p === entry.ref.path || (p.startsWith(entry.ref.path + '/') && !p.slice(entry.ref.path.length + 1).includes('/')))) queueMicrotask(() => { if (listeners.has(entry)) entry.callback(snapshot(entry.ref)); }); }
   function setUser(u) { auth.currentUser = u; for (const f of authListeners) queueMicrotask(() => f(u)); }
+  const SERVER = { __fake: 'serverTimestamp' }, DELETE = { __fake: 'deleteField' };
+  function resolve(d, base = {}) { // sentinels -> asal qeemat (merge ke sath)
+    const out = { ...base };
+    for (const [k, v] of Object.entries(d || {})) { if (v === DELETE) delete out[k]; else if (v === SERVER) out[k] = { seconds: Math.floor(sdk.now() / 1000), nanoseconds: 0 }; else out[k] = structuredClone(v); }
+    return out;
+  }
   function apply(writes) {
     if (fail.next) { const e = fail.next; fail.next = null; throw e; }
     const changed = [];
     for (const [type, r, d, o] of writes) {
       changed.push(r.path);
       if (type === 'delete') records.delete(r.path);
-      else if (type === 'update') { const cur = structuredClone(records.get(r.path)); if (!cur) throw Object.assign(new Error('not-found'), { code: 'not-found' }); for (const [k, v] of Object.entries(d)) { const parts = k.split('.'); let t = cur; while (parts.length > 1) { const key = parts.shift(); t = t[key] ??= {}; } t[parts[0]] = v; } records.set(r.path, cur); }
-      else records.set(r.path, o?.merge ? { ...(records.get(r.path) || {}), ...structuredClone(d) } : structuredClone(d));
+      else if (type === 'update') { const cur = structuredClone(records.get(r.path)); if (!cur) throw Object.assign(new Error('not-found'), { code: 'not-found' }); for (const [k, v] of Object.entries(d)) { const parts = k.split('.'); let t = cur; while (parts.length > 1) { const key = parts.shift(); t = t[key] ??= {}; } if (v === DELETE) delete t[parts[0]]; else if (v === SERVER) t[parts[0]] = { seconds: Math.floor(sdk.now() / 1000), nanoseconds: 0 }; else t[parts[0]] = v; } records.set(r.path, cur); }
+      else records.set(r.path, resolve(d, o?.merge ? (records.get(r.path) || {}) : {}));
     }
     emit(changed);
   }
@@ -38,7 +44,7 @@ export function fakeSdk({ records = new Map(), initialUser = null, ownerPassword
     signOut: async () => setUser(null),
     signInAnonymously: async () => { if (fail.signIn.length) throw fail.signIn.shift(); const u = { uid: 'anon-' + (++n), isAnonymous: true }; setUser(u); return { user: u }; },
     signInWithEmailAndPassword: async (_a, email, password) => { sdk.attempts.push(email); if (fail.signIn.length) throw fail.signIn.shift(); if (password !== ownerPassword || email !== 'hp6235@gmail.com') throw Object.assign(new Error('wrong'), { code: 'auth/invalid-credential' }); const u = { uid: 'owner-uid', email, isAnonymous: false }; setUser(u); return { user: u }; },
-    attempts: [], EmailAuthProvider: { credential: () => ({}) }, reauthenticateWithCredential: async () => {}, updatePassword: async () => {}
+    attempts: [], now: () => Date.now(), serverTimestamp: () => SERVER, deleteField: () => DELETE, EmailAuthProvider: { credential: () => ({}) }, reauthenticateWithCredential: async () => {}, updatePassword: async () => {}
   };
   return { sdk, auth, records, setUser, fail, listeners };
 }

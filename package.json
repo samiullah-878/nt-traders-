@@ -2,6 +2,6 @@
   "name": "nt-hazri",
   "private": true,
   "type": "module",
-  "scripts": { "test": "node --test *.test.mjs" },
+  "scripts": { "test": "node --test --test-force-exit *.test.mjs" },
   "devDependencies": { "happy-dom": "^20.0.0" }
 }

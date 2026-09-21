@@ -1,7 +1,7 @@
 // core.js — Noor Traders Hazri + Salary
 // Sirf hisab-kitab. Yahan na DOM hai na Firebase, is liye ye file Node mein test hoti hai.
 
-export const APP_VERSION = 'v203';
+export const APP_VERSION = 'v204';
 export const TZ = 'Asia/Karachi';
 export const BUSINESS_ID = 'noor-traders';
 export const SHOP = { name: 'Noor Traders Gulyana', lat: 32.7979125, lng: 73.956984375, radius: 200 };
@@ -515,3 +515,23 @@ export function weekSummary({ staff = [], attendance = [], requests = [], schedu
   }
   return { from, to: today, rows: out };
 }
+
+/** Firestore Timestamp / number -> milliseconds (ya null). */
+export function tsMillis(v) {
+  if (v == null) return null;
+  if (typeof v === 'number') return v;
+  if (typeof v.toMillis === 'function') return v.toMillis();
+  if (typeof v.seconds === 'number') return v.seconds * 1000 + Math.round((v.nanoseconds || 0) / 1e6);
+  return null;
+}
+/**
+ * Staff ne jo Check-In waqt likha (phone ki ghari) aur server par jo asal waqt aaya — dono mein kitne minute farq.
+ * 10+ minute = ya to phone ki ghari ghalat, ya internet ke baghair lagi aur baad mein pohanchi. Malik ko chip dikhti hai.
+ */
+export function serverGap(a = {}) {
+  const at = tsMillis(a.serverAt), claimed = parseTime(a.checkIn);
+  if (at == null || claimed == null || !isDate(a.date)) return null;
+  const gap = Math.round((at - Date.parse(a.date + 'T00:00:00+05:00')) / 60000) - claimed;
+  return Math.abs(gap) > 2 * 1440 ? null : gap;
+}
+

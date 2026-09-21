@@ -53,7 +53,7 @@ test('server save na kare to saaf paigham', async () => {
   fake.sdk.writeBatch = realBatch;
 });
 test('update ke links: GitHub ka pata website se, Firebase rules', async () => {
-  await click($('[data-action=tab][data-arg=staff]')); await click($('[data-action=links]'));
+  await click($('[data-action=tab][data-arg=settings]')); await click($('[data-action=links]'));
   const hrefs = [...win.document.querySelectorAll('[data-sheet=links] a')].map(a => a.getAttribute('href'));
   assert.ok(hrefs.includes('https://github.com/samiullah-878/nt-traders-/upload/main'));
   assert.ok(hrefs.includes('https://console.firebase.google.com/project/nt-traders/firestore/rules'));

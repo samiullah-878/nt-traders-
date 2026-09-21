@@ -2,8 +2,9 @@
 import {
   APP_VERSION, STATUS_LABEL, STATUS_MARK, DAY_SHORT, SHOP, esc, money, hm, fmtTime, to24, pkDate, pkMinutes, pkTime24, addDays, addMonths, weekday,
   monthDates, monthLabel, dateLabel, parseTime, shortDate, weekRange, dayRows, countStatuses, monthSummary, smartSearch, salaryConfig, checkoutDue, isDate,
-  shiftMinutes, usesDefaultSalary, weekSummary, isClosed, loanCuts, workMinutes, parseTime as C_parse
+  shiftMinutes, usesDefaultSalary, weekSummary, isClosed, loanCuts, workMinutes, parseTime as C_parse, serverGap, STATUS_MARK as MARK
 } from './core.js';
+const to24FromMin = m => { const x = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
 import { icon, avatar, nameHtml, toast, busy, openSheet, refreshSheets, fileToDataUrl, deliverPdf, $, errorText, timeField, IN_TICKETS, OUT_TICKETS } from './ui.js';
 import { loadPdfLib, browserTextImages, dailyPdf, staffMonthPdf, registerPdf, salarySheetPdf } from './pdf.js';
 
@@ -69,6 +70,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       chips.push(a.checkOut ? `<span class="tag t-ok">Gaya ${fmtTime(a.checkOut)}</span>` : due ? '<span class="tag t-bad">Check-Out baqi</span>' : '<span class="tag">Kaam par</span>');
       if (minutes != null) chips.push(`<span class="tag t-ink">${hm(minutes)}${duty && minutes > duty ? ' (+' + hm(minutes - duty) + ' OT)' : ''}</span>`);
       if (a.manual) chips.push('<span class="tag">Malik ne lagayi</span>');
+      const g = serverGap(a); if (g != null && Math.abs(g) >= 10) chips.push(`<span class="tag t-bad" title="Staff ke phone ka waqt aur server ka waqt alag">Server ${fmtTime(to24FromMin(parseTime(a.checkIn) + g))}</span>`);
     }
     // Tickets: aik tap se Aaya / Gaya ka waqt. Bhool jane wale larke ke liye.
     const key = s.phone + '|' + date, open = ui.openTickets.has(key);
@@ -112,7 +114,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     const closed = isClosed(resolveBase(), date), reason = (S.config.closedDays || []).find(d => d.date === date)?.reason;
     return `${date === today ? attention() + weekCard() : ''}
       ${closed ? `<p class="closed-line">${icon('alert', 18)} <span><b>${esc(dateLabel(date))}: Dukaan band</b>${reason && reason !== 'Dukaan band' ? ' — ' + esc(reason) : ''}. Is din koi ghair hazir nahi ginta.</span></p>` : ''}
-      <div class="day-tools"><button type="button" class="btn btn-ghost btn-sm" data-action="toggle-closed" data-arg="${date}">${closed ? 'Dukaan band hatayein' : (date === today ? 'Aaj' : 'Is din') + ' dukaan band (Eid / chutti)'}</button>${c.absent + c.waiting && data.monthLoaded(month) ? `<button type="button" class="btn btn-ghost btn-sm" data-action="quick-present-all" data-arg="${date}">Sab ghair hazir ko hazir lagao</button>` : ''}</div>
+      <div class="day-tools"><button type="button" class="btn btn-ghost btn-sm" data-action="toggle-closed" data-arg="${date}">${closed ? 'Dukaan band hatayein' : (date === today ? 'Aaj' : 'Is din') + ' dukaan band (Eid / chutti)'}</button>${c.absent + c.waiting && data.monthLoaded(month) ? `<button type="button" class="btn btn-ghost btn-sm" data-action="quick-present-all" data-arg="${date}">Sab ghair hazir ko hazir lagao</button>` : ''}<button type="button" class="btn btn-ghost btn-sm" data-action="selfies-day" data-arg="${date}">${icon('camera', 16)} Selfies dekhein</button></div>
       <section class="panel">
         ${strip(c, rows.length)}
         <div class="chips" role="tablist" aria-label="Filter">${FILTERS.map(([k, label]) => `<button type="button" role="tab" class="chip c-${k}" aria-selected="${ui.filter === k}" data-action="filter" data-arg="${k}"><b>${counts[k]}</b> ${label}</button>`).join('')}</div>
@@ -139,7 +141,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     const atEnd = day ? ui.date >= pkDate() : ui.month >= pkDate().slice(0, 7);
     return `<div class="toolbar">
         <div class="switch" role="tablist"><button type="button" role="tab" aria-selected="${day}" data-action="view" data-arg="day">Din</button><button type="button" role="tab" aria-selected="${!day}" data-action="view" data-arg="month">Mahina</button></div>
-        <button type="button" class="btn btn-ink" data-action="${day ? 'pdf-day' : 'pdf-register'}">${icon('pdf', 18)} ${day ? 'Aaj ki hazri PDF' : 'Register PDF'}</button>
+        <span class="btn-row"><button type="button" class="btn btn-ink" data-action="${day ? 'pdf-day' : 'pdf-register'}">${icon('pdf', 18)} ${day ? 'Aaj ki hazri PDF' : 'Register PDF'}</button>${day ? '' : `<button type="button" class="btn btn-ink" data-action="excel" data-arg="${ui.month}">${icon('down', 18)} Excel</button>`}</span>
       </div>
       <div class="datebar">
         <button type="button" class="icon-btn" data-action="step" data-arg="-1" aria-label="Pichla">${icon('left')}</button>
@@ -155,7 +157,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
   function salaryTab() {
     const month = ui.salaryMonth, rows = salaryRows(month), sum = k => rows.reduce((n, r) => n + Number(r.calc[k] || 0), 0);
     const def = S.config.salaryDefault || {}, onDefault = rows.filter(r => r.calc.useDefault).length;
-    return `<div class="toolbar"><h1 class="page-title">Salary</h1><div class="btn-row"><button type="button" class="btn btn-ink" data-action="pdf-salary">${icon('pdf', 18)} Salary sheet</button><button type="button" class="btn btn-ink" data-action="pdf-slips">${icon('share', 18)} Sab ki slips</button></div></div>
+    return `<div class="toolbar"><h1 class="page-title">Salary</h1><div class="btn-row"><button type="button" class="btn btn-ink" data-action="pdf-salary">${icon('pdf', 18)} Salary sheet</button><button type="button" class="btn btn-ink" data-action="excel" data-arg="${month}">${icon('down', 18)} Excel</button><button type="button" class="btn btn-ink" data-action="pdf-slips">${icon('share', 18)} Sab ki slips</button></div></div>
       <div class="datebar">
         <button type="button" class="icon-btn" data-action="sal-step" data-arg="-1" aria-label="Pichla mahina">${icon('left')}</button>
         <label class="date-pick"><span>${esc(monthLabel(month))}</span><input type="month" value="${month}" max="${pkDate().slice(0, 7)}" data-change="pick-salary-month" aria-label="Mahina chunein"></label>
@@ -239,15 +241,32 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         <p class="empty-line" id="staffEmpty" ${list.length ? 'hidden' : ''}>Koi staff nahi mila.</p>
         ${inactive ? `<button type="button" class="link" data-action="toggle-inactive">${ui.showInactive ? 'Band kiye hue chhupayein' : `Band kiye hue bhi dikhayein (${inactive})`}</button>` : ''}
       </section>
+      <button type="button" class="rule-card" data-action="tab" data-arg="settings">${icon('clock', 20)}<span><b>Duty, salary aur baqi settings</b><small>Neeche "Settings" tab mein</small></span>${icon('right', 18)}</button>`;
+  }
+  function settingsTab() {
+    const pend = pending().length, d = S.config.salaryDefault || {}, fixes = selfieFix();
+    const tool = (action, ic, title, text = '', extra = '') => `<button type="button" class="tool${extra}" data-action="${action}">${icon(ic)}<span><b>${title}</b>${text ? `<small>${text}</small>` : ''}</span>${action === 'requests' && pend ? `<em class="badge">${pend}</em>` : icon('right', 18)}</button>`;
+    return `<div class="toolbar"><h1 class="page-title">Settings</h1></div>
+      <h2 class="section-label">Rozana ka kaam</h2>
       <section class="panel tools">
-        <button type="button" class="tool" data-action="requests">${icon('note')}<span><b>Chutti / correction ki requests</b><small>${pend ? pend + ' ka jawab baqi' : 'Koi nayi request nahi'}</small></span>${pend ? `<em class="badge">${pend}</em>` : ''}</button>
-        <button type="button" class="tool" data-action="settings">${icon('clock')}<span><b>Default duty aur default salary</b><small>${esc(dutyText(resolveBase()))} &nbsp;|&nbsp; ${S.config.salaryDefault?.monthlySalary ? money(S.config.salaryDefault.monthlySalary) : 'salary likhi nahi'} &nbsp;|&nbsp; ${Number(S.config.radius || SHOP.radius)}m</small></span></button>
-        <button type="button" class="tool" data-action="password">${icon('edit')}<span><b>Malik ka password badlein</b></span></button>
-        <button type="button" class="tool" data-action="links">${icon('share')}<span><b>Update ke links</b><small>GitHub upload · Firebase rules</small></span></button>
-        <button type="button" class="tool" data-action="khata">${icon('book')}<span><b>Advance / qarz ka khata</b></span></button>
-        <button type="button" class="tool" data-action="diag">${icon('alert')}<span><b>App ki jaanch</b><small>Hazri na dikhe to is ka screenshot bhejein</small></span></button>
-        <button type="button" class="tool" data-action="update">${icon('down')}<span><b>App update check karein</b><small>Abhi ${APP_VERSION}</small></span></button>
-        <button type="button" class="tool tone-bad" data-action="logout">${icon('out')}<span><b>Logout</b></span></button>
+        ${tool('requests', 'note', 'Chutti / correction ki requests', pend ? pend + ' ka jawab baqi' : 'Koi nayi request nahi')}
+        ${tool('history', 'edit', 'Tabdeeli ki history', 'Kis ki hazri / salary kab aur kyun badli')}
+        ${tool('khata', 'book', 'Advance / qarz ka khata', 'Kis ka kitna qarz baqi')}
+      </section>
+      <h2 class="section-label">Qawaid (sab staff par)</h2>
+      <section class="panel tools">
+        ${tool('cfg-duty', 'clock', 'Duty ka waqt', esc(dutyText(resolveBase())) + ' &nbsp;|&nbsp; riayat ' + Number(S.config.grace ?? 10) + ' min' + (nightShift(S.config) ? ' &nbsp;|&nbsp; <b class="txt-bad">ghalat lag raha hai</b>' : ''))}
+        ${tool('cfg-salary', 'wallet', 'Salary ke qawaid', (d.monthlySalary ? 'Default ' + money(d.monthlySalary) : 'Default salary likhi nahi') + ' &nbsp;|&nbsp; ' + (d.mode === 'days' ? 'din ke mutabiq' : 'ghanton ke mutabiq'))}
+        ${tool('cfg-checkin', 'pin', 'Check-In ki had aur hidayat', Number(S.config.radius || SHOP.radius) + 'm dukaan se' + (S.config.instruction ? ' &nbsp;|&nbsp; hidayat likhi hai' : ''))}
+      </section>
+      <h2 class="section-label">App</h2>
+      <section class="panel tools">
+        ${tool('links', 'share', 'Update ke links', 'GitHub upload · Firebase rules')}
+        ${tool('update', 'down', 'App update check karein', 'Abhi ' + APP_VERSION)}
+        ${fixes ? tool('migrate-selfies', 'camera', 'App ko halka karein (aik dafa)', 'Purani selfies alag karein — hazri list tez khulegi') : ''}
+        ${tool('diag', 'alert', 'App ki jaanch', 'Hazri na dikhe to is ka screenshot bhejein')}
+        ${tool('password', 'edit', 'Malik ka password badlein')}
+        ${tool('logout', 'out', 'Logout', '', ' tone-bad')}
       </section>`;
   }
   function staffForm(phone) {
@@ -264,8 +283,8 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         <fieldset><legend>Duty ka waqt</legend>
           <label class="check"><input type="checkbox" name="useDefaultShift" ${!own || own.useDefaultShift !== false ? 'checked' : ''} data-change="toggle-box" data-arg="ownShift" data-invert="1"> Default duty (${esc(dutyText(resolveBase()))})</label>
           <div id="ownShift" class="sub-box" ${!own || own.useDefaultShift !== false ? 'hidden' : ''}>
-            ${timeField('shiftStart', to24(sch.shiftStart) || '09:15', { label: 'Duty shuru', tickets: IN_TICKETS })}
-            ${timeField('shiftEnd', to24(sch.shiftEnd) || '19:00', { label: 'Duty khatam', tickets: OUT_TICKETS })}
+            ${timeField('shiftStart', to24(sch.shiftStart) || '09:15', { label: 'Duty shuru', tickets: IN_TICKETS, guess: 'in' })}
+            ${timeField('shiftEnd', to24(sch.shiftEnd) || '19:00', { label: 'Duty khatam', tickets: OUT_TICKETS, guess: 'out' })}
             <label>Late ki riayat (minute)<input name="grace" type="number" inputmode="numeric" min="0" max="120" value="${Number(sch.grace ?? 10)}"></label>
           </div>
           <label>Hafta-war chutti<select name="weeklyOff"><option value="">Koi nahi</option>${['Itwar', 'Peer', 'Mangal', 'Budh', 'Jumerat', 'Juma', 'Hafta'].map((d, i) => `<option value="${i}" ${(own?.weeklyOff || []).map(Number).includes(i) ? 'selected' : ''}>${d}</option>`).join('')}</select></label>
@@ -282,6 +301,8 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
           <details><summary>Points ka rate (agar dete hain)</summary><label>1 point = Rs<input name="pointRate" type="number" inputmode="decimal" min="0" step="0.5" value="${Number(s?.salary?.pointRate) || ''}"></label><p class="hint">Waqt par aane ke points hazri ke sath khud bante hain. Rate 0 ho to salary par asar nahi.</p></details>
         </fieldset>
         <fieldset><legend>Ijazat</legend>
+          <label>Login PIN <small>(ikhtiyari, 4 hindse — khali = sirf number se login)</small><input name="pin" type="text" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" value="${esc(s?.pin || '')}" placeholder="maslan 4821" autocomplete="off"></label>
+          <p class="hint">PIN tab kaam karta hai jab naye Firebase rules (v204) publish ho chuke hon.</p>
           <label class="check"><input type="checkbox" name="loginEnabled" ${s?.loginEnabled === false ? '' : 'checked'}> Staff apne number se login kar sakta hai</label>
           <label class="check"><input type="checkbox" name="active" ${s?.active === false ? '' : 'checked'}> Kaam par hai (hata dein to list se chhup jata hai, hazri mehfooz rehti hai)</label>
         </fieldset>
@@ -323,6 +344,19 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     sheet.step = n => { const next = addMonths(month, n); if (next > pkDate().slice(0, 7)) return; month = next; data.watchMonth(month); sheet.refresh(true); };
     return sheet;
   }
+  // Selfie sirf yahan (daba kar) load hoti hai — list halki rehti hai
+  const selfies = new Map();
+  function selfieImg(a) {
+    const url = a.selfie || selfies.get(a.id);
+    if (url) return `<img src="${esc(url)}" alt="Check-In ki selfie">`;
+    if (url === '') return '<span class="selfie-wait">Selfie nahi mili</span>';
+    queueMicrotask(() => data.getSelfie(a).then(u => { selfies.set(a.id, u || ''); const box = [...document.querySelectorAll('[data-selfie]')].find(el => el.dataset.selfie === a.id); if (box) box.firstElementChild.outerHTML = u ? `<img src="${esc(u)}" alt="Check-In ki selfie">` : '<span class="selfie-wait">Selfie nahi mili</span>'; }).catch(() => { /* internet */ }));
+    return '<span class="selfie-wait">Selfie load ho rahi…</span>';
+  }
+  function gapNote(a) {
+    const g = serverGap(a);
+    return g != null && Math.abs(g) >= 10 ? `<br><b class="txt-bad">Server par ${fmtTime(to24FromMin(parseTime(a.checkIn) + g))} pohanchi (${Math.abs(g)} min farq) — phone ki ghari ya internet</b>` : '';
+  }
   function attendanceSheet(phone, date) {
     data.watchMonth(date.slice(0, 7));
     return openSheet({
@@ -331,10 +365,10 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         const s = account(phone) || { name: phone }, a = data.attendanceBetween(date, date).find(x => x.phone === phone) || {}, sch = data.scheduleFor(phone);
         sh.setTitle(`${nameHtml(s.name)} <small>${esc(dateLabel(date))}</small>`);
         return `<form class="form" data-form="att" data-phone="${phone}" data-id="${esc(a.id || '')}">
-          ${a.selfie ? `<div class="proof"><img src="${esc(a.selfie)}" alt="Check-In ki selfie"><p>${icon('pin', 16)} Dukaan se ${a.checkInDistance != null ? Math.round(a.checkInDistance) + 'm' : '—'}<br><small>Selfie Check-In ke waqt li gayi</small></p></div>` : ''}
+          ${a.selfie || a.hasSelfie ? `<div class="proof" data-selfie="${esc(a.id)}">${selfieImg(a)}<p>${icon('pin', 16)} Dukaan se ${a.checkInDistance != null ? Math.round(a.checkInDistance) + 'm' : '—'}<br><small>Selfie Check-In ke waqt li gayi</small>${gapNote(a)}</p></div>` : gapNote(a) ? `<p class="hint">${gapNote(a)}</p>` : ''}
           <label>Tareekh<input name="date" type="date" value="${date}" max="${pkDate()}" required ${a.id ? 'readonly' : ''}></label>
-          ${timeField('checkIn', to24(a.checkIn), { label: 'Aaya', tickets: [to24(sch.shiftStart), ...IN_TICKETS].sort(), now: date === pkDate() })}
-          ${timeField('checkOut', to24(a.checkOut), { label: 'Gaya', tickets: [...OUT_TICKETS, to24(sch.shiftEnd)].sort(), optional: true, now: date === pkDate() })}
+          ${timeField('checkIn', to24(a.checkIn), { label: 'Aaya', tickets: [to24(sch.shiftStart), ...IN_TICKETS].sort(), now: date === pkDate(), guess: 'in' })}
+          ${timeField('checkOut', to24(a.checkOut), { label: 'Gaya', tickets: [...OUT_TICKETS, to24(sch.shiftEnd)].sort(), optional: true, now: date === pkDate(), guess: 'out' })}
           <label>Note <small>(kyun badla)</small><input name="note" value="${esc(a.ownerNote || '')}" maxlength="200"></label>
           <div class="btn-row sticky"><button class="btn btn-primary btn-lg">Save karein</button>${a.id ? `<button type="button" class="btn btn-ghost" data-action="att-delete" data-id="${esc(a.id)}">Hazri hatayein</button>` : ''}</div>
         </form>`;
@@ -361,39 +395,46 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       }
     });
   }
-  function settingsSheet(focus = '') {
-    const sheet = openSheet({ id: 'settings', wide: true, title: 'Default duty aur default salary', render: () => {
-      const c = S.config, d = { ...(c.salaryDefault || {}) }, n = activeStaff().length;
-      const customShift = activeStaff().filter(s => S.schedules.get(s.phone)?.useDefaultShift === false).length;
-      const customSalary = activeStaff().filter(s => !usesDefaultSalary(s)).length;
-      const hrs = shiftMinutes(resolveBase());
-      return `<form class="form" data-form="settings">
-      <fieldset id="setDuty"><legend>Default duty (sab par)</legend>
-        ${timeField('shiftStart', to24(c.shiftStart) || '09:15', { label: 'Aane ka waqt', tickets: IN_TICKETS })}
-        ${timeField('shiftEnd', to24(c.shiftEnd) || '19:00', { label: 'Jane ka waqt', tickets: OUT_TICKETS })}
-        ${nightShift(c) ? `<p class="error-line">${icon('alert', 18)} <span>Abhi duty <b>${esc(dutyText(resolveBase()))}</b> save hai — ye raat ki duty lag rahi hai. Din ki duty ho to upar AM / PM theek kar ke Save karein.</span></p>` : ''}
-        <p class="hint">${hrs ? 'Duty: <b>' + hm(hrs) + '</b> roz. Isi se default salary ke ghante bante hain.' : 'Jane ka waqt likhein taake roz ke ghante khud ban jayein.'}</p>
-        <div class="two"><label>Late ki riayat (minute)<input name="grace" type="number" inputmode="numeric" min="0" max="120" value="${Number(c.grace ?? 10)}"></label>
-        <label>Check-In ki had (meter)<input name="radius" type="number" inputmode="numeric" min="20" max="5000" value="${Number(c.radius || SHOP.radius)}" required></label></div>
+  const selfieFix = () => data.allAttendance().some(a => a.selfie);
+  function dutySheet() {
+    return openSheet({ id: 'cfg-duty', wide: true, title: 'Duty ka waqt (sab par)', render: () => {
+      const c = S.config, customShift = activeStaff().filter(s => S.schedules.get(s.phone)?.useDefaultShift === false).length, hrs = shiftMinutes(resolveBase());
+      return `<form class="form" data-form="cfg">
+        ${nightShift(c) ? `<p class="error-line">${icon('alert', 18)} <span>Abhi <b>${esc(dutyText(resolveBase()))}</b> save hai — ye raat ki duty lag rahi hai. Neeche ticket se sahi waqt chunein.</span></p>` : ''}
+        ${timeField('shiftStart', to24(c.shiftStart) || '09:15', { label: 'Aane ka waqt', tickets: IN_TICKETS, guess: 'in' })}
+        ${timeField('shiftEnd', to24(c.shiftEnd) || '19:00', { label: 'Jane ka waqt', tickets: OUT_TICKETS, guess: 'out' })}
+        <p class="hint">${hrs ? 'Duty: <b>' + hm(hrs) + '</b> roz. Isi se default salary ke ghante bante hain.' : 'Jane ka waqt chunein taake roz ke ghante khud ban jayein.'}</p>
+        <label>Late ki riayat (minute) <small>is ke baad Late</small><input name="grace" type="number" inputmode="numeric" min="0" max="120" value="${Number(c.grace ?? 10)}"></label>
         <p class="hint">${customShift ? `${customShift} staff ki apni alag duty hai.` : 'Sab staff default duty par hain.'}</p>
         ${customShift ? '<button type="button" class="btn btn-ghost btn-sm" data-action="apply-shift-all">Sab par default duty lagayein</button>' : ''}
-      </fieldset>
-      <fieldset id="setSalary"><legend>Default salary (sab par)</legend>
-        <label>Mahana salary (Rs)<input name="defSalary" type="number" inputmode="numeric" min="0" value="${Number(d.monthlySalary) || ''}" placeholder="25000"></label>
+        <div class="btn-row sticky"><button class="btn btn-primary btn-lg">Save karein</button></div></form>`;
+    } });
+  }
+  function salaryRulesSheet() {
+    return openSheet({ id: 'cfg-salary', wide: true, title: 'Salary ke qawaid (sab par)', render: () => {
+      const d = { ...(S.config.salaryDefault || {}) }, n = activeStaff().length, customSalary = activeStaff().filter(s => !usesDefaultSalary(s)).length;
+      return `<form class="form" data-form="cfg">
+        <label>Default mahana salary (Rs)<input name="defSalary" type="number" inputmode="numeric" min="0" value="${Number(d.monthlySalary) || ''}" placeholder="25000"></label>
         <div class="two"><label>Mahine ke din<input name="defDays" type="number" inputmode="numeric" min="1" max="31" value="${Number(d.workingDays) || 30}"></label><label>Overtime (Rs/ghanta) <small>khali = aam rate</small><input name="defOt" type="number" inputmode="numeric" min="0" value="${Number(d.overtimeRate) || ''}"></label></div>
         <label>Hisab kaise ho
           <select name="salaryMode"><option value="days" ${d.mode === 'days' ? 'selected' : ''}>Din ke mutabiq — poori salary, har ghair hazir din kat-ta hai</option><option value="hours" ${d.mode !== 'days' ? 'selected' : ''}>Ghanton ke mutabiq — jitne ghante kaam, utni salary</option></select></label>
         <label class="check"><input type="checkbox" name="leavePaid" ${d.leavePaid !== false ? 'checked' : ''}> Manzoor chutti ki salary nahi kategi</label>
         <div class="two"><label>Har kitne late par jurmana <small>0 = band</small><input name="lateEvery" type="number" inputmode="numeric" min="0" max="31" value="${Number(d.lateEvery) || 0}"></label><label>Jurmana (din ki salary)<input name="lateFineDays" type="number" inputmode="decimal" min="0" max="5" step="0.25" value="${d.lateFineDays ?? 0.5}"></label></div>
-        <p class="hint">Misal: 3 aur 0.5 = har 3 dafa late hone par aadhe din ki salary kategi. Ye qawaid sab staff par lagte hain.</p>
+        <p class="hint">Misal: 3 aur 0.5 = har 3 dafa late par aadhe din ki salary kategi. Mode aur jurmana sab staff par lagte hain. Final ho chuke mahine nahi badalte.</p>
         <p class="hint">${customSalary ? `${customSalary} staff ki apni salary hai (default nahi).` : n ? 'Sab staff default salary par hain.' : ''}</p>
         ${customSalary ? '<button type="button" class="btn btn-ghost btn-sm" data-action="apply-salary-all">Sab par default salary lagayein</button>' : ''}
-      </fieldset>
-      <label>Staff ke liye hidayat <small>(un ki screen par nazar aati hai)</small><textarea name="instruction" rows="3" maxlength="500">${esc(c.instruction || '')}</textarea></label>
-      <p class="hint">Final ho chuke mahinon par in tabdeeliyon ka asar nahi hota.</p>
-      <div class="btn-row sticky"><button class="btn btn-primary btn-lg">Save karein</button></div></form>`; } });
-    if (focus) setTimeout(() => sheet.el.querySelector(focus === 'salary' ? '#setSalary' : '#setDuty')?.scrollIntoView?.({ block: 'start' }), 80);
-    return sheet;
+        <div class="btn-row sticky"><button class="btn btn-primary btn-lg">Save karein</button></div></form>`;
+    } });
+  }
+  function checkinSheet() {
+    return openSheet({ id: 'cfg-checkin', title: 'Check-In ki had aur hidayat', render: () => {
+      const c = S.config;
+      return `<form class="form" data-form="cfg">
+        <label>Check-In dukaan se kitni door tak (meter)<input name="radius" type="number" inputmode="numeric" min="20" max="5000" value="${Number(c.radius || SHOP.radius)}" required></label>
+        <p class="hint">Dukaan ke andar GPS kabhi 50-100m tak ghalat hota hai. 200m theek rehta hai.</p>
+        <label>Staff ke liye hidayat <small>(un ki screen par nazar aati hai)</small><textarea name="instruction" rows="3" maxlength="500">${esc(c.instruction || '')}</textarea></label>
+        <div class="btn-row sticky"><button class="btn btn-primary btn-lg">Save karein</button></div></form>`;
+    } });
   }
   function khataSheet() {
     return openSheet({ id: 'khata', wide: true, title: 'Advance / qarz ka khata', render: () => {
@@ -432,6 +473,70 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         </div>
         <p class="hint">Is update (${esc(APP_VERSION)}) mein Firebase rules badalne ki zaroorat nahi.</p>`;
     } });
+  }
+  function selfiesDaySheet(date) {
+    let pics = null, error = '';
+    const sheet = openSheet({ id: 'selfies', wide: true, title: 'Selfies', render: sh => {
+      sh.setTitle(`Selfies <small>${esc(dateLabel(date))}</small>`);
+      const rows = rowsFor(date).filter(r => r.a.checkIn);
+      if (error) return `<p class="error-line">${icon('alert', 18)} <span>${esc(error)}</span></p>`;
+      if (!rows.length) return '<p class="empty-line">Is din kisi ne Check-In nahi kiya.</p>';
+      return `<p class="hint">Baen taraf staff ki profile tasveer, daen taraf Check-In ki selfie. Chehra na mile to hazri khol kar durust karein.</p>
+        <ul class="selfie-grid">${rows.map(r => {
+          const pic = pics?.get(r.a.id), gap = serverGap(r.a);
+          return `<li><button type="button" data-action="edit-att" data-phone="${r.account.phone}" data-date="${date}">
+            <span class="pair">${r.account.photo ? `<img src="${esc(r.account.photo)}" alt="">` : avatar(r.account, 'lg')}${pic ? `<img src="${esc(pic)}" alt="Selfie">` : `<span class="noselfie">${pics ? (r.a.manual ? 'Malik ne lagayi' : 'Selfie nahi') : 'Load…'}</span>`}</span>
+            <b>${nameHtml(r.account.name)}</b><small>${fmtTime(r.a.checkIn)}${r.a.checkInDistance != null ? ' · ' + Math.round(r.a.checkInDistance) + 'm' : ''}${r.a.checkInAccuracy ? ' (±' + Math.round(r.a.checkInAccuracy) + 'm)' : ''}</small>
+            ${gap != null && Math.abs(gap) >= 10 ? `<small class="txt-bad">Server ka waqt ${hm(Math.abs(gap))} ${gap > 0 ? 'baad' : 'pehle'}</small>` : ''}</button></li>`; }).join('')}</ul>`;
+    } });
+    data.selfiesFor(date).then(m => { pics = m; sheet.refresh(true); }).catch(e => { error = errorText(e); sheet.refresh(true); });
+    return sheet;
+  }
+  const AUDIT_LABEL = { attendance: 'Hazri badli', 'attendance delete': 'Hazri hatayi', request: 'Request ka jawab', 'salary settings': 'Salary settings', 'salary adjustment': 'Advance / bonus / qarz', 'salary adjustment delete': 'Advance / bonus hataya', 'salary final': 'Salary final', 'salary reopen': 'Salary dobara kholi', 'salary payment': 'Salary di', settings: 'Settings', 'staff delete': 'Staff delete', 'dukaan band': 'Dukaan band', 'dukaan band hataya': 'Dukaan band hataya', 'default shift sab par': 'Sab par default duty', 'default salary sab par': 'Sab par default salary' };
+  function historySheet() {
+    let rows = null, error = '', who = '';
+    const sheet = openSheet({ id: 'history', wide: true, title: 'Tabdeeli ki history', render: () => {
+      if (error) return `<p class="error-line">${icon('alert', 18)} <span>${esc(error)}</span></p>`;
+      if (!rows) return '<p class="loading-line">History aa rahi hai…</p>';
+      const phoneOf = t => (String(t).match(/03\d{9}/) || [])[0] || '';
+      const list = rows.filter(r => !who || phoneOf(r.target) === who);
+      const parse = v => { try { return typeof v === 'string' ? JSON.parse(v || 'null') : v; } catch { return null; } };
+      const brief = v => { if (!v || typeof v !== 'object') return ''; if ('checkIn' in v || 'checkOut' in v) return `${fmtTime(v.checkIn)} – ${fmtTime(v.checkOut)}`; if ('amount' in v) return `${v.kind === 'advance' ? 'Advance' : v.kind === 'loan' ? 'Qarz' : 'Bonus'} ${money(v.amount)}`; if ('paid' in v) return 'Ada ' + money(v.paid); if ('status' in v) return v.status === 'approved' ? 'Manzoor' : v.status === 'rejected' ? 'Na-manzoor' : String(v.status); if ('state' in v) return v.state === 'final' ? 'Final' + (v.final != null ? ' ' + money(v.final) : '') : 'Khula'; if ('monthlySalary' in v) return money(v.monthlySalary); return ''; };
+      const when = at => { const d = new Date(Number(at) || 0); if (!d.getTime()) return ''; const t = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d); return `${shortDate(pkDate(d))} ${fmtTime(t)}`; };
+      return `<label class="inline-select">Staff<select data-change="history-who"><option value="">Sab</option>${activeStaff().map(s => `<option value="${s.phone}" ${who === s.phone ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>
+        <ul class="ledger history">${list.map(r => { const ph = phoneOf(r.target), day = (String(r.target).match(/^\d{4}-\d{2}-\d{2}/) || [])[0], b = brief(parse(r.before)), a = brief(parse(r.after));
+          return `<li><span><b>${esc(AUDIT_LABEL[r.type] || r.type)}</b>${ph ? ' · ' + nameHtml(account(ph)?.name || ph) : ''}${day ? ' · ' + esc(shortDate(day)) : ''}<small>${b || a ? `${esc(b || '—')} → ${esc(a || '—')}` : ''}${r.reason ? ' · ' + esc(r.reason) : ''}</small></span><small class="muted">${esc(when(r.at))}</small></li>`; }).join('') || '<li class="muted">Koi tabdeeli nahi mili.</li>'}</ul>
+        <p class="hint">Aakhri ${rows.length} tabdeeliyan.</p>`;
+    } });
+    sheet.setWho = v => { who = v; sheet.refresh(true); };
+    data.auditLog(200).then(r => { rows = r; sheet.refresh(true); }).catch(e => { error = errorText(e); sheet.refresh(true); });
+    return sheet;
+  }
+  /* ---------- Excel (sirf dabane par load) ---------- */
+  let xlsxPromise = null;
+  function loadXlsx() {
+    if (window.XLSX) return Promise.resolve(window.XLSX);
+    xlsxPromise ||= new Promise((resolve, reject) => { const sc = document.createElement('script'); sc.src = './xlsx.mini.min.js'; sc.onload = () => resolve(window.XLSX); sc.onerror = () => { xlsxPromise = null; reject(new Error('Excel library load nahi hui. Internet check kar ke dobara dabayein.')); }; document.head.append(sc); });
+    return xlsxPromise;
+  }
+  const DAY_FULL = ['Itwar', 'Peer', 'Mangal', 'Budh', 'Jumerat', 'Juma', 'Hafta'];
+  function excelWorkbook(X, month) {
+    const dates = monthDates(month), staff = activeStaff(), wb = X.utils.book_new(), r0 = n => Math.round(Number(n) || 0), h2 = m => +((m || 0) / 60).toFixed(2);
+    const reg = [['Naam', 'Number', ...dates.map(d => +d.slice(8)), 'Hazir', 'Late', 'Ghair hazir', 'Chutti/Off', 'Kul ghante']];
+    const detail = [['Tareekh', 'Din', 'Naam', 'Number', 'Aaya', 'Gaya', 'Ghante', 'Late (min)', 'Status', 'Note']];
+    for (const s of staff) {
+      const sum = summaryFor(s, month);
+      reg.push([s.name, s.phone, ...sum.days.map(d => MARK[d.status] === '·' ? '' : MARK[d.status]), sum.count.present + sum.count.late, sum.count.late, sum.count.absent, sum.count.leave + sum.count.off, h2(sum.totalMin)]);
+      for (const d of sum.days) if (d.status !== 'na') detail.push([d.date, DAY_FULL[weekday(d.date)], s.name, s.phone, d.a.checkIn ? fmtTime(d.a.checkIn) : '', d.a.checkOut ? fmtTime(d.a.checkOut) : '', d.minutes != null ? h2(d.minutes) : '', d.a.checkIn ? d.late : '', STATUS_LABEL[d.status], d.a.ownerNote || '']);
+    }
+    const sal = [['Naam', 'Number', 'Salary', 'Default?', 'Din kaam', 'Ghante', 'Ghair hazir din', 'Hazri salary', 'Overtime', 'Bonus+', 'Advance', 'Qarz qist', 'Late jurmana', 'Kul', 'Ada', 'Baqi', 'Halat']];
+    for (const s of staff) { const c = data.calcFor(s, month);
+      sal.push([s.name, s.phone, r0(c.monthlySalary), c.useDefault ? 'Default' : 'Apni', c.daysWorked, h2((c.normalMin || 0) + (c.otMin || 0)), c.absentDays ?? '', r0(c.normalSalary), r0(c.overtimeAmount), r0((c.bonus || 0) + (c.pointsAmount || 0) + (c.mealSalary || 0)), r0(c.advance), r0(c.loanCut), r0(c.lateFine), r0(c.final), r0(c.paid), r0(c.balance), c.frozen ? 'Final' : 'Andaza']); }
+    const add = (rows, name, widths) => { const ws = X.utils.aoa_to_sheet(rows); ws['!cols'] = widths.map(w => ({ wch: w })); X.utils.book_append_sheet(wb, ws, name); };
+    add(reg, 'Register', [18, 13, ...dates.map(() => 3.5), 7, 6, 11, 10, 10]);
+    add(detail, 'Hazri', [11, 9, 18, 13, 9, 9, 7, 9, 12, 24]);
+    add(sal, 'Salary', [18, 13, 9, 9, 8, 8, 10, 11, 9, 9, 9, 9, 11, 10, 10, 10, 8]);
+    return wb;
   }
   function diagSheet() {
     return openSheet({ id: 'diag', wide: true, title: 'App ki jaanch', render: () => {
@@ -528,10 +633,27 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     async 'leave-cancel'(el) { if (!confirm('Ye chutti cancel karein?')) return; await busy(el, () => data.cancelLeave(el.dataset.id), 'Chutti cancel ho gayi'); },
     requests() { open('requests', requestsSheet); },
     async req(el) { await busy(el, () => data.reviewRequest(el.dataset.id, el.dataset.arg, ''), el.dataset.arg === 'approved' ? 'Manzoor ho gayi' : 'Na-manzoor kar di'); },
-    settings(el) { open('settings', () => settingsSheet(el?.dataset.arg || '')); },
+    settings(el) { const arg = el?.dataset.arg; actions[arg === 'salary' ? 'cfg-salary' : 'cfg-duty'](); },
+    'cfg-duty'() { open('cfg', dutySheet); },
+    'cfg-salary'() { open('cfg', salaryRulesSheet); },
+    'cfg-checkin'() { open('cfg', checkinSheet); },
+    async 'migrate-selfies'(el) {
+      if (!confirm('Purane hazri records ki selfies alag jagah rakh di jayengi (aik dafa ka kaam, 1-2 minute). Selfies mitengi nahi, daba kar pehle ki tarah dikhengi. Shuru karein?')) return;
+      await busy(el, async () => { const n = await data.migrateSelfies((done, m) => { const t = $('#toast'); if (t) { t.textContent = `${done} selfie alag ho gayin (${monthLabel(m)})…`; t.className = 'toast show'; } }); toast(n ? `${n} selfie alag ho gayin. App ab halki hai.` : 'Koi purani selfie nahi mili — app pehle se halki hai.', 'ok'); });
+    },
     khata() { open('khata', khataSheet); },
     diag() { open('diag', diagSheet); },
     links() { open('links', linksSheet); },
+    'selfies-day'(el) { needMonth(el.dataset.arg.slice(0, 7)); open('selfies', () => selfiesDaySheet(el.dataset.arg)); },
+    history() { open('history', historySheet); },
+    async excel(el) {
+      const month = el.dataset.arg || ui.month;
+      await busy(el, async () => {
+        needMonth(month);
+        const X = await loadXlsx(), buf = X.write(excelWorkbook(X, month), { type: 'array', bookType: 'xlsx' });
+        deliverPdf({ blob: new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), filename: `NoorTraders_Hazri_Salary_${month}.xlsx` });
+      });
+    },
     'tix-open'(el) { ui.openTickets.add(el.dataset.arg); rerender(); },
     async tix(el) {
       const { phone, date, kind, arg } = el.dataset, a = data.attendanceBetween(date, date).find(x => x.phone === phone);
@@ -556,7 +678,10 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       const list = el.dataset.arg ? all.filter(a => a.id === el.dataset.arg) : all;
       if (!list.length) return;
       if (!confirm(`${list.length > 1 ? list.length + ' staff ka' : (account(list[0].phone)?.name || '') + ' ka'} Check-Out duty khatam ke waqt par band kar dein?\n${list.map(a => `${account(a.phone)?.name} (${shortDate(a.date)})`).join(', ')}`)) return;
-      await busy(el, () => data.closeCheckouts(list), 'Check-Out band ho gaya');
+      await busy(el, async () => {
+        const r = await data.closeCheckouts(list);
+        if (r.failed.length) toast(`${r.done} band ho gaye. In ka waqt khud durust karein: ${r.failed.join(', ')}`, 'bad'); else toast('Check-Out band ho gaya', 'ok');
+      });
     },
     async 'toggle-closed'(el) {
       const date = el.dataset.arg, on = isClosed(resolveBase(), date);
@@ -611,7 +736,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       await busy(button, async () => { await data.saveAttendance({ phone: form.dataset.phone, date: v.date, checkIn: v.checkIn, checkOut: v.checkOut, note: v.note }); sheets.att?.close(); }, 'Hazri save ho gayi');
     },
     async leave(form, v, button) { await busy(button, async () => { await data.markLeave({ phone: form.dataset.phone, ...v }); sheets.leave?.close(); }, 'Chutti lag gayi'); },
-    async settings(form, v, button) { await busy(button, async () => { await data.saveConfig(v); sheets.settings?.close(); }, 'Settings save ho gayin'); },
+    async cfg(form, v, button) { await busy(button, async () => { await data.saveConfig(v); sheets.cfg?.close(); }, 'Save ho gaya'); },
     async password(form, v, button) {
       await busy(button, async () => {
         try { await controller.changeOwnerPassword(v.current, v.next); } catch (e) { if (/wrong-password|invalid-credential/.test(e.code || '')) throw new Error('Mojooda password ghalat hai.'); throw e; }
@@ -625,6 +750,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     'pick-date'(el) { if (!el.value) return; if (ui.view === 'day') { if (isDate(el.value) && el.value <= pkDate()) ui.date = el.value; data.watchMonth(ui.date.slice(0, 7)); } else { ui.month = el.value; data.watchMonth(ui.month); } rerender(); },
     'pick-salary-month'(el) { if (!el.value) return; ui.salaryMonth = el.value; data.watchMonth(ui.salaryMonth); rerender(); },
     async 'staff-photo'(el) { const f = el.files?.[0]; if (!f) return; try { sheets.staffForm?.setPhoto(await fileToDataUrl(f, 360)); } catch (e) { toast(errorText(e), 'bad'); } },
+    'history-who'(el) { sheets.history?.setWho(el.value); },
     'toggle-box'(el) { const box = $('#' + el.dataset.arg, el.closest('form')); if (box) box.hidden = el.dataset.invert ? el.checked : !el.checked; },
     'extra-kind'(el) { const per = el.form.elements.perMonth; if (per) { per.hidden = el.value !== 'loan'; per.required = el.value === 'loan'; } }
   };
@@ -639,13 +765,13 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
 
   function render() {
     const pend = pending().length;
-    const tabs = [['hazri', 'Hazri', 'book'], ['salary', 'Salary', 'wallet'], ['staff', 'Staff', 'people']];
+    const tabs = [['hazri', 'Hazri', 'book'], ['salary', 'Salary', 'wallet'], ['staff', 'Staff', 'people'], ['settings', 'Settings', 'clock']];
     return `<header class="top"><div class="top-in">
         <div class="brand"><span class="brand-mark" aria-hidden="true">NT</span><span><b>Noor Traders</b><small>${S.pendingWrites ? `<span class="sync-pill">${icon('clock', 13)} ${S.pendingWrites} entry server par ja rahi</span>` : 'Hazri register'}</small></span></div>
-        <nav class="tabs" aria-label="Hisse">${tabs.map(([k, label, ic]) => `<button type="button" data-action="tab" data-arg="${k}" aria-current="${ui.tab === k ? 'page' : 'false'}">${icon(ic, 22)}<span>${label}</span>${k === 'staff' && pend ? `<em class="badge">${pend}</em>` : ''}</button>`).join('')}</nav>
+        <nav class="tabs" aria-label="Hisse">${tabs.map(([k, label, ic]) => `<button type="button" data-action="tab" data-arg="${k}" aria-current="${ui.tab === k ? 'page' : 'false'}">${icon(ic, 22)}<span>${label}</span>${k === 'settings' && pend ? `<em class="badge">${pend}</em>` : ''}</button>`).join('')}</nav>
         <button type="button" class="search-btn" data-action="search">${icon('search', 18)}<span>Talash: naam, "late is hafte"…</span></button>
       </div></header>
-      <main class="view view-${ui.tab}">${!S.loaded.has('staff') ? '<p class="loading-line">Data aa raha hai…</p>' : ''}${ui.tab === 'hazri' ? hazriTab() : ui.tab === 'salary' ? salaryTab() : staffTab()}</main>`;
+      <main class="view view-${ui.tab}">${!S.loaded.has('staff') ? '<p class="loading-line">Data aa raha hai…</p>' : ''}${ui.tab === 'hazri' ? hazriTab() : ui.tab === 'salary' ? salaryTab() : ui.tab === 'staff' ? staffTab() : settingsTab()}</main>`;
   }
   return { render, actions, forms, changes, inputs, ui, onData() { refreshSheets(); } };
 }

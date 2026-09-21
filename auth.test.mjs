@@ -33,7 +33,7 @@ test('staff login: session banta hai, account milta hai', async () => {
 });
 test('staff login: number register nahi → saaf paigham, koi session nahi', async () => {
   const { c, f } = setup(); await tick();
-  await assert.rejects(c.login({ role: 'staff', password: '03001234567' }), e => /register nahi/.test(loginErrorMessage(e)));
+  await assert.rejects(c.login({ role: 'staff', password: '03001234567' }), e => /PIN ghalat|login band/.test(loginErrorMessage(e)));
   assert.equal(f.auth.currentUser, null);
 });
 test('staff login: band account → andar nahi', async () => {

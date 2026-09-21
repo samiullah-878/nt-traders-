@@ -174,15 +174,15 @@ export async function getGps() {
 
 /* ---------- PDF dena (aik ya kai files) ---------- */
 export function deliverPdf(input) {
-  const list = (Array.isArray(input) ? input : [input]).map(({ doc, filename }) => {
-    const blob = doc.output('blob');
-    return { filename, blob, url: URL.createObjectURL(blob), file: typeof File !== 'undefined' ? new File([blob], filename, { type: 'application/pdf' }) : null };
+  const list = (Array.isArray(input) ? input : [input]).map(({ doc, blob: given, filename }) => {
+    const blob = given || doc.output('blob'), type = blob.type || 'application/pdf';
+    return { filename, blob, url: URL.createObjectURL(blob), file: typeof File !== 'undefined' ? new File([blob], filename, { type }) : null };
   });
   const files = list.map(x => x.file).filter(Boolean);
   const canShare = files.length === list.length && !!navigator.canShare?.({ files });
   const many = list.length > 1;
   const sheet = openSheet({
-    title: many ? `${list.length} PDF tayyar hain` : 'PDF tayyar hai', id: 'pdf',
+    title: many ? `${list.length} PDF tayyar hain` : /\.xlsx$/.test(list[0].filename) ? 'Excel file tayyar hai' : 'PDF tayyar hai', id: 'pdf',
     render: () => `${canShare ? `<button type="button" class="btn btn-primary btn-lg" id="pdfShare">${icon('share')} ${many ? 'Sab WhatsApp / Share' : 'WhatsApp / Share'}</button>` : ''}
       ${many ? '<p class="hint">WhatsApp mein har larke ki slip alag file ban kar jati hai. Aik aik bhejni ho to neeche wali list se download karein.</p>' : ''}
       <ul class="pdf-list">${list.map(x => `<li><span class="pdf-name">${icon('pdf')} <span>${esc(x.filename)}</span></span>
@@ -210,7 +210,7 @@ function tpParts(v) {
 export function timeField(name, value, opts = {}) {
   const t = tpParts(value), tickets = [...new Set((opts.tickets || []).filter(Boolean))];
   const hours = Array.from({ length: 12 }, (_, i) => i + 1), mins = Array.from({ length: 60 }, (_, i) => i);
-  return `<div class="tp" data-tp data-optional="${opts.optional ? '1' : ''}">
+  return `<div class="tp" data-tp data-optional="${opts.optional ? '1' : ''}" data-guess="${opts.guess || ''}">
     ${opts.label ? `<span class="tp-label">${opts.label}</span>` : ''}
     <input type="hidden" name="${esc(name)}" value="${t ? esc(pad24(value)) : ''}">
     <div class="tp-show" aria-live="polite">${t ? esc(fmtTime(value)).toUpperCase() : (opts.optional ? 'Abhi khali' : 'Waqt chunein')}</div>
@@ -239,7 +239,9 @@ function tpRead(box, forcePm) {
   const h = Number(box.querySelector('[data-tp-h]').value), m = Number(box.querySelector('[data-tp-m]').value || 0);
   if (!h) return '';
   const pressed = box.querySelector('[data-tp-ap][aria-pressed=true]');
-  const pm = forcePm ?? (pressed ? pressed.dataset.tpAp === 'pm' : (h >= 1 && h <= 7) || h === 12); // AM/PM na chuna ho to dukaan ke hisab se andaza
+  // AM/PM na chuna ho to andaza: jane ka waqt = PM; aane ka waqt = 6-11 AM, 12-5 PM
+  const guess = box.dataset.guess, auto = guess === 'out' ? true : guess === 'in' ? (h === 12 || h <= 5) : ((h >= 1 && h <= 7) || h === 12);
+  const pm = forcePm ?? (pressed ? pressed.dataset.tpAp === 'pm' : auto);
   const h24 = (h % 12) + (pm ? 12 : 0);
   return p2(h24) + ':' + p2(m);
 }

@@ -90,7 +90,9 @@ test('naya staff + settings', async () => {
   assert.equal($('[data-sheet=staff-form]'), null);
   await click('[data-action=staff-new]'); fill($('form[data-form=staff]'), { name: 'Dobara', phone: '03111112223' }); await submit($('form[data-form=staff]'));
   assert.match(toastText(), /pehle se mojood/); await click('[data-sheet=staff-form] [data-sheet-close]');
-  await click('[data-action=settings]'); fill($('form[data-form=settings]'), { shiftStart: '10:00', radius: '150' }); await submit($('form[data-form=settings]'));
+  await click('[data-action=tab][data-arg=settings]');
+  await click('[data-action=cfg-duty]'); fill($('form[data-form=cfg]'), { shiftStart: '10:00' }); await submit($('form[data-form=cfg]'));
+  await click('[data-action=cfg-checkin]'); fill($('form[data-form=cfg]'), { radius: '150' }); await submit($('form[data-form=cfg]'));
   assert.equal(records.get(B + 'staffConfig/main').shiftStart, '10:00'); assert.equal(records.get(B + 'staffConfig/main').radius, 150);
 });
 test('salary: advance → final → payment', async () => {
@@ -107,16 +109,20 @@ test('salary: advance → final → payment', async () => {
   await click('[data-sheet=salary] [data-sheet-close]');
 });
 test('v201: default duty + default salary settings', async () => {
-  await click('[data-action=tab][data-arg=staff]'); await click('[data-action=settings]');
-  const f = $('form[data-form=settings]');
-  fill(f, { shiftStart: '09:00', shiftEnd: '18:00', defSalary: '26000', defDays: '26', salaryMode: 'days', lateEvery: '3', lateFineDays: '0.5' }); await submit(f);
+  await click('[data-action=tab][data-arg=settings]'); await click('[data-action=cfg-duty]');
+  fill($('form[data-form=cfg]'), { shiftStart: '09:00', shiftEnd: '18:00' }); await submit($('form[data-form=cfg]'));
+  await click('[data-action=cfg-salary]');
+  const f = $('form[data-form=cfg]');
+  fill(f, { defSalary: '26000', defDays: '26', salaryMode: 'days', lateEvery: '3', lateFineDays: '0.5' }); await submit(f);
   const cfg = records.get(B + 'staffConfig/main');
   assert.equal(cfg.shiftEnd, '18:00'); assert.deepEqual([cfg.salaryDefault.monthlySalary, cfg.salaryDefault.workingDays, cfg.salaryDefault.mode, cfg.salaryDefault.lateEvery], [26000, 26, 'days', 3]);
-  await click('[data-action=settings]'); assert.ok($('[data-action=apply-salary-all]'), 'purane staff apni salary par hain');
+  await app.data.saveConfig({ radius: 180 }); await settle(); // sirf aik hissa: salary ke qawaid na mitein (v204 bug fix)
+  assert.equal(records.get(B + 'staffConfig/main').salaryDefault.monthlySalary, 26000); assert.equal(records.get(B + 'staffConfig/main').shiftEnd, '18:00');
+  await click('[data-action=cfg-salary]'); assert.ok($('[data-action=apply-salary-all]'), 'purane staff apni salary par hain');
   await click('[data-action=apply-salary-all]');
   assert.equal(records.get(B + 'staffAccounts/03001234567').salary.useDefault, true);
   assert.equal(records.get(B + 'staffAccounts/03001234567').salary.monthlySalary, 30000, 'purani raqam mehfooz');
-  await click('[data-sheet=settings] [data-sheet-close]');
+  await click('[data-sheet=cfg-salary] [data-sheet-close]');
   await click('[data-action=tab][data-arg=salary]'); assert.match($('.rule-card').textContent, /Rs 26,000/); assert.match($('.view').textContent, /Default Rs 26,000/);
 });
 test('v201: jaldi hazir, dukaan band, check-out band, qarz, slips, khata, jaanch', async () => {
@@ -137,7 +143,7 @@ test('v201: jaldi hazir, dukaan band, check-out band, qarz, slips, khata, jaanch
   assert.match($('[data-sheet=salary]').textContent, /Qarz ki qist/);
   await click('[data-sheet=salary] [data-sheet-close]');
   await click('[data-action=khata]'); assert.match($('[data-sheet=khata]').textContent, /Rs 6,000/); await click('[data-sheet=khata] [data-sheet-close]');
-  await click('[data-action=tab][data-arg=staff]'); await click('[data-action=diag]');
+  await click('[data-action=tab][data-arg=settings]'); await click('[data-action=diag]');
   assert.match($('[data-sheet=diag]').textContent, new RegExp(today)); assert.match($('[data-sheet=diag]').textContent, /Aaj ke record/);
   await click('[data-sheet=diag] [data-sheet-close]');
 });
@@ -172,21 +178,62 @@ test('v202: Aaya/Gaya tickets aur aasan time picker', async () => {
 test('v202: raat ki duty ghalti se save ho to warning', async () => {
   await app.data.saveConfig({ shiftStart: '21:15', shiftEnd: '07:52', radius: 200 }); await settle();
   assert.match($('.attention').textContent, /ghalat lag rahi/);
-  await click('.attention [data-action=settings]'); assert.match($('[data-sheet=settings]').textContent, /raat ki duty/);
-  const f = $('form[data-form=settings]'); await click(f.querySelector('[data-tp-set="09:15"]')); await click([...f.querySelectorAll('[data-tp]')][1].querySelector('[data-tp-set="19:00"]'));
+  await click('.attention [data-action=settings]'); assert.match($('[data-sheet=cfg-duty]').textContent, /raat ki duty/);
+  const f = $('form[data-form=cfg]'); await click(f.querySelector('[data-tp-set="09:15"]')); await click([...f.querySelectorAll('[data-tp]')][1].querySelector('[data-tp-set="19:00"]'));
   await submit(f); assert.deepEqual([records.get(B + 'staffConfig/main').shiftStart, records.get(B + 'staffConfig/main').shiftEnd], ['09:15', '19:00']);
   assert.equal($('.attention')?.textContent.includes('ghalat lag rahi') || false, false);
 });
+test('v204: Settings tab, selfie alag, server waqt, halka karna, check-out band', async () => {
+  await click('[data-action=tab][data-arg=staff]'); assert.equal($('[data-action=diag]'), null, 'Staff tab mein sirf staff');
+  await click('[data-action=tab][data-arg=settings]');
+  for (const a of ['requests', 'khata', 'cfg-duty', 'cfg-salary', 'cfg-checkin', 'links', 'update', 'diag', 'password', 'logout']) assert.ok($(`.view [data-action="${a}"]`), a);
+  // purani inline selfie + 40 min ka server farq
+  await fake.sdk.setDoc({ path: B + `staffAttendance/${today}_03007654321` }, { id: `${today}_03007654321`, date: today, phone: '03007654321', checkIn: '09:10', checkOut: '', selfie: 'data:image/jpeg;base64,QUJD', serverAt: { seconds: Math.floor((Date.parse(today + 'T09:50:00+05:00')) / 1000), nanoseconds: 0 } }); await settle();
+  assert.ok($('[data-action=migrate-selfies]'), 'halka karne ka button');
+  await click('[data-action=tab][data-arg=hazri]');
+  assert.match($('.row-main[data-phone="03007654321"]').closest('.row').textContent, /Server 9:50 am/);
+  await click('[data-action=tab][data-arg=settings]'); await click('[data-action=migrate-selfies]'); await settle(10);
+  const moved = records.get(B + `staffAttendance/${today}_03007654321`);
+  assert.equal(moved.selfie, undefined); assert.equal(moved.hasSelfie, true); assert.equal(records.get(B + `staffSelfies/${today}_03007654321`).selfie, 'data:image/jpeg;base64,QUJD');
+  await click('[data-action=tab][data-arg=hazri]'); await click('.row-main[data-phone="03007654321"]');
+  await click(`[data-sheet=profile] [data-action=edit-att][data-date="${today}"]`); await settle(10);
+  assert.ok($('[data-sheet=att] .proof img'), 'selfie daba kar load'); assert.match($('[data-sheet=att]').textContent, /40 min farq/);
+  await click('[data-sheet=att] [data-sheet-close]'); await click('[data-sheet=profile] [data-sheet-close]');
+  // aik ghalat ho to baqi Check-Out na rukein
+  const r = await app.data.closeCheckouts([{ id: 'x', date: '2026-01-06', phone: '03001234567', checkIn: '22:30' }, { id: 'y', date: '2026-01-07', phone: '03001234567', checkIn: '09:00' }]);
+  assert.equal(r.done, 1); assert.equal(r.failed.length, 1);
+  // PIN wala staff form
+  await click('[data-action=tab][data-arg=staff]'); await click('.row-main[data-phone="03111112223"]');
+  fill($('form[data-form=staff]'), { pin: '12a4' }); await submit($('form[data-form=staff]')); assert.match(toastText(), /PIN 4 hindson/);
+  fill($('form[data-form=staff]'), { pin: '4821' }); await submit($('form[data-form=staff]'));
+  assert.equal(records.get(B + 'staffAccounts/03111112223').pin, '4821'); assert.equal(records.get(B + 'staff/03111112223').pin, undefined, 'purani copy mein PIN nahi');
+});
+test('v204: aaj ki selfies, history, Excel', async () => {
+  const { createRequire } = await import('node:module'); const X = createRequire(import.meta.url)('./xlsx.mini.min.js'); if (X?.utils) win.XLSX = X; assert.ok(win.XLSX?.utils, 'xlsx');
+  win.URL.createObjectURL = () => 'blob:x'; globalThis.URL.createObjectURL = win.URL.createObjectURL;
+  records.set(B + `staffSelfies/${today}_03001234567`, { phone: '03001234567', date: today, selfie: 'data:image/jpeg;base64,AAAA', at: 1 });
+  await click('[data-action=tab][data-arg=hazri]'); await click(`[data-action=selfies-day][data-arg="${today}"]`); await settle(10);
+  assert.ok($('[data-sheet=selfies] img[alt=Selfie]'), 'selfie nazar aayi'); await click('[data-sheet=selfies] [data-sheet-close]');
+  await click('[data-action=tab][data-arg=settings]'); await click('[data-action=history]'); await settle(10);
+  assert.ok($('[data-sheet=history]'), 'history: ' + toastText());
+  assert.match($('[data-sheet=history]').textContent, /Hazri badli/); await click('[data-sheet=history] [data-sheet-close]');
+  await click('[data-action=tab][data-arg=salary]'); await click('[data-action=excel]'); await settle(10);
+  assert.ok($('[data-sheet=pdf]'), 'Excel sheet nahi khula: ' + toastText());
+  assert.match($('[data-sheet=pdf]').textContent, /NoorTraders_Hazri_Salary_.*\.xlsx/); await click('[data-sheet=pdf] [data-sheet-close]');
+});
 test('logout → staff login → check-in / check-out', async () => {
   records.delete(B + `staffAttendance/${today}_03111112223`); // upar malik ne hazri lagayi thi
-  await click('[data-action=tab][data-arg=staff]'); await click('[data-action=logout]'); await settle();
+  await click('[data-action=tab][data-arg=settings]'); await click('[data-action=logout]'); await settle();
   assert.equal($('#app').dataset.screen, 'login');
   await click('[data-action=login-role][data-arg=staff]');
-  fill($('form[data-form=login]'), { phone: '0311 1112223' }); await submit($('form[data-form=login]')); await settle(10);
+  fill($('form[data-form=login]'), { phone: '0311 1112223', pin: '4821' }); await submit($('form[data-form=login]')); await settle(10);
+  assert.ok([...records].some(([k, v]) => k.includes('staffSessions/') && v.pin === '4821'), 'PIN session mein');
   assert.equal($('#app').dataset.screen, 'staff'); assert.match($('.brand').textContent, /Usman/);
   assert.ok($('[data-action=check-in]'), 'Check-In button'); assert.match($('.punch').textContent, /9h 45m roz/);
   const r = await app.data.checkIn({ selfie: 'data:image/jpeg;base64,AAAA', gps: { lat: 32.7979, lng: 73.9569, accuracy: 10, distance: 12 } }); assert.equal(r.queued, false); await settle();
-  assert.ok(records.get(B + `staffAttendance/${today}_03111112223`).checkIn);
+  const att = records.get(B + `staffAttendance/${today}_03111112223`);
+  assert.ok(att.checkIn); assert.equal(att.selfie, undefined, 'selfie record mein nahi'); assert.equal(att.hasSelfie, true); assert.ok(att.serverAt?.seconds, 'server ka waqt');
+  assert.equal(records.get(B + `staffSelfies/${today}_03111112223`).selfie, 'data:image/jpeg;base64,AAAA');
   await assert.rejects(app.data.checkIn({ selfie: 'x', gps: { distance: 900 } }), /door/);
   assert.ok($('[data-action=check-out]'), 'ab Check-Out button'); assert.match($('.punch').textContent, /baqi/); assert.match($('.punch').textContent, /Malik tak pohanch gayi/);
   Object.defineProperty(win.navigator, 'geolocation', { value: undefined, configurable: true });
