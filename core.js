@@ -1,20 +1,21 @@
 // core.js — Noor Traders Hazri + Salary
 // Sirf hisab-kitab. Yahan na DOM hai na Firebase, is liye ye file Node mein test hoti hai.
 
-export const APP_VERSION = 'v200';
+export const APP_VERSION = 'v201';
 export const TZ = 'Asia/Karachi';
 export const BUSINESS_ID = 'noor-traders';
 export const SHOP = { name: 'Noor Traders Gulyana', lat: 32.7979125, lng: 73.956984375, radius: 200 };
 export const DEFAULT_CONFIG = {
   shiftStart: '09:00', shiftEnd: '', radius: 200, grace: 10,
-  instruction: '',
+  instruction: '', closedDays: [],
+  salaryDefault: { monthlySalary: 0, workingDays: 30, overtimeRate: 0, mode: 'hours', leavePaid: true, lateEvery: 0, lateFineDays: 0.5 },
   scores: { m10: 10, m20: 8, m30: 6, m45: 4, late: 2 }
 };
 export const STATUS_LABEL = {
   present: 'Hazir', late: 'Late', absent: 'Ghair hazir', leave: 'Chutti',
-  off: 'Weekly off', waiting: 'Abhi nahi aaya', na: '—'
+  off: 'Weekly off', closed: 'Dukaan band', waiting: 'Abhi nahi aaya', loading: 'Load ho rahi…', na: '—'
 };
-export const STATUS_MARK = { present: 'P', late: 'L', absent: 'A', leave: 'C', off: 'O', waiting: '·', na: '' };
+export const STATUS_MARK = { present: 'P', late: 'L', absent: 'A', leave: 'C', off: 'O', closed: 'B', waiting: '·', loading: '…', na: '' };
 export const DAY_NAMES = ['Itwar', 'Peer', 'Mangal', 'Budh', 'Jumerat', 'Juma', 'Hafta'];
 export const DAY_SHORT = ['Itw', 'Peer', 'Mng', 'Budh', 'Jum', 'Juma', 'Haf'];
 export const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -44,8 +45,16 @@ export function normalizePhone(value) {
 
 /* ---------- date / time (hamesha Pakistan ka waqt) ---------- */
 const pad = n => String(n).padStart(2, '0');
+/** Hamesha "YYYY-MM-DD". (Kuch Android phones 'en-CA' par "9/21/2026" dete hain — is liye hisse alag alag le kar jorte hain.) */
 export function pkDate(d = new Date()) {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(d);
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(d);
+    const get = t => parts.find(x => x.type === t)?.value || '';
+    const out = `${get('year')}-${get('month')}-${get('day')}`.replace(/[^\d-]/g, '');
+    if (/^\d{4}-\d{2}-\d{2}$/.test(out)) return out;
+  } catch { /* purana browser */ }
+  const pk = new Date(d.getTime() + 5 * 3600000); // Pakistan UTC+5, koi daylight saving nahi
+  return pk.toISOString().slice(0, 10);
 }
 export function pkMinutes(d = new Date()) {
   const parts = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(d);
@@ -150,11 +159,19 @@ export function resolveSchedule(config = {}, own = null) {
   const base = { grace: 10, weeklyOff: [], ...DEFAULT_CONFIG, ...config };
   if (!own) return base;
   const merged = { ...base, ...own };
-  if (own.useDefaultShift) { merged.shiftStart = base.shiftStart; merged.shiftEnd = base.shiftEnd; }
+  if (own.useDefaultShift !== false) { merged.shiftStart = base.shiftStart; merged.shiftEnd = base.shiftEnd; merged.grace = base.grace; }
   merged.grace = Number(merged.grace ?? 10);
   merged.weeklyOff = Array.isArray(merged.weeklyOff) ? merged.weeklyOff.map(Number) : [];
   return merged;
 }
+/** Shift kitne minute ki hai (raat ki shift bhi). shiftEnd na ho to null. */
+export function shiftMinutes(schedule = {}) {
+  const a = parseTime(schedule.shiftStart), b = parseTime(schedule.shiftEnd);
+  if (a == null || b == null) return null;
+  const d = b > a ? b - a : b + 1440 - a;
+  return d > 0 && d <= 20 * 60 ? d : null;
+}
+export function isClosed(schedule = {}, date) { return (schedule.closedDays || []).some(d => d?.date === date); }
 export function lateMinutes(att, schedule = {}) {
   const actual = parseTime(att?.checkIn), start = parseTime(schedule.shiftStart);
   if (actual == null) return 0;
@@ -178,6 +195,7 @@ export function statusFor({ account = {}, attendance = {}, requests = [], date, 
   }
   if (date > today) return 'na';
   if (account.joinDate && date < account.joinDate) return 'na';
+  if (isClosed(schedule, date)) return 'closed';
   const phone = account.phone;
   if (requests.some(r => r.phone === phone && r.kind === 'leave' && r.status === 'approved' && r.date <= date && r.to >= date)) return 'leave';
   if ((schedule.weeklyOff || []).includes(weekday(date))) return 'off';
@@ -224,8 +242,9 @@ export function dayRows({ staff = [], attendance = [], requests = [], schedules 
   });
 }
 export function countStatuses(rows) {
-  const c = { present: 0, late: 0, absent: 0, leave: 0, off: 0, waiting: 0, na: 0 };
+  const c = { present: 0, late: 0, absent: 0, leave: 0, off: 0, closed: 0, waiting: 0, loading: 0, na: 0 };
   for (const r of rows) c[r.status] = (c[r.status] || 0) + 1;
+  c.off += c.closed; // dukaan band bhi "off" mein ginti
   return c;
 }
 /** Aik staff ka poora mahina. */
@@ -248,29 +267,61 @@ export function mealConfig(salary = {}, account = {}) {
   const mode = ['daily', 'monthly', 'none'].includes(salary.mealMode) ? salary.mealMode : legacy > 0 ? (account.meal === 'monthly' ? 'monthly' : 'daily') : 'none';
   return { mealMode: mode, mealRate: Math.max(0, Number(salary.mealRate ?? legacy) || 0), mealInSalary: salary.mealInSalary === true };
 }
-export function salaryConfig(account = {}) {
-  const d = account.salary || {};
+/** Staff default salary par hai? Purane staff jin ki apni raqam likhi hai wo "apni salary" par rehte hain. */
+export function usesDefaultSalary(account = {}) {
+  const s = account.salary || {};
+  return s.useDefault ?? !(Number(s.monthlySalary) > 0);
+}
+/**
+ * Salary ki settings. config.salaryDefault = sab ki default salary aur qawaid (hisab ka tareeqa, late jurmana).
+ * Default wale staff ke roz ke ghante us ki duty (shift) se khud bante hain.
+ */
+export function salaryConfig(account = {}, config = {}, schedule = null) {
+  const d = account.salary || {}, def = { ...DEFAULT_CONFIG.salaryDefault, ...(config.salaryDefault || {}) };
+  const useDefault = usesDefaultSalary(account), src = useDefault ? def : d;
+  const shift = shiftMinutes(schedule || resolveSchedule(config));
   return {
-    ...mealConfig(d, account),
-    monthlySalary: Number(d.monthlySalary || 0),
-    dutyHours: Number(d.dutyHours || 10),
-    workingDays: Number(d.workingDays || 30),
-    overtimeRate: Number(d.overtimeRate || 0),
-    pointRate: Number(d.pointRate || 0)
+    ...mealConfig(d, account), useDefault,
+    monthlySalary: Number(src.monthlySalary || 0),
+    dutyHours: useDefault ? (shift ? shift / 60 : Number(def.dutyHours || 10)) : Number(d.dutyHours || 10),
+    workingDays: Number(src.workingDays || 30),
+    overtimeRate: Number(src.overtimeRate || 0),
+    pointRate: Number(d.pointRate || def.pointRate || 0),
+    mode: def.mode === 'days' ? 'days' : 'hours',
+    leavePaid: def.leavePaid !== false,
+    lateEvery: Math.max(0, Math.floor(Number(def.lateEvery || 0))),
+    lateFineDays: Math.max(0, Number(def.lateFineDays ?? 0.5))
   };
+}
+/** Qarz (qiston wala advance): is mahine kitni qist kategi aur kitna baqi rahega. */
+export function loanCuts(extras = [], month) {
+  const out = [];
+  for (const x of extras.filter(e => e.kind === 'loan' && isMonth(e.month))) {
+    const amount = Number(x.amount || 0), per = Math.max(1, Number(x.perMonth || amount));
+    let remaining = amount, cut = 0;
+    for (let m = x.month; m <= month && remaining > 0; m = addMonths(m, 1)) {
+      cut = Math.min(per, remaining);
+      if (m === month) break;
+      remaining -= cut; cut = 0;
+    }
+    if (x.month > month) cut = 0;
+    out.push({ ...x, cut, remainingBefore: remaining, remainingAfter: Math.max(0, remaining - cut) });
+  }
+  return out;
 }
 /**
  * Mahine ki salary. Formula purani app wala hi hai:
  * hourly = monthly / (dutyHours × workingDays); normal ghante × hourly + overtime + points + bonus + khana − advance.
  * Agar mahina "final" ho chuka hai to wahi jama hua hisab wapas aata hai (badalta nahi).
  */
-export function salaryCalc({ account = {}, month, attendance = [], payroll = null }) {
+export function salaryCalc({ account = {}, month, attendance = [], payroll = null, config = {}, schedule = null, requests = [], today = pkDate(), nowMin = pkMinutes() }) {
   const paid = Number(payroll?.paid || 0), payments = payroll?.payments || [];
   if (payroll?.state === 'final' && payroll.snapshot) {
     const s = payroll.snapshot;
     return { ...s, frozen: true, paid, payments, balance: Number(s.final || 0) - paid };
   }
-  const cfg = salaryConfig(account), { from, to } = monthRange(month);
+  const sch = schedule || resolveSchedule(config);
+  const cfg = salaryConfig(account, config, sch), { from, to } = monthRange(month);
   const recs = attendance.filter(a => a.phone === account.phone && a.date >= from && a.date <= to);
   const dutyMin = Math.max(0, Math.round(cfg.dutyHours * 60));
   let normalMin = 0, otMin = 0, daysWorked = 0, attPoints = 0, openDays = 0;
@@ -284,19 +335,35 @@ export function salaryCalc({ account = {}, month, attendance = [], payroll = nul
   }
   const expectedHours = cfg.dutyHours * cfg.workingDays;
   const hourly = expectedHours > 0 ? cfg.monthlySalary / expectedHours : 0;
+  const perDay = cfg.workingDays > 0 ? cfg.monthlySalary / cfg.workingDays : 0;
   const otRate = cfg.overtimeRate > 0 ? cfg.overtimeRate : hourly;
-  const normalSalary = (normalMin / 60) * hourly, overtimeAmount = (otMin / 60) * otRate;
+  // Din ke hisab se ginti (ghair hazir, chutti, late)
+  const sum = monthSummary({ account, attendance: recs, requests, schedule: sch, month, today, nowMin });
+  const beforeJoin = account.joinDate ? sum.days.filter(d => d.date < account.joinDate && d.date <= today).length : 0;
+  const absentDays = sum.count.absent + beforeJoin + (cfg.leavePaid ? 0 : sum.count.leave);
+  const lateCount = sum.count.late;
+  let normalSalary, absentCut = 0;
+  if (cfg.mode === 'days') { absentCut = Math.min(cfg.monthlySalary, absentDays * perDay); normalSalary = cfg.monthlySalary - absentCut; }
+  else normalSalary = (normalMin / 60) * hourly;
+  const overtimeAmount = (otMin / 60) * otRate;
   const points = attPoints, pointsAmount = points * cfg.pointRate;
-  const extras = (Array.isArray(account.salaryExtras) ? account.salaryExtras : []).filter(x => x.month === month);
-  const sum = k => extras.filter(x => x.kind === k).reduce((n, x) => n + Number(x.amount || 0), 0);
-  const bonus = sum('bonus'), advance = sum('advance');
+  const all = Array.isArray(account.salaryExtras) ? account.salaryExtras : [];
+  const extras = all.filter(x => x.month === month && x.kind !== 'loan');
+  const add = k => extras.filter(x => x.kind === k).reduce((n, x) => n + Number(x.amount || 0), 0);
+  const bonus = add('bonus'), advance = add('advance');
+  const loans = loanCuts(all, month).filter(l => l.cut > 0 || l.month === month);
+  const loanCut = loans.reduce((n, l) => n + l.cut, 0);
+  const lateFines = cfg.lateEvery ? Math.floor(lateCount / cfg.lateEvery) : 0;
+  const lateFine = lateFines * cfg.lateFineDays * perDay;
   const mealDays = new Set(recs.filter(a => a.checkIn).map(a => a.date)).size;
   const mealTotal = cfg.mealMode === 'monthly' ? cfg.mealRate : cfg.mealMode === 'daily' ? cfg.mealRate * mealDays : 0;
   const mealSalary = cfg.mealInSalary ? mealTotal : 0;
-  const final = normalSalary + overtimeAmount + pointsAmount + bonus + mealSalary - advance;
+  const deductions = advance + loanCut + lateFine;
+  const final = normalSalary + overtimeAmount + pointsAmount + bonus + mealSalary - deductions;
   return {
-    phone: account.phone, month, periodLabel: monthLabel(month), from, to, ...cfg, expectedHours, hourly, otRate,
+    phone: account.phone, month, periodLabel: monthLabel(month), from, to, ...cfg, expectedHours, hourly, perDay, otRate,
     daysWorked, openDays, normalMin, otMin, normalSalary, overtimeAmount, attPoints, taskPoints: 0, points, pointsAmount,
+    absentDays, absentCut, lateCount, lateFines, lateFine, loans, loanCut, deductions,
     extras, bonus, advance, mealDays, mealTotal, mealSalary, final, frozen: false, paid, payments, balance: final - paid
   };
 }
@@ -420,7 +487,7 @@ export function smartSearch({ query, staff = [], attendance = [], requests = [],
   let money = [];
   if (p.salaryDue || p.advance) {
     const month = (p.from || today).slice(0, 7);
-    money = people.map(account => ({ account, calc: salaryCalc({ account, month, attendance, payroll: payroll.find(x => x.id === `${month}_${account.phone}`) }) }))
+    money = people.map(account => ({ account, calc: salaryCalc({ account, month, attendance, config, requests, today, nowMin, schedule: resolveSchedule(config, schedules.get(account.phone)), payroll: payroll.find(x => x.id === `${month}_${account.phone}`) }) }))
       .filter(x => p.advance ? x.calc.advance > 0 : x.calc.balance > 0.5);
   }
   const bits = [];
@@ -430,4 +497,21 @@ export function smartSearch({ query, staff = [], attendance = [], requests = [],
   if (p.rangeLabel) bits.push(p.rangeLabel); else if (wantsDays) bits.push('Aaj');
   if (p.text) bits.push('"' + p.text + '"');
   return { parsed: p, people, rows, money, mode: (p.salaryDue || p.advance) ? 'money' : wantsDays ? 'days' : 'people', summary: bits.join(' · ') };
+}
+
+/** Hafte ka khulasa: har staff kitne din aaya, kitni dafa late. */
+export function weekSummary({ staff = [], attendance = [], requests = [], schedules = new Map(), config = {}, today = pkDate(), nowMin = pkMinutes() }) {
+  const { from } = weekRange(today), out = [];
+  for (const account of staff) {
+    const schedule = resolveSchedule(config, schedules.get(account.phone));
+    let present = 0, late = 0, absent = 0, minutes = 0;
+    for (let d = from; d <= today; d = addDays(d, 1)) {
+      const a = attendance.find(x => x.phone === account.phone && x.date === d) || {};
+      const st = statusFor({ account, attendance: a, requests, date: d, schedule, today, nowMin });
+      if (st === 'present' || st === 'late') present++; if (st === 'late') late++; if (st === 'absent') absent++;
+      minutes += workMinutes(a) || 0;
+    }
+    out.push({ account, present, late, absent, minutes });
+  }
+  return { from, to: today, rows: out };
 }

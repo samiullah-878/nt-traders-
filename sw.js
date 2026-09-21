@@ -1,6 +1,6 @@
 /* Noor Traders Hazri — service worker.
    Sirf app ki apni files cache hoti hain. Hazri/salary ka data (Firebase) yahan se kabhi nahi guzarta. */
-const APP_VERSION = 'v200';
+const APP_VERSION = 'v201';
 const CACHE = 'nt-hazri-' + APP_VERSION;
 const SHELL = ['./', './index.html', './styles.css', './boot.js', './app.js', './core.js', './auth.js', './data.js', './ui.js', './owner.js', './staffview.js', './pdf.js', './firebase-config.js', './archivo-latin.woff2', './icon.svg', './manifest.webmanifest'];
 

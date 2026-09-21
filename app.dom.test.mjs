@@ -6,7 +6,7 @@ import { fakeSdk, memoryStorage, B } from './test-fake-sdk.mjs';
 const win = new Window({ url: 'https://example.test/app/' });
 Object.assign(globalThis, { window: win, document: win.document, File: win.File, requestAnimationFrame: fn => setTimeout(fn, 0) });
 Object.defineProperty(globalThis, 'navigator', { value: win.navigator, configurable: true, writable: true });
-win.confirm = () => true; globalThis.confirm = win.confirm;
+win.confirm = () => true; globalThis.confirm = win.confirm; win.prompt = (q, d) => d ?? 'Eid'; globalThis.prompt = win.prompt;
 win.fetch = async () => ({ ok: true, json: async () => ({ version: 'v200' }) });
 win.scrollTo = () => {};
 win.document.body.innerHTML = '<div id="app" data-screen="boot"></div><div id="sheetHost"></div><div id="toast"></div>';
@@ -48,6 +48,8 @@ test('malik login → Hazri tab, qataarein, tawajju', async () => {
   assert.ok($('.ur'), 'Urdu naam apne font class ke sath');
   assert.match($('.attention').textContent, /request/);
   assert.ok($$('.row-pdf').length === 2, 'har staff par PDF button');
+  assert.match($('.register').textContent, /9:00 am – 7:00 pm/); assert.match($('.register').textContent, /10h duty/);
+  assert.match($('.register').textContent, /Aaya 9:25 am/);
 });
 test('filter, din badalna, mahine ka jaal', async () => {
   await click('[data-action=filter][data-arg=late]'); assert.equal($$('.register .row').length, 1);
@@ -104,17 +106,53 @@ test('salary: advance → final → payment', async () => {
   assert.equal($('form[data-form=extra]'), null, 'final mahine mein advance band');
   await click('[data-sheet=salary] [data-sheet-close]');
 });
+test('v201: default duty + default salary settings', async () => {
+  await click('[data-action=tab][data-arg=staff]'); await click('[data-action=settings]');
+  const f = $('form[data-form=settings]');
+  fill(f, { shiftStart: '09:00', shiftEnd: '18:00', defSalary: '26000', defDays: '26', salaryMode: 'days', lateEvery: '3', lateFineDays: '0.5' }); await submit(f);
+  const cfg = records.get(B + 'staffConfig/main');
+  assert.equal(cfg.shiftEnd, '18:00'); assert.deepEqual([cfg.salaryDefault.monthlySalary, cfg.salaryDefault.workingDays, cfg.salaryDefault.mode, cfg.salaryDefault.lateEvery], [26000, 26, 'days', 3]);
+  await click('[data-action=settings]'); assert.ok($('[data-action=apply-salary-all]'), 'purane staff apni salary par hain');
+  await click('[data-action=apply-salary-all]');
+  assert.equal(records.get(B + 'staffAccounts/03001234567').salary.useDefault, true);
+  assert.equal(records.get(B + 'staffAccounts/03001234567').salary.monthlySalary, 30000, 'purani raqam mehfooz');
+  await click('[data-sheet=settings] [data-sheet-close]');
+  await click('[data-action=tab][data-arg=salary]'); assert.match($('.rule-card').textContent, /Rs 26,000/); assert.match($('.view').textContent, /Default Rs 26,000/);
+});
+test('v201: jaldi hazir, dukaan band, check-out band, qarz, slips, khata, jaanch', async () => {
+  await click('[data-action=tab][data-arg=hazri]');
+  const quick = $('[data-action=quick-present][data-phone="03111112223"]'); assert.ok(quick, 'naye staff par Hazir lagao'); await click(quick);
+  assert.equal(records.get(B + `staffAttendance/${today}_03111112223`).checkIn, '09:00');
+  await click(`[data-action=toggle-closed][data-arg="${today}"]`);
+  assert.equal(records.get(B + 'staffConfig/main').closedDays[0].date, today); assert.ok($('.closed-line'));
+  await click(`[data-action=toggle-closed][data-arg="${today}"]`); assert.equal(records.get(B + 'staffConfig/main').closedDays.length, 0);
+  records.set(B + `staffAttendance/2026-01-05_03001234567`, { date: '2026-01-05', phone: '03001234567', checkIn: '09:00', checkOut: '' });
+  await app.data.closeCheckouts([{ id: '2026-01-05_03001234567', date: '2026-01-05', phone: '03001234567', checkIn: '09:00' }]);
+  assert.equal(records.get(B + 'staffAttendance/2026-01-05_03001234567').checkOut, '18:00');
+  await click('[data-action=tab][data-arg=salary]'); await click('.row-main[data-action=salary][data-phone="03007654321"]');
+  const ex = $('form[data-form=extra]'); ex.elements.kind.value = 'loan'; ex.elements.kind.dispatchEvent(new win.Event('change', { bubbles: true }));
+  assert.equal(ex.elements.perMonth.hidden, false);
+  fill(ex, { amount: '6000', perMonth: '2000' }); await submit(ex);
+  const loan = records.get(B + 'staffAccounts/03007654321').salaryExtras.find(x => x.kind === 'loan'); assert.equal(loan.perMonth, 2000);
+  assert.match($('[data-sheet=salary]').textContent, /Qarz ki qist/);
+  await click('[data-sheet=salary] [data-sheet-close]');
+  await click('[data-action=khata]'); assert.match($('[data-sheet=khata]').textContent, /Rs 6,000/); await click('[data-sheet=khata] [data-sheet-close]');
+  await click('[data-action=tab][data-arg=staff]'); await click('[data-action=diag]');
+  assert.match($('[data-sheet=diag]').textContent, new RegExp(today)); assert.match($('[data-sheet=diag]').textContent, /Aaj ke record/);
+  await click('[data-sheet=diag] [data-sheet-close]');
+});
 test('logout → staff login → check-in / check-out', async () => {
+  records.delete(B + `staffAttendance/${today}_03111112223`); // upar malik ne hazri lagayi thi
   await click('[data-action=tab][data-arg=staff]'); await click('[data-action=logout]'); await settle();
   assert.equal($('#app').dataset.screen, 'login');
   await click('[data-action=login-role][data-arg=staff]');
   fill($('form[data-form=login]'), { phone: '0311 1112223' }); await submit($('form[data-form=login]')); await settle(10);
   assert.equal($('#app').dataset.screen, 'staff'); assert.match($('.brand').textContent, /Usman/);
-  assert.ok($('[data-action=check-in]'), 'Check-In button');
+  assert.ok($('[data-action=check-in]'), 'Check-In button'); assert.match($('.punch').textContent, /9h roz/);
   const r = await app.data.checkIn({ selfie: 'data:image/jpeg;base64,AAAA', gps: { lat: 32.7979, lng: 73.9569, accuracy: 10, distance: 12 } }); assert.equal(r.queued, false); await settle();
   assert.ok(records.get(B + `staffAttendance/${today}_03111112223`).checkIn);
   await assert.rejects(app.data.checkIn({ selfie: 'x', gps: { distance: 900 } }), /door/);
-  assert.ok($('[data-action=check-out]'), 'ab Check-Out button');
+  assert.ok($('[data-action=check-out]'), 'ab Check-Out button'); assert.match($('.punch').textContent, /baqi/); assert.match($('.punch').textContent, /Malik tak pohanch gayi/);
   Object.defineProperty(win.navigator, 'geolocation', { value: undefined, configurable: true });
   await click('[data-action=check-out]'); await settle(10);
   assert.ok(records.get(B + `staffAttendance/${today}_03111112223`).checkOut); assert.match($('.punch').textContent, /mukammal/);

@@ -6,8 +6,8 @@ import {
 } from './core.js';
 
 const INK = [27, 42, 74], PAPER = [246, 248, 252], LINE = [208, 215, 228], MUTED = [96, 108, 130];
-const TONE = { present: [24, 120, 78], late: [176, 108, 12], absent: [179, 38, 30], leave: [88, 80, 160], off: [96, 108, 130], waiting: [96, 108, 130], na: [160, 168, 184] };
-const TINT = { late: [253, 246, 230], absent: [253, 238, 236], leave: [241, 240, 252], off: [243, 245, 249] };
+const TONE = { present: [24, 120, 78], late: [176, 108, 12], absent: [179, 38, 30], leave: [88, 80, 160], off: [96, 108, 130], closed: [96, 108, 130], waiting: [96, 108, 130], loading: [160, 168, 184], na: [160, 168, 184] };
+const TINT = { late: [253, 246, 230], absent: [253, 238, 236], leave: [241, 240, 252], off: [243, 245, 249], closed: [243, 245, 249] };
 
 let libPromise = null;
 /** Browser: dono library files pehli PDF par hi load hoti hain, app ka kholna halka rehta hai. */
@@ -120,7 +120,7 @@ export async function dailyPdf(lib, { date, rows, textImages }) {
     { label: 'Kul staff', value: rows.length }, { label: 'Hazir (waqt par)', value: c.present, tone: TONE.present }, { label: 'Late', value: c.late, tone: TONE.late },
     { label: 'Ghair hazir', value: c.absent, tone: TONE.absent }, { label: 'Chutti / Off', value: c.leave + c.off, tone: TONE.leave }
   ]);
-  const order = { late: 1, present: 0, waiting: 2, absent: 3, leave: 4, off: 5, na: 6 };
+  const order = { late: 1, present: 0, waiting: 2, absent: 3, leave: 4, off: 5, closed: 5, loading: 6, na: 6 };
   const sorted = [...rows].sort((a, b) => (order[a.status] - order[b.status]) || (a.a.checkIn || '').localeCompare(b.a.checkIn || '') || String(a.account.name).localeCompare(String(b.account.name)));
   table(ctx, lib, {
     startY: y,
@@ -157,18 +157,24 @@ export async function staffMonthPdf(lib, { account, month, summary, calc, schedu
     const line = (label, value, style) => [{ content: label, styles: style }, { content: value, styles: { halign: 'right', ...style } }];
     const rowsOut = [
       line('Mahana salary (tay shuda)', money(calc.monthlySalary)),
-      line(`Aam ghante: ${hm(calc.normalMin)}  x  ${money(calc.hourly)}/ghanta`, money(calc.normalSalary)),
+      ...(calc.mode === 'days'
+        ? [line(`Ghair hazir: ${calc.absentDays} din  x  ${money(calc.perDay)}/din (kati)`, '- ' + money(calc.absentCut), calc.absentCut ? { textColor: TONE.absent } : {}), line('Hazri ke mutabiq salary', money(calc.normalSalary))]
+        : [line(`Aam ghante: ${hm(calc.normalMin)}  x  ${money(calc.hourly)}/ghanta`, money(calc.normalSalary))]),
       line(`Overtime: ${hm(calc.otMin)}  x  ${money(calc.otRate)}/ghanta`, '+ ' + money(calc.overtimeAmount))
     ];
     if (calc.pointsAmount) rowsOut.push(line(`Points: ${calc.points}  x  ${money(calc.pointRate)}`, '+ ' + money(calc.pointsAmount)));
     if (calc.mealSalary) rowsOut.push(line(`Khana (${calc.mealMode === 'daily' ? calc.mealDays + ' din' : 'mahana'})`, '+ ' + money(calc.mealSalary)));
     if (calc.bonus) rowsOut.push(line('Bonus', '+ ' + money(calc.bonus)));
     if (calc.advance) rowsOut.push(line('Advance (kat gaya)', '- ' + money(calc.advance), { textColor: TONE.absent }));
+    if (calc.loanCut) rowsOut.push(line('Qarz ki qist', '- ' + money(calc.loanCut), { textColor: TONE.absent }));
+    if (calc.lateFine) rowsOut.push(line(`Late jurmana (${calc.lateCount} dafa late)`, '- ' + money(calc.lateFine), { textColor: TONE.absent }));
     rowsOut.push(line('Kul banti salary', money(calc.final), { fontStyle: 'bold', fillColor: PAPER, textColor: INK }));
     rowsOut.push(line('Ada ho chuki', money(calc.paid)));
     rowsOut.push(line('BAQI', money(calc.balance), { fontStyle: 'bold', fillColor: INK, textColor: 255 }));
     y = table(ctx, lib, { startY: y, body: rowsOut, showHead: 'never', alternateRowStyles: {}, columnStyles: { 1: { cellWidth: 45 } }, pageBreak: 'avoid' }, images);
-    const ledger = [...(calc.extras || []).map(x => [shortDate(x.date), x.kind === 'advance' ? 'Advance' : 'Bonus', money(x.amount), x.note || '']), ...(calc.payments || []).map(x => [shortDate(x.date), 'Salary di', money(x.amount), x.note || ''])];
+    const ledger = [...(calc.extras || []).map(x => [shortDate(x.date), x.kind === 'advance' ? 'Advance' : 'Bonus', money(x.amount), x.note || '']),
+      ...(calc.loans || []).filter(l => l.cut).map(l => [shortDate(l.date || l.month + '-01'), 'Qarz qist', money(l.cut), `Kul ${money(l.amount)}, baqi ${money(l.remainingAfter)}`]),
+      ...(calc.payments || []).map(x => [shortDate(x.date), 'Salary di', money(x.amount), x.note || ''])];
     if (ledger.length) {
       y = sectionTitle(ctx, y + 3, 'Advance, bonus aur payments');
       y = table(ctx, lib, { startY: y, head: [['Tareekh', 'Qisam', 'Raqam', 'Note']], body: ledger, columnStyles: { 0: { cellWidth: 24 }, 1: { cellWidth: 28 }, 2: { cellWidth: 30, halign: 'right' } } }, images);
@@ -188,7 +194,7 @@ export async function staffMonthPdf(lib, { account, month, summary, calc, schedu
 export async function registerPdf(lib, { month, grid, textImages }) {
   const ctx = createDoc(lib, { landscape: true }), dates = monthDates(month);
   const images = await imagesFor(collect(grid.map(g => g.account.name)), textImages);
-  let y = header(ctx, { title: 'Mahine ka Register', subtitle: 'P = Hazir   L = Late   A = Ghair hazir   C = Chutti   O = Weekly off', right: monthLabel(month), rightSmall: `${grid.length} staff` });
+  let y = header(ctx, { title: 'Mahine ka Register', subtitle: 'P = Hazir   L = Late   A = Ghair hazir   C = Chutti   O = Weekly off   B = Dukaan band', right: monthLabel(month), rightSmall: `${grid.length} staff` });
   const dayW = (ctx.W - 2 * ctx.M - 44 - 4 * 9) / dates.length;
   const columnStyles = { 0: { cellWidth: 44, halign: 'left', fontStyle: 'bold' } };
   dates.forEach((_, i) => { columnStyles[i + 1] = { cellWidth: dayW }; });
@@ -217,12 +223,12 @@ export async function salarySheetPdf(lib, { month, rows, textImages }) {
   const images = await imagesFor(collect(rows.map(r => r.account.name)), textImages);
   const total = k => rows.reduce((n, r) => n + Number(r.calc[k] || 0), 0);
   let y = header(ctx, { title: 'Salary Sheet', subtitle: 'Sab staff ki mahana salary', right: monthLabel(month), rightSmall: `${rows.length} staff` });
-  y = statBoxes(ctx, y, [{ label: 'Kul banti salary', value: money(total('final')) }, { label: 'Advance', value: money(total('advance')), tone: TONE.late }, { label: 'Ada ho chuki', value: money(total('paid')), tone: TONE.present }, { label: 'Baqi', value: money(total('balance')), tone: TONE.absent }]);
+  y = statBoxes(ctx, y, [{ label: 'Kul banti salary', value: money(total('final')) }, { label: 'Katautiyan', value: money(rows.reduce((n, r) => n + Number(r.calc.deductions ?? r.calc.advance ?? 0), 0)), tone: TONE.late }, { label: 'Ada ho chuki', value: money(total('paid')), tone: TONE.present }, { label: 'Baqi', value: money(total('balance')), tone: TONE.absent }]);
   table(ctx, lib, {
     startY: y,
-    head: [['#', 'Naam', 'Mahana', 'Din', 'Ghante', 'Aam salary', 'Overtime', 'Bonus+', 'Advance', 'Kul', 'Ada', 'Baqi', 'Halat']],
-    body: rows.map((r, i) => [i + 1, r.account.name || r.account.phone, money(r.calc.monthlySalary), r.calc.daysWorked, hm((r.calc.normalMin || 0) + (r.calc.otMin || 0)), money(r.calc.normalSalary), money(r.calc.overtimeAmount), money((r.calc.bonus || 0) + (r.calc.pointsAmount || 0) + (r.calc.mealSalary || 0)), money(r.calc.advance), money(r.calc.final), money(r.calc.paid), money(r.calc.balance), r.calc.frozen ? 'Final' : 'Andaza']),
-    foot: [['', 'Kul', '', '', '', money(total('normalSalary')), money(total('overtimeAmount')), '', money(total('advance')), money(total('final')), money(total('paid')), money(total('balance')), '']],
+    head: [['#', 'Naam', 'Mahana', 'Din', 'Ghante', 'Hazri salary', 'Overtime', 'Bonus+', 'Katautiyan', 'Kul', 'Ada', 'Baqi', 'Halat']],
+    body: rows.map((r, i) => [i + 1, r.account.name || r.account.phone, money(r.calc.monthlySalary), r.calc.daysWorked, hm((r.calc.normalMin || 0) + (r.calc.otMin || 0)), money(r.calc.normalSalary), money(r.calc.overtimeAmount), money((r.calc.bonus || 0) + (r.calc.pointsAmount || 0) + (r.calc.mealSalary || 0)), money(r.calc.deductions ?? r.calc.advance), money(r.calc.final), money(r.calc.paid), money(r.calc.balance), r.calc.frozen ? 'Final' : 'Andaza']),
+    foot: [['', 'Kul', '', '', '', money(total('normalSalary')), money(total('overtimeAmount')), '', money(rows.reduce((n, r) => n + Number(r.calc.deductions ?? r.calc.advance ?? 0), 0)), money(total('final')), money(total('paid')), money(total('balance')), '']],
     footStyles: { fillColor: PAPER, textColor: INK, fontStyle: 'bold', halign: 'right' },
     columnStyles: { 0: { cellWidth: 8, halign: 'center' }, 1: { cellWidth: 44, fontStyle: 'bold' }, 2: { halign: 'right' }, 3: { halign: 'center', cellWidth: 11 }, 4: { halign: 'right' }, 5: { halign: 'right' }, 6: { halign: 'right' }, 7: { halign: 'right' }, 8: { halign: 'right' }, 9: { halign: 'right', fontStyle: 'bold' }, 10: { halign: 'right' }, 11: { halign: 'right', fontStyle: 'bold' }, 12: { cellWidth: 16 } },
     didParseCell(data) { if (data.section === 'body' && data.column.index === 11 && rows[data.row.index].calc.balance > 0.5) data.cell.styles.textColor = TONE.absent; }

@@ -172,22 +172,24 @@ export async function getGps() {
   return { lat, lng, accuracy, distance: haversine(lat, lng, SHOP.lat, SHOP.lng) };
 }
 
-/* ---------- PDF dena ---------- */
-export function deliverPdf({ doc, filename }) {
-  const blob = doc.output('blob'), url = URL.createObjectURL(blob);
-  const file = typeof File !== 'undefined' ? new File([blob], filename, { type: 'application/pdf' }) : null;
-  const canShare = !!(file && navigator.canShare?.({ files: [file] }));
+/* ---------- PDF dena (aik ya kai files) ---------- */
+export function deliverPdf(input) {
+  const list = (Array.isArray(input) ? input : [input]).map(({ doc, filename }) => {
+    const blob = doc.output('blob');
+    return { filename, blob, url: URL.createObjectURL(blob), file: typeof File !== 'undefined' ? new File([blob], filename, { type: 'application/pdf' }) : null };
+  });
+  const files = list.map(x => x.file).filter(Boolean);
+  const canShare = files.length === list.length && !!navigator.canShare?.({ files });
+  const many = list.length > 1;
   const sheet = openSheet({
-    title: 'PDF tayyar hai', id: 'pdf',
-    render: () => `<p class="pdf-name">${icon('pdf')} <span>${esc(filename)}</span></p>
-      <div class="btn-col">
-        ${canShare ? `<button type="button" class="btn btn-primary btn-lg" id="pdfShare">${icon('share')} WhatsApp / Share</button>` : ''}
-        <a class="btn ${canShare ? 'btn-ghost' : 'btn-primary'} btn-lg" href="${url}" download="${esc(filename)}">${icon('down')} Download</a>
-        <a class="btn btn-ghost btn-lg" href="${url}" target="_blank" rel="noopener">Khol kar dekhein</a>
-      </div>`,
-    onClose: () => setTimeout(() => URL.revokeObjectURL(url), 60000)
+    title: many ? `${list.length} PDF tayyar hain` : 'PDF tayyar hai', id: 'pdf',
+    render: () => `${canShare ? `<button type="button" class="btn btn-primary btn-lg" id="pdfShare">${icon('share')} ${many ? 'Sab WhatsApp / Share' : 'WhatsApp / Share'}</button>` : ''}
+      ${many ? '<p class="hint">WhatsApp mein har larke ki slip alag file ban kar jati hai. Aik aik bhejni ho to neeche wali list se download karein.</p>' : ''}
+      <ul class="pdf-list">${list.map(x => `<li><span class="pdf-name">${icon('pdf')} <span>${esc(x.filename)}</span></span>
+        <span class="btn-row"><a class="btn ${canShare || many ? 'btn-ghost' : 'btn-primary'} btn-sm" href="${x.url}" download="${esc(x.filename)}">${icon('down', 16)} Download</a><a class="btn btn-ghost btn-sm" href="${x.url}" target="_blank" rel="noopener">Kholein</a></span></li>`).join('')}</ul>`,
+    onClose: () => setTimeout(() => list.forEach(x => URL.revokeObjectURL(x.url)), 60000)
   });
   const share = $('#pdfShare', sheet.el);
-  if (share) share.onclick = () => navigator.share({ files: [file], title: filename }).catch(() => { /* user ne band kiya */ });
+  if (share) share.onclick = () => navigator.share({ files, title: many ? 'Salary slips' : list[0].filename }).catch(() => { /* user ne band kiya */ });
   return sheet;
 }

@@ -1,7 +1,7 @@
 // data.js — Firebase se baat sirf yahan hoti hai. sdk bahar se aata hai (boot.js asal SDK deta hai, test naqli).
 import {
   BUSINESS_ID, DEFAULT_CONFIG, SHOP, normalizePhone, normalizeAttendance, pkDate, pkTime24, pkMinutes, parseTime, to24,
-  monthRange, addMonths, resolveSchedule, lateMinutes, scoreForLate, salaryCalc, salarySnapshot, isMonth, isDate
+  monthRange, addMonths, addDays, resolveSchedule, lateMinutes, scoreForLate, salaryCalc, salarySnapshot, isMonth, isDate, shiftMinutes, salaryConfig
 } from './core.js';
 import { isOwnerUser } from './auth.js';
 
@@ -32,15 +32,17 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     return {
       role: null, phone: '', loaded: new Set(), config: { ...DEFAULT_CONFIG },
       staff: [], months: new Map(), requests: [], schedules: new Map(), payroll: [],
-      account: null, myAttendance: []
+      account: null, myAttendance: [], errors: {}, lastSync: {}
     };
   }
   let unsubs = [], monthSubs = new Map(), epoch = 0, legacyChecked = false;
   const changed = () => onChange(state);
-  const live = (query, name, handler) => {
+  const problem = (name, error) => { state.errors[name] = error?.code || error?.message || 'error'; changed(); onProblem(name, error); };
+  const live = (query, name, handler, options) => {
     const token = epoch;
-    unsubs.push(sdk.onSnapshot(query, snap => { if (token !== epoch) return; handler(snap); state.loaded.add(name); changed(); },
-      error => { if (token === epoch) onProblem(name, error); }));
+    const next = snap => { if (token !== epoch) return; handler(snap); state.loaded.add(name); delete state.errors[name]; if (!snap.metadata?.fromCache) state.lastSync[name] = Date.now(); changed(); };
+    const fail = error => { if (token === epoch) problem(name, error); };
+    unsubs.push(options ? sdk.onSnapshot(query, options, next, fail) : sdk.onSnapshot(query, next, fail));
   };
   function stop() {
     epoch++;
@@ -95,8 +97,10 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     monthSubs.set(month, sdk.onSnapshot(q, snap => {
       if (token !== epoch) return;
       const rows = []; snap.forEach(d => rows.push(normalizeAttendance(clean(d.data()), d.id)));
-      state.months.set(month, rows); state.loaded.add('att:' + month); changed();
-    }, error => { if (token === epoch) onProblem('attendance', error); }));
+      state.months.set(month, rows); state.loaded.add('att:' + month); delete state.errors['att:' + month];
+      if (!snap.metadata?.fromCache) state.lastSync['att:' + month] = Date.now();
+      changed();
+    }, error => { if (token === epoch) problem('att:' + month, error); }));
   }
   function attendanceBetween(from, to) {
     const out = [];
@@ -113,10 +117,11 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     live(ref('staffConfig', 'main'), 'config', readConfig);
     live(ref('staffAccounts', phone), 'account', snap => { if (snap.exists()) state.account = toAccount(phone, clean(snap.data())); });
     const mine = name => sdk.query(col(name), sdk.where('phone', '==', phone));
+    // includeMetadataChanges: pata chalta hai ke hazri server par pohanch gayi ya abhi phone mein ruki hai.
     live(mine('staffAttendance'), 'myAttendance', snap => {
-      const rows = []; snap.forEach(d => rows.push(normalizeAttendance(clean(d.data()), d.id)));
+      const rows = []; snap.forEach(d => rows.push({ ...normalizeAttendance(clean(d.data()), d.id), pending: !!d.metadata?.hasPendingWrites }));
       state.myAttendance = rows.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-    });
+    }, { includeMetadataChanges: true });
     live(mine('staffRequests'), 'requests', snap => { state.requests = readList(snap); });
     live(mine('staffSchedules'), 'schedules', snap => { state.schedules = new Map(readList(snap).map(s => [s.id, s])); });
     live(mine('staffPayroll'), 'payroll', snap => { state.payroll = readList(snap); });
@@ -132,8 +137,9 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   function calcFor(account, month) {
     const { from, to } = monthRange(month);
     const recs = state.role === 'staff' ? state.myAttendance.filter(a => a.date >= from && a.date <= to) : attendanceBetween(from, to);
-    return salaryCalc({ account, month, attendance: recs, payroll: payrollFor(account.phone, month) });
+    return salaryCalc({ account, month, attendance: recs, payroll: payrollFor(account.phone, month), config: state.config, schedule: scheduleFor(account.phone), requests: state.requests.filter(r => r.phone === account.phone) });
   }
+  const salaryFor = account => salaryConfig(account, state.config, scheduleFor(account.phone));
   /** Purani app salary settings/main mein bhi rakhti thi; dono jagah barabar rakhte hain. Fail ho to koi masla nahi. */
   async function mirrorSalaryToSettings(phone, salary, extras) {
     if (!sdk.updateDoc) return;
@@ -150,7 +156,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     if (originalPhone && originalPhone !== phone) throw new Error('Number badalna ho to naya staff banayein aur purana band kar dein (hazri purane number par hi rehti hai).');
     if (!old && state.staff.some(s => s.phone === phone)) throw new Error('Is number ka staff pehle se mojood hai.');
     const salary = {
-      ...(old?.salary || {}),
+      ...(old?.salary || {}), useDefault: input.useDefaultSalary !== false,
       monthlySalary: Number(input.monthlySalary || 0), dutyHours: Number(input.dutyHours || 10), workingDays: Number(input.workingDays || 30),
       overtimeRate: Number(input.overtimeRate || 0), pointRate: Number(input.pointRate ?? old?.salary?.pointRate ?? 0),
       mealMode: ['daily', 'monthly', 'none'].includes(input.mealMode) ? input.mealMode : 'none', mealRate: Math.max(0, Number(input.mealRate || 0)), mealInSalary: !!input.mealInSalary
@@ -163,7 +169,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     });
     const schedule = clean({
       phone, useDefaultShift: input.useDefaultShift !== false, shiftStart: input.shiftStart || state.config.shiftStart || '09:00', shiftEnd: input.shiftEnd || '',
-      grace: Math.max(0, Number(input.grace ?? 10)), weeklyOff: input.weeklyOff === '' || input.weeklyOff == null ? [] : [Number(input.weeklyOff)]
+      grace: Math.max(0, Number(input.grace ?? state.config.grace ?? 10)), weeklyOff: input.weeklyOff === '' || input.weeklyOff == null ? [] : [Number(input.weeklyOff)]
     });
     await sdk.runTransaction(fs, async tx => {
       tx.set(ref('staffAccounts', phone), account, { merge: true });
@@ -184,11 +190,75 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   }
   async function saveConfig(patch) {
     guardOwner();
-    const next = clean({ shiftStart: patch.shiftStart || '09:00', shiftEnd: patch.shiftEnd || '', radius: Math.max(20, Number(patch.radius || SHOP.radius)), instruction: String(patch.instruction || '') });
+    const num = (v, d) => { const n = Number(v); return v === '' || v == null || !Number.isFinite(n) ? d : n; };
+    if (patch.shiftStart && patch.shiftEnd && patch.shiftStart === patch.shiftEnd) throw new Error('Duty shuru aur khatam ka waqt alag ho.');
+    const next = clean({
+      shiftStart: patch.shiftStart || '09:00', shiftEnd: patch.shiftEnd || '', grace: Math.max(0, num(patch.grace, 10)),
+      radius: Math.max(20, num(patch.radius, SHOP.radius)), instruction: String(patch.instruction || ''),
+      salaryDefault: {
+        monthlySalary: Math.max(0, num(patch.defSalary, 0)), workingDays: Math.min(31, Math.max(1, num(patch.defDays, 30))), overtimeRate: Math.max(0, num(patch.defOt, 0)),
+        mode: patch.salaryMode === 'days' ? 'days' : 'hours', leavePaid: patch.leavePaid !== false,
+        lateEvery: Math.max(0, Math.floor(num(patch.lateEvery, 0))), lateFineDays: Math.max(0, num(patch.lateFineDays, 0.5))
+      }
+    });
     await sdk.runTransaction(fs, async tx => {
       tx.set(ref('staffConfig', 'main'), next, { merge: true });
       audit(tx, 'settings', 'main', { shiftStart: state.config.shiftStart, shiftEnd: state.config.shiftEnd, radius: state.config.radius }, next, 'Malik ne settings badli');
     });
+  }
+
+  /** Sab staff par default duty (waqt + riayat). Hafta-war chutti har aik ki apni rehti hai. */
+  async function applyDefaultShiftAll() {
+    guardOwner();
+    await sdk.runTransaction(fs, async tx => {
+      for (const s of state.staff) tx.set(ref('staffSchedules', s.phone), { phone: s.phone, useDefaultShift: true }, { merge: true });
+      audit(tx, 'default shift sab par', 'all', null, { count: state.staff.length }, 'Malik ne sab par default duty lagayi');
+    });
+  }
+  /** Sab staff par default salary. Un ki apni likhi raqam mehfooz rehti hai (wapas "apni salary" karne par wohi aa jati hai). */
+  async function applyDefaultSalaryAll() {
+    guardOwner();
+    await sdk.runTransaction(fs, async tx => {
+      for (const s of state.staff) {
+        const salary = clean({ ...(s.salary || {}), useDefault: true });
+        tx.set(ref('staffAccounts', s.phone), { salary, updatedAt: Date.now() }, { merge: true });
+        tx.set(ref('staff', s.phone), { salary }, { merge: true });
+      }
+      audit(tx, 'default salary sab par', 'all', null, { count: state.staff.length }, 'Malik ne sab par default salary lagayi');
+    });
+  }
+  /** Dukaan band (Eid / chutti): us din koi ghair hazir nahi ginta. Dobara dabane se hat jata hai. */
+  async function toggleClosed(date, reason = '') {
+    guardOwner();
+    if (!isDate(date)) throw new Error('Tareekh durust nahi.');
+    await sdk.runTransaction(fs, async tx => {
+      const r = ref('staffConfig', 'main'), snap = await tx.get(r);
+      const list = (snap.exists() && Array.isArray(snap.data().closedDays) ? snap.data().closedDays : []).filter(d => d && d.date);
+      const on = list.some(d => d.date === date);
+      const next = on ? list.filter(d => d.date !== date) : [...list, { date, reason: String(reason || 'Dukaan band') }].sort((a, b) => a.date.localeCompare(b.date)).slice(-120);
+      tx.set(r, { closedDays: next }, { merge: true });
+      audit(tx, on ? 'dukaan band hataya' : 'dukaan band', date, null, { date, reason }, reason || '');
+    });
+  }
+  /** Aik tap: hazir lagao. Aane ka waqt = duty shuru; pichle din ke liye jane ka waqt = duty khatam. */
+  async function quickPresent(phone, date) {
+    const sch = scheduleFor(phone);
+    const inT = to24(sch.shiftStart) || '09:00';
+    const outT = date < pkDate() ? (to24(sch.shiftEnd) || endFrom(inT, phone)) : '';
+    await saveAttendance({ phone, date, checkIn: inT, checkOut: outT, note: 'Malik ne lagayi' });
+  }
+  const endFrom = (inT, phone) => { const acc = state.staff.find(s => s.phone === phone) || {}; const m = (parseTime(inT) + Math.round(salaryFor(acc).dutyHours * 60)) % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+  /** Bhoola hua Check-Out: duty khatam ke waqt par band. */
+  async function closeCheckouts(rows) {
+    guardOwner();
+    let n = 0;
+    for (const a of rows) {
+      const sch = scheduleFor(a.phone), inT = to24(a.checkIn); if (!inT || a.checkOut) continue;
+      const outT = to24(sch.shiftEnd) || endFrom(inT, a.phone);
+      await saveAttendance({ phone: a.phone, date: a.date, checkIn: inT, checkOut: outT, note: 'Check-Out bhool gaya — duty ke waqt par band', finalScore: a.finalScore ?? '' });
+      n++;
+    }
+    return n;
   }
 
   /* ---------- owner: attendance ---------- */
@@ -260,13 +330,14 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   }
 
   /* ---------- owner: salary ---------- */
-  async function addExtra(phone, { month, kind, amount, note, date }) {
+  async function addExtra(phone, { month, kind, amount, note, date, perMonth }) {
     guardOwner();
     amount = Number(amount);
     if (!(amount > 0)) throw new Error('Raqam durust likhein.');
+    if (kind === 'loan' && !(Number(perMonth) > 0)) throw new Error('Har mahine kitni qist kategi, wo likhein.');
     if (!isMonth(month)) throw new Error('Mahina chunein.');
     if (payrollFor(phone, month)?.state === 'final') throw new Error('Ye mahina final ho chuka hai. Pehle "Dobara kholein" karein.');
-    const item = { id: 'sx' + Date.now() + Math.random().toString(36).slice(2, 6), month, kind: kind === 'advance' ? 'advance' : 'bonus', amount, note: String(note || ''), date: isDate(date) ? date : pkDate(), by: 'Malik', at: Date.now() };
+    const item = { id: 'sx' + Date.now() + Math.random().toString(36).slice(2, 6), month, kind: ['advance', 'loan'].includes(kind) ? kind : 'bonus', amount, ...(kind === 'loan' ? { perMonth: Math.min(amount, Number(perMonth)) } : {}), note: String(note || ''), date: isDate(date) ? date : pkDate(), by: 'Malik', at: Date.now() };
     let extras;
     await sdk.runTransaction(fs, async tx => {
       const r = ref('staffAccounts', phone), snap = await tx.get(r);
@@ -369,7 +440,8 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   }
 
   return {
-    auth, state, stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor,
+    auth, state, stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
+    applyDefaultShiftAll, applyDefaultSalaryAll, toggleClosed, quickPresent, closeCheckouts,
     accounts: {
       async getSession(uid) { const s = await sdk.getDoc(ref('staffSessions', uid)); return s.exists() ? s.data() : null; },
       async getAccount(phone) { const s = await sdk.getDoc(ref('staffAccounts', phone)); return s.exists() ? { ...s.data(), phone } : null; },

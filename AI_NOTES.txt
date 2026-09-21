@@ -1,11 +1,52 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v200   Tareekh: 2026-09-21
+Version: v201   Tareekh: 2026-09-21  (pehle v200 isi din)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
 
 ------------------------------------------------------------
-1. IS UPDATE MEIN KYA HUA (v118 -> v200)
+0. v201 — IS UPDATE MEIN KYA HUA (v200 ke baad)
+------------------------------------------------------------
+Malik ne v200 chala kar screenshot bheja: app pasand aayi, lekin aaj larkon ne hazri lagayi phir bhi SAB "Ghair hazir" dikh rahe the.
+Farmaish: har qataar mein aane/jane ka waqt aur duty ke ghante chips mein; sab par default duty; default salary jis se sab ka hisab ho;
+aur ye 9 mashwaray bhi (malik ne "sab kar do" kaha): 1 jaldi hazir, 2 dukaan band, 3 bhoola Check-Out band, 4 ghair hazri ki kati,
+5 late jurmana, 6 advance/qarz khata, 7 sab ki salary slips, 8 hafte ka khulasa, 9 staff ko ghante hue/baqi.
+
+"Sab Ghair hazir" — asal wajah malik ke data ke baghair PAKKI nahi mil saki (Firebase yahan se nahi khulta). Jo theek kiya:
+  a) pkDate() ab formatToParts se "YYYY-MM-DD" banata hai. Pehle Intl 'en-CA' par depend tha; kuch Android/ICU is par "9/21/2026" dete hain
+     -> aaj ki tareekh kisi record se nahi milti thi aur sab ghair hazir. (Sab se mumkin wajah.)
+  b) Malik ki hazri abhi load na hui ho ya Firebase error de to ab "Load ho rahi…" / surkh error line dikhti hai, "Ghair hazir" nahi.
+     Errors state.errors mein; data.problem() se.
+  c) Naya "Staff › App ki jaanch" sheet: app ki tareekh vs purane tareeqe ki tareekh, mahine ke records, aaj ke records (id/phone),
+     staff list mein na milne wale numbers, aakhri server sync, errors. Malik se is ka screenshot mangwana agar masla rahe.
+  d) Staff ki screen: "Malik tak pohanch gayi" / "Hazri abhi phone mein hai" (onSnapshot includeMetadataChanges + hasPendingWrites).
+  Doosri mumkin wajuhat (agar a) ke baad bhi ho): staff ke phone par purani v118 cached; hazri record ka phone staff list ke number se
+  mukhtalif (jaanch sheet dikhata hai); staff ka Check-In selfie/GPS par hi ruk gaya.
+
+Naye features:
+  - Qataar (Hazri tab): chips — Duty 9:00 am – 7:00 pm, "10h duty", Aaya, Gaya / Kaam par / Check-Out baqi, kaam ke ghante (+OT), "Malik ne lagayi".
+  - [1] "Hazir lagao" button ghair hazir/abhi-nahi-aaya par (aane ka waqt = duty shuru; pichla din ho to jane ka = duty khatam).
+        "Sab ghair hazir ko hazir lagao" bhi.  data.quickPresent()
+  - [2] "Aaj dukaan band (Eid/chutti)" — staffConfig.closedDays [{date,reason}], status 'closed' ("Dukaan band", register mein B). data.toggleClosed()
+  - [3] "Duty ke waqt par band karein" — bhoola Check-Out = shiftEnd (na ho to checkIn + duty ghante). Tawajju card sab ko band karta hai. data.closeCheckouts()
+  - Default duty: Settings (Staff › Default duty aur default salary): aane/jane ka waqt, riayat (grace), had. useDefaultShift=true wale
+    staff par waqt + grace dono default ke. "Sab par default duty lagayein". data.applyDefaultShiftAll()
+  - Default salary: staffConfig.salaryDefault {monthlySalary, workingDays, overtimeRate, mode, leavePaid, lateEvery, lateFineDays}.
+    Staff par salary.useDefault (true = default). Purane staff jin ki apni raqam likhi thi wo "apni salary" par rehte hain jab tak
+    "Sab par default salary lagayein" na dabayein (un ki purani raqam salary object mein mehfooz rehti hai). Default wale ke roz ke ghante = duty ke ghante.
+  - [4] mode 'days': mahana salary − (ghair hazir din + join se pehle ke din [+ chutti agar leavePaid=false]) × (salary/workingDays) + overtime.
+        mode 'hours': purana ghanton wala formula. Mode sab staff par lagta hai.
+  - [5] Late jurmana: har lateEvery late par lateFineDays din ki salary kati (0 = band).
+  - [6] Qarz: salaryExtras kind 'loan' {amount, perMonth, month=shuru}. Har mahine min(qist, baqi) kat-ta hai (core.loanCuts, deterministic).
+        "Advance / qarz ka khata" sheet (Salary tab aur Staff tab se).
+  - [7] "Sab ki slips": har staff ki alag PDF, aik sath WhatsApp share (navigator.share multiple files) ya aik aik download.
+  - [8] "Is hafte" card Hazri tab par (Peer se aaj tak): poori hazri kitno ki, sab se zyada late, har aik ka aaya/late/ghair/ghante. core.weekSummary
+  - [9] Staff ki Check-In card: duty chips, progress bar, "Xh hue | Yh baqi" ya "Duty poori, Zm overtime"; dukaan band ho to "Aaj dukaan band hai".
+  - PDF: din wale hisab, qarz qist, late jurmana; salary sheet mein "Katautiyan" (advance + qist + jurmana).
+  - Tests: 44 (8 naye). Version v201 (core.js, sw.js, version.json, index.html ?v=201).
+
+------------------------------------------------------------
+1. v200 MEIN KYA HUA (v118 -> v200)
 ------------------------------------------------------------
 Malik ki farmaish: bugs khatam, login aksar fail hoti thi, sirf Hazri + Salary rakho baqi sab hatao,
 har staff par PDF button, aaj ki sab larkon ki hazri ki PDF, fonts theek, layout bilkul naya,
@@ -52,7 +93,7 @@ manifest.webmanifest, icon.svg, version.json
 archivo-latin.woff2, naskh-arabic-400.woff2, naskh-arabic-700.woff2   fonts (repo ke andar)
 jspdf.umd.min.js (2.5.2), jspdf.plugin.autotable.min.js (3.8.4)       PDF library
 firebase-config.js, firestore.rules, firebase.json, firestore.indexes.json, pages.yml, .nojekyll, .gitignore   PURANI WAISI HI (koi tabdeeli nahi)
-*.test.mjs, test-fake-sdk.mjs, package.json     tests (npm install; npm test)  — 36 tests pass
+*.test.mjs, test-fake-sdk.mjs, package.json     tests (npm install; npm test)  — 44 tests pass
 LICENSES.txt, README.md
 
 PURANE REPO SE YE FILES DELETE KARNI HAIN (ab kaam ki nahi):
@@ -69,12 +110,13 @@ PURANE REPO SE YE FILES DELETE KARNI HAIN (ab kaam ki nahi):
 3. DATA MODEL (Firestore: businesses/noor-traders/...)  — purana hi, koi migration nahi
 ------------------------------------------------------------
 staffAccounts/{phone}   name, role, address, phone, photo(dataURL), active, loginEnabled, joinDate(NAYA, ikhtiyari),
-                        salary{monthlySalary,dutyHours,workingDays,overtimeRate,pointRate,mealMode,mealRate,mealInSalary},
-                        salaryExtras[{id,month,kind:'bonus'|'advance',amount,note,date,by,at}]
+                        salary{useDefault(v201),monthlySalary,dutyHours,workingDays,overtimeRate,pointRate,mealMode,mealRate,mealInSalary},
+                        salaryExtras[{id,month,kind:'bonus'|'advance'|'loan',amount,perMonth(loan),note,date,by,at}]
 staff/{phone}           purani copy — saveStaff ab bhi likhta hai (purani hisab app ke liye)
 settings/main           purani hisab app; salaryConfig.{phone} / salaryExtras.{phone} best-effort updateDoc se barabar rakhe jate hain
 staffSessions/{uid}     sirf {phone, createdAt} (rules isi par chalte hain)
-staffConfig/main        shiftStart, shiftEnd, radius, instruction, scores{m10,m20,m30,m45,late}
+staffConfig/main        shiftStart, shiftEnd, grace, radius, instruction, scores{m10,m20,m30,m45,late},
+                        salaryDefault{monthlySalary,workingDays,overtimeRate,mode:'hours'|'days',leavePaid,lateEvery,lateFineDays}, closedDays[{date,reason}]  (v201)
 staffSchedules/{phone}  phone, useDefaultShift, shiftStart, shiftEnd, grace, weeklyOff[0-6, 0=Itwar]
 staffAttendance/{date_phone}  date, phone, name, checkIn, checkOut, checkInTs, checkOutTs, selfie, checkInLat/Lng/Accuracy/Distance,
                         minutesLate, autoScore, finalScore, shiftStart, ownerNote, editedAt, editedBy, manual
@@ -127,13 +169,13 @@ PDF mein Urdu lipi wala matn tasveer bana kar lagta hai (jsPDF Urdu font nahi ba
 ------------------------------------------------------------
 1) GitHub repo kholein -> "Add file" -> "Upload files" -> zip ke andar ki SAB files ek sath daal dein (folder nahi, sirf files) -> Commit.
 2) Upar wali list ki purani files delete karein (har file kholein -> ... -> Delete file).
-3) 1-2 minute baad app kholein; neeche/login par "v200" likha aaye.
+3) 1-2 minute baad app kholein; neeche/login par "v201" likha aaye. Staff ke phone par bhi v201 aana zaroori hai (purani na chal rahi ho).
 Firebase mein kuch nahi badalna. Firestore rules waise hi hain. Authentication mein "Anonymous" aur "Email/Password" dono ON rehne chahiye.
 
 ------------------------------------------------------------
 8. KYA TEST HUA, KYA NAHI
 ------------------------------------------------------------
-Hua: 36 automated tests (hisab, status, salary, talash, login ke saare raaste, aur poori app naqli Firebase + happy-dom par:
+Hua: 44 automated tests (hisab, status, salary, talash, login ke saare raaste, aur poori app naqli Firebase + happy-dom par:
   login -> hazri -> hazri durust -> request manzoor -> talash -> naya staff -> advance -> final -> payment -> staff check-in/out -> request).
   4 PDF Node mein ban kar tasveer ki shakal mein dekhi gayin.
 Nahi hua (yahan mumkin nahi tha): asal Firebase/rules ke sath, asal phone ka camera aur GPS, asal browser mein dekhna (layout).
@@ -143,4 +185,5 @@ Nahi hua (yahan mumkin nahi tha): asal Firebase/rules ke sath, asal phone ka cam
 9. AGLE KAAM / KHULE SAWAL
 ------------------------------------------------------------
 - Malik ka pehla message "...user friendly bi ho or es ka" par kat gaya tha; baqi hissa abhi maloom nahi.
+- v201 ke baad: malik se poochna ke hazri theek dikh rahi hai; na ho to "App ki jaanch" ka screenshot.
 - Staff ka number badalna: abhi nahi hota (naya staff banao, purana band karo). Chahiye ho to hazri records move karne wala feature banana hoga.

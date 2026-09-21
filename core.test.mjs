@@ -39,7 +39,8 @@ test('status: hazir / late / waiting / absent / chutti / off / join se pehle', (
 test('apni alag shift aur default shift', () => {
   assert.equal(C.resolveSchedule({ shiftStart: '09:00' }, { useDefaultShift: true, shiftStart: '11:00', grace: 5 }).shiftStart, '09:00');
   assert.equal(C.resolveSchedule({ shiftStart: '09:00' }, { useDefaultShift: false, shiftStart: '11:00', grace: 5 }).shiftStart, '11:00');
-  assert.equal(C.resolveSchedule({ shiftStart: '09:00' }, { useDefaultShift: true, grace: 5 }).grace, 5);
+  assert.equal(C.resolveSchedule({ shiftStart: '09:00', grace: 15 }, { useDefaultShift: true, grace: 5 }).grace, 15);
+  assert.equal(C.resolveSchedule({ shiftStart: '09:00' }, { useDefaultShift: false, grace: 5 }).grace, 5);
 });
 test('check-out baqi: shift khatam hone ke baad hi', () => {
   const a = { date: '2026-09-21', checkIn: '09:00', checkOut: '' };
@@ -105,4 +106,56 @@ test('mahine ka khulasa', () => {
   const account = { phone: '03001234567', joinDate: '2026-09-10' };
   const s = C.monthSummary({ account, month: '2026-09', schedule: sch, today: '2026-09-12', nowMin: 1200, attendance: [{ phone: '03001234567', date: '2026-09-10', checkIn: '09:00', checkOut: '19:00' }, { phone: '03001234567', date: '2026-09-11', checkIn: '09:30', checkOut: '' }] });
   assert.deepEqual([s.count.present, s.count.late, s.count.absent, s.count.na], [1, 1, 1, 27]); assert.equal(s.totalMin, 600); assert.equal(s.open, 1);
+});
+
+test('tareekh hamesha YYYY-MM-DD, har phone par', () => {
+  assert.match(C.pkDate(), /^\d{4}-\d{2}-\d{2}$/);
+  assert.equal(C.pkDate(new Date('2026-09-21T20:30:00Z')), '2026-09-22'); // Pakistan mein raat 1:30
+  assert.equal(C.pkDate(new Date('2026-09-21T18:59:00Z')), '2026-09-21');
+});
+test('shift ke ghante aur dukaan band', () => {
+  assert.equal(C.shiftMinutes({ shiftStart: '09:00', shiftEnd: '19:00' }), 600);
+  assert.equal(C.shiftMinutes({ shiftStart: '20:00', shiftEnd: '04:00' }), 480);
+  assert.equal(C.shiftMinutes({ shiftStart: '09:00' }), null);
+  const schedule = C.resolveSchedule({ shiftStart: '09:00', closedDays: [{ date: '2026-09-18', reason: 'Eid' }] });
+  assert.equal(C.statusFor({ account: { phone: '1' }, attendance: {}, date: '2026-09-18', schedule, today: '2026-09-21', nowMin: 600 }), 'closed');
+  assert.equal(C.statusFor({ account: { phone: '1' }, attendance: { checkIn: '09:00' }, date: '2026-09-18', schedule, today: '2026-09-21', nowMin: 600 }), 'present');
+  assert.equal(C.countStatuses([{ status: 'closed' }, { status: 'off' }]).off, 2);
+});
+const P = '03001234567';
+const cfg = { shiftStart: '09:00', shiftEnd: '17:00', salaryDefault: { monthlySalary: 30000, workingDays: 30, mode: 'hours' } };
+test('default salary: raqam default se, ghante duty se', () => {
+  const c = C.salaryConfig({ phone: P }, cfg);
+  assert.equal(c.useDefault, true); assert.equal(c.monthlySalary, 30000); assert.equal(c.dutyHours, 8);
+  const own = C.salaryConfig({ phone: P, salary: { monthlySalary: 40000, dutyHours: 10 } }, cfg);
+  assert.equal(own.useDefault, false); assert.equal(own.monthlySalary, 40000); assert.equal(own.dutyHours, 10);
+  const back = C.salaryConfig({ phone: P, salary: { monthlySalary: 40000, useDefault: true } }, cfg);
+  assert.equal(back.monthlySalary, 30000);
+});
+test('din ke hisab se salary: ghair hazir din kat-te hain, chutti nahi', () => {
+  const config = { ...cfg, salaryDefault: { ...cfg.salaryDefault, mode: 'days' } };
+  const att = [{ phone: P, date: '2026-09-01', checkIn: '09:00', checkOut: '17:00' }, { phone: P, date: '2026-09-02', checkIn: '09:00', checkOut: '18:00' }];
+  const requests = [{ phone: P, kind: 'leave', status: 'approved', date: '2026-09-03', to: '2026-09-03' }];
+  const c = C.salaryCalc({ account: { phone: P }, month: '2026-09', attendance: att, config, requests, today: '2026-09-05', nowMin: 1200 });
+  assert.equal(c.absentDays, 2); assert.equal(c.perDay, 1000); assert.equal(c.absentCut, 2000); assert.equal(c.normalSalary, 28000);
+  assert.equal(c.otMin, 60); assert.equal(Math.round(c.overtimeAmount), 125); assert.equal(Math.round(c.final), 28125);
+  const unpaid = C.salaryCalc({ account: { phone: P }, month: '2026-09', attendance: att, config: { ...config, salaryDefault: { ...config.salaryDefault, leavePaid: false } }, requests, today: '2026-09-05', nowMin: 1200 });
+  assert.equal(unpaid.absentDays, 3);
+  const joined = C.salaryCalc({ account: { phone: P, joinDate: '2026-09-04' }, month: '2026-09', attendance: [], config, today: '2026-09-05', nowMin: 1200 });
+  assert.equal(joined.absentDays, 5, 'join se pehle ke 3 din + 2 ghair hazir');
+});
+test('late jurmana aur qarz ki qist', () => {
+  const config = { ...cfg, salaryDefault: { ...cfg.salaryDefault, lateEvery: 3, lateFineDays: 0.5 } };
+  const att = ['01', '02', '03', '04'].map(d => ({ phone: P, date: '2026-09-' + d, checkIn: '09:30', checkOut: '17:30' }));
+  const account = { phone: P, salaryExtras: [{ id: 'l1', kind: 'loan', month: '2026-08', amount: 5000, perMonth: 3000 }] };
+  const c = C.salaryCalc({ account, month: '2026-09', attendance: att, config, today: '2026-09-04', nowMin: 1200 });
+  assert.equal(c.lateCount, 4); assert.equal(c.lateFine, 500); assert.equal(c.loanCut, 2000); assert.equal(c.loans[0].remainingAfter, 0);
+  assert.equal(c.deductions, 2500);
+  assert.equal(C.salaryCalc({ account, month: '2026-08', attendance: [], config, today: '2026-09-04' }).loanCut, 3000);
+  assert.equal(C.salaryCalc({ account, month: '2026-10', attendance: [], config, today: '2026-09-04' }).loanCut, 0);
+});
+test('hafte ka khulasa', () => {
+  const w = C.weekSummary({ staff: [{ phone: P, name: 'A' }], config: { shiftStart: '09:00' }, today: '2026-09-23', nowMin: 1200,
+    attendance: [{ phone: P, date: '2026-09-21', checkIn: '09:30', checkOut: '17:30' }, { phone: P, date: '2026-09-22', checkIn: '09:00', checkOut: '17:00' }] });
+  assert.deepEqual([w.from, w.rows[0].present, w.rows[0].late, w.rows[0].absent, w.rows[0].minutes], ['2026-09-21', 2, 1, 1, 960]);
 });

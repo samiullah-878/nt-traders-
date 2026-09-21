@@ -126,10 +126,10 @@ small{font-size:.8125rem;font-weight:400}
 
 /* ---------- register: kaghaz wale register ki lakeerein aur surkh hashiya ---------- */
 .register{position:relative}
-.register::before{content:"";position:absolute;top:0;bottom:0;left:59px;width:1px;background:var(--margin);pointer-events:none}
+.register::before{content:"";position:absolute;top:0;bottom:0;left:59px;z-index:1;width:1px;background:var(--margin);pointer-events:none}
 .row{display:flex;align-items:stretch;border-bottom:1px solid var(--rule);border-left:4px solid transparent}
 .row:last-child{border-bottom:0}
-.row.s-present{border-left-color:var(--ok)}.row.s-late{border-left-color:#d9960f}.row.s-absent{border-left-color:var(--bad)}.row.s-leave{border-left-color:var(--leave)}.row.s-off,.row.s-waiting{border-left-color:#c3cbdb}
+.row.s-present{border-left-color:var(--ok)}.row.s-late{border-left-color:#d9960f}.row.s-absent{border-left-color:var(--bad)}.row.s-leave{border-left-color:var(--leave)}.row.s-off,.row.s-closed,.row.s-waiting,.row.s-loading{border-left-color:#c3cbdb}
 .row.is-due{background:var(--bad-bg)}.row.is-off{opacity:.6}
 .row-main{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:11px 10px 11px 8px;border:0;background:none;text-align:left}
 .row-text{flex:1;min-width:0;display:grid;padding-left:8px}
@@ -143,7 +143,7 @@ small{font-size:.8125rem;font-weight:400}
 .avatar.lg{width:64px;height:64px;font-size:1.25rem}
 .stamp{flex:none;display:inline-block;padding:2px 8px;border:1.5px solid currentColor;border-radius:5px;font-size:.75rem;font-weight:750;letter-spacing:.01em;white-space:nowrap}
 .row .stamp{transform:rotate(-2.5deg)}
-.st-present{color:var(--ok)}.st-late{color:var(--late)}.st-absent{color:var(--bad)}.st-leave{color:var(--leave)}.st-off,.st-waiting,.st-na{color:var(--off)}
+.st-present{color:var(--ok)}.st-late{color:var(--late)}.st-absent{color:var(--bad)}.st-leave{color:var(--leave)}.st-off,.st-closed,.st-waiting,.st-na,.st-loading{color:var(--off)}
 .amount{flex:none;display:grid;justify-items:end}.amount b{font-weight:750}
 .empty{padding:28px 16px;display:grid;gap:12px;justify-items:center;text-align:center;color:var(--muted)}
 .empty-line,.loading-line{padding:16px;color:var(--muted);text-align:center}
@@ -171,7 +171,7 @@ small{font-size:.8125rem;font-weight:400}
 thead .g-name{background:var(--ink);padding-left:10px}
 .g-name button{width:100%;height:36px;padding:0 10px;border:0;background:none;text-align:left;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .grid td button{width:100%;height:36px;border:0;background:none;font-weight:800;color:inherit}
-.grid td.st-late{background:var(--late-bg)}.grid td.st-absent{background:var(--bad-bg)}.grid td.st-leave{background:var(--leave-bg)}.grid td.st-off{background:var(--off-bg)}
+.grid td.st-late{background:var(--late-bg)}.grid td.st-absent{background:var(--bad-bg)}.grid td.st-leave{background:var(--leave-bg)}.grid td.st-off,.grid td.st-closed{background:var(--off-bg)}
 .g-sum{font-weight:750;min-width:34px!important}
 
 /* ---------- salary ---------- */
@@ -265,3 +265,36 @@ details summary{cursor:pointer;color:var(--ink-2);font-weight:600;padding:6px 0}
 .toast.ok{background:#11603d}.toast.bad{background:#93201a}
 
 @media print{.top,.tabs,.toast,.toolbar .btn{display:none!important}body{background:#fff}}
+
+/* ---------- v201: duty chips, jaldi buttons, hafta, qawaid ---------- */
+.row-col{flex:1;min-width:0;display:grid}
+.row-col .row-main{padding-bottom:4px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;padding:0 10px 11px 70px}
+.tags.inline{padding:4px 0 0}.tags.center{justify-content:center;padding:4px 0 6px}
+.tag{display:inline-flex;align-items:center;gap:4px;min-height:24px;padding:0 8px;border-radius:12px;background:var(--ground);color:var(--muted);font-size:.75rem;font-weight:600;white-space:nowrap}
+.tag .ic{vertical-align:0}
+.t-ok{background:var(--ok-bg);color:var(--ok)}.t-bad{background:var(--bad-bg);color:var(--bad)}.t-ink{background:var(--ink-soft);color:var(--ink)}
+.quick{display:inline-flex;align-items:center;gap:4px;min-height:30px;padding:0 11px;border-radius:15px;border:1.5px solid var(--ok);background:var(--paper);color:var(--ok);font-size:.8125rem;font-weight:700}
+.quick.q-bad{border-color:var(--bad);color:var(--bad)}
+.quick.is-busy{color:transparent}
+.day-tools{display:flex;flex-wrap:wrap;gap:8px}
+.closed-line,.error-line{display:flex;gap:10px;align-items:flex-start;border-radius:var(--r);padding:12px 14px;background:var(--off-bg);color:var(--ink)}
+.error-line{background:var(--bad-bg);color:var(--bad);font-weight:600;border-radius:0;font-size:.875rem}
+.punch .error-line{border-radius:10px;text-align:left}
+.week{background:var(--paper);border:1px solid var(--rule);border-radius:var(--r)}
+.week summary{display:grid;gap:4px;padding:12px 14px;color:var(--text);list-style:none}
+.week summary::-webkit-details-marker{display:none}
+.week-bits{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.8125rem;color:var(--muted)}
+.week-table{width:100%;border-collapse:collapse;font-size:.875rem}
+.week-table th,.week-table td{padding:8px 10px;border-top:1px solid var(--rule);text-align:right}
+.week-table th:first-child,.week-table td:first-child{text-align:left}
+.week-table th{color:var(--muted);font-weight:600;font-size:.75rem}
+.rule-card{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border-radius:var(--r);border:1px solid #cfd7ea;background:var(--ink-soft);color:var(--ink);text-align:left}
+.rule-card>span{flex:1;display:grid;min-width:0}.rule-card small{color:var(--muted)}
+.sub-box{display:grid;gap:12px;padding-left:12px;border-left:3px solid var(--ink-soft)}
+.progress{width:100%;max-width:320px;height:8px;border-radius:4px;background:var(--ground);overflow:hidden;margin:6px 0 2px}
+.progress i{display:block;height:100%;background:var(--ok)}
+.sync-line{display:flex;gap:6px;align-items:center;justify-content:center;color:var(--ok);font-size:.8125rem;font-weight:600;margin-top:4px}
+.sync-line.is-wait{color:var(--late)}
+.pdf-list li{display:grid;gap:8px;padding:10px 0;border-bottom:1px solid var(--rule)}
+.pdf-list .pdf-name{font-size:.9375rem}

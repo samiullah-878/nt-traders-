@@ -9,7 +9,7 @@ export function fakeSdk({ records = new Map(), initialUser = null, ownerPassword
     const data = records.get(ref.path);
     return {
       id: ref.path.split('/').at(-1), ref, metadata: { fromCache: false }, exists: () => data !== undefined, data: () => structuredClone(data),
-      forEach(fn) { for (const [k, v] of records) if (k.startsWith(ref.path + '/') && !k.slice(ref.path.length + 1).includes('/') && (ref.filters || []).every(f => test(v, f))) fn({ id: k.split('/').at(-1), data: () => structuredClone(v) }); }
+      forEach(fn) { for (const [k, v] of records) if (k.startsWith(ref.path + '/') && !k.slice(ref.path.length + 1).includes('/') && (ref.filters || []).every(f => test(v, f))) fn({ id: k.split('/').at(-1), metadata: { hasPendingWrites: false }, data: () => structuredClone(v) }); }
     };
   }
   function emit(paths) { for (const entry of listeners) if (paths.some(p => p === entry.ref.path || (p.startsWith(entry.ref.path + '/') && !p.slice(entry.ref.path.length + 1).includes('/')))) queueMicrotask(() => { if (listeners.has(entry)) entry.callback(snapshot(entry.ref)); }); }
@@ -31,7 +31,7 @@ export function fakeSdk({ records = new Map(), initialUser = null, ownerPassword
     query: (ref, ...filters) => ({ ...ref, filters }), where: (field, op, value) => ({ field, op, value }),
     getDoc: async ref => snapshot(ref), getDocs: async ref => snapshot(ref),
     async setDoc(ref, data, options) { apply([['set', ref, data, options]]); }, async updateDoc(ref, data) { apply([['update', ref, data]]); }, async deleteDoc(ref) { apply([['delete', ref]]); },
-    onSnapshot(ref, callback) { const entry = { ref, callback }; listeners.add(entry); queueMicrotask(() => { if (listeners.has(entry)) callback(snapshot(ref)); }); return () => listeners.delete(entry); },
+    onSnapshot(ref, ...args) { const callback = args.find(a => typeof a === 'function'); const entry = { ref, callback }; listeners.add(entry); queueMicrotask(() => { if (listeners.has(entry)) callback(snapshot(ref)); }); return () => listeners.delete(entry); },
     runTransaction(_fs, fn) { const result = chain.then(async () => { const writes = []; const ret = await fn({ get: async r => snapshot(r), set: (r, d, o) => writes.push(['set', r, d, o]), delete: r => writes.push(['delete', r]) }); apply(writes); return ret; }); chain = result.catch(() => {}); return result; },
     onAuthStateChanged(_a, callback) { authListeners.add(callback); queueMicrotask(() => callback(auth.currentUser)); return () => authListeners.delete(callback); },
     signOut: async () => setUser(null),
