@@ -34,6 +34,12 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
     onChange: () => { softRender(); view?.onData?.(); },
     onProblem: (name, error) => {
       console.warn('data', name, error);
+      if (name === 'new-out') { // nayi parchi: malik ko foran khabar (app khuli ho to)
+        const n = error?.fresh?.length || 1; toast(n > 1 ? `${n} nayi parchiyan — Haan / Nahi karein` : 'Nayi parchi: koi bahar jana chahta hai — Hazri tab dekhein', 'ok');
+        try { win.navigator.vibrate?.([200, 100, 200]); } catch { /* ignore */ }
+        try { const A = win.AudioContext || win.webkitAudioContext; if (A) { const c = new A(), o = c.createOscillator(), g = c.createGain(); o.frequency.value = 880; g.gain.value = 0.08; o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 0.25); } } catch { /* ignore */ }
+        return;
+      }
       if (name === 'save' || name === 'queued-write') toast('Entry server par save nahi hui (' + (error?.code || 'error') + '). Internet check kar ke dobara karein.', 'bad');
       else if (error?.code === 'permission-denied') toast('Kuch data ki ijazat nahi mili (' + name + '). Logout kar ke dobara login karein.', 'bad');
     }
@@ -71,8 +77,7 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
         <form class="form" data-form="login" novalidate>
           ${staff
             ? `<label>Apna mobile number<input name="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="03001234567" maxlength="16" required ${login.busy ? 'disabled' : ''}></label>
-               <label>PIN <small>(sirf agar malik ne diya ho)</small><input name="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="4" pattern="[0-9]*" placeholder="••••" ${login.busy ? 'disabled' : ''}></label>
-               <p class="hint">Wohi number likhein jo malik ne Staff list mein likha hai.</p>`
+               <p class="hint">Wohi number likhein jo malik ne Staff list mein likha hai. Password ki zaroorat nahi.</p>`
             : `<label>Password<span class="pass"><input name="password" type="${login.showPass ? 'text' : 'password'}" autocomplete="current-password" required ${login.busy ? 'disabled' : ''}><button type="button" class="link" data-action="login-show">${login.showPass ? 'Chhupayein' : 'Dikhayein'}</button></span></label>
                <details><summary>Email se login (ikhtiyari)</summary><label>Email<input name="username" type="email" autocomplete="username" placeholder="khali = admin" ${login.busy ? 'disabled' : ''}></label></details>`}
           <p class="login-error" role="alert" ${login.error ? '' : 'hidden'}>${esc(login.error)}</p>
@@ -91,7 +96,7 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
     const phoneInput = $('input[name=phone]', root); if (phoneInput) phoneInput.value = login.phoneDraft;
     try {
       if (!(await ready)) throw Object.assign(new Error('sdk'), { code: 'auth/network-request-failed' });
-      await controller.login(login.role === 'staff' ? { role: 'staff', password: v.phone, pin: v.pin } : { role: 'owner', username: v.username, password: v.password });
+      await controller.login(login.role === 'staff' ? { role: 'staff', password: v.phone } : { role: 'owner', username: v.username, password: v.password });
     } catch (error) {
       login.busy = false; login.error = loginErrorMessage(error); showLogin();
       const again = $('input[name=phone]', root); if (again) again.value = login.phoneDraft;

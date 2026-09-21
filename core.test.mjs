@@ -159,3 +159,18 @@ test('hafte ka khulasa', () => {
     attendance: [{ phone: P, date: '2026-09-21', checkIn: '09:30', checkOut: '17:30' }, { phone: P, date: '2026-09-22', checkIn: '09:00', checkOut: '17:00' }] });
   assert.deepEqual([w.from, w.rows[0].present, w.rows[0].late, w.rows[0].absent, w.rows[0].minutes], ['2026-09-21', 2, 1, 1, 960]);
 });
+
+test('bahar ki parchi: minute, din ka khulasa, salary kati', () => {
+  const t0 = Date.parse('2026-09-21T15:00:00+05:00');
+  assert.equal(C.outMinutes({ status: 'returned', outAt: t0, returnAt: t0 + 35 * 60000 }), 35);
+  assert.equal(C.outMinutes({ status: 'approved', outAt: t0 }, t0 + 10 * 60000), 10);
+  assert.equal(C.outMinutes({ status: 'approved', outAt: t0 }), null);
+  const outs = [{ phone: P, date: '2026-09-21', status: 'returned', outAt: t0, returnAt: t0 + 30 * 60000, requestedAt: 1 }, { phone: P, date: '2026-09-21', status: 'approved', outAt: t0 + 60 * 60000, requestedAt: 2 }, { phone: P, date: '2026-09-21', status: 'rejected', requestedAt: 3 }];
+  const d = C.dayOuts(outs, P, '2026-09-21', t0 + 80 * 60000);
+  assert.equal(d.done.length, 1); assert.ok(d.open); assert.equal(d.total, 50); assert.equal(d.count, 2);
+  const config = { ...cfg, salaryDefault: { ...cfg.salaryDefault, outDeduct: true } };
+  const c = C.salaryCalc({ account: { phone: P }, month: '2026-09', attendance: [], config, outs, today: '2026-09-21' });
+  assert.equal(c.outMin, 30); assert.equal(c.outCount, 1); assert.equal(Math.round(c.outCut), Math.round(0.5 * c.hourly));
+  assert.equal(C.salaryCalc({ account: { phone: P }, month: '2026-09', attendance: [], config: cfg, outs, today: '2026-09-21' }).outCut, 0);
+  assert.match(C.dayColor('2026-09-21'), /^hsl\(/);
+});

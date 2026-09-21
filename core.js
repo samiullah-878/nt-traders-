@@ -1,14 +1,14 @@
 // core.js — Noor Traders Hazri + Salary
 // Sirf hisab-kitab. Yahan na DOM hai na Firebase, is liye ye file Node mein test hoti hai.
 
-export const APP_VERSION = 'v204';
+export const APP_VERSION = 'v205';
 export const TZ = 'Asia/Karachi';
 export const BUSINESS_ID = 'noor-traders';
 export const SHOP = { name: 'Noor Traders Gulyana', lat: 32.7979125, lng: 73.956984375, radius: 200 };
 export const DEFAULT_CONFIG = {
   shiftStart: '09:15', shiftEnd: '19:00', radius: 200, grace: 10,
   instruction: '', closedDays: [],
-  salaryDefault: { monthlySalary: 0, workingDays: 30, overtimeRate: 0, mode: 'hours', leavePaid: true, lateEvery: 0, lateFineDays: 0.5 },
+  salaryDefault: { monthlySalary: 0, workingDays: 30, overtimeRate: 0, mode: 'hours', leavePaid: true, lateEvery: 0, lateFineDays: 0.5, outDeduct: false },
   scores: { m10: 10, m20: 8, m30: 6, m45: 4, late: 2 }
 };
 export const STATUS_LABEL = {
@@ -289,6 +289,7 @@ export function salaryConfig(account = {}, config = {}, schedule = null) {
     pointRate: Number(d.pointRate || def.pointRate || 0),
     mode: def.mode === 'days' ? 'days' : 'hours',
     leavePaid: def.leavePaid !== false,
+    outDeduct: def.outDeduct === true,
     lateEvery: Math.max(0, Math.floor(Number(def.lateEvery || 0))),
     lateFineDays: Math.max(0, Number(def.lateFineDays ?? 0.5))
   };
@@ -314,7 +315,7 @@ export function loanCuts(extras = [], month) {
  * hourly = monthly / (dutyHours × workingDays); normal ghante × hourly + overtime + points + bonus + khana − advance.
  * Agar mahina "final" ho chuka hai to wahi jama hua hisab wapas aata hai (badalta nahi).
  */
-export function salaryCalc({ account = {}, month, attendance = [], payroll = null, config = {}, schedule = null, requests = [], today = pkDate(), nowMin = pkMinutes() }) {
+export function salaryCalc({ account = {}, month, attendance = [], payroll = null, config = {}, schedule = null, requests = [], outs = [], today = pkDate(), nowMin = pkMinutes() }) {
   const paid = Number(payroll?.paid || 0), payments = payroll?.payments || [];
   if (payroll?.state === 'final' && payroll.snapshot) {
     const s = payroll.snapshot;
@@ -358,12 +359,16 @@ export function salaryCalc({ account = {}, month, attendance = [], payroll = nul
   const mealDays = new Set(recs.filter(a => a.checkIn).map(a => a.date)).size;
   const mealTotal = cfg.mealMode === 'monthly' ? cfg.mealRate : cfg.mealMode === 'daily' ? cfg.mealRate * mealDays : 0;
   const mealSalary = cfg.mealInSalary ? mealTotal : 0;
-  const deductions = advance + loanCut + lateFine;
+  // Bahar jane ki parchi: sirf mukammal (wapas aa gaya) parchiyan ginti mein
+  const monthOuts = outs.filter(o => o.phone === account.phone && o.date >= from && o.date <= to && o.status === 'returned');
+  const outMin = monthOuts.reduce((n, o) => n + (outMinutes(o) || 0), 0), outCount = monthOuts.length;
+  const outCut = cfg.outDeduct ? (outMin / 60) * hourly : 0;
+  const deductions = advance + loanCut + lateFine + outCut;
   const final = normalSalary + overtimeAmount + pointsAmount + bonus + mealSalary - deductions;
   return {
     phone: account.phone, month, periodLabel: monthLabel(month), from, to, ...cfg, expectedHours, hourly, perDay, otRate,
     daysWorked, openDays, normalMin, otMin, normalSalary, overtimeAmount, attPoints, taskPoints: 0, points, pointsAmount,
-    absentDays, absentCut, lateCount, lateFines, lateFine, loans, loanCut, deductions,
+    absentDays, absentCut, lateCount, lateFines, lateFine, loans, loanCut, outMin, outCount, outCut, deductions,
     extras, bonus, advance, mealDays, mealTotal, mealSalary, final, frozen: false, paid, payments, balance: final - paid
   };
 }
@@ -535,3 +540,27 @@ export function serverGap(a = {}) {
   return Math.abs(gap) > 2 * 1440 ? null : gap;
 }
 
+
+/* ---------- bahar jane ki parchi ---------- */
+export const OUT_REASONS = ['Maal lene', 'Khana', 'Namaz', 'Bank', 'Ghar ka kaam', 'Delivery', 'Aur'];
+/** Parchi ke minute: wapas aaya to (wapsi − jana); abhi bahar hai to ab tak (now diya ho to). */
+export function outMinutes(o = {}, now = null) {
+  const start = Number(o.outAt) || null; if (!start) return null;
+  const end = o.status === 'returned' ? Number(o.returnAt) : (o.status === 'approved' && now ? now : null);
+  if (!end || end < start) return null;
+  return Math.round((end - start) / 60000);
+}
+/** Aik staff, aik din ki parchiyan + kul bahar ka waqt. */
+export function dayOuts(outs = [], phone, date, now = Date.now()) {
+  const list = outs.filter(o => o.phone === phone && o.date === date && ['pending', 'approved', 'returned', 'rejected'].includes(o.status))
+    .sort((a, b) => (a.requestedAt || 0) - (b.requestedAt || 0));
+  const done = list.filter(o => o.status === 'returned');
+  const open = list.find(o => o.status === 'approved') || null, pending = list.find(o => o.status === 'pending') || null;
+  const total = done.reduce((n, o) => n + (outMinutes(o) || 0), 0) + (open ? (outMinutes(open, now) || 0) : 0);
+  return { list, done, open, pending, total, count: done.length + (open ? 1 : 0) };
+}
+/** Aaj ka rang — Gate Pass par, taake purana screenshot pehchana jaye. */
+export function dayColor(date) {
+  let h = 0; for (const c of String(date)) h = (h * 31 + c.charCodeAt(0)) % 360;
+  return `hsl(${h} 70% 42%)`;
+}

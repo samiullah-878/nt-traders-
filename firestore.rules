@@ -37,12 +37,6 @@ service cloud.firestore {
       return isStaff() && enabledStaffAccount(sessionPhone());
     }
 
-    // v204: ikhtiyari 4 hindse ka PIN. Account mein PIN na ho (ya khali ho) to sirf number kaafi hai.
-    function pinOk(phone, pin) {
-      let account = get(/databases/$(database)/documents/businesses/noor-traders/staffAccounts/$(phone)).data;
-      return !('pin' in account) || account.pin == '' || account.pin == pin;
-    }
-
     // Existing owner business data: owner only.
     match /businesses/noor-traders/{collectionName}/{docId} {
       allow read, write: if isOwner();
@@ -62,11 +56,10 @@ service cloud.firestore {
     match /businesses/noor-traders/staffSessions/{uid} {
       allow create: if isStaff()
         && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['phone', 'createdAt', 'pin'])
+        && request.resource.data.keys().hasOnly(['phone', 'createdAt'])
         && request.resource.data.phone is string
         && request.resource.data.phone.matches('^03[0-9]{9}$')
-        && enabledStaffAccount(request.resource.data.phone)
-        && pinOk(request.resource.data.phone, request.resource.data.get('pin', ''));
+        && enabledStaffAccount(request.resource.data.phone);
       allow update: if isOwner();
       allow get: if isOwner() || (isStaff() && request.auth.uid == uid);
       allow delete, list: if isOwner();
@@ -136,6 +129,34 @@ service cloud.firestore {
           && request.resource.data.selfie.size() <= 300000
           && request.resource.data.selfie.matches('data:image/jpeg;base64,.*'));
       allow update, delete: if isOwner();
+    }
+    // v205: bahar jane ki parchi. Staff mangta hai, malik Haan/Nahi karta hai, staff "Wapas aa gaya" lagata hai.
+    match /businesses/noor-traders/staffOuts/{outId} {
+      allow read: if isOwner() || (validStaffSession() && resource.data.phone == sessionPhone());
+      allow create: if isOwner()
+        || (validStaffSession()
+          && request.resource.data.keys().hasOnly(['phone', 'date', 'reason', 'note', 'minutes', 'status', 'requestedAt', 'serverAt', 'by'])
+          && request.resource.data.phone == sessionPhone()
+          && request.resource.data.by == request.auth.uid
+          && request.resource.data.status == 'pending'
+          && request.resource.data.serverAt == request.time
+          && request.resource.data.date is string && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && request.resource.data.reason is string && request.resource.data.reason.size() > 0 && request.resource.data.reason.size() <= 40
+          && request.resource.data.note is string && request.resource.data.note.size() <= 300
+          && request.resource.data.minutes is number && request.resource.data.minutes >= 1 && request.resource.data.minutes <= 600
+          && request.resource.data.requestedAt is number);
+      allow update: if isOwner()
+        || (validStaffSession()
+          && resource.data.phone == sessionPhone()
+          && request.resource.data.phone == sessionPhone()
+          && ((resource.data.status == 'pending'
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+                && request.resource.data.status == 'cancelled')
+            || (resource.data.status == 'approved'
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'returnAt', 'returnLat', 'returnLng', 'returnDistance', 'returnAccuracy', 'returnServerAt'])
+                && request.resource.data.status == 'returned'
+                && request.resource.data.returnServerAt == request.time)));
+      allow delete: if isOwner();
     }
     match /businesses/noor-traders/staffSchedules/{phone} {
       allow read: if isOwner() || (validStaffSession() && resource.data.phone == sessionPhone());

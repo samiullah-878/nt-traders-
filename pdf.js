@@ -168,6 +168,8 @@ export async function staffMonthPdf(lib, { account, month, summary, calc, schedu
     if (calc.advance) rowsOut.push(line('Advance (kat gaya)', '- ' + money(calc.advance), { textColor: TONE.absent }));
     if (calc.loanCut) rowsOut.push(line('Qarz ki qist', '- ' + money(calc.loanCut), { textColor: TONE.absent }));
     if (calc.lateFine) rowsOut.push(line(`Late jurmana (${calc.lateCount} dafa late)`, '- ' + money(calc.lateFine), { textColor: TONE.absent }));
+    if (calc.outCut) rowsOut.push(line(`Bahar ka waqt (${calc.outCount} parchi, ${hm(calc.outMin)})`, '- ' + money(calc.outCut), { textColor: TONE.absent }));
+    else if (calc.outMin) rowsOut.push(line(`Bahar ka waqt: ${calc.outCount} parchi, ${hm(calc.outMin)} (kati nahi)`, '—'));
     rowsOut.push(line('Kul banti salary', money(calc.final), { fontStyle: 'bold', fillColor: PAPER, textColor: INK }));
     rowsOut.push(line('Ada ho chuki', money(calc.paid)));
     rowsOut.push(line('BAQI', money(calc.balance), { fontStyle: 'bold', fillColor: INK, textColor: 255 }));

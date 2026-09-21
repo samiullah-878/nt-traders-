@@ -18,7 +18,7 @@ export function isOwnerUser(user) {
 function failure(code) { return Object.assign(new Error(code), { code }); }
 export function isTransient(error) { return TRANSIENT.includes(error?.code); }
 
-export function parseLogin({ role, username, password, pin }) {
+export function parseLogin({ role, username, password }) {
   if (role === 'owner') {
     const name = String(username || '').trim().toLowerCase();
     if (!password) throw failure('login/password-required');
@@ -29,23 +29,20 @@ export function parseLogin({ role, username, password, pin }) {
   // Staff sirf apna mobile number likhta hai. Purani app ki tarah "admin" + number bhi chalta hai.
   const phone = normalizePhone(password) || normalizePhone(username);
   if (!phone) throw failure('login/staff-phone');
-  const p = String(pin ?? '').trim();
-  if (p && !/^\d{4}$/.test(p)) throw failure('login/staff-pin');
-  return p ? { role, phone, pin: p } : { role, phone };
+  return { role, phone };
 }
 
 export function loginErrorMessage(error) {
   switch (error?.code) {
     case 'login/owner-username': return 'Malik ke liye username "admin" likhein ya khali chhor dein.';
     case 'login/staff-phone': return 'Apna poora mobile number likhein, jaise 03001234567.';
-    case 'login/staff-pin': return 'PIN 4 hindson ka hota hai. Malik ne PIN nahi diya to khali chhor dein.';
     case 'login/password-required': return 'Password likhein.';
     case 'login/staff-disabled': return 'Ye number register nahi, ya malik ne login band kiya hua hai. Malik se kahein ke Staff list mein number check karein.';
     case 'login/staff-session': return 'Login adhoora reh gaya. Dobara "Login" dabayein.';
     case 'login/owner-required': return 'Is account ko malik wala panel dekhne ki ijazat nahi.';
     case 'login/busy': return 'Login check ho raha hai, thora intezar karein.';
     case 'login/cancelled': return 'Login rok diya gaya. Dobara koshish karein.';
-    case 'permission-denied': return 'Number ya PIN ghalat hai, ya malik ne login band kiya hai. Malik se check karwayein.';
+    case 'permission-denied': return 'Ye number register nahi, ya login band hai. Malik se number check karwayein.';
     case 'auth/too-many-requests': return 'Bohat zyada ghalat koshishein ho gayin. 10-15 minute baad dobara try karein.';
     case 'auth/operation-not-allowed': return 'Firebase mein Anonymous login band hai. Firebase Console > Authentication > Sign-in method mein "Anonymous" on karein.';
     case 'auth/user-disabled': return 'Ye account Firebase mein band kiya gaya hai.';
@@ -192,7 +189,7 @@ export function createAuthController({ auth, sdk, accounts, storage, onReset, on
           credential = await retry(() => sdk.signInAnonymously(auth));
           attemptUser = credential.user;
           check(ticket, credential.user);
-          await retry(() => accounts.createSession(credential.user.uid, request.phone, request.pin || ''));
+          await retry(() => accounts.createSession(credential.user.uid, request.phone));
         }
         check(ticket, credential.user);
         await activate(credential.user, ticket, request.role);

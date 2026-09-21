@@ -202,11 +202,13 @@ test('v204: Settings tab, selfie alag, server waqt, halka karna, check-out band'
   // aik ghalat ho to baqi Check-Out na rukein
   const r = await app.data.closeCheckouts([{ id: 'x', date: '2026-01-06', phone: '03001234567', checkIn: '22:30' }, { id: 'y', date: '2026-01-07', phone: '03001234567', checkIn: '09:00' }]);
   assert.equal(r.done, 1); assert.equal(r.failed.length, 1);
-  // PIN wala staff form
+  // PIN ka option nahi hona chahiye (malik ne mana kiya); purana PIN field save par mit jaye
+  records.set(B + 'staffAccounts/03111112223', { ...records.get(B + 'staffAccounts/03111112223'), pin: '' });
+  await fake.sdk.setDoc({ path: B + 'staffAccounts/03111112223' }, { pin: '' }, { merge: true }); await settle();
   await click('[data-action=tab][data-arg=staff]'); await click('.row-main[data-phone="03111112223"]');
-  fill($('form[data-form=staff]'), { pin: '12a4' }); await submit($('form[data-form=staff]')); assert.match(toastText(), /PIN 4 hindson/);
-  fill($('form[data-form=staff]'), { pin: '4821' }); await submit($('form[data-form=staff]'));
-  assert.equal(records.get(B + 'staffAccounts/03111112223').pin, '4821'); assert.equal(records.get(B + 'staff/03111112223').pin, undefined, 'purani copy mein PIN nahi');
+  assert.equal($('form[data-form=staff] [name=pin]'), null, 'staff form mein PIN nahi');
+  await submit($('form[data-form=staff]'));
+  assert.equal('pin' in records.get(B + 'staffAccounts/03111112223'), false, 'purana PIN field mit gaya');
 });
 test('v204: aaj ki selfies, history, Excel', async () => {
   const { createRequire } = await import('node:module'); const X = createRequire(import.meta.url)('./xlsx.mini.min.js'); if (X?.utils) win.XLSX = X; assert.ok(win.XLSX?.utils, 'xlsx');
@@ -221,13 +223,39 @@ test('v204: aaj ki selfies, history, Excel', async () => {
   assert.ok($('[data-sheet=pdf]'), 'Excel sheet nahi khula: ' + toastText());
   assert.match($('[data-sheet=pdf]').textContent, /NoorTraders_Hazri_Salary_.*\.xlsx/); await click('[data-sheet=pdf] [data-sheet-close]');
 });
+test('v205: malik ko parchi — Haan, abhi bahar, wapsi, salary mein alag', async () => {
+  await click('[data-action=tab][data-arg=hazri]'); await click('[data-action=today]').catch?.(() => {});
+  await fake.sdk.setDoc({ path: B + 'staffOuts/o1' }, { phone: '03001234567', date: today, reason: 'Bank', note: '', minutes: 15, status: 'pending', requestedAt: Date.now(), by: 'x' }); await settle(10);
+  assert.ok($('.out-card'), 'Haan/Nahi card'); assert.match($('.out-card').textContent, /Bank/); assert.match(toastText(), /parchi/i);
+  assert.match($('.tabs').textContent, /Settings/);
+  await click('.out-card [data-action=out-review][data-arg=yes]');
+  const o = records.get(B + 'staffOuts/o1'); assert.equal(o.status, 'approved'); assert.ok(o.outAt);
+  assert.match($('.register').textContent, /Abhi bahar/);
+  // 40 minute pehle gaya tha -> wapsi malik lagaye
+  await fake.sdk.setDoc({ path: B + 'staffOuts/o1' }, { outAt: Date.now() - 40 * 60000 }, { merge: true }); await settle();
+  await click('.att-card[data-action=outs]'); assert.match($('[data-sheet=outs]').textContent, /waqt se zyada/);
+  await click('[data-sheet=outs] [data-action=out-return]');
+  assert.equal(records.get(B + 'staffOuts/o1').status, 'returned'); await click('[data-sheet=outs] [data-sheet-close]');
+  assert.match($('.register').textContent, /Bahar .*\(40m\)|Bahar .*\(0h 40m\)/);
+  // salary: kati band -> sirf nazar aaye; kati on -> kate
+  // (Ali ka ye mahina upar final ho chuka hai, is liye seedha hisab se jaanch)
+  const ali = app.data.state.staff.find(x => x.phone === '03001234567'), calc = () => C.salaryCalc({ account: ali, month: today.slice(0, 7), attendance: [], config: app.data.state.config, outs: app.data.state.outs });
+  let c = calc(); assert.equal(c.outMin, 40); assert.equal(c.outCut, 0);
+  await app.data.saveConfig({ outDeduct: true }); await settle();
+  c = calc();
+  assert.ok(c.outCut > 0, 'kati lagi'); await app.data.saveConfig({ outDeduct: false }); await settle();
+  // naya: Nahi
+  await fake.sdk.setDoc({ path: B + 'staffOuts/o2' }, { phone: '03001234567', date: today, reason: 'Khana', note: '', minutes: 10, status: 'pending', requestedAt: Date.now(), by: 'x' }); await settle(10);
+  await click('.out-card [data-action=out-review][data-arg=no]'); assert.equal(records.get(B + 'staffOuts/o2').status, 'rejected');
+});
 test('logout → staff login → check-in / check-out', async () => {
   records.delete(B + `staffAttendance/${today}_03111112223`); // upar malik ne hazri lagayi thi
   await click('[data-action=tab][data-arg=settings]'); await click('[data-action=logout]'); await settle();
   assert.equal($('#app').dataset.screen, 'login');
   await click('[data-action=login-role][data-arg=staff]');
-  fill($('form[data-form=login]'), { phone: '0311 1112223', pin: '4821' }); await submit($('form[data-form=login]')); await settle(10);
-  assert.ok([...records].some(([k, v]) => k.includes('staffSessions/') && v.pin === '4821'), 'PIN session mein');
+  assert.equal($('form[data-form=login] [name=pin]'), null, 'login par PIN nahi');
+  fill($('form[data-form=login]'), { phone: '0311 1112223' }); await submit($('form[data-form=login]')); await settle(10);
+  assert.ok([...records].some(([k, v]) => k.includes('staffSessions/') && v.phone === '03111112223' && !('pin' in v)), 'session sirf number se');
   assert.equal($('#app').dataset.screen, 'staff'); assert.match($('.brand').textContent, /Usman/);
   assert.ok($('[data-action=check-in]'), 'Check-In button'); assert.match($('.punch').textContent, /9h 45m roz/);
   const r = await app.data.checkIn({ selfie: 'data:image/jpeg;base64,AAAA', gps: { lat: 32.7979, lng: 73.9569, accuracy: 10, distance: 12 } }); assert.equal(r.queued, false); await settle();
@@ -236,7 +264,25 @@ test('logout → staff login → check-in / check-out', async () => {
   assert.equal(records.get(B + `staffSelfies/${today}_03111112223`).selfie, 'data:image/jpeg;base64,AAAA');
   await assert.rejects(app.data.checkIn({ selfie: 'x', gps: { distance: 900 } }), /door/);
   assert.ok($('[data-action=check-out]'), 'ab Check-Out button'); assert.match($('.punch').textContent, /baqi/); assert.match($('.punch').textContent, /Malik tak pohanch gayi/);
+  // ---- v205: bahar jane ki parchi ----
   Object.defineProperty(win.navigator, 'geolocation', { value: undefined, configurable: true });
+  await click('[data-action=out-new]'); assert.ok($('[data-sheet=out-new]'));
+  await click('[data-out-reason="Maal lene"]'); await click('[data-out-min="20"]');
+  $('form[data-form=out]').elements.note.value = 'Rehman traders';
+  await submit($('form[data-form=out]'));
+  const outRec = [...records].find(([k, v]) => k.includes('staffOuts/') && v.phone === '03111112223');
+  assert.ok(outRec, 'parchi bani'); const [outKey, outVal] = outRec;
+  assert.deepEqual(Object.keys(outVal).sort(), ['by', 'date', 'minutes', 'note', 'phone', 'reason', 'requestedAt', 'serverAt', 'status'].sort(), 'sirf rules wali keys');
+  assert.equal(outVal.status, 'pending'); assert.match($('.view').textContent, /Parchi malik ke paas hai/);
+  await assert.rejects(app.data.requestOut({ reason: 'Khana', minutes: 10 }), /pehle se malik/);
+  // malik ne Haan kiya (seedha record mein, jaise doosre phone se)
+  await fake.sdk.setDoc({ path: outKey }, { status: 'approved', outAt: Date.now() - 25 * 60000, approvedAt: Date.now() }, { merge: true }); await settle();
+  assert.ok($('.gate'), 'Gate Pass khula'); assert.match($('.gate').textContent, /Malik ne manzoor kiya/); assert.match($('.gate').textContent, /Maal lene/);
+  assert.ok($('.gate [data-live-clock]'), 'chalti ghari'); assert.match($('.gate').textContent, /waqt guzar gaya/);
+  await click('[data-action=gate-big]'); assert.ok($('[data-sheet=gate] .gate.big')); await click('[data-sheet=gate] [data-sheet-close]');
+  await click('.gate [data-action=out-return]'); await settle(10);
+  const back = records.get(outKey); assert.equal(back.status, 'returned'); assert.ok(back.returnAt); assert.ok(back.returnServerAt?.seconds);
+  assert.equal($('.gate'), null); assert.match($('.view').textContent, /Aaj bahar:/);
   await click('[data-action=check-out]'); await settle(10);
   assert.ok(records.get(B + `staffAttendance/${today}_03111112223`).checkOut); assert.match($('.punch').textContent, /mukammal/);
 });

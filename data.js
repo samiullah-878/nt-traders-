@@ -32,7 +32,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     return {
       role: null, phone: '', loaded: new Set(), config: { ...DEFAULT_CONFIG },
       staff: [], months: new Map(), requests: [], schedules: new Map(), payroll: [],
-      account: null, myAttendance: [], errors: {}, lastSync: {}, pendingWrites: 0
+      account: null, myAttendance: [], outs: [], errors: {}, lastSync: {}, pendingWrites: 0
     };
   }
   let unsubs = [], monthSubs = new Map(), epoch = 0, legacyChecked = false;
@@ -70,6 +70,13 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     live(col('staffRequests'), 'requests', snap => { state.requests = readList(snap).map(r => ({ ...r, phone: normalizePhone(r.phone) || r.phone })); });
     live(col('staffSchedules'), 'schedules', snap => { state.schedules = new Map(readList(snap).map(s => [s.id, s])); });
     live(col('staffPayroll'), 'payroll', snap => { state.payroll = readList(snap); });
+    // Bahar jane ki parchiyan: pichle 45 din
+    live(sdk.query(col('staffOuts'), sdk.where('date', '>=', addDays(pkDate(), -45))), 'outs', snap => {
+      const before = new Set(state.outs.filter(o => o.status === 'pending').map(o => o.id));
+      state.outs = readList(snap).map(o => ({ ...o, phone: normalizePhone(o.phone) || o.phone }));
+      const fresh = state.outs.filter(o => o.status === 'pending' && !before.has(o.id));
+      if (fresh.length && state.loaded.has('outs')) onProblem('new-out', { fresh });
+    });
     const month = pkDate().slice(0, 7);
     watchMonth(month); watchMonth(addMonths(month, -1));
   }
@@ -125,6 +132,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     live(mine('staffRequests'), 'requests', snap => { state.requests = readList(snap); });
     live(mine('staffSchedules'), 'schedules', snap => { state.schedules = new Map(readList(snap).map(s => [s.id, s])); });
     live(mine('staffPayroll'), 'payroll', snap => { state.payroll = readList(snap); });
+    live(mine('staffOuts'), 'outs', snap => { state.outs = readList(snap); });
   }
 
   /* ---------- helpers ---------- */
@@ -165,7 +173,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   function calcFor(account, month) {
     const { from, to } = monthRange(month);
     const recs = state.role === 'staff' ? state.myAttendance.filter(a => a.date >= from && a.date <= to) : attendanceBetween(from, to);
-    return salaryCalc({ account, month, attendance: recs, payroll: payrollFor(account.phone, month), config: state.config, schedule: scheduleFor(account.phone), requests: state.requests.filter(r => r.phone === account.phone) });
+    return salaryCalc({ account, month, attendance: recs, payroll: payrollFor(account.phone, month), config: state.config, schedule: scheduleFor(account.phone), requests: state.requests.filter(r => r.phone === account.phone), outs: state.outs.filter(o => o.phone === account.phone) });
   }
   const salaryFor = account => salaryConfig(account, state.config, scheduleFor(account.phone));
   /** Purani app salary settings/main mein bhi rakhti thi; dono jagah barabar rakhte hain. Fail ho to koi masla nahi. */
@@ -189,10 +197,8 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       overtimeRate: Number(input.overtimeRate || 0), pointRate: Number(input.pointRate ?? old?.salary?.pointRate ?? 0),
       mealMode: ['daily', 'monthly', 'none'].includes(input.mealMode) ? input.mealMode : 'none', mealRate: Math.max(0, Number(input.mealRate || 0)), mealInSalary: !!input.mealInSalary
     };
-    const pin = String(input.pin ?? old?.pin ?? '').trim();
-    if (pin && !/^\d{4}$/.test(pin)) throw new Error('PIN 4 hindson ka ho (jaise 4821), ya khali chhor dein.');
     const account = clean({
-      name: String(input.name).trim(), pin, role: String(input.role || 'Staff').trim() || 'Staff', address: String(input.address || '').trim(), phone,
+      name: String(input.name).trim(), role: String(input.role || 'Staff').trim() || 'Staff', address: String(input.address || '').trim(), phone,
       photo: input.photo ?? old?.photo ?? '', active: input.active !== false, loginEnabled: input.loginEnabled !== false,
       joinDate: isDate(input.joinDate) ? input.joinDate : (old?.joinDate || (old ? '' : pkDate())),
       salary, salaryExtras: old?.salaryExtras || [], updatedAt: Date.now()
@@ -202,8 +208,9 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       grace: Math.max(0, Number(input.grace ?? state.config.grace ?? 10)), weeklyOff: input.weeklyOff === '' || input.weeklyOff == null ? [] : [Number(input.weeklyOff)]
     });
     await fast(async tx => {
-      tx.set(ref('staffAccounts', phone), account, { merge: true });
-      { const { pin: _pin, ...legacy } = account; tx.set(ref('staff', phone), { ...legacy, id: phone }, { merge: true }); } // purani hisab app ke liye (PIN nahi)
+      // PIN ka option malik ne mana kiya — purana khali/likha PIN field bhi mita do
+      tx.set(ref('staffAccounts', phone), old && 'pin' in old && sdk.deleteField ? { ...account, pin: sdk.deleteField() } : account, { merge: true });
+      tx.set(ref('staff', phone), { ...account, id: phone }, { merge: true }); // purani hisab app ke liye
       tx.set(ref('staffSchedules', phone), schedule, { merge: true });
       if (JSON.stringify(old?.salary || null) !== JSON.stringify(salary)) audit(tx, 'salary settings', phone, old?.salary || null, salary, old ? 'Malik ne salary settings badli' : 'Naya staff');
     });
@@ -231,7 +238,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     if (has('grace')) next.grace = Math.max(0, num(patch.grace, 10));
     if (has('radius')) next.radius = Math.max(20, num(patch.radius, SHOP.radius));
     if (has('instruction')) next.instruction = String(patch.instruction || '');
-    const salaryKeys = ['defSalary', 'defDays', 'defOt', 'salaryMode', 'leavePaid', 'lateEvery', 'lateFineDays'];
+    const salaryKeys = ['defSalary', 'defDays', 'defOt', 'salaryMode', 'leavePaid', 'lateEvery', 'lateFineDays', 'outDeduct'];
     if (salaryKeys.some(has)) {
       const old = { ...DEFAULT_CONFIG.salaryDefault, ...(state.config.salaryDefault || {}) }, d = { ...old };
       if (has('defSalary')) d.monthlySalary = Math.max(0, num(patch.defSalary, 0));
@@ -241,6 +248,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       if (has('leavePaid')) d.leavePaid = patch.leavePaid !== false;
       if (has('lateEvery')) d.lateEvery = Math.max(0, Math.floor(num(patch.lateEvery, 0)));
       if (has('lateFineDays')) d.lateFineDays = Math.max(0, num(patch.lateFineDays, 0.5));
+      if (has('outDeduct')) d.outDeduct = patch.outDeduct === true;
       next.salaryDefault = d;
     }
     if (!Object.keys(next).length) return;
@@ -493,6 +501,55 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     return moved;
   }
 
+  /* ---------- bahar jane ki parchi ---------- */
+  const rulesHint = error => error?.code === 'permission-denied'
+    ? Object.assign(new Error('Parchi nahi ja saki: malik ko Firebase rules update karne hain (Settings › Update ke links › Firebase rules).'), { code: 'permission-denied' })
+    : error;
+  async function quick(write) {
+    write.catch(e => problem('save', rulesHint(e)));
+    let t; try { await Promise.race([write, new Promise(r => { t = setTimeout(r, 600); })]); } catch (e) { throw rulesHint(e); } finally { clearTimeout(t); }
+  }
+  /** Staff: bahar jane ki ijazat mangna. */
+  async function requestOut({ reason, note = '', minutes }) {
+    if (state.role !== 'staff') throw new Error('Staff login zaroori hai.');
+    const today = pkDate(), open = state.myAttendance.find(a => a.date === today && a.checkIn && !a.checkOut);
+    if (!open) throw new Error('Pehle Check-In karein. Parchi sirf duty ke dauran banti hai.');
+    const mine = state.outs.filter(o => o.date === today);
+    if (mine.some(o => o.status === 'pending')) throw new Error('Aap ki aik parchi pehle se malik ke paas hai.');
+    if (mine.some(o => o.status === 'approved')) throw new Error('Aap pehle se bahar hain. Wapas aa kar "Wapas aa gaya" dabayein.');
+    const m = Math.round(Number(minutes));
+    if (!reason) throw new Error('Wajah chunein.');
+    if (!(m >= 1 && m <= 600)) throw new Error('Kitni der lagegi, wo chunein.');
+    const id = sdk.doc(col('staffOuts')).id;
+    // Ye keys firestore.rules mein ginti ki hui hain.
+    await quick(sdk.setDoc(ref('staffOuts', id), { phone: state.phone, date: today, reason: String(reason).slice(0, 40), note: String(note || '').slice(0, 300), minutes: m, status: 'pending', requestedAt: Date.now(), serverAt: sdk.serverTimestamp ? sdk.serverTimestamp() : Date.now(), by: auth.currentUser.uid }));
+  }
+  async function cancelOut(id) {
+    if (state.role !== 'staff') throw new Error('Staff login zaroori hai.');
+    await quick(sdk.setDoc(ref('staffOuts', id), { status: 'cancelled' }, { merge: true }));
+  }
+  /** Staff: wapas aa gaya (GPS ke sath). Owner bhi laga sakta hai (larka bhool jaye). */
+  async function returnOut(o, gps = null) {
+    if (!o?.id) throw new Error('Parchi nahi mili.');
+    if (state.role === 'owner') {
+      guardOwner();
+      await fast(async tx => { tx.set(ref('staffOuts', o.id), { status: 'returned', returnAt: Date.now(), returnBy: 'malik' }, { merge: true }); audit(tx, 'bahar wapsi', o.id, { status: o.status }, { status: 'returned' }, 'Malik ne wapsi lagayi'); });
+      return;
+    }
+    await quick(sdk.setDoc(ref('staffOuts', o.id), { ...clean({ status: 'returned', returnAt: Date.now(), returnLat: gps?.lat ?? null, returnLng: gps?.lng ?? null, returnDistance: gps?.distance ?? null, returnAccuracy: gps?.accuracy ?? null }), returnServerAt: sdk.serverTimestamp ? sdk.serverTimestamp() : Date.now() }, { merge: true }));
+  }
+  /** Malik: Haan / Nahi. Haan par Gate Pass khulta hai aur bahar ka waqt shuru. */
+  async function reviewOut(id, approve, note = '') {
+    guardOwner();
+    const o = state.outs.find(x => x.id === id);
+    if (!o || o.status !== 'pending') throw new Error('Ye parchi pehle hi dekhi ja chuki hai ya cancel ho gayi.');
+    const now = Date.now();
+    await fast(async tx => {
+      tx.set(ref('staffOuts', id), approve ? { status: 'approved', approvedAt: now, outAt: now, approvedBy: auth.currentUser.uid, ownerNote: note } : { status: 'rejected', rejectedAt: now, approvedBy: auth.currentUser.uid, ownerNote: note }, { merge: true });
+      audit(tx, approve ? 'bahar manzoor' : 'bahar na-manzoor', `${o.date}_${o.phone}`, { status: 'pending' }, { status: approve ? 'approved' : 'rejected', reason: o.reason, minutes: o.minutes }, o.reason);
+    });
+  }
+
   /* ---------- staff: check-in / out / request ---------- */
   async function checkIn({ selfie, gps }) {
     if (state.role !== 'staff') throw new Error('Staff login zaroori hai.');
@@ -523,6 +580,8 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   async function checkOut(row, gps) {
     if (state.role !== 'staff') throw new Error('Staff login zaroori hai.');
     if (!row?.checkIn || row.checkOut) throw new Error('Check-In ka record nahi mila.');
+    const openOut = state.outs.find(o => o.date === row.date && o.status === 'approved');
+    if (openOut) { try { await returnOut(openOut, gps); } catch { /* parchi ki wapsi baad mein */ } }
     const write = sdk.setDoc(ref('staffAttendance', row.id || `${row.date}_${state.phone}`), { ...clean({
       phone: state.phone, checkOut: pkTime24(), checkOutTs: Date.now(), checkOutLat: gps?.lat ?? null, checkOutLng: gps?.lng ?? null, checkOutAccuracy: gps?.accuracy ?? null, checkOutDistance: gps?.distance ?? null
     }), outServerAt: sdk.serverTimestamp ? sdk.serverTimestamp() : Date.now() }, { merge: true });
@@ -550,11 +609,12 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
 
   return {
     auth, state, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
+    requestOut, cancelOut, returnOut, reviewOut,
     applyDefaultShiftAll, applyDefaultSalaryAll, toggleClosed, quickPresent, closeCheckouts, getSelfie, migrateSelfies, selfiesFor, auditLog,
     accounts: {
       async getSession(uid) { const s = await sdk.getDoc(ref('staffSessions', uid)); return s.exists() ? s.data() : null; },
       async getAccount(phone) { const s = await sdk.getDoc(ref('staffAccounts', phone)); return s.exists() ? { ...s.data(), phone } : null; },
-      async createSession(uid, phone, pin = '') { await sdk.setDoc(ref('staffSessions', uid), pin ? { phone, createdAt: Date.now(), pin } : { phone, createdAt: Date.now() }); }
+      async createSession(uid, phone) { await sdk.setDoc(ref('staffSessions', uid), { phone, createdAt: Date.now() }); }
     },
     saveStaff, deleteStaff, saveConfig, saveAttendance, deleteAttendance, markLeave, cancelLeave, reviewRequest,
     addExtra, removeExtra, toggleFinal, addPayment, checkIn, checkOut, sendRequest

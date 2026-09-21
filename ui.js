@@ -257,3 +257,9 @@ if (typeof document !== 'undefined') {
     const box = sel.closest('[data-tp]'); tpApply(box, tpRead(box));
   });
 }
+
+/* ---------- Gate Pass ki chalti ghari (har second) ---------- */
+if (typeof document !== 'undefined' && typeof setInterval !== 'undefined') {
+  const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h12' });
+  setInterval(() => { const els = document.querySelectorAll('[data-live-clock]'); if (!els.length) return; const t = fmt.format(new Date()).toUpperCase(); for (const el of els) el.textContent = t; }, 1000);
+}
