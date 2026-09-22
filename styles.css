@@ -402,3 +402,14 @@ button.tag{border:0;cursor:pointer}
 .pick-list .is-off{opacity:.55}
 .inline-min{display:inline-flex;align-items:center;gap:6px;font-weight:600;color:var(--muted)}
 .inline-min input{width:78px;min-height:38px}
+
+/* ---------- v209: bina bataye gaya ---------- */
+.decide{display:grid;gap:6px;padding:10px;border-radius:10px;background:var(--bad-bg)}
+.decide label{display:flex;align-items:center;gap:8px;font-weight:650}.decide input{width:120px;min-height:40px}
+.tone-bad-btn{color:var(--bad);border-color:#f3c2be}
+
+/* ---------- v210: aadhi chutti ---------- */
+.st-half{color:var(--leave)}
+.row.s-half{border-left-color:var(--leave)}
+.grid td.st-half{background:var(--leave-bg)}
+.days li.s-half{border-left-color:var(--leave)}

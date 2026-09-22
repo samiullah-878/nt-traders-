@@ -2,8 +2,9 @@
 import {
   APP_VERSION, STATUS_LABEL, STATUS_MARK, DAY_SHORT, SHOP, esc, money, hm, fmtTime, to24, pkDate, pkMinutes, pkTime24, addDays, addMonths, weekday,
   monthDates, monthLabel, dateLabel, parseTime, shortDate, weekRange, dayRows, countStatuses, monthSummary, smartSearch, salaryConfig, checkoutDue, isDate,
-  shiftMinutes, usesDefaultSalary, weekSummary, isClosed, loanCuts, workMinutes, parseTime as C_parse, serverGap, STATUS_MARK as MARK, dayOuts, outMinutes, durText, breakGroup
+  shiftMinutes, usesDefaultSalary, weekSummary, isClosed, loanCuts, workMinutes, parseTime as C_parse, serverGap, STATUS_MARK as MARK, dayOuts, outMinutes, durText, breakGroup, ticketMinutes, ticketText
 } from './core.js';
+import { openTicketSheet } from './tickets.js';
 import { openBreakSheet, breakStatusHtml } from './breaks.js';
 const clock = ms => ms ? fmtTime(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(ms))) : '—';
 const to24FromMin = m => { const x = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
@@ -53,6 +54,8 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       const open = activeStaff().filter(s => data.calcFor(s, prev).daysWorked > 0 && data.payrollFor(s.phone, prev)?.state !== 'final');
       if (open.length) items.push({ tone: 'ink', icon: 'wallet', title: `${monthLabel(prev)} ki salary final nahi`, text: `${open.length} staff baqi`, action: 'salary-month', arg: prev });
     }
+    const undecided = S.tickets.filter(t => t.status !== 'decided');
+    if (undecided.length) items.unshift({ tone: 'bad', icon: 'alert', title: `${undecided.length} "bina bataye gaya" ticket ka faisla baqi`, text: [...new Set(undecided.map(t => account(t.phone)?.name || t.name))].slice(0, 3).join(', '), action: 'tickets', arg: '' });
     if (nightShift(S.config)) items.unshift({ tone: 'bad', icon: 'alert', title: `Default duty ghalat lag rahi hai: ${dutyText(resolveBase())}`, text: 'Daba kar AM / PM theek karein', action: 'settings', arg: '' });
     if (!items.length) return '';
     return `<section class="attention" aria-label="Tawajju chahiye"><h2 class="section-label">Tawajju chahiye</h2><div class="attention-list">${items.map(i =>
@@ -89,6 +92,14 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       const bd = dayOuts(S.outs, s.phone, date, Date.now(), 'break');
       if (bd.open) { const m = outMinutes(bd.open, Date.now()) || 0, over = m > Number(bd.open.minutes || 0); chips.push(`<span class="tag ${over ? 't-bad' : 't-late'}">Khana break · ${durText(m)} se${over ? ' · waqt se zyada' : ''}</span>`); }
       if (bd.done.length) chips.push(`<span class="tag">Khana ${bd.done.map(o => `${clock(o.outAt)}–${clock(o.returnAt)}`).join(', ')} (${durText(bd.done.reduce((n, o) => n + (outMinutes(o) || 0), 0))})</span>`);
+      if (r.leave) chips.push(`<span class="tag ${paidDesc(r.leave) === 'paisa katega' ? 't-bad' : 't-ink'}">${r.leave.half ? 'Aadhi chutti (' + (r.leave.half === 'am' ? 'subah' : 'shaam') + ')' : 'Chutti'} · ${paidDesc(r.leave)}</span>`);
+      for (const t of S.tickets.filter(x => x.phone === s.phone && x.date === date)) {
+        const tm = ticketMinutes(t, Date.now()) || 0;
+        const lab = t.status === 'open' ? `Bina bataye gaya · ${clock(t.from)} se · ${durText(tm)}` : t.status === 'decided'
+          ? `Ticket: ${t.decision === 'katauti' ? 'Katauti ' + money(t.amount) : t.decision === 'warning' ? 'Warning' : 'Maaf'} (${clock(t.from)}–${clock(t.returnAt)})`
+          : `Bina bataye ${clock(t.from)}–${clock(t.returnAt)} (${durText(tm)}) · faisla baqi`;
+        chips.push(`<button type="button" class="tag ${t.status === 'decided' && t.decision !== 'katauti' ? 't-late' : 't-bad'}" data-action="tickets" data-arg="${date}">${esc(lab)}</button>`);
+      }
       if (minutes != null && od.total) chips.push(`<span class="tag t-ink">Asal kaam ${hm(Math.max(0, minutes - od.total))}</span>`);
       const g = serverGap(a); if (g != null && Math.abs(g) >= 10) chips.push(`<span class="tag t-bad" title="Staff ke phone ka waqt aur server ka waqt alag">Server ${fmtTime(to24FromMin(parseTime(a.checkIn) + g))}</span>`);
     }
@@ -128,13 +139,13 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
   function dayView() {
     const date = ui.date, today = pkDate(), month = date.slice(0, 7);
     const rows = rowsFor(date), c = countStatuses(rows);
-    const match = r => ui.filter === 'all' || r.status === ui.filter || (ui.filter === 'leave' && ['off', 'closed'].includes(r.status)) || (ui.filter === 'absent' && ['waiting', 'loading'].includes(r.status));
+    const match = r => ui.filter === 'all' || r.status === ui.filter || (ui.filter === 'present' && r.status === 'half') || (ui.filter === 'leave' && ['off', 'closed'].includes(r.status)) || (ui.filter === 'absent' && ['waiting', 'loading'].includes(r.status));
     const shown = rows.filter(match).sort((a, b) => (ORDER[a.due ? 'due' : a.status] - ORDER[b.due ? 'due' : b.status]) || (a.a.checkIn || '').localeCompare(b.a.checkIn || '') || String(a.account.name).localeCompare(String(b.account.name)));
     const counts = { all: rows.length, present: c.present, late: c.late, absent: c.absent + c.waiting + c.loading, leave: c.leave + c.off };
     const closed = isClosed(resolveBase(), date), reason = (S.config.closedDays || []).find(d => d.date === date)?.reason;
     return `${date === today ? breakStatusHtml(S.outs.filter(o => o.kind === 'break' && o.status === 'approved' && o.date === today), Date.now(), o => account(o.phone)?.name || o.name || o.phone) + outCards() + attention() + weekCard() : ''}
       ${closed ? `<p class="closed-line">${icon('alert', 18)} <span><b>${esc(dateLabel(date))}: Dukaan band</b>${reason && reason !== 'Dukaan band' ? ' — ' + esc(reason) : ''}. Is din koi ghair hazir nahi ginta.</span></p>` : ''}
-      <div class="day-tools">${date === today ? `<button type="button" class="btn btn-primary btn-sm" data-action="break-start">${icon('clock', 16)} Khana break</button>` : ''}<button type="button" class="btn btn-ghost btn-sm" data-action="toggle-closed" data-arg="${date}">${closed ? 'Dukaan band hatayein' : (date === today ? 'Aaj' : 'Is din') + ' dukaan band (Eid / chutti)'}</button>${c.absent + c.waiting && data.monthLoaded(month) ? `<button type="button" class="btn btn-ghost btn-sm" data-action="quick-present-all" data-arg="${date}">Sab ghair hazir ko hazir lagao</button>` : ''}<button type="button" class="btn btn-ghost btn-sm" data-action="selfies-day" data-arg="${date}">${icon('camera', 16)} Selfies dekhein</button></div>
+      <div class="day-tools">${date === today ? `<button type="button" class="btn btn-ghost btn-sm tone-bad-btn" data-action="ticket-new">${icon('alert', 16)} Bina bataye gaya</button>` : ''}${date === today ? `<button type="button" class="btn btn-primary btn-sm" data-action="break-start">${icon('clock', 16)} Khana break</button>` : ''}<button type="button" class="btn btn-ghost btn-sm" data-action="toggle-closed" data-arg="${date}">${closed ? 'Dukaan band hatayein' : (date === today ? 'Aaj' : 'Is din') + ' dukaan band (Eid / chutti)'}</button>${c.absent + c.waiting && data.monthLoaded(month) ? `<button type="button" class="btn btn-ghost btn-sm" data-action="quick-present-all" data-arg="${date}">Sab ghair hazir ko hazir lagao</button>` : ''}<button type="button" class="btn btn-ghost btn-sm" data-action="selfies-day" data-arg="${date}">${icon('camera', 16)} Selfies dekhein</button></div>
       <section class="panel">
         ${strip(c, rows.length)}
         <div class="chips" role="tablist" aria-label="Filter">${FILTERS.map(([k, label]) => `<button type="button" role="tab" class="chip c-${k}" aria-selected="${ui.filter === k}" data-action="filter" data-arg="${k}"><b>${counts[k]}</b> ${label}</button>`).join('')}</div>
@@ -149,7 +160,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     const grid = activeStaff().map(s => ({ account: s, summary: summaryFor(s, month) }));
     return `<section class="panel">
       ${loadingNote(month)}
-      <p class="legend"><span class="mk st-present">P</span> Hazir <span class="mk st-late">L</span> Late <span class="mk st-absent">A</span> Ghair hazir <span class="mk st-leave">C</span> Chutti <span class="mk st-off">O</span> Off &nbsp;—&nbsp; khane par dabayein to hazri durust hoti hai</p>
+      <p class="legend"><span class="mk st-present">P</span> Hazir <span class="mk st-late">L</span> Late <span class="mk st-absent">A</span> Ghair hazir <span class="mk st-leave">C</span> Chutti <span class="mk st-off">O</span> Off <span class="mk st-half">H</span> Aadhi chutti &nbsp;—&nbsp; khane par dabayein to hazri durust hoti hai</p>
       <div class="grid-scroll"><table class="grid"><thead><tr><th class="g-name">Naam</th>${dates.map(d => `<th class="${weekday(d) === 5 ? 'is-fri' : ''}${d === today ? ' is-today' : ''}"><small>${DAY_SHORT[weekday(d)].slice(0, 2)}</small>${+d.slice(8)}</th>`).join('')}<th>P</th><th>L</th><th>A</th></tr></thead>
       <tbody>${grid.map(g => `<tr><th class="g-name"><button type="button" data-action="profile" data-phone="${g.account.phone}" data-date="${month}-01">${nameHtml(g.account.name)}</button></th>${g.summary.days.map(d =>
         `<td class="st-${d.status}${d.date === today ? ' is-today' : ''}">${d.status === 'na' ? '' : `<button type="button" data-action="edit-att" data-phone="${g.account.phone}" data-date="${d.date}" aria-label="${shortDate(d.date)} ${STATUS_LABEL[d.status]}">${STATUS_MARK[d.status]}</button>`}</td>`).join('')}
@@ -218,6 +229,9 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
             ${c.loanCut ? line(`Qarz ki qist <small>${(c.loans || []).filter(l => l.cut).map(l => 'baqi ' + money(l.remainingAfter)).join(', ')}</small>`, '− ' + money(c.loanCut), 'txt-bad') : ''}
             ${c.lateFine ? line(`Late jurmana <small>${c.lateCount} dafa late</small>`, '− ' + money(c.lateFine), 'txt-bad') : ''}
             ${c.outCut ? line(`Bahar ka waqt <small>${c.outCount} parchi · ${hm(c.outMin)}</small>`, '− ' + money(c.outCut), 'txt-bad') : c.outMin ? line(`Bahar ka waqt <small>${c.outCount} parchi · ${hm(c.outMin)} (kati band hai)</small>`, '—') : ''}
+            ${(c.ticketLines || []).map(t => line(esc(t.text.replace(/ — Rs [\d,]+$/, '')), '− ' + money(t.amount), 'txt-bad')).join('')}
+            ${(c.leaveLines || []).map(l => line(`${esc(l.text)} <small>paisa katega</small>`, '− ' + money(l.amount), 'txt-bad')).join('')}
+            ${c.leavePay ? line(`Chutti ki salary <small>${c.paidLeaveUnits} din · paisa nahi katega</small>`, '+ ' + money(c.leavePay)) : ''}
             ${c.breakCut ? line(`Khane ka break <small>${c.breakCount} dafa · ${hm(c.breakMin)}</small>`, '− ' + money(c.breakCut), 'txt-bad') : ''}
             ${line('Kul banti salary', money(c.final), 'is-total')}
             ${line('Ada ho chuki', money(c.paid))}
@@ -258,7 +272,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     return `<div class="toolbar"><h1 class="page-title">Staff <small>${activeStaff().length}</small></h1><button type="button" class="btn btn-primary" data-action="staff-new">${icon('plus', 18)} Naya staff</button></div>
       <div class="search-inline">${icon('search', 18)}<input type="search" placeholder="Naam ya number" value="${esc(ui.staffQuery)}" data-input="staff-query" aria-label="Staff talash"></div>
       <section class="panel"><ol class="register">${list.map(s => `<li class="row${s.active === false ? ' is-off' : ''}" data-search="${esc(`${s.name} ${s.phone} ${s.role || ''}`.toLowerCase())}"><button type="button" class="row-main" data-action="staff-edit" data-phone="${s.phone}">
-        ${avatar(s)}<span class="row-text"><b>${nameHtml(s.name)}</b><small>${esc(s.role || 'Staff')} &nbsp;|&nbsp; ${esc(s.phone)}</small><span class="tags inline"><span class="tag">${icon('clock', 14)} ${esc(dutyText(data.scheduleFor(s.phone)))}</span><span class="tag">${usesDefaultSalary(s) ? 'Default salary' : 'Apni salary ' + money(data.salaryFor(s).monthlySalary)}</span>${s.canApproveOuts ? '<span class="tag t-ink">Manager</span>' : ''}</span></span>
+        ${avatar(s)}<span class="row-text"><b>${nameHtml(s.name)}</b><small>${esc(s.role || 'Staff')} &nbsp;|&nbsp; ${esc(s.phone)}</small><span class="tags inline"><span class="tag">${icon('clock', 14)} ${esc(dutyText(data.scheduleFor(s.phone)))}</span><span class="tag">${usesDefaultSalary(s) ? 'Default salary' : 'Apni salary ' + money(data.salaryFor(s).monthlySalary)}</span>${s.canApproveOuts ? '<span class="tag t-ink">Manager</span>' : ''}${s.canTicket ? '<span class="tag t-ink">Senior</span>' : ''}</span></span>
         <span class="stamp ${s.active === false ? 'st-off' : s.loginEnabled === false ? 'st-absent' : 'st-present'}">${s.active === false ? 'Band' : s.loginEnabled === false ? 'Login band' : 'Chalu'}</span></button></li>`).join('')}</ol>
         <p class="empty-line" id="staffEmpty" ${list.length ? 'hidden' : ''}>Koi staff nahi mila.</p>
         ${inactive ? `<button type="button" class="link" data-action="toggle-inactive">${ui.showInactive ? 'Band kiye hue chhupayein' : `Band kiye hue bhi dikhayein (${inactive})`}</button>` : ''}
@@ -272,6 +286,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       <h2 class="section-label">Rozana ka kaam</h2>
       <section class="panel tools">
         ${tool('requests', 'note', 'Chutti / correction ki requests', pend ? pend + ' ka jawab baqi' : 'Koi nayi request nahi')}
+        ${tool('tickets', 'alert', 'Bina bataye gaya — tickets', (() => { const n = S.tickets.filter(t => t.status !== 'decided').length; return n ? n + ' ka faisla baqi' : 'Maaf / warning / katauti'; })())}
         ${tool('outs', 'out', 'Bahar jane ki parchiyan', (() => { const n = S.outs.filter(o => o.status === 'pending').length, b = S.outs.filter(o => o.status === 'approved').length; return n ? n + ' ka jawab baqi' : b ? b + ' abhi bahar' : 'Aaj ki parchiyan'; })())}
         ${tool('history', 'edit', 'Tabdeeli ki history', 'Kis ki hazri / salary kab aur kyun badli')}
         ${tool('khata', 'book', 'Advance / qarz ka khata', 'Kis ka kitna qarz baqi')}
@@ -333,6 +348,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         </fieldset>
         <fieldset><legend>Ijazat</legend>
           <label>Khane ki bari<select name="breakGroup"><option value="1" ${breakGroup(s || {}) === 1 ? 'selected' : ''}>Pehli bari</option><option value="2" ${breakGroup(s || {}) === 2 ? 'selected' : ''}>Doosri bari (pehle walon ki jagah dukaan sambhale)</option></select></label>
+          <label class="check"><input type="checkbox" name="canTicket" ${s?.canTicket ? 'checked' : ''}> Ye <b>senior</b> hai — "bina bataye gaya" ka ticket bana sakta hai (faisla sirf malik)</label>
           <label class="check"><input type="checkbox" name="canApproveOuts" ${s?.canApproveOuts ? 'checked' : ''}> Ye <b>manager</b> hai — doosron ki bahar jane ki parchi Haan / Nahi kar sakta hai (apni nahi)</label>
           <label class="check"><input type="checkbox" name="loginEnabled" ${s?.loginEnabled === false ? '' : 'checked'}> Staff apne number se login kar sakta hai</label>
           <label class="check"><input type="checkbox" name="active" ${s?.active === false ? '' : 'checked'}> Kaam par hai (hata dein to list se chhup jata hai, hazri mehfooz rehti hai)</label>
@@ -367,7 +383,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
             <button type="button" class="btn btn-ghost" data-action="leave" data-phone="${phone}">Chutti dein</button>
             <button type="button" class="btn btn-ghost" data-action="salary" data-phone="${phone}" data-month="${month}">Salary ${money(calc.final)}</button>
           </div>
-          ${leaves.length ? `<ul class="ledger">${leaves.map(r => `<li><span><b>Chutti</b> <small>${esc(shortDate(r.date))}${r.to !== r.date ? ' – ' + esc(shortDate(r.to)) : ''} · ${esc(r.reason || '')}</small></span><button type="button" class="link-bad" data-action="leave-cancel" data-id="${esc(r.id)}">Cancel</button></li>`).join('')}</ul>` : ''}
+          ${leaves.length ? `<ul class="ledger">${leaves.map(r => `<li><span><b>${r.half ? 'Aadhi chutti' : 'Chutti'}</b> <small>${leaveDesc(r)} · ${paidDesc(r)} · ${esc(r.reason || '')}</small></span><button type="button" class="link-bad" data-action="leave-cancel" data-id="${esc(r.id)}">Cancel</button></li>`).join('')}</ul>` : ''}
           <ol class="days">${sum.days.filter(d => d.status !== 'na').reverse().map(d => `<li class="s-${d.status}"><button type="button" data-action="edit-att" data-phone="${phone}" data-date="${d.date}">
             <span class="d-date"><b>${+d.date.slice(8)}</b><small>${DAY_SHORT[weekday(d.date)]}</small></span>
             <span class="d-time">${d.a.checkIn ? `${fmtTime(d.a.checkIn)} <span class="arrow">to</span> ${d.a.checkOut ? fmtTime(d.a.checkOut) : '<b class="txt-bad">baqi</b>'}` : '<span class="muted">—</span>'}${d.minutes != null ? `<small>${hm(d.minutes)}</small>` : ''}</span>
@@ -408,9 +424,20 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       }
     });
   }
+  const HALF = { am: 'aadha din — subah', pm: 'aadha din — shaam' };
+  const leaveDesc = r => `${esc(shortDate(r.date))}${r.to && r.to !== r.date ? ' – ' + esc(shortDate(r.to)) : ''}${r.half ? ' (' + HALF[r.half] + ')' : ''}`;
+  const paidDesc = r => r.status !== 'approved' ? '' : (typeof r.paid === 'boolean' ? r.paid : (S.config.salaryDefault?.leavePaid !== false)) ? 'paisa nahi katega' : 'paisa katega';
   function leaveSheet(phone) {
+    const defPaid = S.config.salaryDefault?.leavePaid !== false;
     return openSheet({ id: 'leave', title: 'Chutti dein', render: () => `<form class="form" data-form="leave" data-phone="${phone}">
-      <div class="two"><label>Kab se<input name="date" type="date" value="${pkDate()}" required></label><label>Kab tak<input name="to" type="date" value="${pkDate()}" required></label></div>
+      <fieldset><legend>Kitni chutti?</legend>
+        <label class="check"><input type="radio" name="half" value="" checked data-change="leave-half"> Poora din (ya kai din)</label>
+        <label class="check"><input type="radio" name="half" value="am" data-change="leave-half"> Aadha din — subah ki chutti (der se aayega)</label>
+        <label class="check"><input type="radio" name="half" value="pm" data-change="leave-half"> Aadha din — shaam ki chutti (jaldi jayega)</label></fieldset>
+      <div class="two"><label>Kab se<input name="date" type="date" value="${pkDate()}" required></label><label id="leaveTo">Kab tak<input name="to" type="date" value="${pkDate()}" required></label></div>
+      <fieldset><legend>Salary</legend>
+        <label class="check"><input type="radio" name="paid" value="yes" ${defPaid ? 'checked' : ''}> Paisa <b>nahi</b> katega</label>
+        <label class="check"><input type="radio" name="paid" value="no" ${defPaid ? '' : 'checked'}> Paisa <b>katega</b></label></fieldset>
       <label>Wajah<input name="reason" maxlength="200" placeholder="Bimari / ghar ka kaam"></label>
       <div class="btn-row sticky"><button class="btn btn-primary btn-lg">Chutti laga dein</button></div></form>` });
   }
@@ -420,9 +447,11 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       render() {
         const list = S.requests.filter(r => r.kind !== 'suggestion').sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
         const card = r => `<li class="req"><p><b>${nameHtml(account(r.phone)?.name || r.phone)}</b> <span class="stamp ${r.status === 'pending' ? 'st-late' : r.status === 'approved' ? 'st-present' : 'st-absent'}">${r.status === 'pending' ? 'Jawab baqi' : r.status === 'approved' ? 'Manzoor' : 'Na-manzoor'}</span></p>
-          <p>${r.kind === 'leave' ? `Chutti: ${esc(shortDate(r.date))}${r.to !== r.date ? ' – ' + esc(shortDate(r.to)) : ''}` : `Hazri durust: ${esc(shortDate(r.date))} &nbsp;|&nbsp; Aaya ${fmtTime(r.checkIn)} &nbsp;|&nbsp; Gaya ${fmtTime(r.checkOut)}`}</p>
+          <p>${r.kind === 'leave' ? `Chutti: ${leaveDesc(r)}${paidDesc(r) ? ' · <b>' + paidDesc(r) + '</b>' : ''}` : `Hazri durust: ${esc(shortDate(r.date))} &nbsp;|&nbsp; Aaya ${fmtTime(r.checkIn)} &nbsp;|&nbsp; Gaya ${fmtTime(r.checkOut)}`}</p>
           <p class="muted">${nameHtml(r.reason || '')}</p>${r.ownerNote ? `<p class="muted">Malik: ${esc(r.ownerNote)}</p>` : ''}
-          ${r.status === 'pending' ? `<div class="btn-row"><button type="button" class="btn btn-primary btn-sm" data-action="req" data-id="${esc(r.id)}" data-arg="approved">Manzoor</button><button type="button" class="btn btn-ghost btn-sm" data-action="req" data-id="${esc(r.id)}" data-arg="rejected">Na-manzoor</button></div>` : ''}</li>`;
+          ${r.status === 'pending' ? (r.kind === 'leave'
+            ? `<div class="btn-row"><button type="button" class="btn btn-primary btn-sm" data-action="req" data-id="${esc(r.id)}" data-arg="approved" data-paid="yes">Manzoor — paisa nahi katega</button><button type="button" class="btn btn-ink btn-sm" data-action="req" data-id="${esc(r.id)}" data-arg="approved" data-paid="no">Manzoor — paisa katega</button><button type="button" class="btn btn-ghost btn-sm" data-action="req" data-id="${esc(r.id)}" data-arg="rejected">Na-manzoor</button></div>`
+            : `<div class="btn-row"><button type="button" class="btn btn-primary btn-sm" data-action="req" data-id="${esc(r.id)}" data-arg="approved">Manzoor</button><button type="button" class="btn btn-ghost btn-sm" data-action="req" data-id="${esc(r.id)}" data-arg="rejected">Na-manzoor</button></div>`) : ''}</li>`;
         const open = list.filter(r => r.status === 'pending'), rest = list.filter(r => r.status !== 'pending').slice(0, 30);
         return `<ul class="reqs">${open.map(card).join('') || '<li class="muted">Koi nayi request nahi.</li>'}</ul>${rest.length ? `<details><summary>Purani requests (${rest.length})</summary><ul class="reqs">${rest.map(card).join('')}</ul></details>` : ''}`;
       }
@@ -527,7 +556,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     data.selfiesFor(date).then(m => { pics = m; sheet.refresh(true); }).catch(e => { error = errorText(e); sheet.refresh(true); });
     return sheet;
   }
-  const AUDIT_LABEL = { attendance: 'Hazri badli', 'attendance delete': 'Hazri hatayi', request: 'Request ka jawab', 'salary settings': 'Salary settings', 'salary adjustment': 'Advance / bonus / qarz', 'salary adjustment delete': 'Advance / bonus hataya', 'salary final': 'Salary final', 'salary reopen': 'Salary dobara kholi', 'salary payment': 'Salary di', settings: 'Settings', 'staff delete': 'Staff delete', 'dukaan band': 'Dukaan band', 'dukaan band hataya': 'Dukaan band hataya', 'default shift sab par': 'Sab par default duty', 'default salary sab par': 'Sab par default salary' };
+  const AUDIT_LABEL = { attendance: 'Hazri badli', 'attendance delete': 'Hazri hatayi', request: 'Request ka jawab', 'salary settings': 'Salary settings', 'salary adjustment': 'Advance / bonus / qarz', 'salary adjustment delete': 'Advance / bonus hataya', 'salary final': 'Salary final', 'salary reopen': 'Salary dobara kholi', 'salary payment': 'Salary di', settings: 'Settings', 'staff delete': 'Staff delete', 'dukaan band': 'Dukaan band', 'dukaan band hataya': 'Dukaan band hataya', 'default shift sab par': 'Sab par default duty', 'default salary sab par': 'Sab par default salary', ticket: 'Bina bataye gaya (ticket)', 'ticket faisla': 'Ticket ka faisla', 'khana break': 'Khana break', 'bahar manzoor': 'Parchi manzoor', 'bahar na-manzoor': 'Parchi na-manzoor', 'bahar wapsi': 'Parchi wapsi' };
   function historySheet() {
     let rows = null, error = '', who = '';
     const sheet = openSheet({ id: 'history', wide: true, title: 'Tabdeeli ki history', render: () => {
@@ -564,13 +593,13 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       reg.push([s.name, s.phone, ...sum.days.map(d => MARK[d.status] === '·' ? '' : MARK[d.status]), sum.count.present + sum.count.late, sum.count.late, sum.count.absent, sum.count.leave + sum.count.off, h2(sum.totalMin)]);
       for (const d of sum.days) if (d.status !== 'na') detail.push([d.date, DAY_FULL[weekday(d.date)], s.name, s.phone, d.a.checkIn ? fmtTime(d.a.checkIn) : '', d.a.checkOut ? fmtTime(d.a.checkOut) : '', d.minutes != null ? h2(d.minutes) : '', dayOuts(S.outs, s.phone, d.date).done.reduce((n, o) => n + (outMinutes(o) || 0), 0) || '', dayOuts(S.outs, s.phone, d.date, Date.now(), 'break').done.reduce((n, o) => n + (outMinutes(o) || 0), 0) || '', d.a.checkIn ? d.late : '', STATUS_LABEL[d.status], d.a.ownerNote || '']);
     }
-    const sal = [['Naam', 'Number', 'Salary', 'Default?', 'Din kaam', 'Ghante', 'Ghair hazir din', 'Hazri salary', 'Overtime', 'Bonus+', 'Advance', 'Qarz qist', 'Late jurmana', 'Bahar (min)', 'Bahar kati', 'Kul', 'Ada', 'Baqi', 'Halat']];
+    const sal = [['Naam', 'Number', 'Salary', 'Default?', 'Din kaam', 'Ghante', 'Ghair hazir din', 'Hazri salary', 'Overtime', 'Bonus+', 'Advance', 'Qarz qist', 'Late jurmana', 'Bahar (min)', 'Bahar kati', 'Ticket katauti', 'Kul', 'Ada', 'Baqi', 'Halat']];
     for (const s of staff) { const c = data.calcFor(s, month);
-      sal.push([s.name, s.phone, r0(c.monthlySalary), c.useDefault ? 'Default' : 'Apni', c.daysWorked, h2((c.normalMin || 0) + (c.otMin || 0)), c.absentDays ?? '', r0(c.normalSalary), r0(c.overtimeAmount), r0((c.bonus || 0) + (c.pointsAmount || 0) + (c.mealSalary || 0)), r0(c.advance), r0(c.loanCut), r0(c.lateFine), c.outMin || 0, r0(c.outCut), r0(c.final), r0(c.paid), r0(c.balance), c.frozen ? 'Final' : 'Andaza']); }
+      sal.push([s.name, s.phone, r0(c.monthlySalary), c.useDefault ? 'Default' : 'Apni', c.daysWorked, h2((c.normalMin || 0) + (c.otMin || 0)), c.absentDays ?? '', r0(c.normalSalary), r0(c.overtimeAmount), r0((c.bonus || 0) + (c.pointsAmount || 0) + (c.mealSalary || 0)), r0(c.advance), r0(c.loanCut), r0(c.lateFine), c.outMin || 0, r0(c.outCut), r0(c.ticketCut), r0(c.final), r0(c.paid), r0(c.balance), c.frozen ? 'Final' : 'Andaza']); }
     const add = (rows, name, widths) => { const ws = X.utils.aoa_to_sheet(rows); ws['!cols'] = widths.map(w => ({ wch: w })); X.utils.book_append_sheet(wb, ws, name); };
     add(reg, 'Register', [18, 13, ...dates.map(() => 3.5), 7, 6, 11, 10, 10]);
     add(detail, 'Hazri', [11, 9, 18, 13, 9, 9, 7, 10, 10, 9, 12, 24]);
-    add(sal, 'Salary', [18, 13, 9, 9, 8, 8, 10, 11, 9, 9, 9, 9, 11, 10, 10, 10, 10, 10, 8]);
+    add(sal, 'Salary', [18, 13, 9, 9, 8, 8, 10, 11, 9, 9, 9, 9, 11, 10, 10, 12, 10, 10, 10, 8]);
     return wb;
   }
   function outsSheet(date) {
@@ -587,6 +616,24 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
           ${o.status === 'approved' ? `<div class="btn-row"><button type="button" class="btn btn-ghost btn-sm" data-action="out-return" data-id="${esc(o.id)}">Wapas aa gaya (malik lagaye)</button></div>` : ''}</li>`; }).join('')}</ul>`
         : '<p class="empty-line">Is din koi parchi nahi.</p>';
     } });
+  }
+  function ticketsSheet(date = '') {
+    let only = date;
+    const sheet = openSheet({ id: 'tickets', wide: true, title: 'Bina bataye gaya — tickets', render: () => {
+      const list = S.tickets.filter(t => !only || t.date === only).sort((a, b) => (a.status === 'decided') - (b.status === 'decided') || (b.from || 0) - (a.from || 0)).slice(0, 80);
+      const decLab = { maaf: ['st-present', 'Maaf'], warning: ['st-late', 'Warning'], katauti: ['st-absent', 'Katauti'] };
+      return `<div class="btn-row"><button type="button" class="chip" aria-pressed="${!!only}" data-action="tickets-filter" data-arg="${esc(date || pkDate())}">Sirf ${esc(shortDate(date || pkDate()))}</button><button type="button" class="chip" aria-pressed="${!only}" data-action="tickets-filter" data-arg="">Sab (45 din)</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-action="ticket-new">${icon('plus', 16)} Naya ticket</button></div>
+        <ul class="reqs">${list.map(t => { const s = account(t.phone) || { name: t.name || t.phone }, m = ticketMinutes(t, Date.now()), sug = t.status === 'decided' ? 0 : data.ticketSuggestFor(t);
+          return `<li class="req"><p><b>${nameHtml(s.name)}</b> ${t.status === 'decided' ? `<span class="stamp ${decLab[t.decision]?.[0] || 'st-off'}">${decLab[t.decision]?.[1] || ''}${t.decision === 'katauti' ? ' ' + money(t.amount) : ''}</span>` : t.status === 'open' ? '<span class="stamp st-absent">Abhi bahar</span>' : '<span class="stamp st-late">Faisla baqi</span>'}</p>
+            <p>${esc(ticketText(t))}${m != null ? ` · <b>${esc(durText(m))}</b>` : ''}</p>
+            <p class="muted">Ticket: ${esc(t.byName || '—')}${t.returnBy ? ' · wapsi: ' + esc(t.returnBy) : ''}${t.note ? ' · ' + nameHtml(t.note) : ''}</p>
+            ${t.status === 'open' ? `<div class="btn-row"><button type="button" class="btn btn-ghost btn-sm" data-action="ticket-return" data-id="${esc(t.id)}">Wapas aa gaya</button></div>` : ''}
+            ${t.status !== 'decided' ? `<div class="decide"><label>Katauti (Rs)<input type="number" inputmode="numeric" min="0" step="5" value="${sug}" data-ticket-amount="${esc(t.id)}"></label><small class="muted">Mashwara: ${money(sug)} = fi ghanta salary × ${esc(durText(m || 0))}${t.status === 'open' ? ' (ab tak)' : ''}</small>
+              <div class="btn-row"><button type="button" class="btn btn-ghost btn-sm" data-action="ticket-decide" data-id="${esc(t.id)}" data-arg="maaf">Maaf</button><button type="button" class="btn btn-ghost btn-sm" data-action="ticket-decide" data-id="${esc(t.id)}" data-arg="warning">Warning</button><button type="button" class="btn btn-out btn-sm" data-action="ticket-decide" data-id="${esc(t.id)}" data-arg="katauti">Katauti</button></div></div>` : ''}</li>`; }).join('') || '<li class="muted">Koi ticket nahi.</li>'}</ul>`;
+    } });
+    sheet.setOnly = v => { only = v; sheet.refresh(true); };
+    return sheet;
   }
   function diagSheet() {
     return openSheet({ id: 'diag', wide: true, title: 'App ki jaanch', render: () => {
@@ -682,7 +729,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     leave(el) { open('leave', () => leaveSheet(el.dataset.phone)); },
     async 'leave-cancel'(el) { if (!confirm('Ye chutti cancel karein?')) return; await busy(el, () => data.cancelLeave(el.dataset.id), 'Chutti cancel ho gayi'); },
     requests() { open('requests', requestsSheet); },
-    async req(el) { await busy(el, () => data.reviewRequest(el.dataset.id, el.dataset.arg, ''), el.dataset.arg === 'approved' ? 'Manzoor ho gayi' : 'Na-manzoor kar di'); },
+    async req(el) { const paid = el.dataset.paid ? el.dataset.paid === 'yes' : undefined; await busy(el, () => data.reviewRequest(el.dataset.id, el.dataset.arg, '', paid), el.dataset.arg === 'approved' ? (paid === false ? 'Manzoor — paisa katega' : 'Manzoor ho gayi') : 'Na-manzoor kar di'); },
     settings(el) { const arg = el?.dataset.arg; actions[arg === 'salary' ? 'cfg-salary' : 'cfg-duty'](); },
     'cfg-duty'() { open('cfg', dutySheet); },
     'cfg-salary'() { open('cfg', salaryRulesSheet); },
@@ -696,6 +743,19 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     links() { open('links', linksSheet); },
     'selfies-day'(el) { needMonth(el.dataset.arg.slice(0, 7)); open('selfies', () => selfiesDaySheet(el.dataset.arg)); },
     history() { open('history', historySheet); },
+    tickets(el) { open('tickets', () => ticketsSheet(el?.dataset.arg || '')); },
+    'tickets-filter'(el) { sheets.tickets?.setOnly(el.dataset.arg); },
+    'ticket-new'(el) {
+      const today = pkDate(), att = data.attendanceBetween(today, today);
+      const people = activeStaff().map(s => ({ phone: s.phone, name: s.name + (att.find(a => a.phone === s.phone && a.checkIn && !a.checkOut) ? '' : ' (duty par nahi)') }));
+      open('ticketNew', () => openTicketSheet({ people, preset: el?.dataset.phone || '', onCreate: v => data.createTicket(v) }));
+    },
+    async 'ticket-return'(el) { const t = S.tickets.find(x => x.id === el.dataset.id); if (!t) return; await busy(el, () => data.returnTicket(t), 'Wapsi lag gayi'); },
+    async 'ticket-decide'(el) {
+      const id = el.dataset.id, d = el.dataset.arg, amt = el.closest('.req')?.querySelector(`[data-ticket-amount]`)?.value;
+      if (d === 'katauti' && !confirm(`${money(amt)} ki katauti is mahine ki salary se kaat dein?`)) return;
+      await busy(el, () => data.decideTicket(id, d, amt), d === 'katauti' ? 'Katauti lag gayi' : d === 'warning' ? 'Warning likh di' : 'Maaf kar diya');
+    },
     'break-start'() {
       const today = pkDate(), att = data.attendanceBetween(today, today);
       const people = activeStaff().map(s => { const a = att.find(x => x.phone === s.phone); return { phone: s.phone, name: s.name, group: breakGroup(s), onDuty: !!(a?.checkIn && !a.checkOut), busy: !!dayOuts(S.outs, s.phone, today, Date.now(), 'all').open }; });
@@ -811,6 +871,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     'pick-date'(el) { if (!el.value) return; if (ui.view === 'day') { if (isDate(el.value) && el.value <= pkDate()) ui.date = el.value; data.watchMonth(ui.date.slice(0, 7)); } else { ui.month = el.value; data.watchMonth(ui.month); } rerender(); },
     'pick-salary-month'(el) { if (!el.value) return; ui.salaryMonth = el.value; data.watchMonth(ui.salaryMonth); rerender(); },
     async 'staff-photo'(el) { const f = el.files?.[0]; if (!f) return; try { sheets.staffForm?.setPhoto(await fileToDataUrl(f, 360)); } catch (e) { toast(errorText(e), 'bad'); } },
+    'leave-half'(el) { const f = el.closest('form'), half = f.querySelector('[name=half]:checked')?.value || ''; const to = f.querySelector('#leaveTo'); if (to) to.hidden = !!half; if (half) f.elements.to.value = f.elements.date.value; },
     'history-who'(el) { sheets.history?.setWho(el.value); },
     'toggle-box'(el) { const box = $('#' + el.dataset.arg, el.closest('form')); if (box) box.hidden = el.dataset.invert ? el.checked : !el.checked; },
     'extra-kind'(el) { const per = el.form.elements.perMonth; if (per) { per.hidden = el.value !== 'loan'; per.required = el.value === 'loan'; } }

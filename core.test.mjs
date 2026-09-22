@@ -140,7 +140,7 @@ test('din ke hisab se salary: ghair hazir din kat-te hain, chutti nahi', () => {
   assert.equal(c.absentDays, 2); assert.equal(c.perDay, 1000); assert.equal(c.absentCut, 2000); assert.equal(c.normalSalary, 28000);
   assert.equal(c.otMin, 60); assert.equal(Math.round(c.overtimeAmount), 125); assert.equal(Math.round(c.final), 28125);
   const unpaid = C.salaryCalc({ account: { phone: P }, month: '2026-09', attendance: att, config: { ...config, salaryDefault: { ...config.salaryDefault, leavePaid: false } }, requests, today: '2026-09-05', nowMin: 1200 });
-  assert.equal(unpaid.absentDays, 3);
+  assert.equal(unpaid.absentDays, 2); assert.equal(unpaid.leaveCut, 1000); assert.equal(unpaid.leaveLines.length, 1); assert.equal(Math.round(unpaid.final), 27125);
   const joined = C.salaryCalc({ account: { phone: P, joinDate: '2026-09-04' }, month: '2026-09', attendance: [], config, today: '2026-09-05', nowMin: 1200 });
   assert.equal(joined.absentDays, 5, 'join se pehle ke 3 din + 2 ghair hazir');
 });
@@ -194,4 +194,37 @@ test('khana break parchi se alag ginti', () => {
   assert.equal(c.outMin, 10); assert.equal(c.breakMin, 30); assert.equal(c.breakCut, 0);
   assert.ok(C.salaryCalc({ account: { phone: P }, month: '2026-09', attendance: [], config: { ...cfg, salaryDefault: { ...cfg.salaryDefault, breakDeduct: true } }, outs, today: '2026-09-21' }).breakCut > 0);
   assert.deepEqual(C.rosterOf([{ phone: '03009999999', name: 'Z', breakGroup: 2 }, { phone: '03001111111', name: 'A', active: false }]), [{ phone: '03009999999', name: 'Z', group: 2 }]);
+});
+
+test('bina bataye gaya: plan wali misal', () => {
+  const t = { date: '2026-09-22', from: Date.parse('2026-09-22T13:15:00+05:00'), returnAt: Date.parse('2026-09-22T14:45:00+05:00'), status: 'decided', decision: 'katauti', amount: 125, phone: P };
+  assert.equal(C.ticketMinutes(t), 90);
+  assert.equal(C.ticketSuggest(30000 / 30 / 12, 90), 125, 'Rs 30,000, 30 din, 12 ghante, 1.5 ghanta -> Rs 125');
+  assert.equal(C.ticketText(t), 'Bina bataye gaya — 22 Sep, 1:15 se 2:45 — Rs 125');
+  assert.equal(C.round5(123), 125); assert.equal(C.round5(122), 120);
+  const c = C.salaryCalc({ account: { phone: P }, month: '2026-09', attendance: [], config: cfg, tickets: [t, { ...t, decision: 'warning', amount: 0 }, { ...t, status: 'returned' }], today: '2026-09-22' });
+  assert.equal(c.ticketCut, 125); assert.equal(c.ticketLines.length, 1); assert.ok(c.deductions >= 125);
+});
+
+test('aadhi chutti: status, late nahi, check-out baqi nahi, paisa katega / nahi', () => {
+  const schedule = C.resolveSchedule({ shiftStart: '09:00', shiftEnd: '19:00' });
+  const reqs = h => [{ phone: P, kind: 'leave', status: 'approved', date: '2026-09-10', to: '2026-09-10', half: h }];
+  // subah ki chutti: 2:30 pm aaya -> 'half', late 0
+  let rows = C.dayRows({ staff: [{ phone: P }], attendance: [{ phone: P, date: '2026-09-10', checkIn: '14:30', checkOut: '' }], requests: reqs('am'), config: { shiftStart: '09:00', shiftEnd: '19:00' }, date: '2026-09-10', today: '2026-09-10', nowMin: 900, now: Date.parse('2026-09-10T20:00:00+05:00') });
+  assert.equal(rows[0].status, 'half'); assert.equal(rows[0].late, 0);
+  // shaam ki chutti: 2:00 pm ke baad check-out baqi nahi (duty aadhe din par khatam = 14:00)
+  rows = C.dayRows({ staff: [{ phone: P }], attendance: [{ phone: P, date: '2026-09-10', checkIn: '09:00', checkOut: '' }], requests: reqs('pm'), config: { shiftStart: '09:00', shiftEnd: '19:00' }, date: '2026-09-10', today: '2026-09-10', nowMin: 700, now: Date.parse('2026-09-10T13:00:00+05:00') });
+  assert.equal(rows[0].due, false);
+  assert.equal(C.halfSchedule(schedule, 'am').shiftStart, '14:00'); assert.equal(C.halfSchedule(schedule, 'pm').shiftEnd, '14:00');
+  // salary (din ke hisab): aadhi chutti paisa katega = aadha din; aaya hi nahi = aadha ghair hazir + aadhi chutti
+  const config = { shiftStart: '09:00', shiftEnd: '19:00', salaryDefault: { monthlySalary: 30000, workingDays: 30, mode: 'days' } };
+  let c = C.salaryCalc({ account: { phone: P }, month: '2026-09', attendance: [{ phone: P, date: '2026-09-10', checkIn: '14:00', checkOut: '19:00' }], config, requests: [{ ...reqs('am')[0], paid: false }], today: '2026-09-10', nowMin: 1200 });
+  assert.equal(c.leaveCut, 500); assert.equal(c.leaveLines[0].text, 'Chutti 10 Sep (aadha din)');
+  c = C.salaryCalc({ account: { phone: P }, month: '2026-09', attendance: [{ phone: P, date: '2026-09-10', checkIn: '14:00', checkOut: '19:00' }], config, requests: [{ ...reqs('am')[0], paid: true }], today: '2026-09-10', nowMin: 1200 });
+  assert.equal(c.leaveCut, 0);
+  c = C.salaryCalc({ account: { phone: P }, month: '2026-09', attendance: [], config, requests: [{ ...reqs('am')[0], paid: true }], today: '2026-09-10', nowMin: 1200 });
+  assert.equal(c.leaveCut, 0); assert.equal(c.absentCut, 9 * 1000 + 500, '9 poore ghair hazir + aadha');
+  // ghanton ke hisab: paise wali chutti ke ghante jurte hain
+  const h = C.salaryCalc({ account: { phone: P }, month: '2026-09', attendance: [], config: { ...config, salaryDefault: { ...config.salaryDefault, mode: 'hours' } }, requests: [{ phone: P, kind: 'leave', status: 'approved', date: '2026-09-09', to: '2026-09-09', paid: true }], today: '2026-09-10', nowMin: 1200 });
+  assert.equal(Math.round(h.leavePay), 1000, 'aik din ke 10 ghante × Rs 100');
 });

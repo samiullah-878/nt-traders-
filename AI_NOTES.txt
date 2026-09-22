@@ -1,8 +1,51 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v208   Tareekh: 2026-09-22  (v200-v204: 2026-09-21)
+Version: v210   Tareekh: 2026-09-22  (v200-v204: 2026-09-21)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+0000000000. v210 — AADHI CHUTTI + HAR CHUTTI PAR "PAISA KATEGA YA NAHI"
+------------------------------------------------------------
+Malik: chutti mein half day ka option; aur chutti par likha ho ke paisa katna hai ya nahi.
+- staffRequests (leave) naya field half: '' | 'am' (subah ki chutti — der se aayega) | 'pm' (shaam ki — jaldi jayega); aadhi chutti sirf aik din (to == date).
+  Malik manzoori par paid: true (paisa nahi katega) | false (paisa katega). Na likha ho to Settings ka leavePaid.
+  data.sendRequest({ half }), data.reviewRequest(id, status, note, paid), data.markLeave({ half, paid:'yes'|'no'|bool }).
+- core: leaveFor(requests, phone, date), halfSchedule(schedule, half) (am: shiftStart = beech ka waqt; pm: shiftEnd = beech ka waqt).
+  statusFor: aadhi chutti + aaya = 'half' ("Aadhi chutti", register H, hazir mein bhi gina jata hai, late nahi); aadhi chutti + nahi aaya = 'absent'
+  (salary mein 0.5 ghair hazir + 0.5 chutti). dayRows/monthSummary: row.leave; late/due halfSchedule se (subah wali par late nahi, shaam wali par
+  jaldi jane par "Check-Out baqi" nahi).
+- Salary (salaryCalc): absentDays ab sirf ghair hazri (+ join se pehle). Din ke hisab: paisa katega wali chutti -> leaveLines
+  [{text:"Chutti 24 Sep (aadha din)", amount}] aur leaveCut (deductions mein). Ghanton ke hisab: paisa nahi katega wali chutti ke duty ghante
+  jurte hain (leavePay = din × duty ghante × hourly). Purana hisab badla: pehle "leavePaid=false" chutti absentDays mein thi, ab leaveCut mein.
+- UI malik: Requests mein leave par "Manzoor — paisa nahi katega" / "Manzoor — paisa katega" / "Na-manzoor"; "Chutti dein": Poora / Aadha subah /
+  Aadha shaam + Paisa nahi katega / katega; qataar chip "Aadhi chutti (shaam) · paisa katega"; profile list; salary sheet/PDF lines.
+  Staff: Request > Chutti: "Poora din / Aadha din — subah / Aadha din — shaam"; apni request par "Paisa nahi katega / katega"; salary lines.
+- Rules v210: staffRequests keys mein 'half' ('' ya 'am'/'pm' sirf leave aur to == date). MALIK KO v210 RULES PUBLISH KARNE HAIN.
+- Tests 65.
+
+------------------------------------------------------------
+000000000. v209 — "BINA BATAYE GAYA" TICKET (FAISLA SIRF MALIK)
+------------------------------------------------------------
+Malik ne doosri chat ka plan (screenshots) bheja; is chat mein code tha is liye yahin banaya. Malik: "Ok".
+- Kaun banaye: malik, manager (canApproveOuts), senior (NAYA staffAccounts.canTicket — staff form "Ye senior hai"). Koi apne upar nahi;
+  senior manager par nahi (malik ne sawal ka jawab nahi diya tha — ye faisla main ne liya, AI_NOTES/jawab mein bataya; badalna aasan).
+- Data: businesses/noor-traders/staffTickets/{auto} {phone, name, date, from(ms), returnAt?(ms), note, status 'open'|'returned'|'decided',
+  by, byName, createdAt, serverAt} + wapsi {returnAt, returnBy, returnServerAt} + malik ka faisla {decision 'maaf'|'warning'|'katauti',
+  amount, decidedAt, decidedBy, ownerNote}. data.createTicket / returnTicket / decideTicket / ticketSuggestFor.
+- Katauti: core.ticketSuggest(hourly, minutes) = round5(hourly × minutes/60); hourly wahi salary wala (mahana ÷ (roz ghante × din)).
+  Misal: 30,000 / 30 / 12 = 83.3 × 1.5 = 125. Malik raqam badal sakta hai. Final mahine mein katauti mana ("Dobara kholein").
+  salaryCalc({ tickets }) -> ticketLines [{text:"Bina bataye gaya — 22 Sep, 1:15 se 2:45 — Rs 125"}], ticketCut (deductions mein).
+  Maaf/Warning = sirf record. Staff ki apni Salary, PDF slip, Excel "Ticket katauti" mein nazar aata hai.
+- Malik UI: Hazri (aaj) "Bina bataye gaya" button; qataar chips (abhi bahar / faisla baqi / Ticket: Katauti Rs ..); Tawajju card
+  "N ticket ka faisla baqi"; tickets sheet (aaj / 45 din): Wapas aa gaya, raqam (mashwara pehle se), Maaf / Warning / Katauti.
+  Settings > "Bina bataye gaya — tickets". Naye ticket par toast + vibrate. History labels.
+- Staff UI (manager/senior): "Bina bataye gaya — ticket" card: "Ticket banayein" (roster se; apna naam nahi; senior ko managers nahi), aaj ke tickets,
+  "Wapas aa gaya". tickets.js = openTicketSheet (larka, kab gaya [Abhi], wapas kab [khali], note).
+- roster mein ab mgr:true (manager) bhi.
+- Rules v209: isTicketer(), isManagerPhone(); staffTickets block (create: phone != apna, senior -> manager nahi, keys ginti ki,
+  serverAt == request.time; update: open -> returned sirf; faisla sirf owner). MALIK KO v209 RULES PUBLISH KARNE HAIN.
+- Tests 63.
 
 ------------------------------------------------------------
 00000000. v208 — KHANE KA WAQFA (ROTI BREAK)
@@ -261,7 +304,7 @@ archivo-latin.woff2, naskh-arabic-400.woff2, naskh-arabic-700.woff2   fonts (rep
 jspdf.umd.min.js (2.5.2), jspdf.plugin.autotable.min.js (3.8.4)       PDF library
 firebase-config.js, firebase.json, firestore.indexes.json, pages.yml, .nojekyll, .gitignore   purani waisi hi; firestore.rules v204 mein badli
 xlsx.mini.min.js  Excel library (sirf dabane par)
-*.test.mjs, test-fake-sdk.mjs, package.json     tests (npm install; npm test)  — 61 tests pass
+*.test.mjs, test-fake-sdk.mjs, package.json     tests (npm install; npm test)  — 65 tests pass
 LICENSES.txt, README.md
 
 PURANE REPO SE YE FILES DELETE KARNI HAIN (ab kaam ki nahi):
@@ -337,13 +380,13 @@ PDF mein Urdu lipi wala matn tasveer bana kar lagta hai (jsPDF Urdu font nahi ba
 ------------------------------------------------------------
 1) App mein Staff > "Update ke links" > "GitHub — files upload karein" (ya repo > "Add file" > "Upload files") -> zip ke andar ki SAB files ek sath daal dein (folder nahi, sirf files) -> Commit.
 2) Upar wali list ki purani files delete karein (har file kholein -> ... -> Delete file).
-3) 1-2 minute baad app kholein; neeche/login par "v208" likha aaye. Staff ke phone par bhi v208 aana zaroori hai (purani na chal rahi ho).
+3) 1-2 minute baad app kholein; neeche/login par "v210" likha aaye. Staff ke phone par bhi v210 aana zaroori hai (purani na chal rahi ho).
 v204 se Firestore rules NAYE hain (upar 0000 dekhein) — app ke baad publish karne hain. Authentication mein "Anonymous" aur "Email/Password" dono ON rehne chahiye.
 
 ------------------------------------------------------------
 8. KYA TEST HUA, KYA NAHI
 ------------------------------------------------------------
-Hua: 61 automated tests (hisab, status, salary, talash, login ke saare raaste, aur poori app naqli Firebase + happy-dom par:
+Hua: 65 automated tests (hisab, status, salary, talash, login ke saare raaste, aur poori app naqli Firebase + happy-dom par:
   login -> hazri -> hazri durust -> request manzoor -> talash -> naya staff -> advance -> final -> payment -> staff check-in/out -> request).
   4 PDF Node mein ban kar tasveer ki shakal mein dekhi gayin.
 Nahi hua (yahan mumkin nahi tha): asal Firebase/rules ke sath, asal phone ka camera aur GPS, asal browser mein dekhna (layout).

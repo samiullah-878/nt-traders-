@@ -1,8 +1,9 @@
 // staffview.js — staff ka apna panel. Sirf apni hazri, apni salary, apni request.
 import {
   APP_VERSION, STATUS_LABEL, DAY_SHORT, SHOP, esc, money, hm, fmtTime, pkDate, pkMinutes, addMonths, weekday, monthLabel, dateLabel, shortDate,
-  monthSummary, openRecord, workMinutes, parseTime, checkoutDue, shiftMinutes, dayOuts, outMinutes, OUT_REASONS, OUT_MINUTES, reasonUr, minutesUr, dayColor, durText, hasArabic, breakGroup
+  monthSummary, openRecord, workMinutes, parseTime, checkoutDue, shiftMinutes, dayOuts, outMinutes, OUT_REASONS, OUT_MINUTES, reasonUr, minutesUr, dayColor, durText, hasArabic, breakGroup, ticketMinutes, ticketText
 } from './core.js';
+import { openTicketSheet } from './tickets.js';
 import { openBreakSheet, breakStatusHtml } from './breaks.js';
 import { icon, avatar, nameHtml, toast, busy, takeSelfie, getGps, deliverPdf, errorText, timeField, IN_TICKETS, OUT_TICKETS, openSheet, refreshSheets } from './ui.js';
 import { loadPdfLib, browserTextImages, staffMonthPdf } from './pdf.js';
@@ -106,6 +107,17 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
     });
     return sheet;
   }
+  /** Senior / manager: bina bataye gaya ka ticket. */
+  function ticketCard() {
+    if (!data.isTicketer()) return '';
+    if (S.errors?.teamTickets) return `<p class="error-line">${icon('alert', 18)} <span>Tickets nahi aaye (${esc(S.errors.teamTickets)}). Malik ko naye Firebase rules (v209) publish karne hain.</span></p>`;
+    const list = (S.teamTickets || []).sort((a, b) => (b.from || 0) - (a.from || 0));
+    return `<section class="panel pad mgr"><h2 class="section-label">${icon('alert', 18)} Bina bataye gaya — ticket</h2>
+      <button type="button" class="btn btn-out" data-action="ticket-new">${icon('alert', 18)} Ticket banayein</button>
+      ${list.map(t => `<div class="mgr-out"><span><b>${nameHtml(t.name || t.phone)}</b> · ${esc(ticketText({ ...t, decision: '' }))}${t.status === 'open' ? ` · <span class="txt-bad">${esc(durText(ticketMinutes(t, Date.now()) || 0))} se bahar</span>` : ''}${t.status === 'decided' ? ' · malik ne faisla kar diya' : ''}</span>
+        ${t.status === 'open' ? `<button type="button" class="btn btn-ghost btn-sm" data-action="ticket-return" data-id="${esc(t.id)}">Wapas aa gaya</button>` : ''}</div>`).join('') || '<p class="hint">Aaj koi ticket nahi. Faisla (maaf / warning / katauti) sirf malik karta hai.</p>'}
+    </section>`;
+  }
   /** Manager: aaj ki doosron ki parchiyan. */
   function managerCard() {
     if (!data.isManager()) return '';
@@ -133,7 +145,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
       <div class="btn-row"><button type="button" class="btn btn-primary btn-sm" data-action="install">${install.canPrompt ? 'Install karein' : 'Kaise lagayein?'}</button><button type="button" class="btn btn-ghost btn-sm" data-action="install-later">Baad mein</button></div></section>`;
   }
   function hazriTab() {
-    return `${installCard()}${managerCard()}${actionCard()}${outCard()}${S.config.instruction ? instructionHtml(S.config.instruction) : ''}${monthBlock()}`;
+    return `${installCard()}${managerCard()}${ticketCard()}${actionCard()}${outCard()}${S.config.instruction ? instructionHtml(S.config.instruction) : ''}${monthBlock()}`;
   }
   function salaryTab() {
     const month = ui.month, c = data.calcFor(me(), month), today = pkDate();
@@ -150,6 +162,9 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
         ${c.advance ? line('Advance (kat gaya)', '− ' + money(c.advance), 'txt-bad') : ''}
         ${c.loanCut ? line(`Qarz ki qist <small>${(c.loans || []).filter(l => l.cut).map(l => 'baqi ' + money(l.remainingAfter)).join(', ')}</small>`, '− ' + money(c.loanCut), 'txt-bad') : ''}
         ${c.lateFine ? line(`Late jurmana <small>${c.lateCount} dafa late</small>`, '− ' + money(c.lateFine), 'txt-bad') : ''}
+        ${(c.ticketLines || []).map(t => line(esc(t.text.replace(/ — Rs [\d,]+$/, '')), '− ' + money(t.amount), 'txt-bad')).join('')}
+        ${(c.leaveLines || []).map(l => line(esc(l.text), '− ' + money(l.amount), 'txt-bad')).join('')}
+        ${c.leavePay ? line('Chutti ki salary (paisa nahi katega)', '+ ' + money(c.leavePay)) : ''}
         ${line('Kul banti salary', money(c.final), 'is-total')}
         ${line('Mil chuki', money(c.paid))}
         ${line('Baqi', money(c.balance), 'is-balance')}
@@ -166,13 +181,16 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
         <div class="switch full" role="tablist"><button type="button" role="tab" aria-selected="${kind === 'leave'}" data-action="req-kind" data-arg="leave">Chutti chahiye</button><button type="button" role="tab" aria-selected="${kind === 'correction'}" data-action="req-kind" data-arg="correction">Hazri ghalat hai</button></div>
         <input type="hidden" name="kind" value="${kind}">
         ${kind === 'leave'
-          ? `<div class="two"><label>Kab se<input name="date" type="date" value="${esc(ui.reqDate || today)}" required></label><label>Kab tak<input name="to" type="date" value="${esc(ui.reqDate || today)}" required></label></div>`
+          ? `<div class="choice"><button type="button" class="chip" data-action="req-half" data-arg="" aria-pressed="${!ui.reqHalf}">Poora din</button><button type="button" class="chip" data-action="req-half" data-arg="am" aria-pressed="${ui.reqHalf === 'am'}">Aadha din — subah</button><button type="button" class="chip" data-action="req-half" data-arg="pm" aria-pressed="${ui.reqHalf === 'pm'}">Aadha din — shaam</button></div>
+             <input type="hidden" name="half" value="${esc(ui.reqHalf || '')}">
+             ${ui.reqHalf ? `<label>Kis din<input name="date" type="date" value="${esc(ui.reqDate || today)}" required></label><p class="hint">${ui.reqHalf === 'am' ? 'Subah ki chutti: us din aap aadhi duty ke baad aayenge, late nahi ginega.' : 'Shaam ki chutti: us din aap aadhi duty ke baad ja sakte hain.'}</p>`
+               : `<div class="two"><label>Kab se<input name="date" type="date" value="${esc(ui.reqDate || today)}" required></label><label>Kab tak<input name="to" type="date" value="${esc(ui.reqDate || today)}" required></label></div>`}`
           : `<label>Kis din ki hazri<input name="date" type="date" value="${esc(ui.reqDate || today)}" max="${today}" required></label>${timeField('checkIn', '', { label: 'Sahi aane ka waqt', tickets: IN_TICKETS, optional: true, guess: 'in' })}${timeField('checkOut', '', { label: 'Sahi jane ka waqt', tickets: OUT_TICKETS, optional: true, guess: 'out' })}<p class="hint">Jo waqt theek hai use khali chhor dein.</p>`}
         <label>Wajah<textarea name="reason" rows="3" maxlength="1000" required placeholder="${kind === 'leave' ? 'Chutti kyun chahiye' : 'Maslan: Check-Out karna bhool gaya'}"></textarea></label>
         <div class="btn-row"><button class="btn btn-primary btn-lg">Malik ko bhejein</button></div></form></section>
       <h2 class="section-label">Meri requests</h2>
-      <section class="panel"><ul class="reqs">${list.map(r => `<li class="req"><p><b>${r.kind === 'leave' ? 'Chutti' : 'Hazri durust'}</b> <span class="stamp ${r.status === 'pending' ? 'st-late' : r.status === 'approved' ? 'st-present' : 'st-absent'}">${r.status === 'pending' ? 'Jawab ka intezar' : r.status === 'approved' ? 'Manzoor' : 'Na-manzoor'}</span></p>
-        <p>${esc(shortDate(r.date))}${r.to && r.to !== r.date ? ' – ' + esc(shortDate(r.to)) : ''}${r.kind === 'correction' ? ` &nbsp;|&nbsp; ${fmtTime(r.checkIn)} to ${fmtTime(r.checkOut)}` : ''}</p><p class="muted">${nameHtml(r.reason || '')}</p>${r.ownerNote ? `<p class="muted">Malik: ${esc(r.ownerNote)}</p>` : ''}</li>`).join('') || '<li class="muted pad">Abhi koi request nahi bheji.</li>'}</ul></section>`;
+      <section class="panel"><ul class="reqs">${list.map(r => `<li class="req"><p><b>${r.kind === 'leave' ? (r.half ? 'Aadhi chutti' : 'Chutti') : 'Hazri durust'}</b> <span class="stamp ${r.status === 'pending' ? 'st-late' : r.status === 'approved' ? 'st-present' : 'st-absent'}">${r.status === 'pending' ? 'Jawab ka intezar' : r.status === 'approved' ? 'Manzoor' : 'Na-manzoor'}</span></p>
+        <p>${esc(shortDate(r.date))}${r.to && r.to !== r.date ? ' – ' + esc(shortDate(r.to)) : ''}${r.half ? (r.half === 'am' ? ' (subah)' : ' (shaam)') : ''}${r.kind === 'leave' && r.status === 'approved' && typeof r.paid === 'boolean' ? ` &nbsp;|&nbsp; <b class="${r.paid ? 'txt-ok' : 'txt-bad'}">${r.paid ? 'Paisa nahi katega' : 'Paisa katega'}</b>` : ''}${r.kind === 'correction' ? ` &nbsp;|&nbsp; ${fmtTime(r.checkIn)} to ${fmtTime(r.checkOut)}` : ''}</p><p class="muted">${nameHtml(r.reason || '')}</p>${r.ownerNote ? `<p class="muted">Malik: ${esc(r.ownerNote)}</p>` : ''}</li>`).join('') || '<li class="muted pad">Abhi koi request nahi bheji.</li>'}</ul></section>`;
   }
 
   const setStep = text => { ui.step = text; const el = document.getElementById('punchStep'); if (el) el.textContent = text; };
@@ -180,6 +198,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
     tab(el) { ui.tab = el.dataset.arg; rerender(); window.scrollTo?.(0, 0); },
     'month-step'(el) { const m = addMonths(ui.month, +el.dataset.arg); if (m <= pkDate().slice(0, 7)) ui.month = m; rerender(); },
     'req-kind'(el) { ui.reqKind = el.dataset.arg; rerender(); },
+    'req-half'(el) { ui.reqHalf = el.dataset.arg; rerender(); },
     'fix-missed'(el) { ui.tab = 'request'; ui.reqKind = 'correction'; ui.reqDate = el.dataset.date; rerender(); window.scrollTo?.(0, 0); },
     async 'check-in'(el) {
       await busy(el, async () => {
@@ -213,6 +232,12 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
       });
       rerender();
     },
+    'ticket-new'() {
+      const roster = (S.config.roster || []).filter(r => r.phone !== S.phone && (data.isManager() || !r.mgr));
+      if (!roster.length) { toast('Staff ki list abhi nahi aayi. Malik aik dafa apni app khol lein.', 'bad'); return; }
+      ui.ticketSheet?.close(); ui.ticketSheet = openTicketSheet({ people: roster.map(r => ({ phone: r.phone, name: r.name })), onCreate: v => data.createTicket(v) });
+    },
+    async 'ticket-return'(el) { const t = (S.teamTickets || []).find(x => x.id === el.dataset.id); if (!t) return; await busy(el, () => data.returnTicket(t), 'Wapsi lag gayi'); rerender(); },
     'break-start'() {
       const today = pkDate(), roster = S.config.roster || [], att = S.teamAttendance || [], all = [...(S.teamOuts || []), ...S.outs.filter(o => o.date === today)];
       const people = roster.map(r => { const a = r.phone === S.phone ? S.myAttendance.find(x => x.date === today) : att.find(x => x.phone === r.phone);
@@ -265,7 +290,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
       rerender();
     },
     async request(form, v, button) {
-      await busy(button, async () => { await data.sendRequest(v); ui.reqDate = ''; form.reset(); }, 'Request malik ko chali gayi');
+      await busy(button, async () => { await data.sendRequest(v); ui.reqDate = ''; ui.reqHalf = ''; form.reset(); }, 'Request malik ko chali gayi');
       rerender();
     }
   };

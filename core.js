@@ -1,7 +1,7 @@
 // core.js — Noor Traders Hazri + Salary
 // Sirf hisab-kitab. Yahan na DOM hai na Firebase, is liye ye file Node mein test hoti hai.
 
-export const APP_VERSION = 'v208';
+export const APP_VERSION = 'v210';
 export const TZ = 'Asia/Karachi';
 export const BUSINESS_ID = 'noor-traders';
 export const SHOP = { name: 'Noor Traders Gulyana', lat: 32.7979125, lng: 73.956984375, radius: 200 };
@@ -13,9 +13,9 @@ export const DEFAULT_CONFIG = {
 };
 export const STATUS_LABEL = {
   present: 'Hazir', late: 'Late', absent: 'Ghair hazir', leave: 'Chutti',
-  off: 'Weekly off', closed: 'Dukaan band', waiting: 'Abhi nahi aaya', loading: 'Load ho rahi…', na: '—'
+  off: 'Weekly off', closed: 'Dukaan band', half: 'Aadhi chutti', waiting: 'Abhi nahi aaya', loading: 'Load ho rahi…', na: '—'
 };
-export const STATUS_MARK = { present: 'P', late: 'L', absent: 'A', leave: 'C', off: 'O', closed: 'B', waiting: '·', loading: '…', na: '' };
+export const STATUS_MARK = { present: 'P', late: 'L', absent: 'A', leave: 'C', off: 'O', closed: 'B', half: 'H', waiting: '·', loading: '…', na: '' };
 export const DAY_NAMES = ['Itwar', 'Peer', 'Mangal', 'Budh', 'Jumerat', 'Juma', 'Hafta'];
 export const DAY_SHORT = ['Itw', 'Peer', 'Mng', 'Budh', 'Jum', 'Juma', 'Haf'];
 export const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -189,18 +189,33 @@ export function attendanceScore(a) { const n = Number(a?.finalScore ?? a?.autoSc
  * Aik staff, aik din ka status.
  * today/nowMin diye jayen to aaj shift se pehle "waiting" aata hai (pehle ye subah hi "absent" dikhata tha).
  */
+/** Us din ki manzoor chutti (poori ya aadhi). half: '' | 'am' (subah ki chutti, der se aayega) | 'pm' (shaam ki, jaldi jayega) */
+export function leaveFor(requests = [], phone, date) {
+  const list = requests.filter(r => r.phone === phone && r.kind === 'leave' && r.status === 'approved' && r.date <= date && (r.to || r.date) >= date);
+  return list.sort((a, b) => (b.reviewedAt || b.createdAt || 0) - (a.reviewedAt || a.createdAt || 0))[0] || null;
+}
+/** Aadhi chutti wale din ki duty: subah ki chutti = duty aadhe din se shuru; shaam ki = aadhe din par khatam. */
+export function halfSchedule(schedule = {}, half = '') {
+  if (!half) return schedule;
+  const start = parseTime(schedule.shiftStart) ?? 540, dur = shiftMinutes(schedule) || 600, mid = (start + Math.round(dur / 2)) % 1440;
+  const t = String(Math.floor(mid / 60)).padStart(2, '0') + ':' + String(mid % 60).padStart(2, '0');
+  return half === 'am' ? { ...schedule, shiftStart: t } : { ...schedule, shiftEnd: t };
+}
 export function statusFor({ account = {}, attendance = {}, requests = [], date, schedule = {}, today = pkDate(), nowMin = pkMinutes() }) {
+  const lv = leaveFor(requests, account.phone, date);
   if (attendance?.checkIn) {
+    if (lv?.half) return 'half';
     return lateMinutes(attendance, schedule) > Number(schedule.grace ?? 10) ? 'late' : 'present';
   }
   if (date > today) return 'na';
   if (account.joinDate && date < account.joinDate) return 'na';
   if (isClosed(schedule, date)) return 'closed';
   const phone = account.phone;
-  if (requests.some(r => r.phone === phone && r.kind === 'leave' && r.status === 'approved' && r.date <= date && r.to >= date)) return 'leave';
+  if (lv && !lv.half) return 'leave';
+  void phone;
   if ((schedule.weeklyOff || []).includes(weekday(date))) return 'off';
   if (date === today) {
-    const start = parseTime(schedule.shiftStart);
+    const start = parseTime(halfSchedule(schedule, lv?.half === 'am' ? 'am' : '').shiftStart);
     if (start != null && nowMin <= start + Number(schedule.grace ?? 10)) return 'waiting';
   }
   return 'absent';
@@ -238,13 +253,15 @@ export function dayRows({ staff = [], attendance = [], requests = [], schedules 
     const schedule = resolveSchedule(config, schedules.get(account.phone));
     const a = byPhone.get(account.phone) || {};
     const status = statusFor({ account, attendance: a, requests, date, schedule, today, nowMin });
-    return { account, a, schedule, status, late: a.checkIn ? lateMinutes(a, schedule) : 0, due: checkoutDue(a, schedule, now), minutes: workMinutes(a) };
+    const leave = leaveFor(requests, account.phone, date), sch = halfSchedule(schedule, leave?.half || '');
+    return { account, a, schedule, leave, status, late: a.checkIn && status !== 'half' ? lateMinutes(a, sch) : 0, due: checkoutDue(a, sch, now), minutes: workMinutes(a) };
   });
 }
 export function countStatuses(rows) {
-  const c = { present: 0, late: 0, absent: 0, leave: 0, off: 0, closed: 0, waiting: 0, loading: 0, na: 0 };
+  const c = { present: 0, late: 0, absent: 0, leave: 0, off: 0, closed: 0, half: 0, waiting: 0, loading: 0, na: 0 };
   for (const r of rows) c[r.status] = (c[r.status] || 0) + 1;
   c.off += c.closed; // dukaan band bhi "off" mein ginti
+  c.present += c.half; // aadhi chutti wala aaya tha -> hazir mein bhi
   return c;
 }
 /** Aik staff ka poora mahina. */
@@ -253,7 +270,8 @@ export function monthSummary({ account, attendance = [], requests = [], schedule
   const days = monthDates(month).map(date => {
     const a = byDate.get(date) || {};
     const status = statusFor({ account, attendance: a, requests, date, schedule, today, nowMin });
-    return { date, a, status, late: a.checkIn ? lateMinutes(a, schedule) : 0, minutes: workMinutes(a) };
+    const leave = leaveFor(requests, account.phone, date);
+    return { date, a, status, leave, late: a.checkIn && status !== 'half' ? lateMinutes(a, halfSchedule(schedule, leave?.half || '')) : 0, minutes: workMinutes(a) };
   });
   const count = countStatuses(days);
   const totalMin = days.reduce((n, d) => n + (d.minutes || 0), 0);
@@ -316,7 +334,7 @@ export function loanCuts(extras = [], month) {
  * hourly = monthly / (dutyHours × workingDays); normal ghante × hourly + overtime + points + bonus + khana − advance.
  * Agar mahina "final" ho chuka hai to wahi jama hua hisab wapas aata hai (badalta nahi).
  */
-export function salaryCalc({ account = {}, month, attendance = [], payroll = null, config = {}, schedule = null, requests = [], outs = [], today = pkDate(), nowMin = pkMinutes() }) {
+export function salaryCalc({ account = {}, month, attendance = [], payroll = null, config = {}, schedule = null, requests = [], outs = [], tickets = [], today = pkDate(), nowMin = pkMinutes() }) {
   const paid = Number(payroll?.paid || 0), payments = payroll?.payments || [];
   if (payroll?.state === 'final' && payroll.snapshot) {
     const s = payroll.snapshot;
@@ -342,9 +360,26 @@ export function salaryCalc({ account = {}, month, attendance = [], payroll = nul
   // Din ke hisab se ginti (ghair hazir, chutti, late)
   const sum = monthSummary({ account, attendance: recs, requests, schedule: sch, month, today, nowMin });
   const beforeJoin = account.joinDate ? sum.days.filter(d => d.date < account.joinDate && d.date <= today).length : 0;
-  const absentDays = sum.count.absent + beforeJoin + (cfg.leavePaid ? 0 : sum.count.leave);
+  // Chutti: har chutti par malik ne likha ke paisa katega ya nahi (paid); na likha ho to Settings wala qaida.
+  let absentUnits = 0, paidLeaveUnits = 0; const leaveLines = [];
+  for (const d of sum.days) {
+    if (d.date > today) continue;
+    const lv = d.leave, units = lv?.half ? 0.5 : 1, paid = lv ? (typeof lv.paid === 'boolean' ? lv.paid : cfg.leavePaid) : null;
+    let leaveUnits = 0;
+    if (d.status === 'absent') { if (lv?.half) { absentUnits += 0.5; leaveUnits = 0.5; } else absentUnits += 1; }
+    else if (d.status === 'leave') leaveUnits = 1;
+    else if (d.status === 'half') leaveUnits = 0.5;
+    if (!leaveUnits) continue;
+    void units;
+    if (paid) paidLeaveUnits += leaveUnits;
+    else leaveLines.push({ date: d.date, units: leaveUnits, half: lv?.half || '', amount: leaveUnits * perDay, text: `Chutti ${shortDate(d.date)}${leaveUnits < 1 ? ' (aadha din)' : ''}` });
+  }
+  const absentDays = absentUnits + beforeJoin;
   const lateCount = sum.count.late;
   let normalSalary, absentCut = 0;
+  // din ke hisab mein bina-paise wali chutti kat-ti hai; ghanton ke hisab mein paise wali chutti ke ghante jurte hain
+  const leaveCut = cfg.mode === 'days' ? leaveLines.reduce((n, l) => n + l.amount, 0) : 0;
+  const leavePay = cfg.mode === 'days' ? 0 : paidLeaveUnits * dutyMin / 60 * hourly;
   if (cfg.mode === 'days') { absentCut = Math.min(cfg.monthlySalary, absentDays * perDay); normalSalary = cfg.monthlySalary - absentCut; }
   else normalSalary = (normalMin / 60) * hourly;
   const overtimeAmount = (otMin / 60) * otRate;
@@ -367,12 +402,16 @@ export function salaryCalc({ account = {}, month, attendance = [], payroll = nul
   const breakMin = monthBreaks.reduce((n, o) => n + (outMinutes(o) || 0), 0), breakCount = monthBreaks.length;
   const outCut = cfg.outDeduct ? (outMin / 60) * hourly : 0;
   const breakCut = cfg.breakDeduct ? (breakMin / 60) * hourly : 0;
-  const deductions = advance + loanCut + lateFine + outCut + breakCut;
-  const final = normalSalary + overtimeAmount + pointsAmount + bonus + mealSalary - deductions;
+  // Bina bataye gaya: sirf malik ke "Katauti" wale faisle
+  const ticketLines = tickets.filter(t => t.phone === account.phone && t.date >= from && t.date <= to && t.status === 'decided' && t.decision === 'katauti' && Number(t.amount) > 0)
+    .sort((a, b) => (a.from || 0) - (b.from || 0)).map(t => ({ id: t.id, date: t.date, amount: Number(t.amount), text: ticketText(t) }));
+  const ticketCut = ticketLines.reduce((n, t) => n + t.amount, 0);
+  const deductions = advance + loanCut + lateFine + outCut + breakCut + ticketCut + leaveCut;
+  const final = normalSalary + leavePay + overtimeAmount + pointsAmount + bonus + mealSalary - deductions;
   return {
     phone: account.phone, month, periodLabel: monthLabel(month), from, to, ...cfg, expectedHours, hourly, perDay, otRate,
     daysWorked, openDays, normalMin, otMin, normalSalary, overtimeAmount, attPoints, taskPoints: 0, points, pointsAmount,
-    absentDays, absentCut, lateCount, lateFines, lateFine, loans, loanCut, outMin, outCount, outCut, breakMin, breakCount, breakCut, deductions,
+    absentDays, absentCut, lateCount, lateFines, lateFine, loans, loanCut, outMin, outCount, outCut, breakMin, breakCount, breakCut, ticketLines, ticketCut, leaveLines: cfg.mode === 'days' ? leaveLines : [], leaveCut, leavePay, paidLeaveUnits, deductions,
     extras, bonus, advance, mealDays, mealTotal, mealSalary, final, frozen: false, paid, payments, balance: final - paid
   };
 }
@@ -517,7 +556,7 @@ export function weekSummary({ staff = [], attendance = [], requests = [], schedu
     for (let d = from; d <= today; d = addDays(d, 1)) {
       const a = attendance.find(x => x.phone === account.phone && x.date === d) || {};
       const st = statusFor({ account, attendance: a, requests, date: d, schedule, today, nowMin });
-      if (st === 'present' || st === 'late') present++; if (st === 'late') late++; if (st === 'absent') absent++;
+      if (st === 'present' || st === 'late' || st === 'half') present++; if (st === 'late') late++; if (st === 'absent') absent++;
       minutes += workMinutes(a) || 0;
     }
     out.push({ account, present, late, absent, minutes });
@@ -600,6 +639,27 @@ export const BREAK_MINUTES = [10, 15, 20, 30, 40, 45, 60];
 export function breakGroup(account = {}) { return Number(account.breakGroup) === 2 ? 2 : 1; }
 /** Malik ke staff se sab ke liye halki list (naam + bari) — staffConfig/main.roster, taake manager ko naam nazar aayen. */
 export function rosterOf(staff = []) {
-  return staff.filter(s => s.active !== false).map(s => ({ phone: s.phone, name: String(s.name || '').slice(0, 80), group: breakGroup(s) }))
+  return staff.filter(s => s.active !== false).map(s => ({ phone: s.phone, name: String(s.name || '').slice(0, 80), group: breakGroup(s), ...(s.canApproveOuts ? { mgr: true } : {}) }))
     .sort((a, b) => a.phone.localeCompare(b.phone));
 }
+
+/* ---------- bina bataye gaya (ticket) ---------- */
+export function round5(n) { return Math.max(0, Math.round((Number(n) || 0) / 5) * 5); }
+const pkClock = ms => { const d = new Date(Number(ms)); const p = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(d); const g = t => p.find(x => x.type === t)?.value || '00'; return `${g('hour')}:${g('minute')}`; };
+export function ticketMinutes(t = {}, now = null) {
+  const a = Number(t.from) || null; if (!a) return null;
+  const b = Number(t.returnAt) || (t.status === 'open' && now ? now : null);
+  if (!b || b < a) return null;
+  return Math.round((b - a) / 60000);
+}
+/** "Bina bataye gaya — 22 Sep, 1:15 se 2:45 — Rs 125" (12-ghante, am/pm ke baghair, jaisa plan mein tha) */
+export function ticketText(t = {}) {
+  const h = ms => { const [H, M] = pkClock(ms).split(':').map(Number); return `${(H % 12) || 12}:${String(M).padStart(2, '0')}`; };
+  const parts = [`Bina bataye gaya — ${shortDate(t.date)}, ${t.from ? h(t.from) : '—'} se ${t.returnAt ? h(t.returnAt) : '—'}`];
+  if (t.decision === 'katauti' && Number(t.amount) > 0) parts.push(`Rs ${Math.round(Number(t.amount)).toLocaleString('en-PK')}`);
+  return parts.join(' — ');
+}
+/** Katauti ka mashwara: (mahana ÷ din ÷ roz ke ghante) × jitni der gaya, qareebi 5 rupay. */
+export function ticketSuggest(hourly, minutes) { return round5((Number(hourly) || 0) * (Number(minutes) || 0) / 60); }
+/** "HH:MM" (aaj) -> milliseconds (Pakistan waqt). */
+export function pkTimeMs(date, hhmm) { const m = parseTime(hhmm); if (m == null || !isDate(date)) return null; return Date.parse(`${date}T${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}:00+05:00`); }

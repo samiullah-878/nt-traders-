@@ -263,6 +263,49 @@ test('v208: malik khana break — bari, waqt, sab wapas', async () => {
   assert.ok(br.every(([k]) => records.get(k).status === 'returned'), 'sab wapas');
   assert.match($('.register').textContent, /Khana .*–/);
 });
+test('v209: malik ka ticket — banana, wapsi, katauti salary mein', async () => {
+  await click('[data-action=tab][data-arg=hazri]');
+  await click('[data-action=ticket-new]'); assert.ok($('[data-sheet=ticket-new]'));
+  const f = $('[data-sheet=ticket-new] form');
+  f.elements.phone.value = '03007654321';
+  const ago = C.pkDate(new Date(Date.now() - 30 * 60000)) === today ? C.pkTime24(new Date(Date.now() - 30 * 60000)) : '00:00';
+  f.elements.from.value = ago; f.elements.note.value = 'Dukaan khuli chhori';
+  f.dispatchEvent(new win.Event('submit', { bubbles: true, cancelable: true })); await settle(10);
+  const tk = [...records].find(([k, v]) => k.includes('staffTickets/') && v.phone === '03007654321');
+  assert.ok(tk, 'ticket bana'); assert.equal(tk[1].status, 'open'); assert.equal(tk[1].byName, 'Malik');
+  assert.match($('.register').textContent, /Bina bataye gaya/);
+  assert.match($('.attention').textContent, /faisla baqi/);
+  await click('.attention [data-action=tickets]'); assert.ok($('[data-sheet=tickets]'));
+  await click('[data-sheet=tickets] [data-action=ticket-return]'); await settle(6);
+  assert.equal(records.get(tk[0]).status, 'returned');
+  const amt = $('[data-sheet=tickets] [data-ticket-amount]'); assert.ok(Number(amt.value) >= 0); amt.value = '150';
+  await click('[data-sheet=tickets] [data-action=ticket-decide][data-arg=katauti]'); await settle(6);
+  assert.equal(records.get(tk[0]).decision, 'katauti'); assert.equal(records.get(tk[0]).amount, 150);
+  const bilal = app.data.state.staff.find(x => x.phone === '03007654321');
+  const c = app.data.calcFor(bilal, today.slice(0, 7)); assert.equal(c.ticketCut, 150); assert.match(c.ticketLines[0].text, /Bina bataye gaya — .* — Rs 150/);
+  await click('[data-sheet=tickets] [data-sheet-close]');
+  // final mahine mein katauti nahi (Ali ka mahina final hai)
+  const aliT = await app.data.createTicket({ phone: '03001234567', from: ago, back: C.pkTime24() }); await settle(6);
+  await assert.rejects(app.data.decideTicket(aliT, 'katauti', 100), /final/);
+  await app.data.decideTicket(aliT, 'warning'); await settle(4); assert.equal(records.get(B + 'staffTickets/' + aliT).decision, 'warning');
+});
+test('v210: chutti — aadha din, paisa katega / nahi', async () => {
+  await fake.sdk.setDoc({ path: B + 'staffRequests/rq2' }, { phone: '03007654321', kind: 'leave', date: today, to: today, half: 'pm', checkIn: '', checkOut: '', reason: 'Doctor', status: 'pending', createdAt: Date.now(), by: 'x' }); await settle(8);
+  await click('[data-action=tab][data-arg=settings]'); await click('[data-action=requests]');
+  assert.match($('[data-sheet=requests]').textContent, /aadha din — shaam/);
+  await click('[data-sheet=requests] [data-action=req][data-id=rq2][data-paid=no]'); await settle(6);
+  assert.equal(records.get(B + 'staffRequests/rq2').status, 'approved'); assert.equal(records.get(B + 'staffRequests/rq2').paid, false);
+  await click('[data-sheet=requests] [data-sheet-close]');
+  await click('[data-action=tab][data-arg=hazri]');
+  assert.match($('.register').textContent, /Aadhi chutti \(shaam\) · paisa katega/);
+  // malik khud aadhi chutti de (subah, paisa nahi katega)
+  await click('.row-main[data-phone="03001234567"]'); await click('[data-sheet=profile] [data-action=leave]');
+  const lf = $('form[data-form=leave]'); lf.querySelector('[name=half][value=am]').checked = true; lf.querySelector('[name=paid][value=yes]').checked = true;
+  await submit(lf);
+  const lv = [...records].find(([k, v]) => k.includes('staffRequests/') && v.phone === '03001234567' && v.half === 'am');
+  assert.ok(lv, 'aadhi chutti lagi'); assert.equal(lv[1].paid, true); assert.equal(lv[1].to, lv[1].date);
+  await click('[data-sheet=profile] [data-sheet-close]');
+});
 test('logout → staff login → check-in / check-out', async () => {
   records.delete(B + `staffAttendance/${today}_03111112223`); // upar malik ne hazri lagayi thi
   await click('[data-action=tab][data-arg=staff]'); await click('.row-main[data-phone="03111112223"]');
@@ -312,6 +355,16 @@ test('logout → staff login → check-in / check-out', async () => {
   assert.match($('.mgr').textContent, /abhi bahar/);
   await click('.mgr [data-action=mgr-return]'); await settle(6); assert.equal(records.get(B + 'staffOuts/m1').status, 'returned'); assert.equal(records.get(B + 'staffOuts/m1').returnBy, 'manager');
   await assert.rejects(app.data.reviewOut(outKey.split('/').pop(), true), /pehle hi|Apni parchi/);
+  // ---- v209: manager ticket banata hai (apne upar nahi) ----
+  assert.ok($('[data-action=ticket-new]'), 'ticket ka button (manager)');
+  await click('[data-action=ticket-new]'); const tf = $('[data-sheet=ticket-new] form');
+  assert.equal(tf.querySelector('option[value="03111112223"]'), null, 'apna naam list mein nahi');
+  tf.elements.phone.value = '03001234567'; tf.dispatchEvent(new win.Event('submit', { bubbles: true, cancelable: true })); await settle(10);
+  const st = [...records].find(([k, v]) => k.includes('staffTickets/') && v.byName === 'Usman');
+  assert.ok(st, 'manager ne ticket banaya'); assert.ok(Object.keys(st[1]).every(k => ['phone', 'name', 'date', 'from', 'returnAt', 'note', 'status', 'by', 'byName', 'createdAt', 'serverAt'].includes(k)), 'sirf rules wali keys');
+  await assert.rejects(app.data.createTicket({ phone: '03111112223', from: C.pkTime24() }), /Apne upar/);
+  await click('.mgr [data-action=ticket-return]'); await settle(6); assert.equal(records.get(st[0]).status, 'returned'); assert.equal(records.get(st[0]).returnBy, 'Usman');
+  await assert.rejects(app.data.decideTicket(st[0].split('/').pop(), 'katauti', 50), /Malik/);
   // ---- v208: manager khana break (doosri bari / apna waqt) ----
   records.set(B + `staffAttendance/${today}_03007654321`, { date: today, phone: '03007654321', checkIn: '09:20', checkOut: '' });
   await fake.sdk.setDoc({ path: B + `staffAttendance/${today}_03007654321` }, { checkIn: '09:20' }, { merge: true }); await settle();
@@ -333,7 +386,7 @@ test('staff: request bhejna (sirf rules wali keys), salary tab', async () => {
   await click('[data-action=tab][data-arg=request]');
   const form = $('form[data-form=request]'); fill(form, { reason: 'Shadi hai' }); await submit(form);
   const req = [...records].find(([k, v]) => k.includes('staffRequests/') && v.reason === 'Shadi hai')[1];
-  assert.deepEqual(Object.keys(req).sort(), ['by', 'checkIn', 'checkOut', 'createdAt', 'date', 'kind', 'phone', 'reason', 'status', 'to']);
+  assert.deepEqual(Object.keys(req).sort(), ['by', 'checkIn', 'checkOut', 'createdAt', 'date', 'half', 'kind', 'phone', 'reason', 'status', 'to']); assert.equal(req.half, '');
   await click('[data-action=tab][data-arg=salary]'); assert.match($('.calc').textContent, /Mahana salary/);
   await click('[data-action=tab][data-arg=hazri]'); assert.ok($('.days'));
 });

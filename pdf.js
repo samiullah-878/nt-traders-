@@ -6,8 +6,8 @@ import {
 } from './core.js';
 
 const INK = [27, 42, 74], PAPER = [246, 248, 252], LINE = [208, 215, 228], MUTED = [96, 108, 130];
-const TONE = { present: [24, 120, 78], late: [176, 108, 12], absent: [179, 38, 30], leave: [88, 80, 160], off: [96, 108, 130], closed: [96, 108, 130], waiting: [96, 108, 130], loading: [160, 168, 184], na: [160, 168, 184] };
-const TINT = { late: [253, 246, 230], absent: [253, 238, 236], leave: [241, 240, 252], off: [243, 245, 249], closed: [243, 245, 249] };
+const TONE = { present: [24, 120, 78], late: [176, 108, 12], absent: [179, 38, 30], leave: [88, 80, 160], off: [96, 108, 130], closed: [96, 108, 130], half: [88, 80, 160], waiting: [96, 108, 130], loading: [160, 168, 184], na: [160, 168, 184] };
+const TINT = { late: [253, 246, 230], absent: [253, 238, 236], leave: [241, 240, 252], off: [243, 245, 249], closed: [243, 245, 249], half: [241, 240, 252] };
 
 let libPromise = null;
 /** Browser: dono library files pehli PDF par hi load hoti hain, app ka kholna halka rehta hai. */
@@ -168,6 +168,9 @@ export async function staffMonthPdf(lib, { account, month, summary, calc, schedu
     if (calc.advance) rowsOut.push(line('Advance (kat gaya)', '- ' + money(calc.advance), { textColor: TONE.absent }));
     if (calc.loanCut) rowsOut.push(line('Qarz ki qist', '- ' + money(calc.loanCut), { textColor: TONE.absent }));
     if (calc.lateFine) rowsOut.push(line(`Late jurmana (${calc.lateCount} dafa late)`, '- ' + money(calc.lateFine), { textColor: TONE.absent }));
+    for (const l of calc.leaveLines || []) rowsOut.push(line(l.text + ' (paisa katega)', '- ' + money(l.amount), { textColor: TONE.absent }));
+    if (calc.leavePay) rowsOut.push(line(`Chutti ki salary (${calc.paidLeaveUnits} din, paisa nahi katega)`, '+ ' + money(calc.leavePay)));
+    for (const t of calc.ticketLines || []) rowsOut.push(line(t.text.replace(/ — Rs [\d,]+$/, ''), '- ' + money(t.amount), { textColor: TONE.absent }));
     if (calc.outCut) rowsOut.push(line(`Bahar ka waqt (${calc.outCount} parchi, ${hm(calc.outMin)})`, '- ' + money(calc.outCut), { textColor: TONE.absent }));
     else if (calc.outMin) rowsOut.push(line(`Bahar ka waqt: ${calc.outCount} parchi, ${hm(calc.outMin)} (kati nahi)`, '—'));
     rowsOut.push(line('Kul banti salary', money(calc.final), { fontStyle: 'bold', fillColor: PAPER, textColor: INK }));
@@ -196,7 +199,7 @@ export async function staffMonthPdf(lib, { account, month, summary, calc, schedu
 export async function registerPdf(lib, { month, grid, textImages }) {
   const ctx = createDoc(lib, { landscape: true }), dates = monthDates(month);
   const images = await imagesFor(collect(grid.map(g => g.account.name)), textImages);
-  let y = header(ctx, { title: 'Mahine ka Register', subtitle: 'P = Hazir   L = Late   A = Ghair hazir   C = Chutti   O = Weekly off   B = Dukaan band', right: monthLabel(month), rightSmall: `${grid.length} staff` });
+  let y = header(ctx, { title: 'Mahine ka Register', subtitle: 'P = Hazir   L = Late   A = Ghair hazir   C = Chutti   O = Weekly off   B = Dukaan band   H = Aadhi chutti', right: monthLabel(month), rightSmall: `${grid.length} staff` });
   const dayW = (ctx.W - 2 * ctx.M - 44 - 4 * 9) / dates.length;
   const columnStyles = { 0: { cellWidth: 44, halign: 'left', fontStyle: 'bold' } };
   dates.forEach((_, i) => { columnStyles[i + 1] = { cellWidth: dayW }; });
