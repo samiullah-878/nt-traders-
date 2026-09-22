@@ -185,3 +185,13 @@ test('parchi Urdu: wajah aur waqt', () => {
 test('chhota waqt', () => {
   assert.equal(C.durText(0), '1 min se kam'); assert.equal(C.durText(7), '7 min'); assert.equal(C.durText(65), '1h 05m');
 });
+
+test('khana break parchi se alag ginti', () => {
+  const t0 = Date.parse('2026-09-21T13:00:00+05:00');
+  const outs = [{ phone: P, date: '2026-09-21', status: 'returned', kind: 'break', outAt: t0, returnAt: t0 + 30 * 60000 }, { phone: P, date: '2026-09-21', status: 'returned', outAt: t0 + 60 * 60000, returnAt: t0 + 70 * 60000 }];
+  assert.equal(C.dayOuts(outs, P, '2026-09-21').total, 10); assert.equal(C.dayOuts(outs, P, '2026-09-21', t0, 'break').total, 30);
+  const c = C.salaryCalc({ account: { phone: P }, month: '2026-09', attendance: [], config: cfg, outs, today: '2026-09-21' });
+  assert.equal(c.outMin, 10); assert.equal(c.breakMin, 30); assert.equal(c.breakCut, 0);
+  assert.ok(C.salaryCalc({ account: { phone: P }, month: '2026-09', attendance: [], config: { ...cfg, salaryDefault: { ...cfg.salaryDefault, breakDeduct: true } }, outs, today: '2026-09-21' }).breakCut > 0);
+  assert.deepEqual(C.rosterOf([{ phone: '03009999999', name: 'Z', breakGroup: 2 }, { phone: '03001111111', name: 'A', active: false }]), [{ phone: '03009999999', name: 'Z', group: 2 }]);
+});

@@ -2,10 +2,10 @@
    App ki files aur Firebase SDK phone se foran milte hain (peeche se taza bhi hote rehte hain).
    Hazri/salary ka DATA yahan se nahi guzarta — wo Firebase khud sambhalta hai.
    Nayi version: app version.json dekhti hai; nayi ho to cache mita kar reload karti hai. */
-const APP_VERSION = 'v207';
+const APP_VERSION = 'v208';
 const CACHE = 'nt-hazri-' + APP_VERSION;
 const SDK_CACHE = 'nt-hazri-sdk-12.18.0';
-const SHELL = ['./', './index.html', './styles.css', './boot.js', './app.js', './core.js', './auth.js', './data.js', './ui.js', './owner.js', './staffview.js', './pdf.js', './firebase-config.js', './archivo-latin.woff2', './icon.svg', './icon-192.png', './icon-512.png', './manifest.webmanifest'];
+const SHELL = ['./', './index.html', './styles.css', './boot.js', './app.js', './core.js', './auth.js', './data.js', './ui.js', './owner.js', './staffview.js', './breaks.js', './pdf.js', './firebase-config.js', './archivo-latin.woff2', './icon.svg', './icon-192.png', './icon-512.png', './manifest.webmanifest'];
 const SDK = ['firebase-app.js', 'firebase-auth.js', 'firebase-firestore.js'].map(f => 'https://www.gstatic.com/firebasejs/12.18.0/' + f);
 
 self.addEventListener('install', event => {

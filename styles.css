@@ -390,3 +390,15 @@ button.tag{border:0;cursor:pointer}
 .notice{align-items:flex-start}.notice>div{display:grid;gap:2px;flex:1}
 .notice.is-rtl>div{text-align:right;unicode-bidi:plaintext}
 .notice.is-rtl p{unicode-bidi:plaintext}
+
+/* ---------- v208: khane ka waqfa ---------- */
+.break-card{display:grid;gap:8px;padding:12px 14px;border-radius:var(--r);background:var(--late-bg);border:1px solid #efd59c;color:var(--text)}
+.break-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--late)}.break-head b{flex:1}
+.break-card ul{display:grid;gap:4px}.break-card li{display:flex;justify-content:space-between;gap:10px;font-size:.9375rem}
+.break-back{display:flex;gap:8px;align-items:center;padding:10px 12px;border-radius:10px;background:var(--ok-bg);color:var(--ok)}
+.pick-list{display:grid;gap:2px}
+.pick-list .pick{display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid var(--rule)}
+.pick-list .pick>span{display:grid}.pick-list small{color:var(--muted)}
+.pick-list .is-off{opacity:.55}
+.inline-min{display:inline-flex;align-items:center;gap:6px;font-weight:600;color:var(--muted)}
+.inline-min input{width:78px;min-height:38px}

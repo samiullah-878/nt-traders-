@@ -7,7 +7,7 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Noor Traders Hazri v206. Owner emails auth.js ke OWNER_EMAILS se milni chahiye.
+    // Noor Traders Hazri v208. Owner emails auth.js ke OWNER_EMAILS se milni chahiye.
     // An arbitrary Firebase email account must never gain business-owner access.
     function isOwner() {
       return signedIn()
@@ -79,7 +79,8 @@ service cloud.firestore {
 
     // Employee can only access attendance rows for the phone attached to their own session.
     match /businesses/noor-traders/staffAttendance/{attendanceId} {
-      allow read: if isOwner()
+      // v208: manager bhi (khane ke break ke liye) dekh sakta hai ke kaun duty par hai.
+      allow read: if isOwner() || isOutManager()
         || (validStaffSession() && resource.data.phone == sessionPhone());
 
       // v204: staff sirf apne aaj ke record ka Check-In bana sakta hai; serverAt = asal server ka waqt (phone ki ghari nahi).
@@ -151,7 +152,18 @@ service cloud.firestore {
           && request.resource.data.reason is string && request.resource.data.reason.size() > 0 && request.resource.data.reason.size() <= 40
           && request.resource.data.note is string && request.resource.data.note.size() <= 300
           && request.resource.data.minutes is number && request.resource.data.minutes >= 1 && request.resource.data.minutes <= 600
-          && request.resource.data.requestedAt is number);
+          && request.resource.data.requestedAt is number)
+        || (isOutManager()
+          && request.resource.data.keys().hasOnly(['phone', 'name', 'date', 'reason', 'note', 'minutes', 'status', 'kind', 'batch', 'requestedAt', 'serverAt', 'by', 'outAt', 'approvedAt', 'approvedBy', 'approvedByName', 'approvedServerAt'])
+          && request.resource.data.kind == 'break'
+          && request.resource.data.status == 'approved'
+          && request.resource.data.by == request.auth.uid
+          && request.resource.data.approvedBy == request.auth.uid
+          && request.resource.data.serverAt == request.time
+          && request.resource.data.approvedServerAt == request.time
+          && request.resource.data.phone is string && request.resource.data.phone.matches('^03[0-9]{9}$')
+          && request.resource.data.date is string && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && request.resource.data.minutes is number && request.resource.data.minutes >= 1 && request.resource.data.minutes <= 180);
       allow update: if isOwner()
         || (validStaffSession()
           && resource.data.phone == sessionPhone()
@@ -164,8 +176,8 @@ service cloud.firestore {
                 && request.resource.data.status == 'returned'
                 && request.resource.data.returnServerAt == request.time)))
         || (isOutManager()
-          && resource.data.phone != sessionPhone()
-          && ((resource.data.status == 'pending'
+          && (resource.data.phone != sessionPhone() || resource.data.get('kind', '') == 'break')
+          && ((resource.data.status == 'pending' && resource.data.phone != sessionPhone()
                 && request.resource.data.status in ['approved', 'rejected']
                 && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'approvedAt', 'outAt', 'rejectedAt', 'approvedBy', 'approvedByName', 'approvedServerAt'])
                 && request.resource.data.approvedBy == request.auth.uid

@@ -1,8 +1,30 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v207   Tareekh: 2026-09-22  (v200-v204: 2026-09-21)
+Version: v208   Tareekh: 2026-09-22  (v200-v204: 2026-09-21)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+00000000. v208 — KHANE KA WAQFA (ROTI BREAK)
+------------------------------------------------------------
+Malik: roti ke waqt manager sab par aik sath break lagaye; 2-3 larke us waqt dukaan sambhalein (un ka break baad mein).
+Break ka waqt roz badalta hai -> manager (aur malik) har dafa khud minute chune.
+- Data: staffOuts mein hi, kind:'break', reason 'Khana', status seedha 'approved', outAt=abhi, minutes, batch, approvedByName.
+  data.startBreak(phones, minutes) (malik: fast batch + audit 'khana break'; manager: writeBatch), data.endBreaks(list) ("Sab wapas aa gaye").
+  Larka khud bhi "Wapas aa gaya" daba sakta hai (purana staff rule). Check-Out par khula break khud band.
+- Bari: staffAccounts.breakGroup 1 (pehli, default) / 2 (doosri) — staff form "Khane ki bari".
+- Manager ko naam/bari chahiye: malik ki app staffConfig/main.roster [{phone,name,group}] khud barabar rakhti hai (syncRoster; core.rosterOf).
+  Manager ki app aaj ki hazri bhi sunti hai (staffAttendance where date==aaj -> teamAttendance) taake pata chale kaun duty par hai.
+- breaks.js: openBreakSheet (Pehli/Doosri bari tab, minute chips 10-60 + apna minute, "1:35 pm tak wapas", har larke ka nishan — duty par
+  nahi / pehle se bahar wale band), breakStatusHtml ("N khane ke break par", baqi/zyada minute, "Sab wapas aa gaye").
+- Malik: Hazri (aaj) "Khana break" button + break card; qataar chips "Khana break · 12 min se", "Khana 1:05 pm–1:35 pm (30 min)";
+  parchiyan list mein "Khana break" tag; Excel "Khana (min)". Staff: Gate Pass jaisa "KHANA BREAK · کھانے کا وقفہ" pass.
+  Manager: "Khana break shuru karein" + break card manager wale hisse mein.
+- Hisab: core.dayOuts(..., kind 'out'|'break'|'all'); parchi (outMin) aur break (breakMin) alag. salaryDefault.breakDeduct (default band,
+  Settings > Salary ke qawaid) -> breakCut = breakMin/60 × hourly.
+- Rules (v208): staffAttendance read mein isOutManager(); staffOuts create: manager kind=='break' approved (keys ginti ki hui, serverAt/
+  approvedServerAt == request.time, minutes 1-180); manager update: apna break bhi wapas laga sake. MALIK KO v208 RULES PUBLISH KARNE HAIN.
+- Tests 61.
 
 ------------------------------------------------------------
 0000000. v207 — HOME SCREEN APP, WHATSAPP LOGIN LINK, LOGOUT NEECHE
@@ -239,7 +261,7 @@ archivo-latin.woff2, naskh-arabic-400.woff2, naskh-arabic-700.woff2   fonts (rep
 jspdf.umd.min.js (2.5.2), jspdf.plugin.autotable.min.js (3.8.4)       PDF library
 firebase-config.js, firebase.json, firestore.indexes.json, pages.yml, .nojekyll, .gitignore   purani waisi hi; firestore.rules v204 mein badli
 xlsx.mini.min.js  Excel library (sirf dabane par)
-*.test.mjs, test-fake-sdk.mjs, package.json     tests (npm install; npm test)  — 59 tests pass
+*.test.mjs, test-fake-sdk.mjs, package.json     tests (npm install; npm test)  — 61 tests pass
 LICENSES.txt, README.md
 
 PURANE REPO SE YE FILES DELETE KARNI HAIN (ab kaam ki nahi):
@@ -315,13 +337,13 @@ PDF mein Urdu lipi wala matn tasveer bana kar lagta hai (jsPDF Urdu font nahi ba
 ------------------------------------------------------------
 1) App mein Staff > "Update ke links" > "GitHub — files upload karein" (ya repo > "Add file" > "Upload files") -> zip ke andar ki SAB files ek sath daal dein (folder nahi, sirf files) -> Commit.
 2) Upar wali list ki purani files delete karein (har file kholein -> ... -> Delete file).
-3) 1-2 minute baad app kholein; neeche/login par "v207" likha aaye. Staff ke phone par bhi v207 aana zaroori hai (purani na chal rahi ho).
+3) 1-2 minute baad app kholein; neeche/login par "v208" likha aaye. Staff ke phone par bhi v208 aana zaroori hai (purani na chal rahi ho).
 v204 se Firestore rules NAYE hain (upar 0000 dekhein) — app ke baad publish karne hain. Authentication mein "Anonymous" aur "Email/Password" dono ON rehne chahiye.
 
 ------------------------------------------------------------
 8. KYA TEST HUA, KYA NAHI
 ------------------------------------------------------------
-Hua: 59 automated tests (hisab, status, salary, talash, login ke saare raaste, aur poori app naqli Firebase + happy-dom par:
+Hua: 61 automated tests (hisab, status, salary, talash, login ke saare raaste, aur poori app naqli Firebase + happy-dom par:
   login -> hazri -> hazri durust -> request manzoor -> talash -> naya staff -> advance -> final -> payment -> staff check-in/out -> request).
   4 PDF Node mein ban kar tasveer ki shakal mein dekhi gayin.
 Nahi hua (yahan mumkin nahi tha): asal Firebase/rules ke sath, asal phone ka camera aur GPS, asal browser mein dekhna (layout).

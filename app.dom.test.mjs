@@ -248,6 +248,21 @@ test('v205: malik ko parchi — Haan, abhi bahar, wapsi, salary mein alag', asyn
   await fake.sdk.setDoc({ path: B + 'staffOuts/o2' }, { phone: '03001234567', date: today, reason: 'Khana', note: '', minutes: 10, status: 'pending', requestedAt: Date.now(), by: 'x' }); await settle(10);
   await click('.out-card [data-action=out-review][data-arg=no]'); assert.equal(records.get(B + 'staffOuts/o2').status, 'rejected');
 });
+test('v208: malik khana break — bari, waqt, sab wapas', async () => {
+  await click('[data-action=tab][data-arg=hazri]');
+  assert.ok(records.get(B + 'staffConfig/main').roster?.length >= 2, 'roster bana (manager ke liye naam)');
+  await click('[data-action=break-start]'); assert.ok($('[data-sheet=break]'));
+  await click('[data-sheet=break] [data-break-min="45"]'); assert.match($('[data-sheet=break]').textContent, /45 min/);
+  const picks = [...doc.querySelectorAll('[data-sheet=break] [data-break-pick]:not([disabled])')];
+  assert.ok(picks.length >= 1, 'duty wale chune ja sakte hain');
+  await click('[data-sheet=break] [data-break-go]'); await settle(8);
+  const br = [...records].filter(([k, v]) => k.includes('staffOuts/') && v.kind === 'break');
+  assert.ok(br.length >= 1); assert.equal(br[0][1].minutes, 45); assert.equal(br[0][1].status, 'approved'); assert.equal(br[0][1].approvedByName, 'Malik');
+  assert.match($('.view').textContent, /khane ke break par/); assert.match($('.register').textContent, /Khana break/);
+  await click('[data-action=break-end-all]'); await settle(6);
+  assert.ok(br.every(([k]) => records.get(k).status === 'returned'), 'sab wapas');
+  assert.match($('.register').textContent, /Khana .*–/);
+});
 test('logout → staff login → check-in / check-out', async () => {
   records.delete(B + `staffAttendance/${today}_03111112223`); // upar malik ne hazri lagayi thi
   await click('[data-action=tab][data-arg=staff]'); await click('.row-main[data-phone="03111112223"]');
@@ -275,7 +290,7 @@ test('logout → staff login → check-in / check-out', async () => {
   await click('[data-out-reason="Maal lene"]'); await click('[data-out-min="20"]');
   $('form[data-form=out]').elements.note.value = 'Rehman traders';
   await submit($('form[data-form=out]'));
-  const outRec = [...records].find(([k, v]) => k.includes('staffOuts/') && v.phone === '03111112223');
+  const outRec = [...records].find(([k, v]) => k.includes('staffOuts/') && v.phone === '03111112223' && !v.kind);
   assert.ok(outRec, 'parchi bani'); const [outKey, outVal] = outRec;
   assert.deepEqual(Object.keys(outVal).sort(), ['by', 'date', 'minutes', 'name', 'note', 'phone', 'reason', 'requestedAt', 'serverAt', 'status'].sort(), 'sirf rules wali keys'); assert.equal(outVal.name, 'Usman');
   assert.equal(outVal.status, 'pending'); assert.match($('.view').textContent, /Parchi malik ke paas hai/);
@@ -297,6 +312,20 @@ test('logout → staff login → check-in / check-out', async () => {
   assert.match($('.mgr').textContent, /abhi bahar/);
   await click('.mgr [data-action=mgr-return]'); await settle(6); assert.equal(records.get(B + 'staffOuts/m1').status, 'returned'); assert.equal(records.get(B + 'staffOuts/m1').returnBy, 'manager');
   await assert.rejects(app.data.reviewOut(outKey.split('/').pop(), true), /pehle hi|Apni parchi/);
+  // ---- v208: manager khana break (doosri bari / apna waqt) ----
+  records.set(B + `staffAttendance/${today}_03007654321`, { date: today, phone: '03007654321', checkIn: '09:20', checkOut: '' });
+  await fake.sdk.setDoc({ path: B + `staffAttendance/${today}_03007654321` }, { checkIn: '09:20' }, { merge: true }); await settle();
+  await click('.mgr [data-action=break-start]'); assert.ok($('[data-sheet=break]'), 'manager break sheet');
+  const custom = $('[data-sheet=break] [data-break-custom]'); custom.value = '25'; custom.dispatchEvent(new win.Event('change', { bubbles: true })); await settle();
+  assert.match($('[data-sheet=break] .break-back').textContent, /25 min/);
+  for (const cb of doc.querySelectorAll('[data-sheet=break] [data-break-pick]')) { if (!cb.disabled && !cb.checked) { cb.checked = true; cb.dispatchEvent(new win.Event('change', { bubbles: true })); await settle(2); } }
+  await click('[data-sheet=break] [data-break-go]'); await settle(8);
+  const mb = [...records].filter(([k, v]) => k.includes('staffOuts/') && v.kind === 'break' && v.approvedByName === 'Usman');
+  assert.ok(mb.length >= 1, 'manager ne break shuru kiya'); assert.equal(mb[0][1].minutes, 25);
+  assert.ok(Object.keys(mb[0][1]).every(k => ['phone', 'name', 'date', 'reason', 'note', 'minutes', 'status', 'kind', 'batch', 'requestedAt', 'serverAt', 'by', 'outAt', 'approvedAt', 'approvedBy', 'approvedByName', 'approvedServerAt'].includes(k)), 'sirf rules wali keys');
+  if (mb.some(([, v]) => v.phone === '03111112223')) assert.match($('.gate').textContent, /KHANA BREAK/);
+  await click('.mgr [data-action=break-end-all]'); await settle(8);
+  assert.ok(mb.every(([k]) => records.get(k).status === 'returned'), 'manager ne sab wapas lagaye');
   await click('[data-action=check-out]'); await settle(10);
   assert.ok(records.get(B + `staffAttendance/${today}_03111112223`).checkOut); assert.match($('.punch').textContent, /mukammal/);
 });

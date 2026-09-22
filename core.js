@@ -1,14 +1,14 @@
 // core.js — Noor Traders Hazri + Salary
 // Sirf hisab-kitab. Yahan na DOM hai na Firebase, is liye ye file Node mein test hoti hai.
 
-export const APP_VERSION = 'v207';
+export const APP_VERSION = 'v208';
 export const TZ = 'Asia/Karachi';
 export const BUSINESS_ID = 'noor-traders';
 export const SHOP = { name: 'Noor Traders Gulyana', lat: 32.7979125, lng: 73.956984375, radius: 200 };
 export const DEFAULT_CONFIG = {
   shiftStart: '09:15', shiftEnd: '19:00', radius: 200, grace: 10,
   instruction: '', closedDays: [],
-  salaryDefault: { monthlySalary: 0, workingDays: 30, overtimeRate: 0, mode: 'hours', leavePaid: true, lateEvery: 0, lateFineDays: 0.5, outDeduct: false },
+  salaryDefault: { monthlySalary: 0, workingDays: 30, overtimeRate: 0, mode: 'hours', leavePaid: true, lateEvery: 0, lateFineDays: 0.5, outDeduct: false, breakDeduct: false },
   scores: { m10: 10, m20: 8, m30: 6, m45: 4, late: 2 }
 };
 export const STATUS_LABEL = {
@@ -290,6 +290,7 @@ export function salaryConfig(account = {}, config = {}, schedule = null) {
     mode: def.mode === 'days' ? 'days' : 'hours',
     leavePaid: def.leavePaid !== false,
     outDeduct: def.outDeduct === true,
+    breakDeduct: def.breakDeduct === true,
     lateEvery: Math.max(0, Math.floor(Number(def.lateEvery || 0))),
     lateFineDays: Math.max(0, Number(def.lateFineDays ?? 0.5))
   };
@@ -360,15 +361,18 @@ export function salaryCalc({ account = {}, month, attendance = [], payroll = nul
   const mealTotal = cfg.mealMode === 'monthly' ? cfg.mealRate : cfg.mealMode === 'daily' ? cfg.mealRate * mealDays : 0;
   const mealSalary = cfg.mealInSalary ? mealTotal : 0;
   // Bahar jane ki parchi: sirf mukammal (wapas aa gaya) parchiyan ginti mein
-  const monthOuts = outs.filter(o => o.phone === account.phone && o.date >= from && o.date <= to && o.status === 'returned');
+  const mine = outs.filter(o => o.phone === account.phone && o.date >= from && o.date <= to && o.status === 'returned');
+  const monthOuts = mine.filter(o => o.kind !== 'break'), monthBreaks = mine.filter(o => o.kind === 'break');
   const outMin = monthOuts.reduce((n, o) => n + (outMinutes(o) || 0), 0), outCount = monthOuts.length;
+  const breakMin = monthBreaks.reduce((n, o) => n + (outMinutes(o) || 0), 0), breakCount = monthBreaks.length;
   const outCut = cfg.outDeduct ? (outMin / 60) * hourly : 0;
-  const deductions = advance + loanCut + lateFine + outCut;
+  const breakCut = cfg.breakDeduct ? (breakMin / 60) * hourly : 0;
+  const deductions = advance + loanCut + lateFine + outCut + breakCut;
   const final = normalSalary + overtimeAmount + pointsAmount + bonus + mealSalary - deductions;
   return {
     phone: account.phone, month, periodLabel: monthLabel(month), from, to, ...cfg, expectedHours, hourly, perDay, otRate,
     daysWorked, openDays, normalMin, otMin, normalSalary, overtimeAmount, attPoints, taskPoints: 0, points, pointsAmount,
-    absentDays, absentCut, lateCount, lateFines, lateFine, loans, loanCut, outMin, outCount, outCut, deductions,
+    absentDays, absentCut, lateCount, lateFines, lateFine, loans, loanCut, outMin, outCount, outCut, breakMin, breakCount, breakCut, deductions,
     extras, bonus, advance, mealDays, mealTotal, mealSalary, final, frozen: false, paid, payments, balance: final - paid
   };
 }
@@ -566,8 +570,10 @@ export function outMinutes(o = {}, now = null) {
   return Math.round((end - start) / 60000);
 }
 /** Aik staff, aik din ki parchiyan + kul bahar ka waqt. */
-export function dayOuts(outs = [], phone, date, now = Date.now()) {
-  const list = outs.filter(o => o.phone === phone && o.date === date && ['pending', 'approved', 'returned', 'rejected'].includes(o.status))
+/** kind 'out' = bahar ki parchiyan, 'break' = khane ka waqfa, 'all' = dono. */
+export function dayOuts(outs = [], phone, date, now = Date.now(), kind = 'out') {
+  const list = outs.filter(o => o.phone === phone && o.date === date && ['pending', 'approved', 'returned', 'rejected'].includes(o.status)
+      && (kind === 'all' || (kind === 'break' ? o.kind === 'break' : o.kind !== 'break')))
     .sort((a, b) => (a.requestedAt || 0) - (b.requestedAt || 0));
   const done = list.filter(o => o.status === 'returned');
   const open = list.find(o => o.status === 'approved') || null, pending = list.find(o => o.status === 'pending') || null;
@@ -586,4 +592,14 @@ export function durText(min) {
   if (m < 1) return '1 min se kam';
   if (m < 60) return m + ' min';
   return hm(m);
+}
+
+/* ---------- khane ka waqfa (break) ---------- */
+export const BREAK_MINUTES = [10, 15, 20, 30, 40, 45, 60];
+/** Staff ki bari: 1 = pehli, 2 = doosri (jo pehle walon ki jagah dukaan sambhalte hain). */
+export function breakGroup(account = {}) { return Number(account.breakGroup) === 2 ? 2 : 1; }
+/** Malik ke staff se sab ke liye halki list (naam + bari) — staffConfig/main.roster, taake manager ko naam nazar aayen. */
+export function rosterOf(staff = []) {
+  return staff.filter(s => s.active !== false).map(s => ({ phone: s.phone, name: String(s.name || '').slice(0, 80), group: breakGroup(s) }))
+    .sort((a, b) => a.phone.localeCompare(b.phone));
 }

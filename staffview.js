@@ -1,8 +1,9 @@
 // staffview.js — staff ka apna panel. Sirf apni hazri, apni salary, apni request.
 import {
   APP_VERSION, STATUS_LABEL, DAY_SHORT, SHOP, esc, money, hm, fmtTime, pkDate, pkMinutes, addMonths, weekday, monthLabel, dateLabel, shortDate,
-  monthSummary, openRecord, workMinutes, parseTime, checkoutDue, shiftMinutes, dayOuts, outMinutes, OUT_REASONS, OUT_MINUTES, reasonUr, minutesUr, dayColor, durText, hasArabic
+  monthSummary, openRecord, workMinutes, parseTime, checkoutDue, shiftMinutes, dayOuts, outMinutes, OUT_REASONS, OUT_MINUTES, reasonUr, minutesUr, dayColor, durText, hasArabic, breakGroup
 } from './core.js';
+import { openBreakSheet, breakStatusHtml } from './breaks.js';
 import { icon, avatar, nameHtml, toast, busy, takeSelfie, getGps, deliverPdf, errorText, timeField, IN_TICKETS, OUT_TICKETS, openSheet, refreshSheets } from './ui.js';
 import { loadPdfLib, browserTextImages, staffMonthPdf } from './pdf.js';
 
@@ -65,6 +66,8 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
     const today = pkDate(), open = openRecord(S.myAttendance);
     if (!open || open.date !== today) return '';
     const od = dayOuts(S.outs, S.phone, today), last = [...S.outs].filter(o => o.date === today).sort((a, b) => (b.requestedAt || 0) - (a.requestedAt || 0))[0];
+    const bk = dayOuts(S.outs, S.phone, today, Date.now(), 'break');
+    if (bk.open) return gatePass(bk.open, false);
     if (od.open) return gatePass(od.open, false);
     if (od.pending) return `<section class="out-wait">${icon('clock', 22)}<div><b>Parchi malik ke paas hai</b><small><span class="ur" dir="rtl">${esc(reasonUr(od.pending.reason))} · ${esc(minutesUr(od.pending.minutes))}</span> · ${clock(od.pending.requestedAt)} ko bheji. Malik ya manager "Haan" karein to yahan Gate Pass khul jayega.</small></div><button type="button" class="btn btn-ghost btn-sm" data-action="out-cancel" data-id="${esc(od.pending.id)}">Cancel</button></section>`;
     return `${last?.status === 'rejected' ? `<p class="notice tone-bad">${icon('alert', 18)} <span>Malik ne ${esc(last.reason)} ki parchi mana kar di${last.ownerNote ? ': ' + esc(last.ownerNote) : ''}.</span></p>` : ''}
@@ -74,7 +77,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
   function gatePass(o, big) {
     const m = outMinutes(o, Date.now()) || 0, over = m > Number(o.minutes || 0), back = Number(o.outAt) + Number(o.minutes || 0) * 60000;
     return `<section class="gate${big ? ' big' : ''}" style="--day:${dayColor(pkDate())}">
-      <div class="gate-top"><span>GATE PASS · <span class="ur" dir="rtl">گیٹ پاس</span></span><span>${esc(dateLabel(pkDate()))}</span></div>
+      <div class="gate-top"><span>${o.kind === 'break' ? 'KHANA BREAK · <span class="ur" dir="rtl">کھانے کا وقفہ</span>' : 'GATE PASS · <span class="ur" dir="rtl">گیٹ پاس</span>'}</span><span>${esc(dateLabel(pkDate()))}</span></div>
       <div class="gate-body">${avatar(me(), 'lg')}<div><b class="gate-name">${nameHtml(me().name)}</b><small>${esc(me().role || 'Staff')} · ${esc(me().phone || S.phone)}</small></div></div>
       <div class="gate-grid"><div><small class="ur" dir="rtl">وجہ</small><b class="ur" dir="rtl">${esc(reasonUr(o.reason))}</b>${o.note ? `<small dir="auto">${esc(o.note)}</small>` : ''}</div><div><small class="ur" dir="rtl">گیا</small><b>${clock(o.outAt)}</b></div><div><small class="ur" dir="rtl">واپسی</small><b class="${over ? 'txt-bad' : ''}">${clock(back)}</b></div></div>
       <p class="gate-ok">${icon('check', 18)} <span class="ur" dir="rtl">${o.approvedByName && o.approvedByName !== 'Malik' ? esc(o.approvedByName) + ' (منیجر) نے منظور کیا' : 'مالک نے منظور کیا'}</span></p>
@@ -106,13 +109,16 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
   /** Manager: aaj ki doosron ki parchiyan. */
   function managerCard() {
     if (!data.isManager()) return '';
-    const list = S.teamOuts || [], pending = list.filter(o => o.status === 'pending'), out = list.filter(o => o.status === 'approved');
+    const list = S.teamOuts || [], pending = list.filter(o => o.status === 'pending'), out = list.filter(o => o.status === 'approved' && o.kind !== 'break');
+    const breaks = [...list, ...S.outs.filter(o => o.date === pkDate())].filter(o => o.kind === 'break' && o.status === 'approved');
     if (S.errors?.teamOuts) return `<p class="error-line">${icon('alert', 18)} <span>Manager ki parchiyan nahi aayin (${esc(S.errors.teamOuts)}). Malik ko naye Firebase rules (v206) publish karne hain.</span></p>`;
     return `<section class="panel pad mgr"><h2 class="section-label">${icon('people', 18)} Manager — bahar jane ki parchiyan</h2>
+      <button type="button" class="btn btn-primary" data-action="break-start">${icon('clock', 18)} Khana break shuru karein</button>
+      ${breakStatusHtml(breaks)}
       ${pending.map(o => `<div class="out-card"><div class="out-text"><b>${nameHtml(o.name || o.phone)} bahar jana chahta hai</b><small>${esc(o.reason)}${o.note ? ' — ' + nameHtml(o.note) : ''} · ${o.minutes} min · ${clock(o.requestedAt)}</small></div>
         <div class="out-btns"><button type="button" class="btn btn-primary btn-sm" data-action="mgr-review" data-id="${esc(o.id)}" data-arg="yes">Haan</button><button type="button" class="btn btn-ghost btn-sm" data-action="mgr-review" data-id="${esc(o.id)}" data-arg="no">Nahi</button></div></div>`).join('')}
       ${out.map(o => { const m = outMinutes(o, Date.now()) || 0, over = m > Number(o.minutes || 0); return `<div class="mgr-out"><span><b>${nameHtml(o.name || o.phone)}</b> abhi bahar · <span class="${over ? 'txt-bad' : ''}">${hm(m)}</span> · ${esc(o.reason)}${o.approvedByName ? ' · ' + esc(o.approvedByName) + ' ne manzoor ki' : ''}</span><button type="button" class="btn btn-ghost btn-sm" data-action="mgr-return" data-id="${esc(o.id)}">Wapas aa gaya</button></div>`; }).join('')}
-      ${!pending.length && !out.length ? '<p class="hint">Abhi koi parchi nahi. Nayi parchi aaye to yahan Haan / Nahi ke button aayenge.</p>' : ''}
+      ${!pending.length && !out.length && !breaks.length ? '<p class="hint">Abhi koi parchi nahi. Nayi parchi aaye to yahan Haan / Nahi ke button aayenge.</p>' : ''}
     </section>`;
   }
   /** Malik ki hidayat: Urdu ho to poora paragraph daen se baen (English alfaaz beech mein theek rehte hain). */
@@ -206,6 +212,18 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
         toast(result.queued ? 'Internet kamzor hai — Check-Out phone mein mehfooz hai, signal aate hi chala jayega.' : 'Check-Out ho gaya', 'ok');
       });
       rerender();
+    },
+    'break-start'() {
+      const today = pkDate(), roster = S.config.roster || [], att = S.teamAttendance || [], all = [...(S.teamOuts || []), ...S.outs.filter(o => o.date === today)];
+      const people = roster.map(r => { const a = r.phone === S.phone ? S.myAttendance.find(x => x.date === today) : att.find(x => x.phone === r.phone);
+        return { phone: r.phone, name: r.name, group: Number(r.group) === 2 ? 2 : 1, onDuty: !!(a?.checkIn && !a.checkOut), busy: all.some(o => o.phone === r.phone && o.status === 'approved') }; });
+      if (!people.length) { toast('Staff ki list abhi nahi aayi. Malik aik dafa apni app khol lein, phir dobara koshish karein.', 'bad'); return; }
+      ui.breakSheet?.close(); ui.breakSheet = openBreakSheet({ people, onStart: (phones, m) => data.startBreak(phones, m) });
+    },
+    async 'break-end-all'(el) {
+      const list = [...(S.teamOuts || []), ...S.outs.filter(o => o.date === pkDate())].filter(o => o.kind === 'break' && o.status === 'approved');
+      if (!list.length || !confirm(`${list.length} larkon ki wapsi abhi laga dein?`)) return;
+      await busy(el, () => data.endBreaks(list), 'Sab ki wapsi lag gayi'); rerender();
     },
     async 'mgr-review'(el) { const yes = el.dataset.arg === 'yes'; await busy(el, () => data.reviewOut(el.dataset.id, yes), yes ? 'Manzoor kar di' : 'Mana kar di'); rerender(); },
     async 'mgr-return'(el) { const o = (S.teamOuts || []).find(x => x.id === el.dataset.id); if (!o || !confirm('Is larke ki wapsi abhi ke waqt par laga dein?')) return; await busy(el, () => data.returnOut(o), 'Wapsi lag gayi'); rerender(); },

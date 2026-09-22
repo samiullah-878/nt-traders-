@@ -1,7 +1,7 @@
 // data.js — Firebase se baat sirf yahan hoti hai. sdk bahar se aata hai (boot.js asal SDK deta hai, test naqli).
 import {
   BUSINESS_ID, DEFAULT_CONFIG, SHOP, normalizePhone, normalizeAttendance, pkDate, pkTime24, pkMinutes, parseTime, to24,
-  monthRange, addMonths, addDays, resolveSchedule, lateMinutes, scoreForLate, salaryCalc, salarySnapshot, isMonth, isDate, shiftMinutes, salaryConfig, workMinutes, fmtTime
+  monthRange, addMonths, addDays, resolveSchedule, lateMinutes, scoreForLate, salaryCalc, salarySnapshot, isMonth, isDate, shiftMinutes, salaryConfig, workMinutes, fmtTime, rosterOf
 } from './core.js';
 import { isOwnerUser } from './auth.js';
 
@@ -32,7 +32,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     return {
       role: null, phone: '', loaded: new Set(), config: { ...DEFAULT_CONFIG },
       staff: [], months: new Map(), requests: [], schedules: new Map(), payroll: [],
-      account: null, myAttendance: [], outs: [], teamOuts: [], errors: {}, lastSync: {}, pendingWrites: 0
+      account: null, myAttendance: [], outs: [], teamOuts: [], teamAttendance: [], errors: {}, lastSync: {}, pendingWrites: 0
     };
   }
   let unsubs = [], monthSubs = new Map(), epoch = 0, legacyChecked = false;
@@ -62,10 +62,11 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   /* ---------- owner ---------- */
   function startOwner() {
     stop(); state.role = 'owner';
-    live(ref('staffConfig', 'main'), 'config', readConfig);
+    live(ref('staffConfig', 'main'), 'config', snap => { readConfig(snap); queueMicrotask(syncRoster); });
     live(col('staffAccounts'), 'staff', snap => {
       state.staff = readList(snap).map(d => toAccount(d.id, d)).sort((a, b) => String(a.name).localeCompare(String(b.name)));
       if (!state.staff.length && !legacyChecked) { legacyChecked = true; void importLegacyStaff(); }
+      queueMicrotask(syncRoster);
     });
     live(col('staffRequests'), 'requests', snap => { state.requests = readList(snap).map(r => ({ ...r, phone: normalizePhone(r.phone) || r.phone })); });
     live(col('staffSchedules'), 'schedules', snap => { state.schedules = new Map(readList(snap).map(s => [s.id, s])); });
@@ -79,6 +80,15 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     });
     const month = pkDate().slice(0, 7);
     watchMonth(month); watchMonth(addMonths(month, -1));
+  }
+  /** Manager ko doosron ke naam aur bari chahiye (wo staffAccounts nahi parh sakta) -> staffConfig/main.roster. */
+  let rosterBusy = false;
+  function syncRoster() {
+    if (state.role !== 'owner' || !state.loaded.has('staff') || !state.loaded.has('config') || rosterBusy) return;
+    const next = rosterOf(state.staff);
+    if (JSON.stringify(next) === JSON.stringify(state.config.roster || [])) return;
+    rosterBusy = true;
+    sdk.setDoc(ref('staffConfig', 'main'), { roster: next }, { merge: true }).catch(e => onProblem('roster', e)).finally(() => { rosterBusy = false; });
   }
   /** Purani app sirf "staff" collection mein likhti thi. Agar naye accounts khali hon to wahan se utha lo. */
   async function importLegacyStaff() {
@@ -133,8 +143,13 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
         if (fresh.length && !first) onProblem('new-out', { fresh });
       };
       teamSub = sdk.onSnapshot(sdk.query(col('staffOuts'), sdk.where('date', '==', pkDate())), handler, error => { if (token === epoch) { teamSub = null; problem('teamOuts', error); } });
-      unsubs.push(() => { try { teamSub?.(); } catch { /* ignore */ } teamSub = null; });
-    } else if (!on && teamSub) { try { teamSub(); } catch { /* ignore */ } teamSub = null; state.teamOuts = []; changed(); }
+      // Khane ke break ke liye: aaj kaun duty par hai (sirf waqt; selfie alag collection mein hai)
+      const attSub = sdk.onSnapshot(sdk.query(col('staffAttendance'), sdk.where('date', '==', pkDate())), snap => {
+        if (token !== epoch) return; const rows = []; snap.forEach(d => rows.push(normalizeAttendance(clean(d.data()), d.id)));
+        state.teamAttendance = rows; state.loaded.add('teamAttendance'); delete state.errors.teamAttendance; changed();
+      }, error => { if (token === epoch) problem('teamAttendance', error); });
+      unsubs.push(() => { try { teamSub?.(); } catch { /* ignore */ } teamSub = null; try { attSub(); } catch { /* ignore */ } });
+    } else if (!on && teamSub) { try { teamSub(); } catch { /* ignore */ } teamSub = null; state.teamOuts = []; state.teamAttendance = []; changed(); }
   }
   const isManager = () => state.role === 'staff' && state.account?.canApproveOuts === true;
   function startStaff(phone, cachedAccount) {
@@ -219,7 +234,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     };
     const account = clean({
       name: String(input.name).trim(), role: String(input.role || 'Staff').trim() || 'Staff', address: String(input.address || '').trim(), phone,
-      photo: input.photo ?? old?.photo ?? '', active: input.active !== false, loginEnabled: input.loginEnabled !== false, canApproveOuts: input.canApproveOuts === true,
+      photo: input.photo ?? old?.photo ?? '', active: input.active !== false, loginEnabled: input.loginEnabled !== false, canApproveOuts: input.canApproveOuts === true, breakGroup: Number(input.breakGroup) === 2 ? 2 : 1,
       joinDate: isDate(input.joinDate) ? input.joinDate : (old?.joinDate || (old ? '' : pkDate())),
       salary, salaryExtras: old?.salaryExtras || [], updatedAt: Date.now()
     });
@@ -258,7 +273,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     if (has('grace')) next.grace = Math.max(0, num(patch.grace, 10));
     if (has('radius')) next.radius = Math.max(20, num(patch.radius, SHOP.radius));
     if (has('instruction')) next.instruction = String(patch.instruction || '');
-    const salaryKeys = ['defSalary', 'defDays', 'defOt', 'salaryMode', 'leavePaid', 'lateEvery', 'lateFineDays', 'outDeduct'];
+    const salaryKeys = ['defSalary', 'defDays', 'defOt', 'salaryMode', 'leavePaid', 'lateEvery', 'lateFineDays', 'outDeduct', 'breakDeduct'];
     if (salaryKeys.some(has)) {
       const old = { ...DEFAULT_CONFIG.salaryDefault, ...(state.config.salaryDefault || {}) }, d = { ...old };
       if (has('defSalary')) d.monthlySalary = Math.max(0, num(patch.defSalary, 0));
@@ -269,6 +284,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       if (has('lateEvery')) d.lateEvery = Math.max(0, Math.floor(num(patch.lateEvery, 0)));
       if (has('lateFineDays')) d.lateFineDays = Math.max(0, num(patch.lateFineDays, 0.5));
       if (has('outDeduct')) d.outDeduct = patch.outDeduct === true;
+      if (has('breakDeduct')) d.breakDeduct = patch.breakDeduct === true;
       next.salaryDefault = d;
     }
     if (!Object.keys(next).length) return;
@@ -584,6 +600,45 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     });
   }
 
+  /* ---------- khane ka waqfa: malik ya manager kai larkon ka aik sath ---------- */
+  async function startBreak(phones = [], minutes = 30) {
+    const m = Math.round(Number(minutes));
+    if (!(m >= 1 && m <= 180)) throw new Error('Break ka waqt 1 se 180 minute tak chunein.');
+    const list = [...new Set(phones.map(normalizePhone).filter(Boolean))];
+    if (!list.length) throw new Error('Kam az kam aik larka chunein.');
+    const owner = state.role === 'owner';
+    if (!owner && !isManager()) throw new Error('Sirf malik ya manager break shuru kar sakta hai.');
+    if (owner) guardOwner();
+    const now = Date.now(), today = pkDate(), batch = 'b' + now.toString(36), stamp = sdk.serverTimestamp ? sdk.serverTimestamp() : now;
+    const byName = owner ? 'Malik' : String(state.account?.name || 'Manager').slice(0, 80);
+    const names = new Map((owner ? state.staff.map(s => [s.phone, s.name]) : (state.config.roster || []).map(r => [r.phone, r.name])));
+    const doc = phone => ({ phone, name: String(names.get(phone) || '').slice(0, 80), date: today, reason: 'Khana', note: '', minutes: m, status: 'approved', kind: 'break', batch,
+      requestedAt: now, serverAt: stamp, by: auth.currentUser.uid, outAt: now, approvedAt: now, approvedBy: auth.currentUser.uid, approvedByName: byName, approvedServerAt: stamp });
+    if (owner) {
+      await fast(async tx => { for (const phone of list) tx.set(sdk.doc(col('staffOuts')), doc(phone)); audit(tx, 'khana break', batch, null, { count: list.length, minutes: m }, byName); });
+    } else {
+      const b = sdk.writeBatch(fs); for (const phone of list) b.set(sdk.doc(col('staffOuts')), doc(phone));
+      await quick(b.commit());
+    }
+    return list.length;
+  }
+  async function endBreaks(items = []) {
+    const open = items.filter(o => o?.id && o.status === 'approved'); if (!open.length) return 0;
+    const now = Date.now();
+    if (state.role === 'owner') {
+      guardOwner();
+      await fast(async tx => { for (const o of open) tx.set(ref('staffOuts', o.id), { status: 'returned', returnAt: now, returnBy: 'malik' }, { merge: true }); });
+    } else {
+      if (!isManager()) throw new Error('Sirf malik ya manager sab ki wapsi laga sakta hai.');
+      const b = sdk.writeBatch(fs), stamp = sdk.serverTimestamp ? sdk.serverTimestamp() : now, byName = String(state.account?.name || 'Manager').slice(0, 80);
+      for (const o of open) b.set(ref('staffOuts', o.id), o.phone === state.phone
+        ? { status: 'returned', returnAt: now, returnServerAt: stamp }
+        : { status: 'returned', returnAt: now, returnBy: 'manager', returnByName: byName, returnServerAt: stamp }, { merge: true });
+      await quick(b.commit());
+    }
+    return open.length;
+  }
+
   /* ---------- staff: check-in / out / request ---------- */
   async function checkIn({ selfie, gps }) {
     if (state.role !== 'staff') throw new Error('Staff login zaroori hai.');
@@ -643,7 +698,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
 
   return {
     auth, state, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
-    requestOut, cancelOut, returnOut, reviewOut, isManager,
+    requestOut, cancelOut, returnOut, reviewOut, isManager, startBreak, endBreaks,
     applyDefaultShiftAll, applyDefaultSalaryAll, toggleClosed, quickPresent, closeCheckouts, getSelfie, migrateSelfies, selfiesFor, auditLog,
     accounts: {
       async getSession(uid) { const s = await sdk.getDoc(ref('staffSessions', uid)); return s.exists() ? s.data() : null; },

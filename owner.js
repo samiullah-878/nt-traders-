@@ -2,8 +2,9 @@
 import {
   APP_VERSION, STATUS_LABEL, STATUS_MARK, DAY_SHORT, SHOP, esc, money, hm, fmtTime, to24, pkDate, pkMinutes, pkTime24, addDays, addMonths, weekday,
   monthDates, monthLabel, dateLabel, parseTime, shortDate, weekRange, dayRows, countStatuses, monthSummary, smartSearch, salaryConfig, checkoutDue, isDate,
-  shiftMinutes, usesDefaultSalary, weekSummary, isClosed, loanCuts, workMinutes, parseTime as C_parse, serverGap, STATUS_MARK as MARK, dayOuts, outMinutes, durText
+  shiftMinutes, usesDefaultSalary, weekSummary, isClosed, loanCuts, workMinutes, parseTime as C_parse, serverGap, STATUS_MARK as MARK, dayOuts, outMinutes, durText, breakGroup
 } from './core.js';
+import { openBreakSheet, breakStatusHtml } from './breaks.js';
 const clock = ms => ms ? fmtTime(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(ms))) : '—';
 const to24FromMin = m => { const x = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
 import { icon, avatar, nameHtml, toast, busy, openSheet, refreshSheets, fileToDataUrl, deliverPdf, $, errorText, timeField, IN_TICKETS, OUT_TICKETS } from './ui.js';
@@ -64,7 +65,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
   /** Nayi parchiyan: Haan / Nahi yahin se. */
   function outCards() {
     const list = S.outs.filter(o => o.status === 'pending' && o.date === pkDate()).sort((a, b) => (a.requestedAt || 0) - (b.requestedAt || 0));
-    const openList = S.outs.filter(o => o.status === 'approved' && o.date === pkDate());
+    const openList = S.outs.filter(o => o.status === 'approved' && o.date === pkDate() && o.kind !== 'break');
     if (!list.length && !openList.length) return '';
     return `<section class="out-cards" aria-label="Bahar jane ki parchiyan">${list.map(o => { const s = account(o.phone) || { name: o.phone };
       return `<div class="out-card">${avatar(s)}<div class="out-text"><b>${nameHtml(s.name)} bahar jana chahta hai</b><small>${esc(o.reason)}${o.note ? ' — ' + nameHtml(o.note) : ''} · ${o.minutes} min · ${esc(clock(o.requestedAt))}</small></div>
@@ -85,6 +86,9 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       if (od.open) { const m = outMinutes(od.open, Date.now()) || 0, over = m > Number(od.open.minutes || 0); chips.push(`<button type="button" class="tag ${over ? 't-bad' : 't-late'}" data-action="outs" data-arg="${date}">Abhi bahar · ${durText(m)} se · ${esc(od.open.reason)}${over ? ' · waqt se zyada' : ''}</button>`); }
       if (od.pending) chips.push(`<button type="button" class="tag t-late" data-action="outs" data-arg="${date}">Bahar jana chahta hai · ${esc(od.pending.reason)}</button>`);
       if (od.done.length) chips.push(`<button type="button" class="tag" data-action="outs" data-arg="${date}">Bahar ${od.done.map(o => `${clock(o.outAt)}–${clock(o.returnAt)}`).join(', ')} (${durText(od.done.reduce((n, o) => n + (outMinutes(o) || 0), 0))})</button>`);
+      const bd = dayOuts(S.outs, s.phone, date, Date.now(), 'break');
+      if (bd.open) { const m = outMinutes(bd.open, Date.now()) || 0, over = m > Number(bd.open.minutes || 0); chips.push(`<span class="tag ${over ? 't-bad' : 't-late'}">Khana break · ${durText(m)} se${over ? ' · waqt se zyada' : ''}</span>`); }
+      if (bd.done.length) chips.push(`<span class="tag">Khana ${bd.done.map(o => `${clock(o.outAt)}–${clock(o.returnAt)}`).join(', ')} (${durText(bd.done.reduce((n, o) => n + (outMinutes(o) || 0), 0))})</span>`);
       if (minutes != null && od.total) chips.push(`<span class="tag t-ink">Asal kaam ${hm(Math.max(0, minutes - od.total))}</span>`);
       const g = serverGap(a); if (g != null && Math.abs(g) >= 10) chips.push(`<span class="tag t-bad" title="Staff ke phone ka waqt aur server ka waqt alag">Server ${fmtTime(to24FromMin(parseTime(a.checkIn) + g))}</span>`);
     }
@@ -128,9 +132,9 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     const shown = rows.filter(match).sort((a, b) => (ORDER[a.due ? 'due' : a.status] - ORDER[b.due ? 'due' : b.status]) || (a.a.checkIn || '').localeCompare(b.a.checkIn || '') || String(a.account.name).localeCompare(String(b.account.name)));
     const counts = { all: rows.length, present: c.present, late: c.late, absent: c.absent + c.waiting + c.loading, leave: c.leave + c.off };
     const closed = isClosed(resolveBase(), date), reason = (S.config.closedDays || []).find(d => d.date === date)?.reason;
-    return `${date === today ? outCards() + attention() + weekCard() : ''}
+    return `${date === today ? breakStatusHtml(S.outs.filter(o => o.kind === 'break' && o.status === 'approved' && o.date === today), Date.now(), o => account(o.phone)?.name || o.name || o.phone) + outCards() + attention() + weekCard() : ''}
       ${closed ? `<p class="closed-line">${icon('alert', 18)} <span><b>${esc(dateLabel(date))}: Dukaan band</b>${reason && reason !== 'Dukaan band' ? ' — ' + esc(reason) : ''}. Is din koi ghair hazir nahi ginta.</span></p>` : ''}
-      <div class="day-tools"><button type="button" class="btn btn-ghost btn-sm" data-action="toggle-closed" data-arg="${date}">${closed ? 'Dukaan band hatayein' : (date === today ? 'Aaj' : 'Is din') + ' dukaan band (Eid / chutti)'}</button>${c.absent + c.waiting && data.monthLoaded(month) ? `<button type="button" class="btn btn-ghost btn-sm" data-action="quick-present-all" data-arg="${date}">Sab ghair hazir ko hazir lagao</button>` : ''}<button type="button" class="btn btn-ghost btn-sm" data-action="selfies-day" data-arg="${date}">${icon('camera', 16)} Selfies dekhein</button></div>
+      <div class="day-tools">${date === today ? `<button type="button" class="btn btn-primary btn-sm" data-action="break-start">${icon('clock', 16)} Khana break</button>` : ''}<button type="button" class="btn btn-ghost btn-sm" data-action="toggle-closed" data-arg="${date}">${closed ? 'Dukaan band hatayein' : (date === today ? 'Aaj' : 'Is din') + ' dukaan band (Eid / chutti)'}</button>${c.absent + c.waiting && data.monthLoaded(month) ? `<button type="button" class="btn btn-ghost btn-sm" data-action="quick-present-all" data-arg="${date}">Sab ghair hazir ko hazir lagao</button>` : ''}<button type="button" class="btn btn-ghost btn-sm" data-action="selfies-day" data-arg="${date}">${icon('camera', 16)} Selfies dekhein</button></div>
       <section class="panel">
         ${strip(c, rows.length)}
         <div class="chips" role="tablist" aria-label="Filter">${FILTERS.map(([k, label]) => `<button type="button" role="tab" class="chip c-${k}" aria-selected="${ui.filter === k}" data-action="filter" data-arg="${k}"><b>${counts[k]}</b> ${label}</button>`).join('')}</div>
@@ -214,6 +218,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
             ${c.loanCut ? line(`Qarz ki qist <small>${(c.loans || []).filter(l => l.cut).map(l => 'baqi ' + money(l.remainingAfter)).join(', ')}</small>`, '− ' + money(c.loanCut), 'txt-bad') : ''}
             ${c.lateFine ? line(`Late jurmana <small>${c.lateCount} dafa late</small>`, '− ' + money(c.lateFine), 'txt-bad') : ''}
             ${c.outCut ? line(`Bahar ka waqt <small>${c.outCount} parchi · ${hm(c.outMin)}</small>`, '− ' + money(c.outCut), 'txt-bad') : c.outMin ? line(`Bahar ka waqt <small>${c.outCount} parchi · ${hm(c.outMin)} (kati band hai)</small>`, '—') : ''}
+            ${c.breakCut ? line(`Khane ka break <small>${c.breakCount} dafa · ${hm(c.breakMin)}</small>`, '− ' + money(c.breakCut), 'txt-bad') : ''}
             ${line('Kul banti salary', money(c.final), 'is-total')}
             ${line('Ada ho chuki', money(c.paid))}
             ${line('Baqi', money(c.balance), 'is-balance')}
@@ -327,6 +332,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
           <details><summary>Points ka rate (agar dete hain)</summary><label>1 point = Rs<input name="pointRate" type="number" inputmode="decimal" min="0" step="0.5" value="${Number(s?.salary?.pointRate) || ''}"></label><p class="hint">Waqt par aane ke points hazri ke sath khud bante hain. Rate 0 ho to salary par asar nahi.</p></details>
         </fieldset>
         <fieldset><legend>Ijazat</legend>
+          <label>Khane ki bari<select name="breakGroup"><option value="1" ${breakGroup(s || {}) === 1 ? 'selected' : ''}>Pehli bari</option><option value="2" ${breakGroup(s || {}) === 2 ? 'selected' : ''}>Doosri bari (pehle walon ki jagah dukaan sambhale)</option></select></label>
           <label class="check"><input type="checkbox" name="canApproveOuts" ${s?.canApproveOuts ? 'checked' : ''}> Ye <b>manager</b> hai — doosron ki bahar jane ki parchi Haan / Nahi kar sakta hai (apni nahi)</label>
           <label class="check"><input type="checkbox" name="loginEnabled" ${s?.loginEnabled === false ? '' : 'checked'}> Staff apne number se login kar sakta hai</label>
           <label class="check"><input type="checkbox" name="active" ${s?.active === false ? '' : 'checked'}> Kaam par hai (hata dein to list se chhup jata hai, hazri mehfooz rehti hai)</label>
@@ -448,6 +454,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         <label class="check"><input type="checkbox" name="leavePaid" ${d.leavePaid !== false ? 'checked' : ''}> Manzoor chutti ki salary nahi kategi</label>
         <div class="two"><label>Har kitne late par jurmana <small>0 = band</small><input name="lateEvery" type="number" inputmode="numeric" min="0" max="31" value="${Number(d.lateEvery) || 0}"></label><label>Jurmana (din ki salary)<input name="lateFineDays" type="number" inputmode="decimal" min="0" max="5" step="0.25" value="${d.lateFineDays ?? 0.5}"></label></div>
         <label class="check"><input type="checkbox" name="outDeduct" ${d.outDeduct ? 'checked' : ''}> Bahar jane ki parchi ka waqt salary se katein <small>(har ghanta = aik ghante ki salary)</small></label>
+        <label class="check"><input type="checkbox" name="breakDeduct" ${d.breakDeduct ? 'checked' : ''}> Khane ke break ka waqt bhi salary se katein <small>(aam tor par nahi katta)</small></label>
         <p class="hint">Misal: 3 aur 0.5 = har 3 dafa late par aadhe din ki salary kategi. Mode aur jurmana sab staff par lagte hain. Final ho chuke mahine nahi badalte.</p>
         <p class="hint">${customSalary ? `${customSalary} staff ki apni salary hai (default nahi).` : n ? 'Sab staff default salary par hain.' : ''}</p>
         ${customSalary ? '<button type="button" class="btn btn-ghost btn-sm" data-action="apply-salary-all">Sab par default salary lagayein</button>' : ''}
@@ -551,18 +558,18 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
   function excelWorkbook(X, month) {
     const dates = monthDates(month), staff = activeStaff(), wb = X.utils.book_new(), r0 = n => Math.round(Number(n) || 0), h2 = m => +((m || 0) / 60).toFixed(2);
     const reg = [['Naam', 'Number', ...dates.map(d => +d.slice(8)), 'Hazir', 'Late', 'Ghair hazir', 'Chutti/Off', 'Kul ghante']];
-    const detail = [['Tareekh', 'Din', 'Naam', 'Number', 'Aaya', 'Gaya', 'Ghante', 'Bahar (min)', 'Late (min)', 'Status', 'Note']];
+    const detail = [['Tareekh', 'Din', 'Naam', 'Number', 'Aaya', 'Gaya', 'Ghante', 'Bahar (min)', 'Khana (min)', 'Late (min)', 'Status', 'Note']];
     for (const s of staff) {
       const sum = summaryFor(s, month);
       reg.push([s.name, s.phone, ...sum.days.map(d => MARK[d.status] === '·' ? '' : MARK[d.status]), sum.count.present + sum.count.late, sum.count.late, sum.count.absent, sum.count.leave + sum.count.off, h2(sum.totalMin)]);
-      for (const d of sum.days) if (d.status !== 'na') detail.push([d.date, DAY_FULL[weekday(d.date)], s.name, s.phone, d.a.checkIn ? fmtTime(d.a.checkIn) : '', d.a.checkOut ? fmtTime(d.a.checkOut) : '', d.minutes != null ? h2(d.minutes) : '', dayOuts(S.outs, s.phone, d.date).done.reduce((n, o) => n + (outMinutes(o) || 0), 0) || '', d.a.checkIn ? d.late : '', STATUS_LABEL[d.status], d.a.ownerNote || '']);
+      for (const d of sum.days) if (d.status !== 'na') detail.push([d.date, DAY_FULL[weekday(d.date)], s.name, s.phone, d.a.checkIn ? fmtTime(d.a.checkIn) : '', d.a.checkOut ? fmtTime(d.a.checkOut) : '', d.minutes != null ? h2(d.minutes) : '', dayOuts(S.outs, s.phone, d.date).done.reduce((n, o) => n + (outMinutes(o) || 0), 0) || '', dayOuts(S.outs, s.phone, d.date, Date.now(), 'break').done.reduce((n, o) => n + (outMinutes(o) || 0), 0) || '', d.a.checkIn ? d.late : '', STATUS_LABEL[d.status], d.a.ownerNote || '']);
     }
     const sal = [['Naam', 'Number', 'Salary', 'Default?', 'Din kaam', 'Ghante', 'Ghair hazir din', 'Hazri salary', 'Overtime', 'Bonus+', 'Advance', 'Qarz qist', 'Late jurmana', 'Bahar (min)', 'Bahar kati', 'Kul', 'Ada', 'Baqi', 'Halat']];
     for (const s of staff) { const c = data.calcFor(s, month);
       sal.push([s.name, s.phone, r0(c.monthlySalary), c.useDefault ? 'Default' : 'Apni', c.daysWorked, h2((c.normalMin || 0) + (c.otMin || 0)), c.absentDays ?? '', r0(c.normalSalary), r0(c.overtimeAmount), r0((c.bonus || 0) + (c.pointsAmount || 0) + (c.mealSalary || 0)), r0(c.advance), r0(c.loanCut), r0(c.lateFine), c.outMin || 0, r0(c.outCut), r0(c.final), r0(c.paid), r0(c.balance), c.frozen ? 'Final' : 'Andaza']); }
     const add = (rows, name, widths) => { const ws = X.utils.aoa_to_sheet(rows); ws['!cols'] = widths.map(w => ({ wch: w })); X.utils.book_append_sheet(wb, ws, name); };
     add(reg, 'Register', [18, 13, ...dates.map(() => 3.5), 7, 6, 11, 10, 10]);
-    add(detail, 'Hazri', [11, 9, 18, 13, 9, 9, 7, 10, 9, 12, 24]);
+    add(detail, 'Hazri', [11, 9, 18, 13, 9, 9, 7, 10, 10, 9, 12, 24]);
     add(sal, 'Salary', [18, 13, 9, 9, 8, 8, 10, 11, 9, 9, 9, 9, 11, 10, 10, 10, 10, 10, 8]);
     return wb;
   }
@@ -573,7 +580,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       const t = clock;
       const label = { pending: ['st-late', 'Jawab baqi'], approved: ['st-absent', 'Abhi bahar'], returned: ['st-present', 'Wapas aa gaya'], rejected: ['st-off', 'Na-manzoor'] };
       return list.length ? `<ul class="reqs">${list.map(o => { const s = account(o.phone) || { name: o.phone }, m = outMinutes(o, Date.now()), over = m != null && m > Number(o.minutes || 0);
-        return `<li class="req"><p><b>${nameHtml(s.name)}</b> <span class="stamp ${label[o.status]?.[0] || 'st-off'}">${label[o.status]?.[1] || esc(o.status)}</span></p>
+        return `<li class="req"><p><b>${nameHtml(s.name)}</b>${o.kind === 'break' ? ' <span class="tag">Khana break</span>' : ''} <span class="stamp ${label[o.status]?.[0] || 'st-off'}">${label[o.status]?.[1] || esc(o.status)}</span></p>
           <p>${esc(o.reason)}${o.note ? ' — ' + nameHtml(o.note) : ''} · ${o.minutes} min ka kaha</p>
           <p class="muted">Manga ${t(o.requestedAt)}${o.outAt ? ` · Gaya ${t(o.outAt)}` : ''}${o.returnAt ? ` · Wapas ${t(o.returnAt)}` : ''}${m != null ? ` · <b class="${over ? 'txt-bad' : ''}">${hm(m)}</b>${over ? ' (waqt se zyada)' : ''}` : ''}${o.returnDistance != null ? ` · wapsi par dukaan se ${Math.round(o.returnDistance)}m` : ''}${o.approvedByName ? ` · ${esc(o.approvedByName)} ne ${o.status === 'rejected' ? 'mana ki' : 'manzoor ki'}` : ''}${o.returnBy === 'malik' ? ' · wapsi malik ne lagayi' : o.returnBy === 'manager' ? ` · wapsi ${esc(o.returnByName || 'manager')} ne lagayi` : ''}</p>
           ${o.status === 'pending' ? `<div class="btn-row"><button type="button" class="btn btn-primary btn-sm" data-action="out-review" data-id="${esc(o.id)}" data-arg="yes">Haan</button><button type="button" class="btn btn-ghost btn-sm" data-action="out-review" data-id="${esc(o.id)}" data-arg="no">Nahi</button></div>` : ''}
@@ -689,6 +696,12 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     links() { open('links', linksSheet); },
     'selfies-day'(el) { needMonth(el.dataset.arg.slice(0, 7)); open('selfies', () => selfiesDaySheet(el.dataset.arg)); },
     history() { open('history', historySheet); },
+    'break-start'() {
+      const today = pkDate(), att = data.attendanceBetween(today, today);
+      const people = activeStaff().map(s => { const a = att.find(x => x.phone === s.phone); return { phone: s.phone, name: s.name, group: breakGroup(s), onDuty: !!(a?.checkIn && !a.checkOut), busy: !!dayOuts(S.outs, s.phone, today, Date.now(), 'all').open }; });
+      open('break', () => openBreakSheet({ people, onStart: (phones, m) => data.startBreak(phones, m) }));
+    },
+    async 'break-end-all'(el) { const list = S.outs.filter(o => o.kind === 'break' && o.status === 'approved' && o.date === pkDate()); if (!list.length || !confirm(`${list.length} larkon ki wapsi abhi laga dein?`)) return; await busy(el, () => data.endBreaks(list), 'Sab ki wapsi lag gayi'); },
     async 'copy-link'(el) { const url = loginLink(el.dataset.phone); try { await navigator.clipboard.writeText(url); toast('Link copy ho gaya', 'ok'); } catch { prompt('Ye link copy karein:', url); } },
     async install() { if (install?.canPrompt) { await install.prompt(); rerender(); } else toast('Chrome ⋮ menu › "Add to Home screen" / "Install app" dabayein', 'ok'); },
     outs(el) { open('outsSheet', () => outsSheet(el?.dataset.arg || pkDate())); },
