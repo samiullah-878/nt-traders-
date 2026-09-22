@@ -45,6 +45,7 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
     onChange: () => { softRender(); view?.onData?.(); },
     onProblem: (name, error) => {
       console.warn('data', name, error);
+      if (name === 'new-ticket') { toast('Naya "bina bataye gaya" ticket — Hazri tab mein faisla karein', 'bad'); try { win.navigator.vibrate?.([300, 100, 300]); } catch { /* ignore */ } return; }
       if (name === 'new-out') { // nayi parchi: malik ko foran khabar (app khuli ho to)
         const n = error?.fresh?.length || 1; toast(n > 1 ? `${n} nayi parchiyan — Haan / Nahi karein` : 'Nayi parchi: koi bahar jana chahta hai — Hazri tab dekhein', 'ok');
         try { win.navigator.vibrate?.([200, 100, 200]); } catch { /* ignore */ }
