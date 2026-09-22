@@ -1,7 +1,7 @@
 // core.js — Noor Traders Hazri + Salary
 // Sirf hisab-kitab. Yahan na DOM hai na Firebase, is liye ye file Node mein test hoti hai.
 
-export const APP_VERSION = 'v205';
+export const APP_VERSION = 'v206';
 export const TZ = 'Asia/Karachi';
 export const BUSINESS_ID = 'noor-traders';
 export const SHOP = { name: 'Noor Traders Gulyana', lat: 32.7979125, lng: 73.956984375, radius: 200 };
@@ -542,7 +542,22 @@ export function serverGap(a = {}) {
 
 
 /* ---------- bahar jane ki parchi ---------- */
-export const OUT_REASONS = ['Maal lene', 'Khana', 'Namaz', 'Bank', 'Ghar ka kaam', 'Delivery', 'Aur'];
+/** key = Roman (Firebase aur malik ki screen), ur = staff ki parchi aur Gate Pass par Urdu lipi. */
+export const OUT_REASONS = [
+  { key: 'Washroom (chhoti hajat)', ur: 'واش روم — چھوٹی حاجت' },
+  { key: 'Washroom (bari hajat)', ur: 'واش روم — بڑی حاجت' },
+  { key: 'Maal lene', ur: 'مال لینے' }, { key: 'Khana', ur: 'کھانا' }, { key: 'Namaz', ur: 'نماز' },
+  { key: 'Bank', ur: 'بینک' }, { key: 'Ghar ka kaam', ur: 'گھر کا کام' }, { key: 'Delivery', ur: 'ڈیلیوری' }, { key: 'Aur', ur: 'کچھ اور' }
+];
+export const OUT_MINUTES = [3, 5, 7, 10, 15, 20, 30, 45, 60, 90, 120];
+export function reasonUr(key) { return OUT_REASONS.find(r => r.key === key)?.ur || String(key || ''); }
+/** "3 منٹ", "1 گھنٹہ", "ڈیڑھ گھنٹہ", "2 گھنٹے" */
+export function minutesUr(n) {
+  n = Number(n) || 0;
+  if (n === 90) return 'ڈیڑھ گھنٹہ';
+  if (n >= 60 && n % 60 === 0) return n === 60 ? '1 گھنٹہ' : (n / 60) + ' گھنٹے';
+  return n + ' منٹ';
+}
 /** Parchi ke minute: wapas aaya to (wapsi − jana); abhi bahar hai to ab tak (now diya ho to). */
 export function outMinutes(o = {}, now = null) {
   const start = Number(o.outAt) || null; if (!start) return null;

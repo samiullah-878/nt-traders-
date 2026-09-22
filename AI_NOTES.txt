@@ -1,8 +1,25 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v205   Tareekh: 2026-09-22  (v200-v204: 2026-09-21)
+Version: v206   Tareekh: 2026-09-22  (v200-v204: 2026-09-21)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+000000. v206 — PARCHI URDU MEIN, WASHROOM, 3/5/7 MINUTE, MANAGER MANZOORI
+------------------------------------------------------------
+Malik: parchi mein tatti / susu ke chips, parchi wali jagah Urdu (lipi), waqt 3/5/7 minute bhi, aur jis ko malik manager chune wo bhi manzoor kare.
+- core.OUT_REASONS ab [{key, ur}]: key Roman (Firebase + malik ki screen), ur = Urdu lipi (staff ki parchi + Gate Pass). Naye: 'Washroom (chhoti hajat)',
+  'Washroom (bari hajat)' (izzat wale alfaaz). reasonUr(key), OUT_MINUTES [3,5,7,10,15,20,30,45,60,90,120], minutesUr(n).
+- Staff ki parchi ka sheet poora Urdu (dir=rtl, Noto Naskh). Gate Pass: "گیٹ پاس", وجہ/گیا/واپسی, "مالک نے منظور کیا" ya "<naam> (منیجر) نے منظور کیا".
+  Malik ki app mein wajah Roman hi (malik Urdu lipi aasani se nahi parhta).
+- Manager: staffAccounts.canApproveOuts (staff form: "Ye manager hai"). Staff app mein managerCard: aaj ki doosron ki parchiyan (query staffOuts date==aaj),
+  Haan/Nahi, "abhi bahar" + wapsi. Apni parchi manzoor nahi kar sakta. Nayi parchi par toast/vibrate (app khuli ho to).
+  data: managerWatch() account snapshot se chalta/rukta; state.teamOuts; reviewOut/returnOut manager branch (quick setDoc, approvedByName, approvedServerAt/returnServerAt serverTimestamp).
+  Malik ki manzoori bhi approvedByName:'Malik' likhti hai. Parchi banate waqt 'name' bhi jata hai (manager ko naam dikhane ke liye).
+- Rules: isOutManager() (canApproveOuts == true); staffOuts read mein manager; create keys mein 'name'; manager update: pending -> approved/rejected
+  (sirf status, approvedAt, outAt, rejectedAt, approvedBy==uid, approvedByName, approvedServerAt==request.time) aur approved -> returned
+  (status, returnAt, returnBy, returnByName, returnServerAt==request.time), aur sirf doosre ki parchi. MALIK KO v206 RULES PUBLISH KARNE HAIN.
+- Tests 55.
 
 ------------------------------------------------------------
 00000. v205 — BAHAR JANE KI PARCHI (GATE PASS) + PIN HATAYA
@@ -206,7 +223,7 @@ archivo-latin.woff2, naskh-arabic-400.woff2, naskh-arabic-700.woff2   fonts (rep
 jspdf.umd.min.js (2.5.2), jspdf.plugin.autotable.min.js (3.8.4)       PDF library
 firebase-config.js, firebase.json, firestore.indexes.json, pages.yml, .nojekyll, .gitignore   purani waisi hi; firestore.rules v204 mein badli
 xlsx.mini.min.js  Excel library (sirf dabane par)
-*.test.mjs, test-fake-sdk.mjs, package.json     tests (npm install; npm test)  — 54 tests pass
+*.test.mjs, test-fake-sdk.mjs, package.json     tests (npm install; npm test)  — 55 tests pass
 LICENSES.txt, README.md
 
 PURANE REPO SE YE FILES DELETE KARNI HAIN (ab kaam ki nahi):
@@ -282,13 +299,13 @@ PDF mein Urdu lipi wala matn tasveer bana kar lagta hai (jsPDF Urdu font nahi ba
 ------------------------------------------------------------
 1) App mein Staff > "Update ke links" > "GitHub — files upload karein" (ya repo > "Add file" > "Upload files") -> zip ke andar ki SAB files ek sath daal dein (folder nahi, sirf files) -> Commit.
 2) Upar wali list ki purani files delete karein (har file kholein -> ... -> Delete file).
-3) 1-2 minute baad app kholein; neeche/login par "v205" likha aaye. Staff ke phone par bhi v205 aana zaroori hai (purani na chal rahi ho).
+3) 1-2 minute baad app kholein; neeche/login par "v206" likha aaye. Staff ke phone par bhi v206 aana zaroori hai (purani na chal rahi ho).
 v204 se Firestore rules NAYE hain (upar 0000 dekhein) — app ke baad publish karne hain. Authentication mein "Anonymous" aur "Email/Password" dono ON rehne chahiye.
 
 ------------------------------------------------------------
 8. KYA TEST HUA, KYA NAHI
 ------------------------------------------------------------
-Hua: 54 automated tests (hisab, status, salary, talash, login ke saare raaste, aur poori app naqli Firebase + happy-dom par:
+Hua: 55 automated tests (hisab, status, salary, talash, login ke saare raaste, aur poori app naqli Firebase + happy-dom par:
   login -> hazri -> hazri durust -> request manzoor -> talash -> naya staff -> advance -> final -> payment -> staff check-in/out -> request).
   4 PDF Node mein ban kar tasveer ki shakal mein dekhi gayin.
 Nahi hua (yahan mumkin nahi tha): asal Firebase/rules ke sath, asal phone ka camera aur GPS, asal browser mein dekhna (layout).

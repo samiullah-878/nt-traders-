@@ -174,3 +174,10 @@ test('bahar ki parchi: minute, din ka khulasa, salary kati', () => {
   assert.equal(C.salaryCalc({ account: { phone: P }, month: '2026-09', attendance: [], config: cfg, outs, today: '2026-09-21' }).outCut, 0);
   assert.match(C.dayColor('2026-09-21'), /^hsl\(/);
 });
+
+test('parchi Urdu: wajah aur waqt', () => {
+  assert.equal(C.reasonUr('Washroom (bari hajat)'), 'واش روم — بڑی حاجت');
+  assert.equal(C.minutesUr(3), '3 منٹ'); assert.equal(C.minutesUr(60), '1 گھنٹہ'); assert.equal(C.minutesUr(90), 'ڈیڑھ گھنٹہ'); assert.equal(C.minutesUr(120), '2 گھنٹے');
+  assert.deepEqual(C.OUT_MINUTES.slice(0, 3), [3, 5, 7]);
+  assert.ok(C.OUT_REASONS.every(r => r.key.length <= 40), 'rules: wajah 40 harf tak');
+});

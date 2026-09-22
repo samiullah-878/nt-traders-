@@ -18,7 +18,7 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js" crossorigin>
 <link rel="modulepreload" href="./app.js"><link rel="modulepreload" href="./core.js"><link rel="modulepreload" href="./auth.js"><link rel="modulepreload" href="./data.js">
 <link rel="modulepreload" href="./ui.js"><link rel="modulepreload" href="./owner.js"><link rel="modulepreload" href="./staffview.js"><link rel="modulepreload" href="./pdf.js">
-<link rel="stylesheet" href="./styles.css?v=205">
+<link rel="stylesheet" href="./styles.css?v=206">
 </head>
 <body>
 <div id="app" class="app" data-screen="boot">
@@ -36,6 +36,6 @@
 window.__bootTimer=setTimeout(function(){var t=document.getElementById('bootText');if(!t||!document.querySelector('#app[data-screen=boot]'))return;t.innerHTML='Internet kamzor lag raha hai. <button type="button" onclick="location.reload()" class="btn btn-ghost" style="margin-top:12px">Dobara kholein</button>'},12000);
 window.addEventListener('error',function(e){if(String(e.filename||'').indexOf('boot.js')>-1||/import|module/i.test(String(e.message||''))){var t=document.getElementById('bootText');if(t)t.textContent='App load nahi hui. Internet check kar ke page dobara kholein.'}});
 </script>
-<script type="module" src="./boot.js?v=205"></script>
+<script type="module" src="./boot.js?v=206"></script>
 </body>
 </html>

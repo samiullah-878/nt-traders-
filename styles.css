@@ -369,3 +369,12 @@ button.tag{border:0;cursor:pointer}
 .gate .btn-row{padding:0 14px}.gate .btn-row .btn{flex:1}
 .gate.big .gate-name{font-size:1.75rem}.gate.big .gate-clock{font-size:3rem}
 @media(prefers-reduced-motion:reduce){.gate-stripe{animation:none}}
+
+/* ---------- v206: Urdu parchi, manager ---------- */
+.ur-form legend,.ur-form label,.ur-form .hint,.ur-form .btn{font-family:"Noto Naskh Arabic",var(--font)}
+.ur-form legend{font-size:1.0625rem}
+.ur-chip{font-family:"Noto Naskh Arabic",var(--font);font-size:1rem;min-height:44px;line-height:1.6}
+.mgr{display:grid;gap:10px;border-color:#cfd7ea}
+.mgr .section-label{display:flex;align-items:center;gap:6px;color:var(--ink)}
+.mgr-out{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:10px;background:var(--late-bg)}
+.gate .ur{font-size:1em}

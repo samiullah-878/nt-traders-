@@ -250,6 +250,9 @@ test('v205: malik ko parchi — Haan, abhi bahar, wapsi, salary mein alag', asyn
 });
 test('logout → staff login → check-in / check-out', async () => {
   records.delete(B + `staffAttendance/${today}_03111112223`); // upar malik ne hazri lagayi thi
+  await click('[data-action=tab][data-arg=staff]'); await click('.row-main[data-phone="03111112223"]');
+  $('form[data-form=staff] [name=canApproveOuts]').checked = true; await submit($('form[data-form=staff]'));
+  assert.equal(records.get(B + 'staffAccounts/03111112223').canApproveOuts, true, 'Usman manager'); assert.match($('.view').textContent, /Manager/);
   await click('[data-action=tab][data-arg=settings]'); await click('[data-action=logout]'); await settle();
   assert.equal($('#app').dataset.screen, 'login');
   await click('[data-action=login-role][data-arg=staff]');
@@ -267,22 +270,32 @@ test('logout → staff login → check-in / check-out', async () => {
   // ---- v205: bahar jane ki parchi ----
   Object.defineProperty(win.navigator, 'geolocation', { value: undefined, configurable: true });
   await click('[data-action=out-new]'); assert.ok($('[data-sheet=out-new]'));
+  assert.match($('[data-sheet=out-new]').textContent, /واش روم — چھوٹی حاجت/); assert.match($('[data-sheet=out-new]').textContent, /3 منٹ/); assert.match($('[data-sheet=out-new]').textContent, /7 منٹ/);
   await click('[data-out-reason="Maal lene"]'); await click('[data-out-min="20"]');
   $('form[data-form=out]').elements.note.value = 'Rehman traders';
   await submit($('form[data-form=out]'));
   const outRec = [...records].find(([k, v]) => k.includes('staffOuts/') && v.phone === '03111112223');
   assert.ok(outRec, 'parchi bani'); const [outKey, outVal] = outRec;
-  assert.deepEqual(Object.keys(outVal).sort(), ['by', 'date', 'minutes', 'note', 'phone', 'reason', 'requestedAt', 'serverAt', 'status'].sort(), 'sirf rules wali keys');
+  assert.deepEqual(Object.keys(outVal).sort(), ['by', 'date', 'minutes', 'name', 'note', 'phone', 'reason', 'requestedAt', 'serverAt', 'status'].sort(), 'sirf rules wali keys'); assert.equal(outVal.name, 'Usman');
   assert.equal(outVal.status, 'pending'); assert.match($('.view').textContent, /Parchi malik ke paas hai/);
   await assert.rejects(app.data.requestOut({ reason: 'Khana', minutes: 10 }), /pehle se malik/);
   // malik ne Haan kiya (seedha record mein, jaise doosre phone se)
   await fake.sdk.setDoc({ path: outKey }, { status: 'approved', outAt: Date.now() - 25 * 60000, approvedAt: Date.now() }, { merge: true }); await settle();
-  assert.ok($('.gate'), 'Gate Pass khula'); assert.match($('.gate').textContent, /Malik ne manzoor kiya/); assert.match($('.gate').textContent, /Maal lene/);
+  assert.ok($('.gate'), 'Gate Pass khula'); assert.match($('.gate').textContent, /مالک نے منظور کیا/); assert.match($('.gate').textContent, /مال لینے/);
   assert.ok($('.gate [data-live-clock]'), 'chalti ghari'); assert.match($('.gate').textContent, /waqt guzar gaya/);
   await click('[data-action=gate-big]'); assert.ok($('[data-sheet=gate] .gate.big')); await click('[data-sheet=gate] [data-sheet-close]');
   await click('.gate [data-action=out-return]'); await settle(10);
   const back = records.get(outKey); assert.equal(back.status, 'returned'); assert.ok(back.returnAt); assert.ok(back.returnServerAt?.seconds);
   assert.equal($('.gate'), null); assert.match($('.view').textContent, /Aaj bahar:/);
+  // ---- v206: manager (Usman) doosre ki parchi manzoor kare ----
+  assert.ok($('.mgr'), 'manager ka hissa');
+  await fake.sdk.setDoc({ path: B + 'staffOuts/m1' }, { phone: '03001234567', name: 'Ali Raza', date: today, reason: 'Washroom (chhoti hajat)', note: '', minutes: 5, status: 'pending', requestedAt: Date.now(), by: 'x' }); await settle(10);
+  assert.match($('.mgr').textContent, /Ali Raza bahar jana chahta hai/);
+  await click('.mgr [data-action=mgr-review][data-arg=yes]'); await settle(6);
+  const m1 = records.get(B + 'staffOuts/m1'); assert.equal(m1.status, 'approved'); assert.equal(m1.approvedByName, 'Usman'); assert.ok(m1.approvedServerAt?.seconds);
+  assert.match($('.mgr').textContent, /abhi bahar/);
+  await click('.mgr [data-action=mgr-return]'); await settle(6); assert.equal(records.get(B + 'staffOuts/m1').status, 'returned'); assert.equal(records.get(B + 'staffOuts/m1').returnBy, 'manager');
+  await assert.rejects(app.data.reviewOut(outKey.split('/').pop(), true), /pehle hi|Apni parchi/);
   await click('[data-action=check-out]'); await settle(10);
   assert.ok(records.get(B + `staffAttendance/${today}_03111112223`).checkOut); assert.match($('.punch').textContent, /mukammal/);
 });

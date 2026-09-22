@@ -7,7 +7,7 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Noor Traders Hazri v204. Owner emails auth.js ke OWNER_EMAILS se milni chahiye.
+    // Noor Traders Hazri v206. Owner emails auth.js ke OWNER_EMAILS se milni chahiye.
     // An arbitrary Firebase email account must never gain business-owner access.
     function isOwner() {
       return signedIn()
@@ -35,6 +35,12 @@ service cloud.firestore {
 
     function validStaffSession() {
       return isStaff() && enabledStaffAccount(sessionPhone());
+    }
+
+    // v206: malik jis staff ko manager banaye, wo bahar jane ki parchi Haan / Nahi kar sakta hai.
+    function isOutManager() {
+      return validStaffSession()
+        && get(/databases/$(database)/documents/businesses/noor-traders/staffAccounts/$(sessionPhone())).data.get('canApproveOuts', false) == true;
     }
 
     // Existing owner business data: owner only.
@@ -130,12 +136,13 @@ service cloud.firestore {
           && request.resource.data.selfie.matches('data:image/jpeg;base64,.*'));
       allow update, delete: if isOwner();
     }
-    // v205: bahar jane ki parchi. Staff mangta hai, malik Haan/Nahi karta hai, staff "Wapas aa gaya" lagata hai.
+    // v205/v206: bahar jane ki parchi. Staff mangta hai, malik ya manager Haan/Nahi karta hai, staff "Wapas aa gaya" lagata hai.
     match /businesses/noor-traders/staffOuts/{outId} {
-      allow read: if isOwner() || (validStaffSession() && resource.data.phone == sessionPhone());
+      allow read: if isOwner() || isOutManager() || (validStaffSession() && resource.data.phone == sessionPhone());
       allow create: if isOwner()
         || (validStaffSession()
-          && request.resource.data.keys().hasOnly(['phone', 'date', 'reason', 'note', 'minutes', 'status', 'requestedAt', 'serverAt', 'by'])
+          && request.resource.data.keys().hasOnly(['phone', 'name', 'date', 'reason', 'note', 'minutes', 'status', 'requestedAt', 'serverAt', 'by'])
+          && (!('name' in request.resource.data) || (request.resource.data.name is string && request.resource.data.name.size() <= 80))
           && request.resource.data.phone == sessionPhone()
           && request.resource.data.by == request.auth.uid
           && request.resource.data.status == 'pending'
@@ -155,6 +162,17 @@ service cloud.firestore {
             || (resource.data.status == 'approved'
                 && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'returnAt', 'returnLat', 'returnLng', 'returnDistance', 'returnAccuracy', 'returnServerAt'])
                 && request.resource.data.status == 'returned'
+                && request.resource.data.returnServerAt == request.time)))
+        || (isOutManager()
+          && resource.data.phone != sessionPhone()
+          && ((resource.data.status == 'pending'
+                && request.resource.data.status in ['approved', 'rejected']
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'approvedAt', 'outAt', 'rejectedAt', 'approvedBy', 'approvedByName', 'approvedServerAt'])
+                && request.resource.data.approvedBy == request.auth.uid
+                && request.resource.data.approvedServerAt == request.time)
+            || (resource.data.status == 'approved'
+                && request.resource.data.status == 'returned'
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'returnAt', 'returnBy', 'returnByName', 'returnServerAt'])
                 && request.resource.data.returnServerAt == request.time)));
       allow delete: if isOwner();
     }
@@ -170,58 +188,5 @@ service cloud.firestore {
       allow read, create: if isOwner();
     }
 
-    match /businesses/noor-traders/staffTasks/{taskId} {
-      allow read: if isOwner()
-        || (validStaffSession() && resource.data.phone == sessionPhone());
-      allow create, delete: if isOwner();
-      allow update: if isOwner() || (
-        validStaffSession()
-        && resource.data.phone == sessionPhone()
-        && resource.data.get('status', 'assigned') in ['assigned', 'changes_requested']
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'status', 'revision', 'submissionId', 'photoIds', 'staffNote', 'submittedBy', 'submittedAt'
-        ])
-        && request.resource.data.status == 'submitted'
-        && request.resource.data.revision == resource.data.get('revision', 0) + 1
-        && request.resource.data.submissionId is string
-        && request.resource.data.submissionId.matches('^[A-Za-z0-9_-]{8,80}$')
-        && request.resource.data.submissionId != resource.data.get('submissionId', '')
-        && request.resource.data.photoIds is list
-        && request.resource.data.photoIds.size() >= 1
-        && request.resource.data.photoIds.size() <= 8
-        && request.resource.data.photoIds.toSet().size() == request.resource.data.photoIds.size()
-        && request.resource.data.staffNote is string
-        && request.resource.data.staffNote.size() <= 2000
-        && request.resource.data.submittedBy == request.auth.uid
-        && request.resource.data.submittedAt is number
-        && resource.data.get('points', 0) == 0
-      );
-      match /taskPhotos/{photoId} {
-        function task() {
-          return get(/databases/$(database)/documents/businesses/noor-traders/staffTasks/$(taskId)).data;
-        }
-        function nextTask() {
-          return getAfter(/databases/$(database)/documents/businesses/noor-traders/staffTasks/$(taskId)).data;
-        }
-        allow read: if isOwner() || (validStaffSession() && task().phone == sessionPhone());
-        allow create: if isOwner() || (
-          validStaffSession() && task().phone == sessionPhone()
-          && task().get('status', 'assigned') in ['assigned', 'changes_requested']
-          && nextTask().status == 'submitted'
-          && nextTask().revision == task().get('revision', 0) + 1
-          && nextTask().submittedBy == request.auth.uid
-          && request.resource.data.keys().hasOnly(['taskId', 'submissionId', 'dataUrl', 'uploadedBy', 'createdAt'])
-          && request.resource.data.taskId == taskId
-          && request.resource.data.submissionId == nextTask().submissionId
-          && photoId in nextTask().photoIds
-          && request.resource.data.uploadedBy == request.auth.uid
-          && request.resource.data.createdAt is number
-          && request.resource.data.dataUrl is string
-          && request.resource.data.dataUrl.size() <= 280000
-          && request.resource.data.dataUrl.matches('^data:image/jpeg;base64,[A-Za-z0-9+/]+={0,2}$')
-        );
-        allow update, delete: if isOwner();
-      }
-    }
   }
 }
