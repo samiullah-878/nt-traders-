@@ -1,12 +1,12 @@
 // staffview.js — staff ka apna panel. Sirf apni hazri, apni salary, apni request.
 import {
   APP_VERSION, STATUS_LABEL, DAY_SHORT, SHOP, esc, money, hm, fmtTime, pkDate, pkMinutes, addMonths, weekday, monthLabel, dateLabel, shortDate,
-  monthSummary, openRecord, workMinutes, parseTime, checkoutDue, shiftMinutes, dayOuts, outMinutes, OUT_REASONS, OUT_MINUTES, reasonUr, minutesUr, dayColor
+  monthSummary, openRecord, workMinutes, parseTime, checkoutDue, shiftMinutes, dayOuts, outMinutes, OUT_REASONS, OUT_MINUTES, reasonUr, minutesUr, dayColor, durText, hasArabic
 } from './core.js';
 import { icon, avatar, nameHtml, toast, busy, takeSelfie, getGps, deliverPdf, errorText, timeField, IN_TICKETS, OUT_TICKETS, openSheet, refreshSheets } from './ui.js';
 import { loadPdfLib, browserTextImages, staffMonthPdf } from './pdf.js';
 
-export function createStaffView({ data, rerender, logout, checkUpdate }) {
+export function createStaffView({ data, rerender, logout, checkUpdate, install }) {
   const S = data.state;
   const ui = { tab: 'hazri', month: pkDate().slice(0, 7), step: '', reqKind: 'leave' };
   const me = () => S.account || { phone: S.phone, name: '' };
@@ -69,7 +69,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate }) {
     if (od.pending) return `<section class="out-wait">${icon('clock', 22)}<div><b>Parchi malik ke paas hai</b><small><span class="ur" dir="rtl">${esc(reasonUr(od.pending.reason))} · ${esc(minutesUr(od.pending.minutes))}</span> · ${clock(od.pending.requestedAt)} ko bheji. Malik ya manager "Haan" karein to yahan Gate Pass khul jayega.</small></div><button type="button" class="btn btn-ghost btn-sm" data-action="out-cancel" data-id="${esc(od.pending.id)}">Cancel</button></section>`;
     return `${last?.status === 'rejected' ? `<p class="notice tone-bad">${icon('alert', 18)} <span>Malik ne ${esc(last.reason)} ki parchi mana kar di${last.ownerNote ? ': ' + esc(last.ownerNote) : ''}.</span></p>` : ''}
       <button type="button" class="btn btn-ghost btn-lg out-btn" data-action="out-new">${icon('out', 20)} Bahar jana hai? Parchi banayein</button>
-      ${od.done.length ? `<p class="hint center">Aaj bahar: ${od.done.map(o => `${clock(o.outAt)}–${clock(o.returnAt)}`).join(', ')} (${hm(od.total)})</p>` : ''}`;
+      ${od.done.length ? `<p class="hint center">Aaj bahar: ${od.done.map(o => `${clock(o.outAt)}–${clock(o.returnAt)}`).join(', ')} (${durText(od.total)})</p>` : ''}`;
   }
   function gatePass(o, big) {
     const m = outMinutes(o, Date.now()) || 0, over = m > Number(o.minutes || 0), back = Number(o.outAt) + Number(o.minutes || 0) * 60000;
@@ -80,7 +80,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate }) {
       <p class="gate-ok">${icon('check', 18)} <span class="ur" dir="rtl">${o.approvedByName && o.approvedByName !== 'Malik' ? esc(o.approvedByName) + ' (منیجر) نے منظور کیا' : 'مالک نے منظور کیا'}</span></p>
       <p class="gate-clock" data-live-clock aria-live="off">${clock(Date.now())}</p>
       <p class="gate-stripe" aria-hidden="true"></p>
-      <p class="gate-sub ${over ? 'txt-bad' : ''}">${hm(m)} se bahar${over ? ' — waqt guzar gaya, jaldi wapas aayein' : ''}</p>
+      <p class="gate-sub ${over ? 'txt-bad' : ''}">${m < 1 ? 'Abhi abhi gaya' : durText(m) + ' se bahar'}${over ? ' — waqt guzar gaya, jaldi wapas aayein' : ''}</p>
       ${big ? '' : `<div class="btn-row"><button type="button" class="btn btn-ghost" data-action="gate-big" data-id="${esc(o.id)}">Guard ko dikhayein</button><button type="button" class="btn btn-in btn-lg" data-action="out-return" data-id="${esc(o.id)}">${icon('check', 18)} Wapas aa gaya</button></div>`}
     </section>`;
   }
@@ -115,8 +115,19 @@ export function createStaffView({ data, rerender, logout, checkUpdate }) {
       ${!pending.length && !out.length ? '<p class="hint">Abhi koi parchi nahi. Nayi parchi aaye to yahan Haan / Nahi ke button aayenge.</p>' : ''}
     </section>`;
   }
+  /** Malik ki hidayat: Urdu ho to poora paragraph daen se baen (English alfaaz beech mein theek rehte hain). */
+  function instructionHtml(text) {
+    const rtl = hasArabic(text), lines = String(text).split(/\n+/).map(l => l.trim()).filter(Boolean);
+    return `<div class="notice${rtl ? ' is-rtl' : ''}">${icon('note', 18)}<div ${rtl ? 'dir="rtl" lang="ur" class="ur"' : ''}>${lines.map(l => `<p dir="${rtl ? 'rtl' : 'auto'}">${esc(l)}</p>`).join('')}</div></div>`;
+  }
+  /** Home screen par install ka banner (sirf browser mein; app ban chuki ho to nahi). */
+  function installCard() {
+    if (!install || install.standalone || install.dismissed) return '';
+    return `<section class="install-card">${icon('down', 22)}<div><b>App ko home screen par lagayein</b><small>Phir icon daba kar seedha aap ka safha khulega — na link, na number.</small></div>
+      <div class="btn-row"><button type="button" class="btn btn-primary btn-sm" data-action="install">${install.canPrompt ? 'Install karein' : 'Kaise lagayein?'}</button><button type="button" class="btn btn-ghost btn-sm" data-action="install-later">Baad mein</button></div></section>`;
+  }
   function hazriTab() {
-    return `${managerCard()}${actionCard()}${outCard()}${S.config.instruction ? `<p class="notice">${icon('note', 18)} <span>${nameHtml(S.config.instruction)}</span></p>` : ''}${monthBlock()}`;
+    return `${installCard()}${managerCard()}${actionCard()}${outCard()}${S.config.instruction ? instructionHtml(S.config.instruction) : ''}${monthBlock()}`;
   }
   function salaryTab() {
     const month = ui.month, c = data.calcFor(me(), month), today = pkDate();
@@ -198,6 +209,16 @@ export function createStaffView({ data, rerender, logout, checkUpdate }) {
     },
     async 'mgr-review'(el) { const yes = el.dataset.arg === 'yes'; await busy(el, () => data.reviewOut(el.dataset.id, yes), yes ? 'Manzoor kar di' : 'Mana kar di'); rerender(); },
     async 'mgr-return'(el) { const o = (S.teamOuts || []).find(x => x.id === el.dataset.id); if (!o || !confirm('Is larke ki wapsi abhi ke waqt par laga dein?')) return; await busy(el, () => data.returnOut(o), 'Wapsi lag gayi'); rerender(); },
+    async install() {
+      if (install?.canPrompt) { const ok = await install.prompt(); if (ok) toast('App lag rahi hai…', 'ok'); rerender(); return; }
+      openSheet({ id: 'install-help', title: 'Home screen par app kaise lagayein', render: () => `<ol class="steps">
+        <li>Chrome mein upar daen taraf <b>⋮</b> (teen nuqte) dabayein.</li>
+        <li><b>"Add to Home screen"</b> ya <b>"Install app"</b> dabayein.</li>
+        <li><b>Add / Install</b> dabayein. Home screen par <b>NT Hazri</b> ka icon aa jayega.</li>
+        <li>Aage se hamesha usi icon se kholein — login yaad rehta hai.</li></ol>
+        <p class="hint">iPhone: Safari mein neeche <b>Share</b> › <b>"Add to Home Screen"</b>.</p>` });
+    },
+    'install-later'() { install?.later(); rerender(); },
     'out-new'() { ui.outSheet?.close(); ui.outSheet = outSheet(); },
     async 'out-cancel'(el) { if (!confirm('Parchi cancel karein?')) return; await busy(el, () => data.cancelOut(el.dataset.id), 'Parchi cancel ho gayi'); rerender(); },
     'gate-big'(el) { const o = S.outs.find(x => x.id === el.dataset.id); if (!o) return; const sh = openSheet({ id: 'gate', title: 'Gate Pass', wide: true, render: () => { const cur = S.outs.find(x => x.id === o.id); return cur?.status === 'approved' ? gatePass(cur, true) : '<p class="empty-line">Ye Gate Pass ab band ho chuka hai.</p>'; } }); ui.gateSheet = sh; },
@@ -218,7 +239,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate }) {
       });
     },
     update(el) { busy(el, () => checkUpdate(true)); },
-    logout() { if (confirm('Logout karein?')) logout(); }
+    logout() { if (confirm('Logout karein?\n\nLogout ke baad dobara number likhna padega. Aam tor par logout ki zaroorat nahi.')) logout(); }
   };
   const forms = {
     async out(form, v, button) {
@@ -237,10 +258,9 @@ export function createStaffView({ data, rerender, logout, checkUpdate }) {
     return `<header class="top"><div class="top-in">
         <div class="brand">${avatar(me())}<span><b>${nameHtml(me().name || 'Staff')}</b><small>${esc(me().role || 'Noor Traders')}</small></span></div>
         <nav class="tabs" aria-label="Hisse">${tabs.map(([k, label, ic]) => `<button type="button" data-action="tab" data-arg="${k}" aria-current="${ui.tab === k ? 'page' : 'false'}">${icon(ic, 22)}<span>${label}</span>${k === 'request' && pend ? `<em class="badge">${pend}</em>` : ''}</button>`).join('')}</nav>
-        <button type="button" class="icon-btn on-ink" data-action="logout" aria-label="Logout">${icon('out')}</button>
       </div></header>
       <main class="view view-staff">${ui.tab === 'hazri' ? hazriTab() : ui.tab === 'salary' ? salaryTab() : requestTab()}
-        <p class="foot"><button type="button" class="link" data-action="update">Update check karein</button> &nbsp; ${APP_VERSION}</p></main>`;
+        <p class="foot"><button type="button" class="link" data-action="update">Update check karein</button> &nbsp; ${APP_VERSION} &nbsp; · &nbsp; <button type="button" class="link muted-link" data-action="logout">Logout</button></p></main>`;
   }
   return { render, actions, forms, changes: {}, inputs: {}, ui, onData() { refreshSheets(); } };
 }

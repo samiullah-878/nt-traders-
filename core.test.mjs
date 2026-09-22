@@ -181,3 +181,7 @@ test('parchi Urdu: wajah aur waqt', () => {
   assert.deepEqual(C.OUT_MINUTES.slice(0, 3), [3, 5, 7]);
   assert.ok(C.OUT_REASONS.every(r => r.key.length <= 40), 'rules: wajah 40 harf tak');
 });
+
+test('chhota waqt', () => {
+  assert.equal(C.durText(0), '1 min se kam'); assert.equal(C.durText(7), '7 min'); assert.equal(C.durText(65), '1h 05m');
+});

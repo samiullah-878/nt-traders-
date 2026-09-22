@@ -2,7 +2,7 @@
 import {
   APP_VERSION, STATUS_LABEL, STATUS_MARK, DAY_SHORT, SHOP, esc, money, hm, fmtTime, to24, pkDate, pkMinutes, pkTime24, addDays, addMonths, weekday,
   monthDates, monthLabel, dateLabel, parseTime, shortDate, weekRange, dayRows, countStatuses, monthSummary, smartSearch, salaryConfig, checkoutDue, isDate,
-  shiftMinutes, usesDefaultSalary, weekSummary, isClosed, loanCuts, workMinutes, parseTime as C_parse, serverGap, STATUS_MARK as MARK, dayOuts, outMinutes
+  shiftMinutes, usesDefaultSalary, weekSummary, isClosed, loanCuts, workMinutes, parseTime as C_parse, serverGap, STATUS_MARK as MARK, dayOuts, outMinutes, durText
 } from './core.js';
 const clock = ms => ms ? fmtTime(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(ms))) : '—';
 const to24FromMin = m => { const x = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
@@ -12,7 +12,7 @@ import { loadPdfLib, browserTextImages, dailyPdf, staffMonthPdf, registerPdf, sa
 const ORDER = { due: 0, late: 1, waiting: 2, absent: 3, loading: 3, present: 4, leave: 5, off: 6, closed: 6, na: 7 };
 const FILTERS = [['all', 'Sab'], ['present', 'Hazir'], ['late', 'Late'], ['absent', 'Ghair hazir'], ['leave', 'Chutti/Off']];
 
-export function createOwnerView({ data, controller, rerender, logout, checkUpdate }) {
+export function createOwnerView({ data, controller, rerender, logout, checkUpdate, install }) {
   const S = data.state;
   const ui = { openTickets: new Set(), tab: 'hazri', view: 'day', date: pkDate(), month: pkDate().slice(0, 7), filter: 'all', salaryMonth: pkDate().slice(0, 7), staffQuery: '', showInactive: false };
   const activeStaff = () => S.staff.filter(s => s.active !== false);
@@ -82,9 +82,9 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       if (minutes != null) chips.push(`<span class="tag t-ink">${hm(minutes)}${duty && minutes > duty ? ' (+' + hm(minutes - duty) + ' OT)' : ''}</span>`);
       if (a.manual) chips.push('<span class="tag">Malik ne lagayi</span>');
       const od = dayOuts(S.outs, s.phone, date);
-      if (od.open) { const m = outMinutes(od.open, Date.now()) || 0, over = m > Number(od.open.minutes || 0); chips.push(`<button type="button" class="tag ${over ? 't-bad' : 't-late'}" data-action="outs" data-arg="${date}">Abhi bahar · ${hm(m)} se · ${esc(od.open.reason)}${over ? ' · waqt se zyada' : ''}</button>`); }
+      if (od.open) { const m = outMinutes(od.open, Date.now()) || 0, over = m > Number(od.open.minutes || 0); chips.push(`<button type="button" class="tag ${over ? 't-bad' : 't-late'}" data-action="outs" data-arg="${date}">Abhi bahar · ${durText(m)} se · ${esc(od.open.reason)}${over ? ' · waqt se zyada' : ''}</button>`); }
       if (od.pending) chips.push(`<button type="button" class="tag t-late" data-action="outs" data-arg="${date}">Bahar jana chahta hai · ${esc(od.pending.reason)}</button>`);
-      if (od.done.length) chips.push(`<button type="button" class="tag" data-action="outs" data-arg="${date}">Bahar ${od.done.map(o => `${clock(o.outAt)}–${clock(o.returnAt)}`).join(', ')} (${hm(od.done.reduce((n, o) => n + (outMinutes(o) || 0), 0))})</button>`);
+      if (od.done.length) chips.push(`<button type="button" class="tag" data-action="outs" data-arg="${date}">Bahar ${od.done.map(o => `${clock(o.outAt)}–${clock(o.returnAt)}`).join(', ')} (${durText(od.done.reduce((n, o) => n + (outMinutes(o) || 0), 0))})</button>`);
       if (minutes != null && od.total) chips.push(`<span class="tag t-ink">Asal kaam ${hm(Math.max(0, minutes - od.total))}</span>`);
       const g = serverGap(a); if (g != null && Math.abs(g) >= 10) chips.push(`<span class="tag t-bad" title="Staff ke phone ka waqt aur server ka waqt alag">Server ${fmtTime(to24FromMin(parseTime(a.checkIn) + g))}</span>`);
     }
@@ -279,6 +279,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       </section>
       <h2 class="section-label">App</h2>
       <section class="panel tools">
+        ${install && !install.standalone ? tool('install', 'down', 'App home screen par lagayein', 'Icon se seedha khule') : ''}
         ${tool('links', 'share', 'Update ke links', 'GitHub upload · Firebase rules')}
         ${tool('update', 'down', 'App update check karein', 'Abhi ' + APP_VERSION)}
         ${fixes ? tool('migrate-selfies', 'camera', 'App ko halka karein (aik dafa)', 'Purani selfies alag karein — hazri list tez khulegi') : ''}
@@ -286,6 +287,13 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         ${tool('password', 'edit', 'Malik ka password badlein')}
         ${tool('logout', 'out', 'Logout', '', ' tone-bad')}
       </section>`;
+  }
+  const appUrl = () => { const l = window.location; return (l.origin || '') + (l.pathname || '/').replace(/index\.html$/, ''); };
+  const loginLink = phone => `${appUrl()}#login=${phone}`;
+  function waLink(s) {
+    const intl = '92' + String(s.phone).replace(/^0/, '');
+    const text = `Assalam o Alaikum ${s.name || ''}\nNoor Traders hazri app ka aap ka link:\n${loginLink(s.phone)}\n\n1) Link dabayein — app khud login ho jayegi.\n2) Phir "Install karein" / Chrome ⋮ > "Add to Home screen" dabayein.\n3) Aage se home screen wale icon se hi kholein.`;
+    return `https://wa.me/${intl}?text=${encodeURIComponent(text)}`;
   }
   function staffForm(phone) {
     const s = phone ? account(phone) : null, cfg = salaryConfig(s || {}, S.config), own = phone ? S.schedules.get(phone) : null, sch = data.scheduleFor(phone || '');
@@ -323,6 +331,8 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
           <label class="check"><input type="checkbox" name="loginEnabled" ${s?.loginEnabled === false ? '' : 'checked'}> Staff apne number se login kar sakta hai</label>
           <label class="check"><input type="checkbox" name="active" ${s?.active === false ? '' : 'checked'}> Kaam par hai (hata dein to list se chhup jata hai, hazri mehfooz rehti hai)</label>
         </fieldset>
+        ${s ? `<div class="link-box"><b>Login link</b><small>Larke ko WhatsApp par bhejein. Link dabate hi app khud login ho jayegi — number likhna nahi padega.</small>
+          <div class="btn-row"><a class="btn btn-in btn-sm" href="${esc(waLink(s))}" target="_blank" rel="noopener">${icon('share', 16)} WhatsApp par bhejein</a><button type="button" class="btn btn-ghost btn-sm" data-action="copy-link" data-phone="${esc(s.phone)}">Link copy karein</button></div></div>` : ''}
         <div class="btn-row sticky"><button class="btn btn-primary btn-lg">${s ? 'Save karein' : 'Staff shamil karein'}</button>${s ? `<button type="button" class="btn btn-ghost" data-action="staff-delete" data-phone="${phone}">Delete</button>` : ''}</div>
       </form>`
     });
@@ -679,6 +689,8 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     links() { open('links', linksSheet); },
     'selfies-day'(el) { needMonth(el.dataset.arg.slice(0, 7)); open('selfies', () => selfiesDaySheet(el.dataset.arg)); },
     history() { open('history', historySheet); },
+    async 'copy-link'(el) { const url = loginLink(el.dataset.phone); try { await navigator.clipboard.writeText(url); toast('Link copy ho gaya', 'ok'); } catch { prompt('Ye link copy karein:', url); } },
+    async install() { if (install?.canPrompt) { await install.prompt(); rerender(); } else toast('Chrome ⋮ menu › "Add to Home screen" / "Install app" dabayein', 'ok'); },
     outs(el) { open('outsSheet', () => outsSheet(el?.dataset.arg || pkDate())); },
     async 'out-review'(el) { const yes = el.dataset.arg === 'yes'; await busy(el, () => data.reviewOut(el.dataset.id, yes), yes ? 'Manzoor — larke ke phone par Gate Pass khul gaya' : 'Mana kar diya'); },
     async 'out-return'(el) { const o = S.outs.find(x => x.id === el.dataset.id); if (!o || !confirm('Is larke ki wapsi abhi ke waqt par laga dein?')) return; await busy(el, () => data.returnOut(o), 'Wapsi lag gayi'); },

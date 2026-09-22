@@ -378,3 +378,15 @@ button.tag{border:0;cursor:pointer}
 .mgr .section-label{display:flex;align-items:center;gap:6px;color:var(--ink)}
 .mgr-out{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:10px;background:var(--late-bg)}
 .gate .ur{font-size:1em}
+
+/* ---------- v207: install, login link, hidayat ---------- */
+.install-card{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-items:center;padding:14px;border-radius:var(--r);background:var(--ink-soft);color:var(--ink);border:1px solid #cfd7ea}
+.install-card>div:first-of-type{display:grid}.install-card small{color:var(--muted)}
+.install-card .btn-row{grid-column:1/-1}
+.link-box{display:grid;gap:6px;padding:12px;border-radius:var(--r);background:var(--ok-bg)}
+.link-box small{color:var(--muted)}
+.muted-link{color:var(--muted);font-weight:500}
+.steps{display:grid;gap:10px;padding-left:22px;list-style:decimal}
+.notice{align-items:flex-start}.notice>div{display:grid;gap:2px;flex:1}
+.notice.is-rtl>div{text-align:right;unicode-bidi:plaintext}
+.notice.is-rtl p{unicode-bidi:plaintext}

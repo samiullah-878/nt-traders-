@@ -1,7 +1,7 @@
 // core.js — Noor Traders Hazri + Salary
 // Sirf hisab-kitab. Yahan na DOM hai na Firebase, is liye ye file Node mein test hoti hai.
 
-export const APP_VERSION = 'v206';
+export const APP_VERSION = 'v207';
 export const TZ = 'Asia/Karachi';
 export const BUSINESS_ID = 'noor-traders';
 export const SHOP = { name: 'Noor Traders Gulyana', lat: 32.7979125, lng: 73.956984375, radius: 200 };
@@ -578,4 +578,12 @@ export function dayOuts(outs = [], phone, date, now = Date.now()) {
 export function dayColor(date) {
   let h = 0; for (const c of String(date)) h = (h * 31 + c.charCodeAt(0)) % 360;
   return `hsl(${h} 70% 42%)`;
+}
+
+/** Chhote waqt ke liye: "1 min se kam", "7 min", "1h 05m". */
+export function durText(min) {
+  const m = Math.round(Number(min) || 0);
+  if (m < 1) return '1 min se kam';
+  if (m < 60) return m + ' min';
+  return hm(m);
 }

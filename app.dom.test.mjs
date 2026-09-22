@@ -236,7 +236,7 @@ test('v205: malik ko parchi — Haan, abhi bahar, wapsi, salary mein alag', asyn
   await click('.att-card[data-action=outs]'); assert.match($('[data-sheet=outs]').textContent, /waqt se zyada/);
   await click('[data-sheet=outs] [data-action=out-return]');
   assert.equal(records.get(B + 'staffOuts/o1').status, 'returned'); await click('[data-sheet=outs] [data-sheet-close]');
-  assert.match($('.register').textContent, /Bahar .*\(40m\)|Bahar .*\(0h 40m\)/);
+  assert.match($('.register').textContent, /Bahar .*\(40 min\)/);
   // salary: kati band -> sirf nazar aaye; kati on -> kate
   // (Ali ka ye mahina upar final ho chuka hai, is liye seedha hisab se jaanch)
   const ali = app.data.state.staff.find(x => x.phone === '03001234567'), calc = () => C.salaryCalc({ account: ali, month: today.slice(0, 7), attendance: [], config: app.data.state.config, outs: app.data.state.outs });
@@ -251,6 +251,7 @@ test('v205: malik ko parchi — Haan, abhi bahar, wapsi, salary mein alag', asyn
 test('logout → staff login → check-in / check-out', async () => {
   records.delete(B + `staffAttendance/${today}_03111112223`); // upar malik ne hazri lagayi thi
   await click('[data-action=tab][data-arg=staff]'); await click('.row-main[data-phone="03111112223"]');
+  const wa = $('form[data-form=staff] a[href^="https://wa.me/92311"]'); assert.ok(wa, 'WhatsApp login link'); assert.match(decodeURIComponent(wa.getAttribute('href')), /#login=03111112223/);
   $('form[data-form=staff] [name=canApproveOuts]').checked = true; await submit($('form[data-form=staff]'));
   assert.equal(records.get(B + 'staffAccounts/03111112223').canApproveOuts, true, 'Usman manager'); assert.match($('.view').textContent, /Manager/);
   await click('[data-action=tab][data-arg=settings]'); await click('[data-action=logout]'); await settle();

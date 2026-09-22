@@ -1,5 +1,5 @@
 // app.js — app ka dhancha: login screen, malik/staff ka panel chalana, buttons ka aik hi jagah se intezam.
-import { APP_VERSION, esc } from './core.js';
+import { APP_VERSION, esc, normalizePhone } from './core.js';
 import { createAuthController, loginErrorMessage } from './auth.js';
 import { createData } from './data.js';
 import { createOwnerView } from './owner.js';
@@ -21,9 +21,20 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
   let view = null, dirty = false, login = { role: storage?.getItem(ROLE_KEY) || 'staff', error: '', busy: false, showPass: false };
   let data = null, controller = null;
   const hint = () => { try { return !!(storage?.getItem(STAFF_CACHE_KEY) || storage?.getItem(OWNER_IN_KEY)); } catch { return false; } };
-  if (!hint()) showLogin();
+  // v207: malik ka bheja hua login link  ...#login=03001234567  -> number likhe baghair khud login
+  const linkPhone = (() => { const m = String(win.location?.hash || '').match(/login=([+\d\s-]{10,16})/); return m ? normalizePhone(decodeURIComponent(m[1])) : ''; })();
+  if (linkPhone) { try { win.history?.replaceState?.(null, '', win.location.pathname + win.location.search); } catch { /* ignore */ } login.role = 'staff'; }
+  const cachedStaffPhone = () => { try { return JSON.parse(storage?.getItem(STAFF_CACHE_KEY) || 'null')?.phone || ''; } catch { return ''; } };
+  const ownerIn = () => { try { return storage?.getItem(OWNER_IN_KEY) === '1'; } catch { return false; } };
+  if (!hint() || (linkPhone && !ownerIn() && cachedStaffPhone() !== linkPhone)) showLogin();
 
-  const ready = Promise.resolve(sdkPromise || sdk).then(realSdk => { build(realSdk); return true; }).catch(error => {
+  const ready = Promise.resolve(sdkPromise || sdk).then(realSdk => { build(realSdk); return true; }).then(ok => {
+    if (ok && linkPhone) {
+      if (ownerIn()) toast('Is phone par malik login hai. Staff ka link kholne ke liye pehle malik logout karein.', 'bad');
+      else if (cachedStaffPhone() !== linkPhone) void doLogin({ role: 'staff', password: linkPhone }, linkPhone);
+    }
+    return ok;
+  }).catch(error => {
     console.error(error); login.busy = false;
     login.error = 'App ka Firebase hissa load nahi hua. Internet check kar ke page dobara kholein.'; showLogin(); return false;
   });
@@ -51,7 +62,7 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
       clearTimeout(win.__bootTimer);
       login.error = ''; login.busy = false;
       try { storage?.setItem(ROLE_KEY, session.role); if (session.role === 'owner') storage?.setItem(OWNER_IN_KEY, '1'); } catch { /* ignore */ }
-      const shared = { data, controller, rerender: render, logout: () => controller.logout().catch(e => toast(errorText(e), 'bad')), checkUpdate };
+      const shared = { data, controller, rerender: render, logout: () => controller.logout().catch(e => toast(errorText(e), 'bad')), checkUpdate, install };
       if (session.role === 'owner') { data.startOwner(); view = createOwnerView(shared); }
       else { data.startStaff(session.phone, session.account); view = createStaffView(shared); }
       root.dataset.screen = session.role;
@@ -89,14 +100,17 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
     </main>`;
   }
   async function submitLogin(form) {
-    if (login.busy) return;
     const v = formValues(form);
-    login.busy = true; login.error = ''; login.phoneDraft = v.phone || '';
+    await doLogin(login.role === 'staff' ? { role: 'staff', password: v.phone } : { role: 'owner', username: v.username, password: v.password }, v.phone || '');
+  }
+  async function doLogin(input, phoneDraft = '') {
+    if (login.busy) return;
+    login.busy = true; login.error = ''; login.phoneDraft = phoneDraft;
     showLogin();
     const phoneInput = $('input[name=phone]', root); if (phoneInput) phoneInput.value = login.phoneDraft;
     try {
       if (!(await ready)) throw Object.assign(new Error('sdk'), { code: 'auth/network-request-failed' });
-      await controller.login(login.role === 'staff' ? { role: 'staff', password: v.phone } : { role: 'owner', username: v.username, password: v.password });
+      await controller.login(input);
     } catch (error) {
       login.busy = false; login.error = loginErrorMessage(error); showLogin();
       const again = $('input[name=phone]', root); if (again) again.value = login.phoneDraft;
@@ -147,6 +161,22 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
   });
   doc.addEventListener('change', event => { const el = event.target.closest?.('[data-change]'); if (el) view?.changes?.[el.dataset.change]?.(el); });
   doc.addEventListener('input', event => { const el = event.target.closest?.('[data-input]'); if (el) view?.inputs?.[el.dataset.input]?.(el); });
+
+  /* ---------- v207: home screen par install ---------- */
+  let installEvent = null;
+  win.addEventListener?.('beforeinstallprompt', e => { e.preventDefault(); installEvent = e; if (view) softRender(); });
+  win.addEventListener?.('appinstalled', () => { installEvent = null; try { storage?.setItem('nt-hazri-installed', '1'); } catch { /* ignore */ } toast('App home screen par lag gayi. Ab wahan se kholein.', 'ok'); if (view) softRender(); });
+  const install = {
+    get standalone() { try { return !!(win.matchMedia?.('(display-mode: standalone)')?.matches || win.navigator?.standalone); } catch { return false; } },
+    get canPrompt() { return !!installEvent; },
+    get dismissed() { try { return Number(storage?.getItem('nt-hazri-install-later') || 0) > Date.now(); } catch { return false; } },
+    later() { try { storage?.setItem('nt-hazri-install-later', String(Date.now() + 3 * 86400000)); } catch { /* ignore */ } },
+    async prompt() {
+      if (!installEvent) return false;
+      const e = installEvent; installEvent = null;
+      try { await e.prompt(); const r = await e.userChoice; return r?.outcome === 'accepted'; } catch { return false; }
+    }
+  };
 
   /* ---------- update ---------- */
   const newer = (a, b) => (parseInt(String(a).replace(/\D/g, ''), 10) || 0) > (parseInt(String(b).replace(/\D/g, ''), 10) || 0);
