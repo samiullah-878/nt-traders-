@@ -6,6 +6,7 @@ import {
 } from './core.js';
 import { openTicketSheet } from './tickets.js';
 import { NOTIFY_KINDS, newTopic, sendNotify, appLink } from './notify.js';
+import { enablePush, currentToken, pushPermission, pushSupported } from './push.js';
 import { openBreakSheet, breakStatusHtml } from './breaks.js';
 const clock = ms => ms ? fmtTime(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(ms))) : '—';
 const to24FromMin = m => { const x = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
@@ -641,13 +642,30 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     sheet.setOnly = v => { only = v; sheet.refresh(true); };
     return sheet;
   }
+  /** Firebase wala asal push: NT Hazri ke apne icon se, aur "abhi tak nahi aaya" jaisi khabrein bhi. */
+  function pushBox() {
+    const p = S.config.push || {}, perm = pushPermission(), on = perm === 'granted' && ui.pushToken;
+    return `<section class="panel pad" style="display:grid;gap:10px">
+      <h3 class="sub" style="margin:0">Firebase notification (NT Hazri ke icon se)</h3>
+      ${p.vapidKey ? '' : `<p class="hint">Pehle Firebase se key lein: <b>Firebase console › Project settings › Cloud Messaging › Web Push certificates › Generate key pair</b>. Wahan se key copy kar ke yahan paste karein.</p>
+        <form class="inline-form" data-form="vapid"><input name="vapidKey" placeholder="Web Push key (BJ... se shuru)" required><button class="btn btn-primary">Save</button></form>`}
+      ${p.vapidKey ? `<p class="hint">Key lag chuki hai. Jis phone par khabar chahiye (aap ka aur manager ka), us par neeche wala button dabayein.</p>
+        <div class="btn-row"><button type="button" class="btn ${on ? 'btn-ghost' : 'btn-primary'}" data-action="push-on">${on ? 'Is phone par chalu hai — dobara check karein' : 'Is phone par notification chalu karein'}</button>
+          <button type="button" class="btn btn-ghost" data-action="push-devices">Kin phones par chalu hai</button></div>
+        ${perm === 'denied' ? `<p class="error-line">${icon('alert', 18)} <span>Is phone par notification band hai. Chrome › site settings › Notifications mein "Allow" karein.</span></p>` : ''}
+        <label class="check"><input type="checkbox" data-change="push-auto" ${p.on === false ? '' : 'checked'}> Khud aane wali khabrein (nahi aaya, break ka waqt khatam, Check-Out baqi, salary final)</label>
+        <div class="two"><label>"Nahi aaya" duty ke kitne minute baad<input type="number" min="5" max="180" value="${Number(p.absentAfter ?? 30)}" data-change="push-after" data-arg="absentAfter"></label>
+          <label>"Check-Out baqi" kitne minute baad<input type="number" min="5" max="180" value="${Number(p.checkoutAfter ?? 30)}" data-change="push-after" data-arg="checkoutAfter"></label></div>
+        <p class="hint">Ye khabrein Firebase par chalne wale hisse (Cloud Functions) se aati hain — un ka upload AI_NOTES.txt mein likha hai.</p>` : ''}
+    </section>`;
+  }
   function notifySheet() {
     return openSheet({ id: 'notify', wide: true, title: 'Notifications — app band ho tab bhi', render: () => {
       const n = S.config.notify || {};
-      if (!n.topic) return `<p>Parchi, chutti ki request, late aane aur "bina bataye gaya" ticket ki khabar aap ke phone par aayegi — <b>app band ho tab bhi</b>.</p>
+      if (!n.topic) return `${pushBox()}<h3 class="sub">Doosra tareeqa: ntfy (muft)</h3><p>Parchi, chutti ki request, late aane aur "bina bataye gaya" ticket ki khabar aap ke phone par aayegi — <b>app band ho tab bhi</b>.</p>
         <p class="hint">Ye muft <b>ntfy</b> app ke zariye hoti hai (card ya server ki zaroorat nahi). Notification ntfy ke icon ke sath aati hai; daba kar hamari app khulti hai.</p>
         <button type="button" class="btn btn-primary btn-lg" data-action="notify-on">Notifications chalu karein</button>`;
-      return `<ol class="steps">
+      return `${pushBox()}<h3 class="sub">Doosra tareeqa: ntfy (muft)</h3><ol class="steps">
           <li>Play Store se <b>ntfy</b> app install karein: <a class="link" href="https://play.google.com/store/apps/details?id=io.heckel.ntfy" target="_blank" rel="noopener">ntfy — Play Store</a></li>
           <li>ntfy app kholein, neeche <b>+</b> dabayein, "Topic name" mein ye likhein (ya copy kar ke paste karein), phir <b>Subscribe</b>:
             <p class="topic-box"><code>${esc(n.topic)}</code> <button type="button" class="btn btn-ghost btn-sm" data-action="notify-copy">Copy</button></p></li>
@@ -770,6 +788,23 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     'selfies-day'(el) { needMonth(el.dataset.arg.slice(0, 7)); open('selfies', () => selfiesDaySheet(el.dataset.arg)); },
     history() { open('history', historySheet); },
     notify() { open('notify', notifySheet); },
+    async 'push-on'(el) {
+      await busy(el, async () => {
+        if (!(await pushSupported())) throw new Error('Is browser mein notification nahi chalti. App ko home screen par install kar ke wahan se kholein.');
+        const token = await enablePush({ app: data.app, vapidKey: S.config.push?.vapidKey, onToken: t => data.savePushToken(t, navigator.userAgent.slice(0, 60)), onMessage: d => toast(`${d.title || ''} ${d.body || ''}`.trim(), 'ok') });
+        ui.pushToken = token;
+        await data.saveConfig({ appUrl: appLink() });
+      }, 'Is phone par notification chalu ho gaya');
+      rerender();
+    },
+    async 'push-devices'(el) {
+      await busy(el, async () => {
+        const list = await data.pushDevices();
+        openSheet({ id: 'push-devices', title: 'Notification wale phones', render: () => list.length
+          ? `<ul class="ledger">${list.map(d => `<li><span><b>${esc(d.name || d.phone || '—')}</b> <small>${d.role === 'owner' ? 'Malik' : d.role === 'manager' ? 'Manager' : 'Staff'}${d.device ? ' · ' + esc(d.device.slice(0, 40)) : ''}</small></span><small class="muted">${d.at ? esc(shortDate(pkDate(new Date(d.at)))) : ''}</small></li>`).join('')}</ul>`
+          : '<p class="empty-line">Abhi kisi phone par chalu nahi. Har phone par "Is phone par notification chalu karein" dabana hota hai.</p>' });
+      });
+    },
     async 'notify-on'(el) { await busy(el, () => data.saveConfig({ notify: { topic: newTopic(), on: true, out: true, leave: true, late: true, ticket: true } }), 'Notifications chalu — ab ntfy app mein topic subscribe karein'); },
     async 'notify-new'(el) { if (!confirm('Naya topic banayein? Purana topic kaam karna band kar dega; ntfy app mein naya subscribe karna hoga.')) return; await busy(el, () => data.saveConfig({ notify: { ...(S.config.notify || {}), topic: newTopic(), on: true } }), 'Naya topic ban gaya'); },
     async 'notify-toggle'(el) { const n = S.config.notify || {}; await busy(el, () => data.saveConfig({ notify: { ...n, on: !n.on } }), n.on ? 'Notifications band' : 'Notifications chalu'); },
@@ -883,6 +918,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     }
   };
   const forms = {
+    async vapid(form, v, button) { await busy(button, () => data.saveConfig({ push: { ...(S.config.push || {}), vapidKey: String(v.vapidKey || '').trim(), on: true }, appUrl: appLink() }), 'Key save ho gayi'); },
     async staff(form, v, button) {
       await busy(button, async () => { await data.saveStaff({ ...v, photo: sheets.staffForm?.getPhoto() }, form.dataset.phone); sheets.staffForm?.close(); }, 'Staff save ho gaya');
     },
@@ -905,6 +941,8 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     'pick-salary-month'(el) { if (!el.value) return; ui.salaryMonth = el.value; data.watchMonth(ui.salaryMonth); rerender(); },
     async 'staff-photo'(el) { const f = el.files?.[0]; if (!f) return; try { sheets.staffForm?.setPhoto(await fileToDataUrl(f, 360)); } catch (e) { toast(errorText(e), 'bad'); } },
     'leave-half'(el) { const f = el.closest('form'), half = f.querySelector('[name=half]:checked')?.value || ''; const to = f.querySelector('#leaveTo'); if (to) to.hidden = !!half; if (half) f.elements.to.value = f.elements.date.value; },
+    async 'push-auto'(el) { await data.saveConfig({ push: { ...(S.config.push || {}), on: el.checked } }).catch(e => toast(errorText(e), 'bad')); },
+    async 'push-after'(el) { const n = Math.max(5, Math.min(180, Number(el.value) || 30)); await data.saveConfig({ push: { ...(S.config.push || {}), [el.dataset.arg]: n } }).catch(e => toast(errorText(e), 'bad')); },
     async 'notify-kind'(el) { const n = { ...(S.config.notify || {}) }; n[el.dataset.arg] = el.checked; try { await data.saveConfig({ notify: n }); } catch (e) { toast(errorText(e), 'bad'); } },
     'history-who'(el) { sheets.history?.setWho(el.value); },
     'toggle-box'(el) { const box = $('#' + el.dataset.arg, el.closest('form')); if (box) box.hidden = el.dataset.invert ? el.checked : !el.checked; },

@@ -319,6 +319,8 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     if (has('radius')) next.radius = Math.max(20, num(patch.radius, SHOP.radius));
     if (has('instruction')) next.instruction = String(patch.instruction || '');
     if (has('notify')) next.notify = clean(patch.notify || { on: false });
+    if (has('push')) next.push = clean(patch.push || {});
+    if (has('appUrl')) next.appUrl = String(patch.appUrl || '');
     const salaryKeys = ['defSalary', 'defDays', 'defOt', 'salaryMode', 'leavePaid', 'lateEvery', 'lateFineDays', 'outDeduct', 'breakDeduct'];
     if (salaryKeys.some(has)) {
       const old = { ...DEFAULT_CONFIG.salaryDefault, ...(state.config.salaryDefault || {}) }, d = { ...old };
@@ -658,6 +660,15 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     });
   }
 
+  /* ---------- notification ka token (is phone ke liye) ---------- */
+  async function savePushToken(token, label = '') {
+    if (!token) return;
+    const role = state.role === 'owner' ? 'owner' : state.role === 'manager' ? 'manager' : 'staff';
+    await sdk.setDoc(ref('pushTokens', token.slice(-40)), clean({ token, role, phone: state.phone || '', name: state.account?.name || (role === 'owner' ? 'Malik' : ''), device: String(label || '').slice(0, 60), at: Date.now() }), { merge: true });
+  }
+  async function removePushToken(token) { if (token) await sdk.deleteDoc(ref('pushTokens', token.slice(-40))).catch(() => {}); }
+  async function pushDevices() { const snap = await sdk.getDocs(col('pushTokens')); const out = []; snap.forEach(d => out.push({ id: d.id, ...clean(d.data()) })); return out.sort((a, b) => (b.at || 0) - (a.at || 0)); }
+
   /* ---------- bina bataye gaya: ticket ---------- */
   /** Malik, manager ya senior banata hai. Koi apne aap par nahi; senior manager par nahi. */
   async function createTicket({ phone, from, back = '', note = '' }) {
@@ -811,8 +822,9 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   }
 
   return {
-    full, actor, auth, state, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
+    app, full, actor, auth, state, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
     requestOut, cancelOut, returnOut, reviewOut, isManager, isTicketer, startBreak, endBreaks, createTicket, returnTicket, decideTicket, ticketSuggestFor,
+    savePushToken, removePushToken, pushDevices,
     applyDefaultShiftAll, applyDefaultSalaryAll, toggleClosed, quickPresent, closeCheckouts, getSelfie, migrateSelfies, selfiesFor, auditLog,
     accounts: {
       async getSession(uid) { const s = await sdk.getDoc(ref('staffSessions', uid)); return s.exists() ? s.data() : null; },

@@ -7,7 +7,7 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Noor Traders Hazri v211. Owner emails auth.js ke OWNER_EMAILS se milni chahiye.
+    // Noor Traders Hazri v212. Owner emails auth.js ke OWNER_EMAILS se milni chahiye.
     // An arbitrary Firebase email account must never gain business-owner access.
     function isOwner() {
       return signedIn()
@@ -53,12 +53,11 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/businesses/noor-traders/staffAccounts/$(phone)).data.get('canApproveOuts', false) == true;
     }
 
-    // Existing owner business data: owner only.
+    // Malik: sab kuch. v211 Manager: sab dekh sakta hai aur sab badal sakta hai, siwaye hazri (staffAttendance / staffSelfies) ke.
     match /businesses/noor-traders/{collectionName}/{docId} {
-      allow read, write: if isOwner();
-      // v211: manager ka poora panel — staff ka sab data dekh aur badal sakta hai; hazri (staffAttendance/staffSelfies) sirf dekh sakta hai.
-      allow read: if isOutManager() && collectionName in ['staffAccounts', 'staff', 'staffSchedules', 'staffConfig', 'staffRequests', 'staffPayroll', 'staffTickets', 'staffOuts', 'staffAudit', 'staffAttendance', 'staffSelfies'];
-      allow write: if isOutManager() && collectionName in ['staffAccounts', 'staff', 'staffSchedules', 'staffConfig', 'staffRequests', 'staffPayroll', 'staffTickets', 'staffOuts', 'staffAudit'];
+      allow read: if isOwner() || isOutManager();
+      allow write: if isOwner()
+        || (isOutManager() && !(collectionName in ['staffAttendance', 'staffSelfies']));
     }
 
     // Staff can read only the account bound to their own server session.
@@ -228,6 +227,16 @@ service cloud.firestore {
           && request.resource.data.returnServerAt == request.time);
       allow delete: if isOwner();
     }
+    // v212: notification ke liye har phone ka token.
+    match /businesses/noor-traders/pushTokens/{tokenId} {
+      allow read: if isOwner() || isOutManager();
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(['token', 'role', 'phone', 'name', 'device', 'at'])
+        && request.resource.data.token is string
+        && request.resource.data.token.size() < 500;
+      allow delete: if isOwner() || isOutManager();
+    }
+
     match /businesses/noor-traders/staffSchedules/{phone} {
       allow read: if isOwner() || (validStaffSession() && resource.data.phone == sessionPhone());
       allow write: if isOwner();

@@ -2,7 +2,7 @@
 // Firebase SDK (bara) saath saath peeche load hota hai; service worker dusri dafa se sab phone se deta hai.
 const V = '12.18.0', base = `https://www.gstatic.com/firebasejs/${V}/`;
 // App ki zaroori files. Nayi file bane to yahan bhi likhein.
-const FILES = ['app.js', 'core.js', 'auth.js', 'data.js', 'ui.js', 'owner.js', 'staffview.js', 'manager.js', 'pdf.js', 'breaks.js', 'tickets.js', 'notify.js', 'firebase-config.js', 'styles.css'];
+const FILES = ['app.js', 'core.js', 'auth.js', 'data.js', 'ui.js', 'owner.js', 'staffview.js', 'manager.js', 'pdf.js', 'breaks.js', 'tickets.js', 'notify.js', 'push.js', 'firebase-config.js', 'styles.css'];
 const HEAL_KEY = 'nt-hazri-heal-at';
 
 async function start() {

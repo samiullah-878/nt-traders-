@@ -1,8 +1,33 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v211   Tareekh: 2026-09-23  (v200-v204: 2026-09-21)
+Version: v212   Tareekh: 2026-09-23  (v200-v204: 2026-09-21)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+000000000000. v212 — FIREBASE PUSH (APP BAND HO TAB BHI, NT HAZRI KE ICON SE)
+------------------------------------------------------------
+Malik ka Firebase pehle se Blaze par hai -> asal push (Cloud Messaging + Cloud Functions) bana diya. ntfy (v211) bhi chalta rahega.
+- functions/ (naya, Node 20, ESM): index.js + logic.js + package.json. Region asia-south1, TZ Asia/Karachi.
+  Foran: onOut (parchi pending), onRequest (chutti/correction), onTicket, onCheckIn (late — aadhi chutti subah wali par nahi).
+  onSchedule 'every 15 minutes' (watchDay): (1) duty shuru + push.absentAfter(30) min -> "X tak nahi aaye: ..." (din mein aik dafa,
+  pushState/{date}.absent), (2) khane ka break jin ka waqt +5 min guzra -> khabar aur us out doc par overdueAlert:true,
+  (3) duty khatam + push.checkoutAfter(30) -> "N ka Check-Out baqi" (pushState/{date}.checkout).
+  onSchedule '0 10 1 * *' (monthlySalary): pichle mahine ki salary jin ki final nahi.
+  Tokens: businesses/noor-traders/pushTokens/{last40}: {token, role owner|manager|staff, phone, name, device, at}. Khabar sirf
+  role owner/manager ko. Jo token mar jaye (unregistered) wo khud delete ho jata hai. Data-only message; dikhane ka kaam SW karta hai.
+  staffConfig/main.push = { vapidKey, on, absentAfter, checkoutAfter } aur appUrl (notification click par app kholne ke liye).
+- App: push.js (enablePush/currentToken/pushSupported), firebase-messaging-sw.js (icon-192, tag, actions, click -> app kholta hai),
+  firebase-config-sw.js (wahi config, SW ke liye — firebase-config.js badlein to ise bhi badlein!).
+  Settings > Notifications mein upar "Firebase notification": VAPID key ka form (Firebase console > Project settings > Cloud Messaging >
+  Web Push certificates), "Is phone par notification chalu karein" (permission + token + appUrl save), "Kin phones par chalu hai",
+  khud aane wali khabrein on/off aur dono waqt (minute).
+- Rules v212: pushTokens (read: malik/manager; create/update: koi bhi logged-in apna token; delete: malik/manager). Baqi v211 jaisa.
+- Deploy: workflows/deploy-functions.yml -> GitHub par .github/workflows/deploy-functions.yml banani hai; secret FIREBASE_SERVICE_ACCOUNT
+  (Firebase > Project settings > Service accounts > Generate new private key ka poora JSON). Ya computer se: firebase deploy --only functions.
+  firebase.json mein functions block add hua.
+- Yahan test nahi ho saka: asal deploy, asal push, VAPID key. Tests 72 (functions/logic.test.mjs naya: nahi aaya / check-out baqi /
+  break overdue / late — sab window aur dedupe ke sath).
 
 ------------------------------------------------------------
 00000000000. v211 — MANAGER KA POORA PANEL, NOTIFICATIONS (ntfy), BREAK/BAHAR CARD, APP KHUD THEEK HO
@@ -334,7 +359,7 @@ archivo-latin.woff2, naskh-arabic-400.woff2, naskh-arabic-700.woff2   fonts (rep
 jspdf.umd.min.js (2.5.2), jspdf.plugin.autotable.min.js (3.8.4)       PDF library
 firebase-config.js, firebase.json, firestore.indexes.json, pages.yml, .nojekyll, .gitignore   purani waisi hi; firestore.rules v204 mein badli
 xlsx.mini.min.js  Excel library (sirf dabane par)
-*.test.mjs, test-fake-sdk.mjs, package.json     tests (npm install; npm test)  — 67 tests pass
+*.test.mjs, test-fake-sdk.mjs, package.json     tests (npm install; npm test)  — 72 tests pass
 LICENSES.txt, README.md
 
 PURANE REPO SE YE FILES DELETE KARNI HAIN (ab kaam ki nahi):
@@ -410,13 +435,13 @@ PDF mein Urdu lipi wala matn tasveer bana kar lagta hai (jsPDF Urdu font nahi ba
 ------------------------------------------------------------
 1) App mein Staff > "Update ke links" > "GitHub — files upload karein" (ya repo > "Add file" > "Upload files") -> zip ke andar ki SAB files ek sath daal dein (folder nahi, sirf files) -> Commit.
 2) Upar wali list ki purani files delete karein (har file kholein -> ... -> Delete file).
-3) 1-2 minute baad app kholein; neeche/login par "v211" likha aaye. Staff ke phone par bhi v211 aana zaroori hai (purani na chal rahi ho).
+3) 1-2 minute baad app kholein; neeche/login par "v212" likha aaye. Staff ke phone par bhi v212 aana zaroori hai (purani na chal rahi ho).
 v204 se Firestore rules NAYE hain (upar 0000 dekhein) — app ke baad publish karne hain. Authentication mein "Anonymous" aur "Email/Password" dono ON rehne chahiye.
 
 ------------------------------------------------------------
 8. KYA TEST HUA, KYA NAHI
 ------------------------------------------------------------
-Hua: 67 automated tests (hisab, status, salary, talash, login ke saare raaste, aur poori app naqli Firebase + happy-dom par:
+Hua: 72 automated tests (hisab, status, salary, talash, login ke saare raaste, aur poori app naqli Firebase + happy-dom par:
   login -> hazri -> hazri durust -> request manzoor -> talash -> naya staff -> advance -> final -> payment -> staff check-in/out -> request).
   4 PDF Node mein ban kar tasveer ki shakal mein dekhi gayin.
 Nahi hua (yahan mumkin nahi tha): asal Firebase/rules ke sath, asal phone ka camera aur GPS, asal browser mein dekhna (layout).

@@ -1,6 +1,6 @@
 {
-  "version": "v211",
+  "version": "v212",
   "variant": "Production",
   "buildDate": "2026-09-21",
-  "notes": "Manager ka poora panel (hazri badalna nahi), notifications (ntfy), break/bahar card mein har naam ka waqt, app khud theek ho."
+  "notes": "Firebase notifications: app band ho tab bhi, NT Hazri ke icon se; nahi aaya / break / Check-Out / salary ki khud khabar."
 }
