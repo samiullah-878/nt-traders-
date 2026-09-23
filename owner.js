@@ -5,6 +5,7 @@ import {
   shiftMinutes, usesDefaultSalary, weekSummary, isClosed, loanCuts, workMinutes, parseTime as C_parse, serverGap, STATUS_MARK as MARK, dayOuts, outMinutes, durText, breakGroup, ticketMinutes, ticketText
 } from './core.js';
 import { openTicketSheet } from './tickets.js';
+import { NOTIFY_KINDS, newTopic, sendNotify, appLink } from './notify.js';
 import { openBreakSheet, breakStatusHtml } from './breaks.js';
 const clock = ms => ms ? fmtTime(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(ms))) : '—';
 const to24FromMin = m => { const x = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
@@ -14,7 +15,7 @@ import { loadPdfLib, browserTextImages, dailyPdf, staffMonthPdf, registerPdf, sa
 const ORDER = { due: 0, late: 1, waiting: 2, absent: 3, loading: 3, present: 4, leave: 5, off: 6, closed: 6, na: 7 };
 const FILTERS = [['all', 'Sab'], ['present', 'Hazir'], ['late', 'Late'], ['absent', 'Ghair hazir'], ['leave', 'Chutti/Off']];
 
-export function createOwnerView({ data, controller, rerender, logout, checkUpdate, install }) {
+export function createOwnerView({ data, controller, rerender, logout, checkUpdate, install, manager = false }) {
   const S = data.state;
   const ui = { openTickets: new Set(), tab: 'hazri', view: 'day', date: pkDate(), month: pkDate().slice(0, 7), filter: 'all', salaryMonth: pkDate().slice(0, 7), staffQuery: '', showInactive: false };
   const activeStaff = () => S.staff.filter(s => s.active !== false);
@@ -73,7 +74,10 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     return `<section class="out-cards" aria-label="Bahar jane ki parchiyan">${list.map(o => { const s = account(o.phone) || { name: o.phone };
       return `<div class="out-card">${avatar(s)}<div class="out-text"><b>${nameHtml(s.name)} bahar jana chahta hai</b><small>${esc(o.reason)}${o.note ? ' — ' + nameHtml(o.note) : ''} · ${o.minutes} min · ${esc(clock(o.requestedAt))}</small></div>
         <div class="out-btns"><button type="button" class="btn btn-primary btn-sm" data-action="out-review" data-id="${esc(o.id)}" data-arg="yes">Haan</button><button type="button" class="btn btn-ghost btn-sm" data-action="out-review" data-id="${esc(o.id)}" data-arg="no">Nahi</button></div></div>`; }).join('')}
-      ${openList.length ? `<button type="button" class="att-card tone-late" data-action="outs" data-arg="${pkDate()}">${icon('out', 22)}<span><b>${openList.length} abhi bahar hain</b><small>${openList.map(o => `${account(o.phone)?.name || o.phone} (${hm(outMinutes(o, Date.now()) || 0)})`).join(', ')}</small></span></button>` : ''}</section>`;
+      ${openList.length ? `<div class="out-list"><div class="break-head">${icon('out', 20)}<b>${openList.length} abhi bahar hain</b><button type="button" class="btn btn-ghost btn-sm" data-action="outs" data-arg="${pkDate()}">Sab parchiyan</button></div>
+        <p class="hint">Jo wapas aa jaye us ke naam par dabayein.</p>
+        ${openList.map(o => { const m = outMinutes(o, Date.now()) || 0, over = m > Number(o.minutes || 0), back = Number(o.outAt) + Number(o.minutes || 0) * 60000;
+          return `<button type="button" class="b-row" data-action="out-return" data-id="${esc(o.id)}"><span><b>${nameHtml(account(o.phone)?.name || o.name || o.phone)}</b><small>${esc(o.reason)} · ${clock(o.outAt)} gaya · ${clock(back)} tak</small></span><span class="${over ? 'txt-bad' : ''}">${over ? `${m - Number(o.minutes || 0)} min zyada` : `${Number(o.minutes || 0) - m} min baqi`}</span><span class="b-back">Wapas ✓</span></button>`; }).join('')}</div>` : ''}</section>`;
   }
   function personRow(r, date) {
     const { account: s, a, status, late, due, minutes, schedule: sch } = r;
@@ -286,6 +290,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       <h2 class="section-label">Rozana ka kaam</h2>
       <section class="panel tools">
         ${tool('requests', 'note', 'Chutti / correction ki requests', pend ? pend + ' ka jawab baqi' : 'Koi nayi request nahi')}
+        ${tool('notify', 'share', 'Notifications (app band ho tab bhi)', S.config.notify?.on ? 'Chalu — ntfy app mein aati hain' : 'Band — chalu karein')}
         ${tool('tickets', 'alert', 'Bina bataye gaya — tickets', (() => { const n = S.tickets.filter(t => t.status !== 'decided').length; return n ? n + ' ka faisla baqi' : 'Maaf / warning / katauti'; })())}
         ${tool('outs', 'out', 'Bahar jane ki parchiyan', (() => { const n = S.outs.filter(o => o.status === 'pending').length, b = S.outs.filter(o => o.status === 'approved').length; return n ? n + ' ka jawab baqi' : b ? b + ' abhi bahar' : 'Aaj ki parchiyan'; })())}
         ${tool('history', 'edit', 'Tabdeeli ki history', 'Kis ki hazri / salary kab aur kyun badli')}
@@ -302,9 +307,9 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         ${install && !install.standalone ? tool('install', 'down', 'App home screen par lagayein', 'Icon se seedha khule') : ''}
         ${tool('links', 'share', 'Update ke links', 'GitHub upload · Firebase rules')}
         ${tool('update', 'down', 'App update check karein', 'Abhi ' + APP_VERSION)}
-        ${fixes ? tool('migrate-selfies', 'camera', 'App ko halka karein (aik dafa)', 'Purani selfies alag karein — hazri list tez khulegi') : ''}
+        ${fixes && !manager ? tool('migrate-selfies', 'camera', 'App ko halka karein (aik dafa)', 'Purani selfies alag karein — hazri list tez khulegi') : ''}
         ${tool('diag', 'alert', 'App ki jaanch', 'Hazri na dikhe to is ka screenshot bhejein')}
-        ${tool('password', 'edit', 'Malik ka password badlein')}
+        ${manager ? '' : tool('password', 'edit', 'Malik ka password badlein')}
         ${tool('logout', 'out', 'Logout', '', ' tone-bad')}
       </section>`;
   }
@@ -414,6 +419,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         const s = account(phone) || { name: phone }, a = data.attendanceBetween(date, date).find(x => x.phone === phone) || {}, sch = data.scheduleFor(phone);
         sh.setTitle(`${nameHtml(s.name)} <small>${esc(dateLabel(date))}</small>`);
         return `<form class="form" data-form="att" data-phone="${phone}" data-id="${esc(a.id || '')}">
+          ${manager ? `<p class="notice">${icon('alert', 18)} <span>Aap sirf dekh sakte hain. Hazri lagana ya badalna malik ka kaam hai.</span></p>` : ''}
           ${a.selfie || a.hasSelfie ? `<div class="proof" data-selfie="${esc(a.id)}">${selfieImg(a)}<p>${icon('pin', 16)} Dukaan se ${a.checkInDistance != null ? Math.round(a.checkInDistance) + 'm' : '—'}<br><small>Selfie Check-In ke waqt li gayi</small>${gapNote(a)}</p></div>` : gapNote(a) ? `<p class="hint">${gapNote(a)}</p>` : ''}
           <label>Tareekh<input name="date" type="date" value="${date}" max="${pkDate()}" required ${a.id ? 'readonly' : ''}></label>
           ${timeField('checkIn', to24(a.checkIn), { label: 'Aaya', tickets: [to24(sch.shiftStart), ...IN_TICKETS].sort(), now: date === pkDate(), guess: 'in' })}
@@ -635,6 +641,26 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     sheet.setOnly = v => { only = v; sheet.refresh(true); };
     return sheet;
   }
+  function notifySheet() {
+    return openSheet({ id: 'notify', wide: true, title: 'Notifications — app band ho tab bhi', render: () => {
+      const n = S.config.notify || {};
+      if (!n.topic) return `<p>Parchi, chutti ki request, late aane aur "bina bataye gaya" ticket ki khabar aap ke phone par aayegi — <b>app band ho tab bhi</b>.</p>
+        <p class="hint">Ye muft <b>ntfy</b> app ke zariye hoti hai (card ya server ki zaroorat nahi). Notification ntfy ke icon ke sath aati hai; daba kar hamari app khulti hai.</p>
+        <button type="button" class="btn btn-primary btn-lg" data-action="notify-on">Notifications chalu karein</button>`;
+      return `<ol class="steps">
+          <li>Play Store se <b>ntfy</b> app install karein: <a class="link" href="https://play.google.com/store/apps/details?id=io.heckel.ntfy" target="_blank" rel="noopener">ntfy — Play Store</a></li>
+          <li>ntfy app kholein, neeche <b>+</b> dabayein, "Topic name" mein ye likhein (ya copy kar ke paste karein), phir <b>Subscribe</b>:
+            <p class="topic-box"><code>${esc(n.topic)}</code> <button type="button" class="btn btn-ghost btn-sm" data-action="notify-copy">Copy</button></p></li>
+          <li>Manager ke phone par bhi yehi karein (wohi topic).</li>
+          <li>Neeche <b>"Test notification bhejein"</b> dabayein — phone par khabar aani chahiye.</li></ol>
+        <p class="hint">Topic ka naam hi is ki chabi hai — kisi aur ko na batayein. Shak ho to "Naya topic banayein" dabayein aur dobara subscribe karein.</p>
+        <fieldset><legend>Kis cheez ki khabar aaye</legend>${NOTIFY_KINDS.map(([k, label]) => `<label class="check"><input type="checkbox" data-change="notify-kind" data-arg="${k}" ${n[k] === false ? '' : 'checked'}> ${label}</label>`).join('')}</fieldset>
+        <p class="hint">"Abhi tak nahi aaya" wali khabar is tareeqe mein nahi hoti (us ke liye server chahiye). Late aane wale ki khabar us ke Check-In par aati hai.</p>
+        <div class="btn-row"><button type="button" class="btn btn-primary" data-action="notify-test">Test notification bhejein</button>
+          <button type="button" class="btn btn-ghost" data-action="notify-toggle">${n.on ? 'Band karein' : 'Chalu karein'}</button>
+          <button type="button" class="btn btn-ghost" data-action="notify-new">Naya topic banayein</button></div>`;
+    } });
+  }
   function diagSheet() {
     return openSheet({ id: 'diag', wide: true, title: 'App ki jaanch', render: () => {
       const today = pkDate(), month = today.slice(0, 7), rowsToday = data.attendanceBetween(today, today);
@@ -743,6 +769,12 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     links() { open('links', linksSheet); },
     'selfies-day'(el) { needMonth(el.dataset.arg.slice(0, 7)); open('selfies', () => selfiesDaySheet(el.dataset.arg)); },
     history() { open('history', historySheet); },
+    notify() { open('notify', notifySheet); },
+    async 'notify-on'(el) { await busy(el, () => data.saveConfig({ notify: { topic: newTopic(), on: true, out: true, leave: true, late: true, ticket: true } }), 'Notifications chalu — ab ntfy app mein topic subscribe karein'); },
+    async 'notify-new'(el) { if (!confirm('Naya topic banayein? Purana topic kaam karna band kar dega; ntfy app mein naya subscribe karna hoga.')) return; await busy(el, () => data.saveConfig({ notify: { ...(S.config.notify || {}), topic: newTopic(), on: true } }), 'Naya topic ban gaya'); },
+    async 'notify-toggle'(el) { const n = S.config.notify || {}; await busy(el, () => data.saveConfig({ notify: { ...n, on: !n.on } }), n.on ? 'Notifications band' : 'Notifications chalu'); },
+    async 'notify-copy'() { const t = S.config.notify?.topic || ''; try { await navigator.clipboard.writeText(t); toast('Topic copy ho gaya', 'ok'); } catch { prompt('Ye topic copy karein:', t); } },
+    async 'notify-test'(el) { await busy(el, async () => { const ok = await sendNotify(S.config, 'test', { title: 'NT Hazri — test', message: 'Notification theek chal rahi hai.', click: appLink(), tags: ['white_check_mark'] }); if (!ok) throw new Error('Test nahi gaya. Internet check karein, ya notifications chalu karein.'); }, 'Test bhej diya — phone par dekhein'); },
     tickets(el) { open('tickets', () => ticketsSheet(el?.dataset.arg || '')); },
     'tickets-filter'(el) { sheets.tickets?.setOnly(el.dataset.arg); },
     'ticket-new'(el) {
@@ -761,6 +793,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       const people = activeStaff().map(s => { const a = att.find(x => x.phone === s.phone); return { phone: s.phone, name: s.name, group: breakGroup(s), onDuty: !!(a?.checkIn && !a.checkOut), busy: !!dayOuts(S.outs, s.phone, today, Date.now(), 'all').open }; });
       open('break', () => openBreakSheet({ people, onStart: (phones, m) => data.startBreak(phones, m) }));
     },
+    async 'break-end-one'(el) { const o = S.outs.find(x => x.id === el.dataset.id); if (!o || !confirm(`${account(o.phone)?.name || o.name || ''} ki wapsi abhi laga dein?`)) return; await busy(el, () => data.endBreaks([o]), 'Wapsi lag gayi'); },
     async 'break-end-all'(el) { const list = S.outs.filter(o => o.kind === 'break' && o.status === 'approved' && o.date === pkDate()); if (!list.length || !confirm(`${list.length} larkon ki wapsi abhi laga dein?`)) return; await busy(el, () => data.endBreaks(list), 'Sab ki wapsi lag gayi'); },
     async 'copy-link'(el) { const url = loginLink(el.dataset.phone); try { await navigator.clipboard.writeText(url); toast('Link copy ho gaya', 'ok'); } catch { prompt('Ye link copy karein:', url); } },
     async install() { if (install?.canPrompt) { await install.prompt(); rerender(); } else toast('Chrome ⋮ menu › "Add to Home screen" / "Install app" dabayein', 'ok'); },
@@ -872,6 +905,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     'pick-salary-month'(el) { if (!el.value) return; ui.salaryMonth = el.value; data.watchMonth(ui.salaryMonth); rerender(); },
     async 'staff-photo'(el) { const f = el.files?.[0]; if (!f) return; try { sheets.staffForm?.setPhoto(await fileToDataUrl(f, 360)); } catch (e) { toast(errorText(e), 'bad'); } },
     'leave-half'(el) { const f = el.closest('form'), half = f.querySelector('[name=half]:checked')?.value || ''; const to = f.querySelector('#leaveTo'); if (to) to.hidden = !!half; if (half) f.elements.to.value = f.elements.date.value; },
+    async 'notify-kind'(el) { const n = { ...(S.config.notify || {}) }; n[el.dataset.arg] = el.checked; try { await data.saveConfig({ notify: n }); } catch (e) { toast(errorText(e), 'bad'); } },
     'history-who'(el) { sheets.history?.setWho(el.value); },
     'toggle-box'(el) { const box = $('#' + el.dataset.arg, el.closest('form')); if (box) box.hidden = el.dataset.invert ? el.checked : !el.checked; },
     'extra-kind'(el) { const per = el.form.elements.perMonth; if (per) { per.hidden = el.value !== 'loan'; per.required = el.value === 'loan'; } }
@@ -889,11 +923,18 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     const pend = pending().length;
     const tabs = [['hazri', 'Hazri', 'book'], ['salary', 'Salary', 'wallet'], ['staff', 'Staff', 'people'], ['settings', 'Settings', 'clock']];
     return `<header class="top"><div class="top-in">
-        <div class="brand"><span class="brand-mark" aria-hidden="true">NT</span><span><b>Noor Traders</b><small>${S.pendingWrites ? `<span class="sync-pill">${icon('clock', 13)} ${S.pendingWrites} entry server par ja rahi</span>` : 'Hazri register'}</small></span></div>
+        <div class="brand"><span class="brand-mark" aria-hidden="true">NT</span><span><b>Noor Traders</b><small>${manager && !S.pendingWrites ? 'Manager panel · ' + nameHtml(S.account?.name || '') : ''}${S.pendingWrites ? `<span class="sync-pill">${icon('clock', 13)} ${S.pendingWrites} entry server par ja rahi</span>` : manager ? '' : 'Hazri register'}</small></span></div>
         <nav class="tabs" aria-label="Hisse">${tabs.map(([k, label, ic]) => `<button type="button" data-action="tab" data-arg="${k}" aria-current="${ui.tab === k ? 'page' : 'false'}">${icon(ic, 22)}<span>${label}</span>${k === 'settings' && pend + S.outs.filter(o => o.status === 'pending').length ? `<em class="badge">${pend + S.outs.filter(o => o.status === 'pending').length}</em>` : ''}</button>`).join('')}</nav>
         <button type="button" class="search-btn" data-action="search">${icon('search', 18)}<span>Talash: naam, "late is hafte"…</span></button>
       </div></header>
       <main class="view view-${ui.tab}">${!S.loaded.has('staff') ? '<p class="loading-line">Data aa raha hai…</p>' : ''}${ui.tab === 'hazri' ? hazriTab() : ui.tab === 'salary' ? salaryTab() : ui.tab === 'staff' ? staffTab() : settingsTab()}</main>`;
   }
-  return { render, actions, forms, changes, inputs, ui, onData() { refreshSheets(); } };
+  // v211: manager sab kar sakta hai, sirf hazri lagana / badalna / hatana nahi
+  if (manager) {
+    const blocked = () => toast('Hazri lagana ya badalna sirf malik ka kaam hai.', 'bad');
+    for (const k of ['tix', 'tix-open', 'quick-present', 'quick-present-all', 'close-due', 'toggle-closed', 'att-delete', 'migrate-selfies', 'fill-time']) if (actions[k]) actions[k] = blocked;
+    forms.att = blocked;
+  }
+  const renderAll = () => { const html = render(); return manager ? html.replace('<main class="view', '<main data-mgr="1" class="view') : html; };
+  return { render: renderAll, actions, forms, changes, inputs, ui, onData() { refreshSheets(); } };
 }

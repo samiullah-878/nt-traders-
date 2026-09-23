@@ -47,11 +47,15 @@ export function openBreakSheet({ people, onStart, defaultMinutes = 30 }) {
   return sheet;
 }
 
-/** Abhi break par kaun hai — card (malik aur manager). */
+/** Abhi break par kaun hai — card (malik aur manager). v211: har naam ke aage waqt; naam dabane se sirf us ki wapsi. */
+const pkClock = ms => { if (!ms) return '—'; const t = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(Number(ms))); return fmtTime(t); };
 export function breakStatusHtml(open, now = Date.now(), nameOf = o => o.name || o.phone) {
   if (!open.length) return '';
   const left = o => Math.round((Number(o.outAt) + Number(o.minutes) * 60000 - now) / 60000);
   return `<section class="break-card"><div class="break-head">${icon('clock', 20)}<b>${open.length} khane ke break par</b>
       <button type="button" class="btn btn-ghost btn-sm" data-action="break-end-all">Sab wapas aa gaye</button></div>
-    <ul>${open.map(o => { const l = left(o); return `<li><span>${nameHtml(nameOf(o))}</span><span class="${l < 0 ? 'txt-bad' : ''}">${l < 0 ? `${-l} min zyada` : `${l} min baqi`}</span></li>`; }).join('')}</ul></section>`;
+    <p class="hint">Jo wapas aa jaye us ke naam par dabayein.</p>
+    <ul>${open.sort((a, b) => (a.outAt || 0) - (b.outAt || 0)).map(o => { const l = left(o), back = Number(o.outAt) + Number(o.minutes) * 60000;
+      return `<li><button type="button" class="b-row" data-action="break-end-one" data-id="${esc(o.id)}"><span><b>${nameHtml(nameOf(o))}</b><small>${pkClock(o.outAt)} gaya · ${pkClock(back)} tak</small></span>
+        <span class="${l < 0 ? 'txt-bad' : ''}">${l < 0 ? `${-l} min zyada` : `${l} min baqi`}</span><span class="b-back">Wapas ✓</span></button></li>`; }).join('')}</ul></section>`;
 }

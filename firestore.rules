@@ -7,7 +7,7 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Noor Traders Hazri v210. Owner emails auth.js ke OWNER_EMAILS se milni chahiye.
+    // Noor Traders Hazri v211. Owner emails auth.js ke OWNER_EMAILS se milni chahiye.
     // An arbitrary Firebase email account must never gain business-owner access.
     function isOwner() {
       return signedIn()
@@ -56,6 +56,9 @@ service cloud.firestore {
     // Existing owner business data: owner only.
     match /businesses/noor-traders/{collectionName}/{docId} {
       allow read, write: if isOwner();
+      // v211: manager ka poora panel — staff ka sab data dekh aur badal sakta hai; hazri (staffAttendance/staffSelfies) sirf dekh sakta hai.
+      allow read: if isOutManager() && collectionName in ['staffAccounts', 'staff', 'staffSchedules', 'staffConfig', 'staffRequests', 'staffPayroll', 'staffTickets', 'staffOuts', 'staffAudit', 'staffAttendance', 'staffSelfies'];
+      allow write: if isOutManager() && collectionName in ['staffAccounts', 'staff', 'staffSchedules', 'staffConfig', 'staffRequests', 'staffPayroll', 'staffTickets', 'staffOuts', 'staffAudit'];
     }
 
     // Staff can read only the account bound to their own server session.

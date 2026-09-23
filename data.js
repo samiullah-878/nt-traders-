@@ -4,11 +4,12 @@ import {
   monthRange, addMonths, addDays, resolveSchedule, lateMinutes, scoreForLate, salaryCalc, salarySnapshot, isMonth, isDate, shiftMinutes, salaryConfig, workMinutes, fmtTime, rosterOf, ticketMinutes, ticketSuggest, pkTimeMs
 } from './core.js';
 import { isOwnerUser } from './auth.js';
+import { sendNotify, appLink } from './notify.js';
 
 const clean = value => JSON.parse(JSON.stringify(value ?? null));
 const timeout = (promise, ms) => { let t; return Promise.race([promise, new Promise((_, reject) => { t = setTimeout(() => reject(Object.assign(new Error('timeout'), { code: 'app/slow-network' })), ms); })]).finally(() => clearTimeout(t)); };
 
-export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem = () => {} }) {
+export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem = () => {}, notifyFetch }) {
   const app = sdk.initializeApp(firebaseConfig);
   let auth;
   try {
@@ -60,12 +61,22 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   const toAccount = (id, d) => ({ ...d, id, phone: normalizePhone(d.phone || id) || id, name: d.name || id });
 
   /* ---------- owner ---------- */
-  function startOwner() {
-    stop(); state.role = 'owner';
+  /** Malik ka panel. v211: manager bhi yahi panel chalata hai (role 'manager'), sath apni hazri bhi. */
+  function startOwner(opt = {}) {
+    stop(); state.role = opt.role === 'manager' ? 'manager' : 'owner';
+    if (state.role === 'manager') {
+      state.phone = opt.phone; state.account = opt.account ? toAccount(opt.phone, opt.account) : null;
+      const mine = name => sdk.query(col(name), sdk.where('phone', '==', opt.phone));
+      live(mine('staffAttendance'), 'myAttendance', snap => {
+        const rows = []; snap.forEach(d => rows.push({ ...normalizeAttendance(clean(d.data()), d.id), pending: !!d.metadata?.hasPendingWrites }));
+        state.myAttendance = rows.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      }, { includeMetadataChanges: true });
+    }
     live(ref('staffConfig', 'main'), 'config', snap => { readConfig(snap); queueMicrotask(syncRoster); });
     live(col('staffAccounts'), 'staff', snap => {
       state.staff = readList(snap).map(d => toAccount(d.id, d)).sort((a, b) => String(a.name).localeCompare(String(b.name)));
-      if (!state.staff.length && !legacyChecked) { legacyChecked = true; void importLegacyStaff(); }
+      if (state.role === 'manager') { const me = state.staff.find(x => x.phone === state.phone); if (me) state.account = me; }
+      if (state.role === 'owner' && !state.staff.length && !legacyChecked) { legacyChecked = true; void importLegacyStaff(); }
       queueMicrotask(syncRoster);
     });
     live(col('staffRequests'), 'requests', snap => { state.requests = readList(snap).map(r => ({ ...r, phone: normalizePhone(r.phone) || r.phone })); });
@@ -91,7 +102,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   /** Manager ko doosron ke naam aur bari chahiye (wo staffAccounts nahi parh sakta) -> staffConfig/main.roster. */
   let rosterBusy = false;
   function syncRoster() {
-    if (state.role !== 'owner' || !state.loaded.has('staff') || !state.loaded.has('config') || rosterBusy) return;
+    if (!full() || !state.loaded.has('staff') || !state.loaded.has('config') || rosterBusy) return;
     const next = rosterOf(state.staff);
     if (JSON.stringify(next) === JSON.stringify(state.config.roster || [])) return;
     rosterBusy = true;
@@ -109,7 +120,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   }
   /** Poori history nahi, sirf zaroorat ka mahina load hota hai (selfie wale record bhari hote hain). */
   function watchMonth(month) {
-    if (!isMonth(month) || state.role !== 'owner') return;
+    if (!isMonth(month) || !full()) return;
     if (monthSubs.has(month)) return;
     if (monthSubs.size >= 6) { // purana mahina chhor do
       const current = pkDate().slice(0, 7), keep = new Set([current, addMonths(current, -1), month]);
@@ -220,9 +231,22 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     let t; await Promise.race([p, new Promise(resolve => { t = setTimeout(resolve, 400); })]).finally(() => clearTimeout(t));
     return result;
   }
-  function guardOwner() { if (state.role !== 'owner' || !isOwnerUser(auth.currentUser)) throw new Error('Malik ka login zaroori hai.'); }
+  const me = () => String(state.account?.name || state.phone || '');
+  const ping = (kind, msg) => { void sendNotify(state.config, kind, { click: appLink(), ...msg }, notifyFetch || globalThis.fetch); };
+  const shortDateSafe = d => { try { const [, m, dd] = d.split('-').map(Number); return `${dd} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m - 1]}`; } catch { return d; } };
+  /** Panel wala: malik ya manager. */
+  function full() { return state.role === 'owner' || state.role === 'manager'; }
+  const actor = () => state.role === 'owner' ? 'Malik' : String(state.account?.name || 'Manager').slice(0, 80);
+  function guardOwner() {
+    if (state.role === 'owner' && isOwnerUser(auth.currentUser)) return;
+    if (state.role === 'manager' && state.account?.canApproveOuts === true) return;
+    throw new Error('Malik ya manager ka login zaroori hai.');
+  }
+  /** Hazri lagana / badalna / hatana sirf malik. */
+  function guardHazri() { if (state.role !== 'owner' || !isOwnerUser(auth.currentUser)) throw new Error('Hazri sirf malik laga ya badal sakta hai.'); }
+  const notSelf = (phone, what) => { if (state.role === 'manager' && phone === state.phone) throw new Error(`Apni ${what} ka faisla khud nahi kar sakte — malik karega.`); };
   function audit(tx, type, target, before, after, reason) {
-    tx.set(sdk.doc(col('staffAudit')), { type, target, before: JSON.stringify(before ?? null), after: JSON.stringify(after ?? null), reason: reason || '', by: auth.currentUser.uid, at: Date.now() });
+    tx.set(sdk.doc(col('staffAudit')), { type, target, before: JSON.stringify(before ?? null), after: JSON.stringify(after ?? null), reason: reason || '', by: auth.currentUser.uid, byName: actor(), at: Date.now() });
   }
   const scheduleFor = phone => resolveSchedule(state.config, state.schedules.get(phone));
   const payrollFor = (phone, month) => state.payroll.find(p => p.id === `${month}_${phone}`) || null;
@@ -294,6 +318,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     if (has('grace')) next.grace = Math.max(0, num(patch.grace, 10));
     if (has('radius')) next.radius = Math.max(20, num(patch.radius, SHOP.radius));
     if (has('instruction')) next.instruction = String(patch.instruction || '');
+    if (has('notify')) next.notify = clean(patch.notify || { on: false });
     const salaryKeys = ['defSalary', 'defDays', 'defOt', 'salaryMode', 'leavePaid', 'lateEvery', 'lateFineDays', 'outDeduct', 'breakDeduct'];
     if (salaryKeys.some(has)) {
       const old = { ...DEFAULT_CONFIG.salaryDefault, ...(state.config.salaryDefault || {}) }, d = { ...old };
@@ -338,6 +363,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   }
   /** Dukaan band (Eid / chutti): us din koi ghair hazir nahi ginta. Dobara dabane se hat jata hai. */
   async function toggleClosed(date, reason = '') {
+    guardHazri();
     guardOwner();
     if (!isDate(date)) throw new Error('Tareekh durust nahi.');
     await fast(async tx => {
@@ -359,6 +385,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   const endFrom = (inT, phone) => { const acc = state.staff.find(s => s.phone === phone) || {}; const m = (parseTime(inT) + Math.round(salaryFor(acc).dutyHours * 60)) % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
   /** Bhoola hua Check-Out: duty khatam ke waqt par band. */
   async function closeCheckouts(rows) {
+    guardHazri();
     guardOwner();
     let n = 0; const failed = [];
     for (const a of rows) {
@@ -372,6 +399,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
 
   /* ---------- owner: attendance ---------- */
   async function saveAttendance({ phone, date, checkIn, checkOut, note, finalScore }) {
+    guardHazri();
     guardOwner();
     if (!isDate(date)) throw new Error('Tareekh durust nahi.');
     if (date > pkDate()) throw new Error('Aane wali tareekh ki hazri nahi lag sakti.');
@@ -399,6 +427,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     });
   }
   async function deleteAttendance(id, reason) {
+    guardHazri();
     guardOwner();
     await fast(async tx => {
       const r = ref('staffAttendance', id), snap = await tx.get(r);
@@ -424,6 +453,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       const rr = ref('staffRequests', id), snap = await tx.get(rr);
       if (!snap.exists() || snap.data().status !== 'pending') throw new Error('Ye request pehle hi dekhi ja chuki hai.');
       const r = snap.data(), phone = normalizePhone(r.phone) || r.phone;
+      notSelf(phone, 'request');
       const patch = { status, ownerNote: note, reviewedAt: Date.now(), reviewedBy: auth.currentUser.uid };
       if (r.kind === 'leave' && status === 'approved') patch.paid = typeof paid === 'boolean' ? paid : salaryFor({}).leavePaid;
       if (r.kind === 'correction' && status === 'approved') {
@@ -540,6 +570,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   }
   /** Purane records ki selfies alag karo (aik dafa). Malik ki list is ke baad bohat halki. */
   async function migrateSelfies(onProgress = () => {}) {
+    guardHazri();
     guardOwner();
     if (!sdk.deleteField) throw new Error('Is browser mein ye kaam nahi ho sakta.');
     let moved = 0;
@@ -572,10 +603,10 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   }
   /** Staff: bahar jane ki ijazat mangna. */
   async function requestOut({ reason, note = '', minutes }) {
-    if (state.role !== 'staff') throw new Error('Staff login zaroori hai.');
+    if (state.role !== 'staff' && state.role !== 'manager') throw new Error('Staff login zaroori hai.');
     const today = pkDate(), open = state.myAttendance.find(a => a.date === today && a.checkIn && !a.checkOut);
     if (!open) throw new Error('Pehle Check-In karein. Parchi sirf duty ke dauran banti hai.');
-    const mine = state.outs.filter(o => o.date === today);
+    const mine = state.outs.filter(o => o.date === today && o.phone === state.phone);
     if (mine.some(o => o.status === 'pending')) throw new Error('Aap ki aik parchi pehle se malik ke paas hai.');
     if (mine.some(o => o.status === 'approved')) throw new Error('Aap pehle se bahar hain. Wapas aa kar "Wapas aa gaya" dabayein.');
     const m = Math.round(Number(minutes));
@@ -584,9 +615,10 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     const id = sdk.doc(col('staffOuts')).id;
     // Ye keys firestore.rules mein ginti ki hui hain.
     await quick(sdk.setDoc(ref('staffOuts', id), { phone: state.phone, name: String(state.account?.name || '').slice(0, 80), date: today, reason: String(reason).slice(0, 40), note: String(note || '').slice(0, 300), minutes: m, status: 'pending', requestedAt: Date.now(), serverAt: sdk.serverTimestamp ? sdk.serverTimestamp() : Date.now(), by: auth.currentUser.uid }));
+    ping('out', { title: `${me()} bahar jana chahta hai`, message: `${reason} · ${m} min${note ? ' · ' + note : ''} — app khol kar Haan / Nahi karein`, priority: 4, tags: ['door'] });
   }
   async function cancelOut(id) {
-    if (state.role !== 'staff') throw new Error('Staff login zaroori hai.');
+    if (state.role !== 'staff' && state.role !== 'manager') throw new Error('Staff login zaroori hai.');
     await quick(sdk.setDoc(ref('staffOuts', id), { status: 'cancelled' }, { merge: true }));
   }
   /** Staff: wapas aa gaya (GPS ke sath). Owner bhi laga sakta hai (larka bhool jaye). */
@@ -596,9 +628,9 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       await quick(sdk.setDoc(ref('staffOuts', o.id), { status: 'returned', returnAt: Date.now(), returnBy: 'manager', returnByName: String(state.account?.name || 'Manager').slice(0, 80), returnServerAt: sdk.serverTimestamp ? sdk.serverTimestamp() : Date.now() }, { merge: true }));
       return;
     }
-    if (state.role === 'owner') {
+    if (full() && !(state.role === 'manager' && o.phone === state.phone)) {
       guardOwner();
-      await fast(async tx => { tx.set(ref('staffOuts', o.id), { status: 'returned', returnAt: Date.now(), returnBy: 'malik' }, { merge: true }); audit(tx, 'bahar wapsi', o.id, { status: o.status }, { status: 'returned' }, 'Malik ne wapsi lagayi'); });
+      await fast(async tx => { tx.set(ref('staffOuts', o.id), { status: 'returned', returnAt: Date.now(), returnBy: state.role === 'owner' ? 'malik' : 'manager', returnByName: actor() }, { merge: true }); audit(tx, 'bahar wapsi', o.id, { status: o.status }, { status: 'returned' }, 'Malik ne wapsi lagayi'); });
       return;
     }
     await quick(sdk.setDoc(ref('staffOuts', o.id), { ...clean({ status: 'returned', returnAt: Date.now(), returnLat: gps?.lat ?? null, returnLng: gps?.lng ?? null, returnDistance: gps?.distance ?? null, returnAccuracy: gps?.accuracy ?? null }), returnServerAt: sdk.serverTimestamp ? sdk.serverTimestamp() : Date.now() }, { merge: true }));
@@ -619,8 +651,9 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     guardOwner();
     const o = state.outs.find(x => x.id === id);
     if (!o || o.status !== 'pending') throw new Error('Ye parchi pehle hi dekhi ja chuki hai ya cancel ho gayi.');
+    notSelf(o.phone, 'parchi');
     await fast(async tx => {
-      tx.set(ref('staffOuts', id), approve ? { status: 'approved', approvedAt: now, outAt: now, approvedBy: auth.currentUser.uid, approvedByName: 'Malik', ownerNote: note } : { status: 'rejected', rejectedAt: now, approvedBy: auth.currentUser.uid, approvedByName: 'Malik', ownerNote: note }, { merge: true });
+      tx.set(ref('staffOuts', id), approve ? { status: 'approved', approvedAt: now, outAt: now, approvedBy: auth.currentUser.uid, approvedByName: actor(), ownerNote: note } : { status: 'rejected', rejectedAt: now, approvedBy: auth.currentUser.uid, approvedByName: actor(), ownerNote: note }, { merge: true });
       audit(tx, approve ? 'bahar manzoor' : 'bahar na-manzoor', `${o.date}_${o.phone}`, { status: 'pending' }, { status: approve ? 'approved' : 'rejected', reason: o.reason, minutes: o.minutes }, o.reason);
     });
   }
@@ -630,9 +663,9 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   async function createTicket({ phone, from, back = '', note = '' }) {
     phone = normalizePhone(phone);
     if (!phone) throw new Error('Larka chunein.');
-    const owner = state.role === 'owner';
+    const owner = full();
     if (!owner && !isTicketer()) throw new Error('Sirf malik, manager ya senior ticket bana sakta hai.');
-    if (!owner && phone === state.phone) throw new Error('Apne upar ticket nahi bana sakte.');
+    if (phone === state.phone && state.role !== 'owner') throw new Error('Apne upar ticket nahi bana sakte.');
     if (!owner && !isManager() && (state.config.roster || []).find(r => r.phone === phone)?.mgr) throw new Error('Senior, manager par ticket nahi bana sakta. Malik ko batayein.');
     const today = pkDate(), fromMs = pkTimeMs(today, from), backMs = back ? pkTimeMs(today, back) : null;
     if (!fromMs) throw new Error('Kab gaya, wo waqt chunein.');
@@ -640,18 +673,19 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     if (backMs != null && backMs <= fromMs) throw new Error('Wapsi ka waqt jane ke baad ka ho.');
     if (backMs != null && backMs > Date.now() + 60000) throw new Error('Wapsi ka waqt abhi se aage nahi ho sakta.');
     const names = new Map(owner ? state.staff.map(s => [s.phone, s.name]) : (state.config.roster || []).map(r => [r.phone, r.name]));
-    const byName = owner ? 'Malik' : String(state.account?.name || 'Staff').slice(0, 80);
+    const byName = owner ? actor() : String(state.account?.name || 'Staff').slice(0, 80);
     const data = { phone, name: String(names.get(phone) || '').slice(0, 80), date: today, from: fromMs, note: String(note || '').slice(0, 300), status: backMs ? 'returned' : 'open',
       by: auth.currentUser.uid, byName, createdAt: Date.now(), serverAt: sdk.serverTimestamp ? sdk.serverTimestamp() : Date.now(), ...(backMs ? { returnAt: backMs } : {}) };
     const r = sdk.doc(col('staffTickets'));
     if (owner) { guardOwner(); await fast(async tx => { tx.set(r, data); audit(tx, 'ticket', `${today}_${phone}`, null, { from: fromMs, returnAt: backMs }, note || 'Bina bataye gaya'); }); }
     else await quick(sdk.setDoc(r, data));
+    if (state.role !== 'owner') ping('ticket', { title: `Ticket: ${data.name || phone} bina bataye gaya`, message: `${fmtTime(from)} se${back ? ' ' + fmtTime(back) + ' tak' : ' (abhi bahar)'} · ticket: ${byName}${note ? ' · ' + note : ''} — faisla app mein`, priority: 4, tags: ['warning'] });
     return r.id;
   }
   async function returnTicket(t) {
     if (!t?.id || t.status !== 'open') throw new Error('Ye ticket pehle hi band hai.');
     const now = Date.now();
-    if (state.role === 'owner') { guardOwner(); await fast(async tx => tx.set(ref('staffTickets', t.id), { status: 'returned', returnAt: now, returnBy: 'Malik' }, { merge: true })); return; }
+    if (full()) { guardOwner(); await fast(async tx => tx.set(ref('staffTickets', t.id), { status: 'returned', returnAt: now, returnBy: actor() }, { merge: true })); return; }
     if (!isTicketer()) throw new Error('Sirf malik, manager ya senior wapsi laga sakta hai.');
     await quick(sdk.setDoc(ref('staffTickets', t.id), { status: 'returned', returnAt: now, returnBy: String(state.account?.name || 'Staff').slice(0, 80), returnServerAt: sdk.serverTimestamp ? sdk.serverTimestamp() : now }, { merge: true }));
   }
@@ -667,6 +701,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     const t = state.tickets.find(x => x.id === id);
     if (!t) throw new Error('Ticket nahi mila.');
     if (!['maaf', 'warning', 'katauti'].includes(decision)) throw new Error('Faisla chunein.');
+    notSelf(t.phone, 'ticket');
     const amt = decision === 'katauti' ? Math.round(Number(amount)) : 0;
     if (decision === 'katauti' && !(amt > 0)) throw new Error('Katauti ki raqam likhein.');
     if (decision === 'katauti' && payrollFor(t.phone, t.date.slice(0, 7))?.state === 'final') throw new Error('Is mahine ki salary final ho chuki hai. Pehle Salary mein "Dobara kholein" karein.');
@@ -680,11 +715,11 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     if (!(m >= 1 && m <= 180)) throw new Error('Break ka waqt 1 se 180 minute tak chunein.');
     const list = [...new Set(phones.map(normalizePhone).filter(Boolean))];
     if (!list.length) throw new Error('Kam az kam aik larka chunein.');
-    const owner = state.role === 'owner';
+    const owner = full();
     if (!owner && !isManager()) throw new Error('Sirf malik ya manager break shuru kar sakta hai.');
     if (owner) guardOwner();
     const now = Date.now(), today = pkDate(), batch = 'b' + now.toString(36), stamp = sdk.serverTimestamp ? sdk.serverTimestamp() : now;
-    const byName = owner ? 'Malik' : String(state.account?.name || 'Manager').slice(0, 80);
+    const byName = owner ? actor() : String(state.account?.name || 'Manager').slice(0, 80);
     const names = new Map((owner ? state.staff.map(s => [s.phone, s.name]) : (state.config.roster || []).map(r => [r.phone, r.name])));
     const doc = phone => ({ phone, name: String(names.get(phone) || '').slice(0, 80), date: today, reason: 'Khana', note: '', minutes: m, status: 'approved', kind: 'break', batch,
       requestedAt: now, serverAt: stamp, by: auth.currentUser.uid, outAt: now, approvedAt: now, approvedBy: auth.currentUser.uid, approvedByName: byName, approvedServerAt: stamp });
@@ -699,9 +734,9 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   async function endBreaks(items = []) {
     const open = items.filter(o => o?.id && o.status === 'approved'); if (!open.length) return 0;
     const now = Date.now();
-    if (state.role === 'owner') {
+    if (full()) {
       guardOwner();
-      await fast(async tx => { for (const o of open) tx.set(ref('staffOuts', o.id), { status: 'returned', returnAt: now, returnBy: 'malik' }, { merge: true }); });
+      await fast(async tx => { for (const o of open) tx.set(ref('staffOuts', o.id), { status: 'returned', returnAt: now, returnBy: state.role === 'owner' ? 'malik' : 'manager', returnByName: actor() }, { merge: true }); });
     } else {
       if (!isManager()) throw new Error('Sirf malik ya manager sab ki wapsi laga sakta hai.');
       const b = sdk.writeBatch(fs), stamp = sdk.serverTimestamp ? sdk.serverTimestamp() : now, byName = String(state.account?.name || 'Manager').slice(0, 80);
@@ -715,7 +750,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
 
   /* ---------- staff: check-in / out / request ---------- */
   async function checkIn({ selfie, gps }) {
-    if (state.role !== 'staff') throw new Error('Staff login zaroori hai.');
+    if (state.role !== 'staff' && state.role !== 'manager') throw new Error('Staff login zaroori hai.');
     const phone = state.phone, schedule = scheduleFor(phone), date = pkDate(), id = `${date}_${phone}`;
     const radius = Number(state.config.radius || SHOP.radius);
     if (!selfie) throw new Error('Pehle selfie lein.');
@@ -738,10 +773,13 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       if (error?.code === 'permission-denied') write.then(() => sdk.setDoc(ref('staffAttendance', id), { selfie, hasSelfie: false }, { merge: true })).catch(e => onProblem('queued-write', e));
       else onProblem('queued-write', error);
     });
+    // Late aaya -> malik/manager ko khabar (aadhi chutti subah wali ho to nahi)
+    const lvToday = state.requests.find(r => r.phone === phone && r.kind === 'leave' && r.status === 'approved' && r.date <= date && (r.to || r.date) >= date);
+    if (!lvToday && minutesLate > Number(schedule.grace ?? 10)) ping('late', { title: `${me()} late aaya`, message: `${fmtTime(pkTime24())} par Check-In — ${minutesLate} min late (duty ${fmtTime(schedule.shiftStart)})`, tags: ['alarm_clock'] });
     return settle(write);
   }
   async function checkOut(row, gps) {
-    if (state.role !== 'staff') throw new Error('Staff login zaroori hai.');
+    if (state.role !== 'staff' && state.role !== 'manager') throw new Error('Staff login zaroori hai.');
     if (!row?.checkIn || row.checkOut) throw new Error('Check-In ka record nahi mila.');
     const openOut = state.outs.find(o => o.date === row.date && o.status === 'approved');
     if (openOut) { try { await returnOut(openOut, gps); } catch { /* parchi ki wapsi baad mein */ } }
@@ -756,7 +794,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     catch (error) { if (error.code === 'app/slow-network') { write.catch(e => onProblem('queued-write', e)); return { queued: true }; } throw error; }
   }
   async function sendRequest({ kind, date, to, checkIn, checkOut, reason, half = '' }) {
-    if (state.role !== 'staff') throw new Error('Staff login zaroori hai.');
+    if (state.role !== 'staff' && state.role !== 'manager') throw new Error('Staff login zaroori hai.');
     if (!['leave', 'correction'].includes(kind)) throw new Error('Request ki qisam chunein.');
     if (!isDate(date)) throw new Error('Tareekh chunein.');
     half = kind === 'leave' && ['am', 'pm'].includes(half) ? half : '';
@@ -769,10 +807,11 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     const write = sdk.setDoc(ref('staffRequests', id), { phone: state.phone, kind, date, to: end, half, checkIn: checkIn || '', checkOut: checkOut || '', reason: String(reason).trim().slice(0, 1000), status: 'pending', createdAt: Date.now(), by: auth.currentUser.uid });
     write.catch(e => problem('save', e));
     let t; await Promise.race([write, new Promise(r => { t = setTimeout(r, 400); })]).finally(() => clearTimeout(t));
+    ping('leave', { title: kind === 'leave' ? `${me()} ne chutti mangi` : `${me()}: hazri durust karne ki request`, message: `${shortDateSafe(date)}${end !== date ? ' – ' + shortDateSafe(end) : ''}${half ? (half === 'am' ? ' (aadha din subah)' : ' (aadha din shaam)') : ''} · ${String(reason).trim().slice(0, 120)}`, tags: ['memo'] });
   }
 
   return {
-    auth, state, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
+    full, actor, auth, state, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
     requestOut, cancelOut, returnOut, reviewOut, isManager, isTicketer, startBreak, endBreaks, createTicket, returnTicket, decideTicket, ticketSuggestFor,
     applyDefaultShiftAll, applyDefaultSalaryAll, toggleClosed, quickPresent, closeCheckouts, getSelfie, migrateSelfies, selfiesFor, auditLog,
     accounts: {

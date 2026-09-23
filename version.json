@@ -1,6 +1,6 @@
 {
-  "version": "v210",
+  "version": "v211",
   "variant": "Production",
   "buildDate": "2026-09-21",
-  "notes": "Aadhi chutti (subah/shaam) + har chutti par paisa katega ya nahi."
+  "notes": "Manager ka poora panel (hazri badalna nahi), notifications (ntfy), break/bahar card mein har naam ka waqt, app khud theek ho."
 }

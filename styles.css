@@ -413,3 +413,16 @@ button.tag{border:0;cursor:pointer}
 .row.s-half{border-left-color:var(--leave)}
 .grid td.st-half{background:var(--leave-bg)}
 .days li.s-half{border-left-color:var(--leave)}
+
+/* ---------- v211: manager panel ---------- */
+.mode-bar{display:flex;gap:4px;padding:6px 12px;background:var(--ink);position:relative;z-index:21}
+.mode-bar button{flex:1;min-height:36px;border:1px solid rgba(255,255,255,.25);border-radius:9px;background:transparent;color:#c3cde3;font-weight:700}
+.mode-bar button[aria-selected=true]{background:#fff;color:var(--ink);border-color:#fff}
+[data-mgr] [data-action=tix],[data-mgr] [data-action=tix-open],[data-mgr] [data-action=quick-present],[data-mgr] [data-action=quick-present-all],
+[data-mgr] [data-action=close-due],[data-mgr] [data-action=toggle-closed]{opacity:.4;filter:grayscale(1)}
+.break-card li button.b-row,.out-list button.b-row{width:100%;display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 10px;border:1px solid transparent;border-radius:9px;background:var(--paper);text-align:left;font-size:.9375rem}
+.b-row small{display:block;color:var(--muted);font-size:.75rem}
+.b-row .b-back{font-weight:700;color:var(--ok);white-space:nowrap}
+.out-list{display:grid;gap:6px;padding:12px 14px;border-radius:var(--r);background:var(--late-bg);border:1px solid #efd59c}
+.out-list .break-head{color:var(--late)}
+.topic-box{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0}.topic-box code{padding:6px 10px;border-radius:8px;background:var(--ground);font-size:.9375rem;word-break:break-all}

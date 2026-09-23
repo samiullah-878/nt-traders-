@@ -17,8 +17,8 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js" crossorigin>
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js" crossorigin>
 <link rel="modulepreload" href="./app.js"><link rel="modulepreload" href="./core.js"><link rel="modulepreload" href="./auth.js"><link rel="modulepreload" href="./data.js">
-<link rel="modulepreload" href="./ui.js"><link rel="modulepreload" href="./owner.js"><link rel="modulepreload" href="./staffview.js"><link rel="modulepreload" href="./pdf.js"><link rel="modulepreload" href="./breaks.js"><link rel="modulepreload" href="./tickets.js">
-<link rel="stylesheet" href="./styles.css?v=210">
+<link rel="modulepreload" href="./ui.js"><link rel="modulepreload" href="./owner.js"><link rel="modulepreload" href="./staffview.js"><link rel="modulepreload" href="./pdf.js"><link rel="modulepreload" href="./breaks.js"><link rel="modulepreload" href="./tickets.js"><link rel="modulepreload" href="./manager.js"><link rel="modulepreload" href="./notify.js">
+<link rel="stylesheet" href="./styles.css?v=211">
 </head>
 <body>
 <div id="app" class="app" data-screen="boot">
@@ -32,10 +32,17 @@
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <noscript><p style="padding:24px;font-family:sans-serif">Is app ke liye browser mein JavaScript on honi chahiye.</p></noscript>
 <script>
-/* Agar app 12 second mein na khule to khali screen ke bajaye saaf paigham aur "Dobara kholein" button. */
-window.__bootTimer=setTimeout(function(){var t=document.getElementById('bootText');if(!t||!document.querySelector('#app[data-screen=boot]'))return;t.innerHTML='Internet kamzor lag raha hai. <button type="button" onclick="location.reload()" class="btn btn-ghost" style="margin-top:12px">Dobara kholein</button>'},12000);
-window.addEventListener('error',function(e){if(String(e.filename||'').indexOf('boot.js')>-1||/import|module/i.test(String(e.message||''))){var t=document.getElementById('bootText');if(t)t.textContent='App load nahi hui. Internet check kar ke page dobara kholein.'}});
+/* v211: app khud theek ho. __ntRepair = purani copy (service worker + cache) mita kar taza kholna. */
+window.__ntRepair=function(){var done=function(){location.replace(location.pathname+'?r='+Date.now()+(location.hash||''))};
+  try{var jobs=[];if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)jobs.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}));
+  if(window.caches&&caches.keys)jobs.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}));
+  Promise.all(jobs).then(done,done)}catch(e){done()}};
+window.__ntBootMsg=function(html){var t=document.getElementById('bootText');if(t&&document.querySelector('#app[data-screen=boot]'))t.innerHTML=html};
+/* 15 second mein na khule: internet band ho to wohi batao, warna "taza kholein" (purani copy mita kar). */
+window.__bootTimer=setTimeout(function(){if(!document.querySelector('#app[data-screen=boot]'))return;
+  var off=navigator.onLine===false;
+  window.__ntBootMsg((off?'Internet band hai. Internet on kar ke dobara kholein.':'App der se khul rahi hai.')+'<br><button type="button" onclick="window.__ntRepair()" class="btn btn-ghost" style="margin-top:12px">Taza kholein</button>')},15000);
 </script>
-<script type="module" src="./boot.js?v=210"></script>
+<script type="module" src="./boot.js?v=211"></script>
 </body>
 </html>

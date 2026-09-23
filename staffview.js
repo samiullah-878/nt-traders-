@@ -66,7 +66,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
   function outCard() {
     const today = pkDate(), open = openRecord(S.myAttendance);
     if (!open || open.date !== today) return '';
-    const od = dayOuts(S.outs, S.phone, today), last = [...S.outs].filter(o => o.date === today).sort((a, b) => (b.requestedAt || 0) - (a.requestedAt || 0))[0];
+    const od = dayOuts(S.outs, S.phone, today), last = [...S.outs].filter(o => o.date === today && o.phone === S.phone && o.kind !== 'break').sort((a, b) => (b.requestedAt || 0) - (a.requestedAt || 0))[0];
     const bk = dayOuts(S.outs, S.phone, today, Date.now(), 'break');
     if (bk.open) return gatePass(bk.open, false);
     if (od.open) return gatePass(od.open, false);
@@ -175,7 +175,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
   }
   function requestTab() {
     const kind = ui.reqKind, today = pkDate();
-    const list = S.requests.filter(r => r.kind !== 'suggestion').sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).slice(0, 30);
+    const list = S.requests.filter(r => r.phone === S.phone && r.kind !== 'suggestion').sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).slice(0, 30);
     return `<div class="toolbar"><h1 class="page-title">Request</h1></div>
       <section class="panel pad"><form class="form" data-form="request">
         <div class="switch full" role="tablist"><button type="button" role="tab" aria-selected="${kind === 'leave'}" data-action="req-kind" data-arg="leave">Chutti chahiye</button><button type="button" role="tab" aria-selected="${kind === 'correction'}" data-action="req-kind" data-arg="correction">Hazri ghalat hai</button></div>
@@ -245,6 +245,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
       if (!people.length) { toast('Staff ki list abhi nahi aayi. Malik aik dafa apni app khol lein, phir dobara koshish karein.', 'bad'); return; }
       ui.breakSheet?.close(); ui.breakSheet = openBreakSheet({ people, onStart: (phones, m) => data.startBreak(phones, m) });
     },
+    async 'break-end-one'(el) { const o = [...(S.teamOuts || []), ...S.outs].find(x => x.id === el.dataset.id); if (!o || !confirm(`${o.name || ''} ki wapsi abhi laga dein?`)) return; await busy(el, () => data.endBreaks([o]), 'Wapsi lag gayi'); rerender(); },
     async 'break-end-all'(el) {
       const list = [...(S.teamOuts || []), ...S.outs.filter(o => o.date === pkDate())].filter(o => o.kind === 'break' && o.status === 'approved');
       if (!list.length || !confirm(`${list.length} larkon ki wapsi abhi laga dein?`)) return;
@@ -297,7 +298,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
 
   function render() {
     const tabs = [['hazri', 'Hazri', 'clock'], ['salary', 'Salary', 'wallet'], ['request', 'Request', 'note']];
-    const pend = S.requests.filter(r => r.status === 'pending' && r.kind !== 'suggestion').length;
+    const pend = S.requests.filter(r => r.phone === S.phone && r.status === 'pending' && r.kind !== 'suggestion').length;
     return `<header class="top"><div class="top-in">
         <div class="brand">${avatar(me())}<span><b>${nameHtml(me().name || 'Staff')}</b><small>${esc(me().role || 'Noor Traders')}</small></span></div>
         <nav class="tabs" aria-label="Hisse">${tabs.map(([k, label, ic]) => `<button type="button" data-action="tab" data-arg="${k}" aria-current="${ui.tab === k ? 'page' : 'false'}">${icon(ic, 22)}<span>${label}</span>${k === 'request' && pend ? `<em class="badge">${pend}</em>` : ''}</button>`).join('')}</nav>

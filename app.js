@@ -4,6 +4,7 @@ import { createAuthController, loginErrorMessage } from './auth.js';
 import { createData } from './data.js';
 import { createOwnerView } from './owner.js';
 import { createStaffView } from './staffview.js';
+import { createManagerView } from './manager.js';
 import { $, icon, toast, formValues, closeSheets, refreshSheets, errorText } from './ui.js';
 
 const ROLE_KEY = 'nt-hazri-last-role';
@@ -65,6 +66,7 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
       try { storage?.setItem(ROLE_KEY, session.role); if (session.role === 'owner') storage?.setItem(OWNER_IN_KEY, '1'); } catch { /* ignore */ }
       const shared = { data, controller, rerender: render, logout: () => controller.logout().catch(e => toast(errorText(e), 'bad')), checkUpdate, install };
       if (session.role === 'owner') { data.startOwner(); view = createOwnerView(shared); }
+      else if (session.account?.canApproveOuts === true) { data.startOwner({ role: 'manager', phone: session.phone, account: session.account }); view = createManagerView(shared); } // v211: manager = poora panel
       else { data.startStaff(session.phone, session.account); view = createStaffView(shared); }
       root.dataset.screen = session.role;
       render();
