@@ -1,10 +1,8 @@
 // index.js — Noor Traders Hazri ke notifications (Firebase Cloud Functions, Node 20).
-// App band ho tab bhi khabar jati hai, kyun ke ye code Firebase par chalta hai — kisi phone par nahi.
-// Deploy: GitHub Actions (.github/workflows/deploy-functions.yml) ya computer se: firebase deploy --only functions
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
-import { onDocumentCreated } from 'firebase-functions/v2/firestore';
+import { onDocumentCreated, onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions';
 import { pkDate, pkMinutes, parseTime, fmt12, scheduleFor, notArrived, checkoutPending, breaksOverdue, lateOnCheckIn, list } from './logic.js';
@@ -14,10 +12,18 @@ const db = getFirestore();
 const BIZ = 'businesses/noor-traders';
 const col = name => db.collection(`${BIZ}/${name}`);
 const region = 'asia-south1';      // Mumbai — Pakistan ke qareeb
+// v214: parchi wali function hamesha jagti (minInstances 1) — khabar 2-4 second mein. Chhota size, taake kharcha kam rahe.
+const FAST = { region, memory: '256MiB', minInstances: 1, concurrency: 20 };
+const NORMAL = { region, memory: '256MiB' };
 const TZ = 'Asia/Karachi';
 
 const rows = async (name, q) => (await (q ? q : col(name)).get()).docs.map(d => ({ id: d.id, ...d.data() }));
-const config = async () => (await db.doc(`${BIZ}/staffConfig/main`).get()).data() || {};
+let cfgCache = null, cfgAt = 0;
+const config = async () => {
+  if (cfgCache && Date.now() - cfgAt < 60000) return cfgCache;   // aik minute yaad — har khabar par parhna na pade
+  cfgCache = (await db.doc(`${BIZ}/staffConfig/main`).get()).data() || {}; cfgAt = Date.now();
+  return cfgCache;
+};
 const schedulesMap = async () => Object.fromEntries((await rows('staffSchedules')).map(s => [s.id, s]));
 
 /** Kis kis ke phone par khabar jaye: malik + manager (staff ke apne phone par nahi). */
@@ -33,7 +39,8 @@ async function push({ title, body, tag = 'nt', kinds, link = '/' }) {
   if (!targets.length) { logger.info('koi phone register nahi'); return 0; }
   const message = {
     data: { title: String(title).slice(0, 120), body: String(body).slice(0, 300), tag, link },
-    webpush: { headers: { Urgency: 'high', TTL: '3600' }, fcmOptions: { link } }
+    android: { priority: 'high' },
+    webpush: { headers: { Urgency: 'high', TTL: '86400' }, fcmOptions: { link } }
   };
   const res = await getMessaging().sendEach(targets.map(t => ({ ...message, token: t.token })));
   const dead = [];
@@ -45,7 +52,7 @@ async function push({ title, body, tag = 'nt', kinds, link = '/' }) {
 const appLink = async (hash = '') => ((await config()).appUrl || '/') + hash;
 
 /* ---------- foran wali khabrein ---------- */
-export const onOut = onDocumentCreated({ region, document: `${BIZ}/staffOuts/{id}` }, async event => {
+export const onOut = onDocumentCreated({ ...FAST, document: `${BIZ}/staffOuts/{id}` }, async event => {
   const o = event.data?.data(); if (!o || o.status !== 'pending') return;
   await push({
     title: `${o.name || o.phone} bahar jana chahta hai`,
@@ -53,10 +60,9 @@ export const onOut = onDocumentCreated({ region, document: `${BIZ}/staffOuts/{id
     tag: 'out-' + event.params.id, link: await appLink('#open=outs')
   });
 });
-export const onRequest = onDocumentCreated({ region, document: `${BIZ}/staffRequests/{id}` }, async event => {
+export const onRequest = onDocumentCreated({ ...NORMAL, document: `${BIZ}/staffRequests/{id}` }, async event => {
   const r = event.data?.data(); if (!r || r.status !== 'pending') return;
-  const staff = await rows('staffAccounts');
-  const name = staff.find(s => s.phone === r.phone)?.name || r.phone;
+  const name = r.name || (await db.doc(`${BIZ}/staffAccounts/${r.phone}`).get()).data()?.name || r.phone;
   const half = r.half === 'am' ? ' (aadha din — subah)' : r.half === 'pm' ? ' (aadha din — shaam)' : '';
   await push({
     title: r.kind === 'leave' ? `${name} ne chutti mangi` : `${name}: hazri durust karne ki request`,
@@ -64,7 +70,7 @@ export const onRequest = onDocumentCreated({ region, document: `${BIZ}/staffRequ
     tag: 'req-' + event.params.id, link: await appLink('#open=requests')
   });
 });
-export const onTicket = onDocumentCreated({ region, document: `${BIZ}/staffTickets/{id}` }, async event => {
+export const onTicket = onDocumentCreated({ ...NORMAL, document: `${BIZ}/staffTickets/{id}` }, async event => {
   const t = event.data?.data(); if (!t) return;
   await push({
     title: `Ticket: ${t.name || t.phone} bina bataye gaya`,
@@ -72,15 +78,16 @@ export const onTicket = onDocumentCreated({ region, document: `${BIZ}/staffTicke
     tag: 'tkt-' + event.params.id, link: await appLink('#open=tickets')
   });
 });
-export const onCheckIn = onDocumentCreated({ region, document: `${BIZ}/staffAttendance/{id}` }, async event => {
+export const onCheckIn = onDocumentCreated({ ...NORMAL, document: `${BIZ}/staffAttendance/{id}` }, async event => {
   const a = event.data?.data(); if (!a?.checkIn) return;
-  const cfg = await config(), scheds = await schedulesMap();
-  const sch = scheduleFor(cfg, scheds[a.phone]);
-  const requests = await rows('staffRequests', col('staffRequests').where('phone', '==', a.phone));
+  const [cfg, own] = await Promise.all([config(), db.doc(`${BIZ}/staffSchedules/${a.phone}`).get()]);
+  const sch = scheduleFor(cfg, own.exists ? own.data() : null);
+  // pehli jaanch bina Firestore ke: waqt par aaya to aage kuch parhna hi nahi
+  if (!lateOnCheckIn({ attendance: a, schedule: sch, date: a.date })) return;
+  const requests = await rows('staffRequests', col('staffRequests').where('phone', '==', a.phone).where('kind', '==', 'leave'));
   const late = lateOnCheckIn({ attendance: a, schedule: sch, requests, date: a.date });
   if (!late) return;
-  const staff = await rows('staffAccounts');
-  const name = staff.find(s => s.phone === a.phone)?.name || a.name || a.phone;
+  const name = a.name || (await db.doc(`${BIZ}/staffAccounts/${a.phone}`).get()).data()?.name || a.phone;
   await push({
     title: `${name} late aaya`,
     body: `${fmt12(parseTime(a.checkIn))} par Check-In — ${late} min late (duty ${fmt12(parseTime(sch.shiftStart))})`,
@@ -88,9 +95,22 @@ export const onCheckIn = onDocumentCreated({ region, document: `${BIZ}/staffAtte
   });
 });
 
+/* ---------- test: app se "Test notification bhejein" (pushTokens par testAt) ---------- */
+export const onPushTest = onDocumentWritten({ ...NORMAL, document: `${BIZ}/pushTokens/{id}` }, async event => {
+  const before = event.data?.before?.data(), after = event.data?.after?.data();
+  if (!after?.token || !after.testAt || before?.testAt === after.testAt) return;
+  const link = await appLink();
+  await getMessaging().send({
+    token: after.token,
+    data: { title: 'NT Hazri — test', body: 'Notification theek chal raha hai.', tag: 'test', link },
+    android: { priority: 'high' },
+    webpush: { headers: { Urgency: 'high', TTL: '600' }, fcmOptions: { link } }
+  }).catch(e => logger.error('test push', e));
+});
+
 /* ---------- khud aane wali khabrein (har 15 minute par jaanch) ---------- */
 const stateRef = date => db.doc(`${BIZ}/pushState/${date}`);
-export const watchDay = onSchedule({ region, schedule: 'every 15 minutes', timeZone: TZ }, async () => {
+export const watchDay = onSchedule({ ...NORMAL, schedule: 'every 15 minutes', timeZone: TZ }, async () => {
   const date = pkDate(), nowMin = pkMinutes(), now = Date.now();
   const cfg = await config();
   if (cfg.push?.on === false) return;
@@ -131,7 +151,7 @@ export const watchDay = onSchedule({ region, schedule: 'every 15 minutes', timeZ
 });
 
 /* ---------- mahine ki 1 tareekh: salary final karne ki yaad-dehani ---------- */
-export const monthlySalary = onSchedule({ region, schedule: '0 10 1 * *', timeZone: TZ }, async () => {
+export const monthlySalary = onSchedule({ ...NORMAL, schedule: '0 10 1 * *', timeZone: TZ }, async () => {
   const cfg = await config();
   if (cfg.push?.on === false) return;
   const d = new Date(), prev = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 15)).toISOString().slice(0, 7);
