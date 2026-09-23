@@ -7,7 +7,7 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Noor Traders Hazri v212. Owner emails auth.js ke OWNER_EMAILS se milni chahiye.
+    // Noor Traders Hazri v213. Owner emails auth.js ke OWNER_EMAILS se milni chahiye.
     // An arbitrary Firebase email account must never gain business-owner access.
     function isOwner() {
       return signedIn()
@@ -231,7 +231,7 @@ service cloud.firestore {
     match /businesses/noor-traders/pushTokens/{tokenId} {
       allow read: if isOwner() || isOutManager();
       allow create, update: if signedIn()
-        && request.resource.data.keys().hasOnly(['token', 'role', 'phone', 'name', 'device', 'at'])
+        && request.resource.data.keys().hasOnly(['token', 'role', 'phone', 'name', 'device', 'at', 'testAt'])
         && request.resource.data.token is string
         && request.resource.data.token.size() < 500;
       allow delete: if isOwner() || isOutManager();

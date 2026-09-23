@@ -666,6 +666,11 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     const role = state.role === 'owner' ? 'owner' : state.role === 'manager' ? 'manager' : 'staff';
     await sdk.setDoc(ref('pushTokens', token.slice(-40)), clean({ token, role, phone: state.phone || '', name: state.account?.name || (role === 'owner' ? 'Malik' : ''), device: String(label || '').slice(0, 60), at: Date.now() }), { merge: true });
   }
+  /** Test: apne hi token par khabar mangwana (Cloud Function testAt dekh kar bhejti hai). */
+  async function pushTestPing(token) {
+    if (!token) throw new Error('Token nahi mila.');
+    await sdk.setDoc(ref('pushTokens', token.slice(-40)), { testAt: Date.now() }, { merge: true });
+  }
   async function removePushToken(token) { if (token) await sdk.deleteDoc(ref('pushTokens', token.slice(-40))).catch(() => {}); }
   async function pushDevices() { const snap = await sdk.getDocs(col('pushTokens')); const out = []; snap.forEach(d => out.push({ id: d.id, ...clean(d.data()) })); return out.sort((a, b) => (b.at || 0) - (a.at || 0)); }
 
@@ -824,7 +829,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   return {
     app, full, actor, auth, state, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
     requestOut, cancelOut, returnOut, reviewOut, isManager, isTicketer, startBreak, endBreaks, createTicket, returnTicket, decideTicket, ticketSuggestFor,
-    savePushToken, removePushToken, pushDevices,
+    savePushToken, removePushToken, pushDevices, pushTestPing,
     applyDefaultShiftAll, applyDefaultSalaryAll, toggleClosed, quickPresent, closeCheckouts, getSelfie, migrateSelfies, selfiesFor, auditLog,
     accounts: {
       async getSession(uid) { const s = await sdk.getDoc(ref('staffSessions', uid)); return s.exists() ? s.data() : null; },

@@ -1,6 +1,6 @@
 {
-  "version": "v212",
+  "version": "v213",
   "variant": "Production",
   "buildDate": "2026-09-21",
-  "notes": "Firebase notifications: app band ho tab bhi, NT Hazri ke icon se; nahi aaya / break / Check-Out / salary ki khud khabar."
+  "notes": "Notifications ka safha saaf: halat, aik button, test, aur jaanch."
 }

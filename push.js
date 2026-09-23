@@ -32,3 +32,9 @@ export async function currentToken({ app, vapidKey }) {
     return await m.getToken(m.getMessaging(app), { vapidKey, ...(reg ? { serviceWorkerRegistration: reg } : {}) }) || '';
   } catch { return ''; }
 }
+
+/** Is phone par band karein (token khatam). */
+export async function disablePush({ app }) {
+  const m = await load();
+  try { await m.deleteToken(m.getMessaging(app)); return true; } catch { return false; }
+}

@@ -1,8 +1,28 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v212   Tareekh: 2026-09-23  (v200-v204: 2026-09-21)
+Version: v213   Tareekh: 2026-09-23  (v200-v204: 2026-09-21)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+0000000000000. v213 — NOTIFICATIONS KA SAFHA SAAF (TEST + JAANCH)
+------------------------------------------------------------
+Malik ne v212 ke baad Functions deploy kar li (GitHub Actions; service account ko Editor + Security Admin dena para, compute SA ko
+run.invoker + eventarc.eventReceiver, aur eventarc/pubsub/cloudbuild/artifactregistry/run APIs enable). Lekin notification nahi aaya:
+Firestore mein pushTokens collection hi nahi bana tha (yani "Is phone par chalu karein" kabhi mukammal nahi hua), aur purana safha
+upar se scroll nahi ho raha tha + Firebase wala hissa ntfy ke hidayat ke neeche dab gaya tha.
+- owner.pushBox() nayi shakal: sab se upar halat ("Is phone par: CHALU / BAND"), aik bara button, ghalti ka paigham sheet ke andar
+  (ui.pushMsg — toast nahi, kyunki wo chala jata tha), "Test notification bhejein", "Kin phones par chalu hai", "Is phone par band karein",
+  aur do <details>: settings (khud aane wali khabrein, minute) aur "Jaanch" (key lagi?, ijazat, token ke aakhri 8 harf, Firebase mein
+  mehfooz?, app home screen se khuli ya browser mein). ntfy ab neeche <details> mein.
+- notifySheet khulte hi currentToken() aur pushDevices() se halat khud bhar deta hai (ui.pushToken, ui.pushSaved).
+- push.disablePush() (deleteToken) = "Is phone par band karein".
+- Test push: app pushTokens/{id} par {testAt: Date.now()} likhti hai (data.pushTestPing) -> nayi function onPushTest (onDocumentWritten)
+  usi token par test khabar bhejti hai. Is liye FUNCTIONS AUR RULES DONO KA NAYA VERSION CHAHIYE:
+  rules mein pushTokens keys mein 'testAt' add hua; functions/index.js mein onPushTest.
+- Malik ko batana: v213 upload -> functions/index.js badal kar Actions se deploy -> rules publish -> app mein Settings > Notifications
+  > "Is phone par notification chalu karein" -> "Test notification bhejein".
+- Tests 72 (koi naya test nahi; UI wala hissa).
 
 ------------------------------------------------------------
 000000000000. v212 — FIREBASE PUSH (APP BAND HO TAB BHI, NT HAZRI KE ICON SE)
@@ -435,7 +455,7 @@ PDF mein Urdu lipi wala matn tasveer bana kar lagta hai (jsPDF Urdu font nahi ba
 ------------------------------------------------------------
 1) App mein Staff > "Update ke links" > "GitHub — files upload karein" (ya repo > "Add file" > "Upload files") -> zip ke andar ki SAB files ek sath daal dein (folder nahi, sirf files) -> Commit.
 2) Upar wali list ki purani files delete karein (har file kholein -> ... -> Delete file).
-3) 1-2 minute baad app kholein; neeche/login par "v212" likha aaye. Staff ke phone par bhi v212 aana zaroori hai (purani na chal rahi ho).
+3) 1-2 minute baad app kholein; neeche/login par "v213" likha aaye. Staff ke phone par bhi v213 aana zaroori hai (purani na chal rahi ho).
 v204 se Firestore rules NAYE hain (upar 0000 dekhein) — app ke baad publish karne hain. Authentication mein "Anonymous" aur "Email/Password" dono ON rehne chahiye.
 
 ------------------------------------------------------------
