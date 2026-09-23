@@ -1,0 +1,22 @@
+name: Deploy Firebase Functions
+on:
+  push:
+    branches: ["main"]
+    paths: ["functions/**", "firebase.json", ".github/workflows/deploy-functions.yml"]
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Service account file
+        run: printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/sa.json"
+      - name: Install functions deps
+        run: npm install --prefix functions
+      - name: Deploy
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: npx --yes firebase-tools@13 deploy --only functions --project nt-traders --non-interactive --force
