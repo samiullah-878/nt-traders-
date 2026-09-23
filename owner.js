@@ -670,7 +670,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
           <tr><td>Is phone ka token</td><td>${ui.pushToken ? '…' + esc(String(ui.pushToken).slice(-8)) : 'nahi bana'}</td></tr>
           <tr><td>Firebase mein mehfooz</td><td>${ui.pushSaved == null ? '—' : ui.pushSaved ? 'haan' : 'nahi'}</td></tr>
           <tr><td>App</td><td>${install?.standalone ? 'home screen se khuli' : 'browser mein khuli'}</td></tr>
-        </tbody></table><p class="hint">Test bhejne ke liye Firebase par functions aur rules ka naya version hona zaroori hai (AI_NOTES dekhein).</p></details>` }
+        </tbody></table><p class="hint">Khabar der se aaye to us phone par: <b>Settings › Apps › (Chrome ya NT Hazri) › Battery › Unrestricted</b>, aur usi app ki <b>Notifications</b> mein is channel ko <b>Urgent</b> kar dein. Test bhejne ke liye Firebase par functions aur rules ka naya version zaroori hai.</p></details>` }
     </section>`;
   }
   function notifySheet() {

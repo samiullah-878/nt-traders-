@@ -1,8 +1,24 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v213   Tareekh: 2026-09-23  (v200-v204: 2026-09-21)
+Version: v214   Tareekh: 2026-09-23  (v200-v204: 2026-09-21)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+00000000000000. v214 — KHABAR FORAN (COLD START KHATAM)
+------------------------------------------------------------
+Malik: v213 ke baad parchi ki khabar aa gayi lekin ~2 minute baad (cold start). Malik ne "instant wala lagao" kaha (kharcha bata diya tha:
+aik chhota instance hamesha jagta = taqreeban $1.5-$3 / Rs 400-900 mahana).
+- functions/index.js: FAST = { region, memory:'256MiB', minInstances:1, concurrency:20 } sirf onOut (parchi) par — 2-4 second.
+  Baqi (onRequest, onTicket, onCheckIn, onPushTest, watchDay, monthlySalary) NORMAL = 256MiB, minInstances 0 (kharcha nahi).
+- Khabar halki/tez: config() ab 1 minute cache; onRequest/onCheckIn/onTicket ab poori staffAccounts list nahi parhte (sirf apna doc, ya
+  doc ka 'name' field); onCheckIn pehle bina Firestore ke late check karta hai aur waqt par aane par foran ruk jata hai; leave query ab
+  kind=='leave' se chhoti.
+- Notification par android.priority high aur TTL 86400 (pehle 3600).
+- App: Settings > Notifications > Jaanch mein hidayat — der ho to us phone par Battery "Unrestricted" aur notification channel "Urgent".
+- Malik ko: kharche par nazar ke liye Firebase > Usage and billing > Budgets & alerts mein $5 ka alert. Wapas normal karna ho to
+  functions/index.js mein onOut ke FAST ko NORMAL kar dein.
+- Sirf functions/index.js + app ki 5 files badli hain; rules mein koi tabdeeli nahi. Tests 72.
 
 ------------------------------------------------------------
 0000000000000. v213 — NOTIFICATIONS KA SAFHA SAAF (TEST + JAANCH)
@@ -455,7 +471,7 @@ PDF mein Urdu lipi wala matn tasveer bana kar lagta hai (jsPDF Urdu font nahi ba
 ------------------------------------------------------------
 1) App mein Staff > "Update ke links" > "GitHub — files upload karein" (ya repo > "Add file" > "Upload files") -> zip ke andar ki SAB files ek sath daal dein (folder nahi, sirf files) -> Commit.
 2) Upar wali list ki purani files delete karein (har file kholein -> ... -> Delete file).
-3) 1-2 minute baad app kholein; neeche/login par "v213" likha aaye. Staff ke phone par bhi v213 aana zaroori hai (purani na chal rahi ho).
+3) 1-2 minute baad app kholein; neeche/login par "v214" likha aaye. Staff ke phone par bhi v214 aana zaroori hai (purani na chal rahi ho).
 v204 se Firestore rules NAYE hain (upar 0000 dekhein) — app ke baad publish karne hain. Authentication mein "Anonymous" aur "Email/Password" dono ON rehne chahiye.
 
 ------------------------------------------------------------
