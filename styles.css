@@ -435,3 +435,10 @@ button.tag{border:0;cursor:pointer}
 .push-more{border-top:1px solid var(--rule);padding-top:8px}
 .push-more summary{font-weight:650;color:var(--ink-2)}
 .push-more>*:not(summary){margin-top:10px}
+
+/* ---------- v215: pichli screen foran (tasveer) ---------- */
+html.is-snap #app::before{content:"Taza ho raha hai…";position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:50%;transform:translateX(-50%);z-index:60;
+  padding:6px 14px;border-radius:999px;background:rgba(27,42,74,.92);color:#fff;font-size:.8125rem;font-weight:650;box-shadow:0 4px 14px rgba(0,0,0,.18);pointer-events:none}
+html.is-snap .live-clock,html.is-snap [data-live]{opacity:.6}
+.snap-msg{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 80px);z-index:61;padding:14px;border-radius:14px;background:#fff;color:var(--ink);
+  box-shadow:0 10px 30px rgba(0,0,0,.2);text-align:center;font-weight:600}

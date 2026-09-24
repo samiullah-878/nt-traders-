@@ -307,7 +307,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       <section class="panel tools">
         ${install && !install.standalone ? tool('install', 'down', 'App home screen par lagayein', 'Icon se seedha khule') : ''}
         ${tool('links', 'share', 'Update ke links', 'GitHub upload · Firebase rules')}
-        ${tool('update', 'down', 'App update check karein', 'Abhi ' + APP_VERSION)}
+        ${tool('update', 'down', 'App update check karein', 'Abhi ' + APP_VERSION + (S.bootMs ? ` · ${(S.bootMs / 1000).toFixed(1)}s mein khuli` : ''))}
         ${fixes && !manager ? tool('migrate-selfies', 'camera', 'App ko halka karein (aik dafa)', 'Purani selfies alag karein — hazri list tez khulegi') : ''}
         ${tool('diag', 'alert', 'App ki jaanch', 'Hazri na dikhe to is ka screenshot bhejein')}
         ${manager ? '' : tool('password', 'edit', 'Malik ka password badlein')}

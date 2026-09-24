@@ -6,11 +6,14 @@ import {
 import { openTicketSheet } from './tickets.js';
 import { openBreakSheet, breakStatusHtml } from './breaks.js';
 import { icon, avatar, nameHtml, toast, busy, takeSelfie, getGps, deliverPdf, errorText, timeField, IN_TICKETS, OUT_TICKETS, openSheet, refreshSheets } from './ui.js';
-import { loadPdfLib, browserTextImages, staffMonthPdf } from './pdf.js';
+// v215: PDF ka code sirf tab load hota hai jab larka PDF banaye
+const pdfMod = () => import('./pdf.js');
 
 export function createStaffView({ data, rerender, logout, checkUpdate, install }) {
   const S = data.state;
-  const ui = { tab: 'hazri', month: pkDate().slice(0, 7), step: '', reqKind: 'leave' };
+  const TAB_KEY = 'nt-hazri-staff-tab';
+  const savedTab = (() => { try { const t = localStorage.getItem(TAB_KEY); return ['hazri', 'salary', 'request'].includes(t) ? t : 'hazri'; } catch { return 'hazri'; } })();
+  const ui = { tab: savedTab, month: pkDate().slice(0, 7), step: '', reqKind: 'leave' };
   const me = () => S.account || { phone: S.phone, name: '' };
   const schedule = () => data.scheduleFor(S.phone);
   const closedToday = () => !openRecord(S.myAttendance) && !S.myAttendance.some(a => a.date === pkDate()) && (S.config.closedDays || []).some(d => d.date === pkDate());
@@ -195,7 +198,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
 
   const setStep = text => { ui.step = text; const el = document.getElementById('punchStep'); if (el) el.textContent = text; };
   const actions = {
-    tab(el) { ui.tab = el.dataset.arg; rerender(); window.scrollTo?.(0, 0); },
+    tab(el) { ui.tab = el.dataset.arg; try { localStorage.setItem(TAB_KEY, ui.tab); } catch { /* ignore */ } rerender(); window.scrollTo?.(0, 0); },
     'month-step'(el) { const m = addMonths(ui.month, +el.dataset.arg); if (m <= pkDate().slice(0, 7)) ui.month = m; rerender(); },
     'req-kind'(el) { ui.reqKind = el.dataset.arg; rerender(); },
     'req-half'(el) { ui.reqHalf = el.dataset.arg; rerender(); },
@@ -278,6 +281,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
     },
     async 'my-pdf'(el) {
       await busy(el, async () => {
+        const { loadPdfLib, browserTextImages, staffMonthPdf } = await pdfMod();
         const lib = await loadPdfLib(), month = ui.month;
         deliverPdf(await staffMonthPdf(lib, { account: me(), month, summary: summary(month), calc: data.calcFor(me(), month), schedule: schedule(), textImages: browserTextImages }));
       });
@@ -304,7 +308,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
         <nav class="tabs" aria-label="Hisse">${tabs.map(([k, label, ic]) => `<button type="button" data-action="tab" data-arg="${k}" aria-current="${ui.tab === k ? 'page' : 'false'}">${icon(ic, 22)}<span>${label}</span>${k === 'request' && pend ? `<em class="badge">${pend}</em>` : ''}</button>`).join('')}</nav>
       </div></header>
       <main class="view view-staff">${ui.tab === 'hazri' ? hazriTab() : ui.tab === 'salary' ? salaryTab() : requestTab()}
-        <p class="foot"><button type="button" class="link" data-action="update">Update check karein</button> &nbsp; ${APP_VERSION} &nbsp; · &nbsp; <button type="button" class="link muted-link" data-action="logout">Logout</button></p></main>`;
+        <p class="foot"><button type="button" class="link" data-action="update">Update check karein</button> &nbsp; ${APP_VERSION}${S.bootMs ? ` · ${(S.bootMs / 1000).toFixed(1)}s mein khuli` : ''} &nbsp; · &nbsp; <button type="button" class="link muted-link" data-action="logout">Logout</button></p></main>`;
   }
   return { render, actions, forms, changes: {}, inputs: {}, ui, onData() { refreshSheets(); } };
 }

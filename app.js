@@ -2,9 +2,10 @@
 import { APP_VERSION, esc, normalizePhone } from './core.js';
 import { createAuthController, loginErrorMessage } from './auth.js';
 import { createData } from './data.js';
-import { createOwnerView } from './owner.js';
 import { createStaffView } from './staffview.js';
-import { createManagerView } from './manager.js';
+// v215: malik ka panel (bara) sirf malik/manager ke liye load hota hai — larke ke phone par nahi.
+const loadOwnerView = () => import('./owner.js').then(m => m.createOwnerView);
+const loadManagerView = () => import('./manager.js').then(m => m.createManagerView);
 import { $, icon, toast, formValues, closeSheets, refreshSheets, errorText } from './ui.js';
 
 const ROLE_KEY = 'nt-hazri-last-role';
@@ -12,6 +13,8 @@ const FIELD = /^(INPUT|TEXTAREA|SELECT)$/;
 
 const OWNER_IN_KEY = 'nt-hazri-owner-in';
 const STAFF_CACHE_KEY = 'nt-hazri-session-v200';
+// v215: pichli screen ki "tasveer" (HTML) — index.html usay app ke JS se bhi pehle dikha deta hai.
+const SNAP_KEY = 'nt-hazri-snap-v1';
 
 /**
  * sdk ya sdkPromise. Tez kholne ke liye boot.js Firebase ko peeche load karta hai (sdkPromise):
@@ -20,7 +23,7 @@ const STAFF_CACHE_KEY = 'nt-hazri-session-v200';
 export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalStorage(), win = window }) {
   const doc = win.document, root = $('#app', doc);
   let view = null, dirty = false, login = { role: storage?.getItem(ROLE_KEY) || 'staff', error: '', busy: false, showPass: false };
-  let data = null, controller = null;
+  let data = null, controller = null, sessionSeq = 0, snapTimer = null, firstPaint = true;
   const hint = () => { try { return !!(storage?.getItem(STAFF_CACHE_KEY) || storage?.getItem(OWNER_IN_KEY)); } catch { return false; } };
   // v207: malik ka bheja hua login link  ...#login=03001234567  -> number likhe baghair khud login
   const linkPhone = (() => { const m = String(win.location?.hash || '').match(/login=([+\d\s-]{10,16})/); return m ? normalizePhone(decodeURIComponent(m[1])) : ''; })();
@@ -59,17 +62,18 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
   });
   controller = createAuthController({
     auth: data.auth, sdk, accounts: data.accounts, storage,
-    onReset() { data.stop(); view = null; closeSheets(); login.busy = false; try { storage?.removeItem(OWNER_IN_KEY); } catch { /* ignore */ } showLogin(); },
+    onReset() { data.stop(); view = null; closeSheets(); login.busy = false; try { storage?.removeItem(OWNER_IN_KEY); storage?.removeItem(SNAP_KEY); } catch { /* ignore */ } showLogin(); },
     onSession(session) {
       clearTimeout(win.__bootTimer);
       login.error = ''; login.busy = false;
       try { storage?.setItem(ROLE_KEY, session.role); if (session.role === 'owner') storage?.setItem(OWNER_IN_KEY, '1'); } catch { /* ignore */ }
       const shared = { data, controller, rerender: render, logout: () => controller.logout().catch(e => toast(errorText(e), 'bad')), checkUpdate, install };
-      if (session.role === 'owner') { data.startOwner(); view = createOwnerView(shared); }
-      else if (session.account?.canApproveOuts === true) { data.startOwner({ role: 'manager', phone: session.phone, account: session.account }); view = createManagerView(shared); } // v211: manager = poora panel
-      else { data.startStaff(session.phone, session.account); view = createStaffView(shared); }
-      root.dataset.screen = session.role;
-      render();
+      const seq = ++sessionSeq;
+      const show = make => { if (seq !== sessionSeq) return; view = make(shared); root.dataset.screen = session.role; render(); };
+      const failView = error => { console.error(error); if (seq === sessionSeq) toast('App ka ek hissa load nahi hua. Internet check kar ke "Taza kholein" dabayein.', 'bad'); };
+      if (session.role === 'owner') { data.startOwner(); loadOwnerView().then(show).catch(failView); }
+      else if (session.account?.canApproveOuts === true) { data.startOwner({ role: 'manager', phone: session.phone, account: session.account }); loadManagerView().then(show).catch(failView); } // v211: manager = poora panel
+      else { data.startStaff(session.phone, session.account); show(createStaffView); }
     },
     onError(error, role) { login.role = role || login.role; login.error = loginErrorMessage(error); login.busy = false; showLogin(); }
   });
@@ -126,8 +130,25 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
     dirty = false;
     const scroll = win.scrollY;
     root.innerHTML = view.render();
+    if (firstPaint) {
+      firstPaint = false;
+      try { doc.documentElement.classList.remove('is-snap'); } catch { /* ignore */ }
+      const t0 = Number(win.__ntT0) || 0, now = win.performance?.now?.() || 0;
+      if (data?.state && t0 && now > t0) data.state.bootMs = Math.round(now - t0);
+    }
+    clearTimeout(snapTimer);
+    snapTimer = setTimeout(saveSnap, 900);
     if (options.keepFocus?.dataset?.input) { const el = $(`[data-input="${options.keepFocus.dataset.input}"]`, root); if (el) { el.focus(); try { el.setSelectionRange(el.value.length, el.value.length); } catch { /* search type */ } } }
     if (scroll) win.scrollTo?.(0, scroll);
+  }
+  /** Screen ki tasveer phone mein rakho (agli dafa foran dikhane ke liye). Sheets / login is mein nahi. */
+  function saveSnap() {
+    try {
+      if (!view || !['staff', 'owner', 'manager'].includes(root.dataset.screen)) return;
+      const html = root.innerHTML;
+      if (html.length > 300000) { storage?.removeItem(SNAP_KEY); return; }
+      storage?.setItem(SNAP_KEY, JSON.stringify({ v: APP_VERSION, role: root.dataset.screen, html, at: Date.now() }));
+    } catch { /* jagah na ho to chup */ }
   }
   /** Data badalne par screen taza hoti hai, lekin agar koi kuch likh raha ho to us ka likha hua nahi mit-ta. */
   function softRender() {
@@ -149,7 +170,7 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
   doc.addEventListener('click', event => {
     const el = event.target.closest?.('[data-action]'); if (!el || el.disabled) return;
     const fn = view?.actions[el.dataset.action] || shellActions[el.dataset.action];
-    if (!fn) return;
+    if (!fn) { if (!view && root.dataset.screen === 'snapshot') { event.preventDefault(); toast('Ek second — app taza ho rahi hai…', 'ok'); } return; }
     event.preventDefault();
     Promise.resolve().then(() => fn(el, event)).catch(error => { console.error(error); toast(errorText(error), 'bad'); });
   });

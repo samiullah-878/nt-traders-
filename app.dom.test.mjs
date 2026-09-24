@@ -312,8 +312,10 @@ test('logout → staff login → check-in / check-out', async () => {
   const wa = $('form[data-form=staff] a[href^="https://wa.me/92311"]'); assert.ok(wa, 'WhatsApp login link'); assert.match(decodeURIComponent(wa.getAttribute('href')), /#login=03111112223/);
   $('form[data-form=staff] [name=canApproveOuts]').checked = true; await submit($('form[data-form=staff]'));
   assert.equal(records.get(B + 'staffAccounts/03111112223').canApproveOuts, true, 'Usman manager'); assert.match($('.view').textContent, /Manager/);
+  await new Promise(r => setTimeout(r, 1000)); assert.ok(storage.getItem('nt-hazri-snap-v1'), 'malik ki tasveer bani');
   await click('[data-action=tab][data-arg=settings]'); await click('[data-action=logout]'); await settle();
   assert.equal($('#app').dataset.screen, 'login');
+  assert.equal(storage.getItem('nt-hazri-snap-v1'), null, 'logout par tasveer mit gayi');
   await click('[data-action=login-role][data-arg=staff]');
   assert.equal($('form[data-form=login] [name=pin]'), null, 'login par PIN nahi');
   fill($('form[data-form=login]'), { phone: '0311 1112223' }); await submit($('form[data-form=login]')); await settle(10);
@@ -322,6 +324,10 @@ test('logout → staff login → check-in / check-out', async () => {
   assert.ok($('.mode-bar'), 'manager: Meri hazri / Manager panel switch'); assert.match($('.view').textContent + $('.top').textContent, /Manager panel|Noor Traders/);
   await click('[data-action=mgr-mode][data-arg=me]');
   assert.ok($('[data-action=check-in]'), 'Check-In button'); assert.match($('.punch').textContent, /9h 45m roz/);
+  // v215: screen ki tasveer phone mein (agli dafa foran dikhane ke liye)
+  await new Promise(r => setTimeout(r, 1000));
+  const snap = JSON.parse(storage.getItem('nt-hazri-snap-v1') || 'null');
+  assert.ok(snap && snap.html.includes('check-in') && ['staff', 'manager'].includes(snap.role), 'tasveer mehfooz');
   const r = await app.data.checkIn({ selfie: 'data:image/jpeg;base64,AAAA', gps: { lat: 32.7979, lng: 73.9569, accuracy: 10, distance: 12 } }); assert.equal(r.queued, false); await settle();
   const att = records.get(B + `staffAttendance/${today}_03111112223`);
   assert.ok(att.checkIn); assert.equal(att.selfie, undefined, 'selfie record mein nahi'); assert.equal(att.hasSelfie, true); assert.ok(att.serverAt?.seconds, 'server ka waqt');

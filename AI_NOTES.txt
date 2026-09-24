@@ -1,8 +1,27 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v214   Tareekh: 2026-09-23  (v200-v204: 2026-09-21)
+Version: v215   Tareekh: 2026-09-24  (v200-v204: 2026-09-21)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+000000000000000. v215 — LARKE KI APP FORAN KHULE
+------------------------------------------------------------
+Malik: larke ka (staff) safha bohat tez khule, login/load ka intezar khatam ho.
+- Screen ki "tasveer": app.js har render ke 0.9 s baad root.innerHTML localStorage 'nt-hazri-snap-v1' {v, role, html, at} mein rakhta hai
+  (300 KB se bara ho to nahi; sheets/login nahi). index.html ki inline script (app ke JS se bhi PEHLE) — agar login shuda phone
+  (session-v200 ya owner-in) aur tasveer 7 din se purani nahi aur #login= link nahi — wohi HTML #app mein daal deti hai,
+  data-screen='snapshot', <html class="is-snap"> -> upar chhota "Taza ho raha hai…". Asal pehli render par class hat jati hai.
+  Tasveer ke dauran button dabaya to toast "Ek second — app taza ho rahi hai". Logout (onReset) par tasveer mit jati hai.
+  __ntBootMsg / 15 s timer ab snapshot screen par bhi neeche paigham (snap-msg) dikhate hain; boot.js fail() bhi.
+- Halka code: app.js ab owner.js / manager.js ko dynamic import karta hai (sirf malik/manager); staffview.js pdf.js ko sirf PDF
+  banate waqt. index.html modulepreload se owner/manager/pdf/push hata diye (larke ke phone par ~160 KB kam). SW phir bhi sab cache
+  karta hai (peeche).
+- Pichla tab yaad: staffview localStorage 'nt-hazri-staff-tab' (hazri|salary|request).
+- Raftaar: window.__ntT0 (index.html) se pehli asal render tak ka waqt -> data.state.bootMs; staff footer aur malik ke Settings
+  "App update" tool mein "0.9s mein khuli".
+- Firestore offline cache (persistentLocalCache) pehle se laga tha — is liye doosri dafa data bhi phone se aata hai.
+- Check-In/Out ki hifazat wohi (serverTimestamp + rules). Rules/functions mein koi tabdeeli nahi. Tests 72 (+ tasveer save/mitne ki jaanch).
 
 ------------------------------------------------------------
 00000000000000. v214 — KHABAR FORAN (COLD START KHATAM)
@@ -471,7 +490,7 @@ PDF mein Urdu lipi wala matn tasveer bana kar lagta hai (jsPDF Urdu font nahi ba
 ------------------------------------------------------------
 1) App mein Staff > "Update ke links" > "GitHub — files upload karein" (ya repo > "Add file" > "Upload files") -> zip ke andar ki SAB files ek sath daal dein (folder nahi, sirf files) -> Commit.
 2) Upar wali list ki purani files delete karein (har file kholein -> ... -> Delete file).
-3) 1-2 minute baad app kholein; neeche/login par "v214" likha aaye. Staff ke phone par bhi v214 aana zaroori hai (purani na chal rahi ho).
+3) 1-2 minute baad app kholein; neeche/login par "v215" likha aaye. Staff ke phone par bhi v215 aana zaroori hai (purani na chal rahi ho).
 v204 se Firestore rules NAYE hain (upar 0000 dekhein) — app ke baad publish karne hain. Authentication mein "Anonymous" aur "Email/Password" dono ON rehne chahiye.
 
 ------------------------------------------------------------

@@ -17,8 +17,8 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js" crossorigin>
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js" crossorigin>
 <link rel="modulepreload" href="./app.js"><link rel="modulepreload" href="./core.js"><link rel="modulepreload" href="./auth.js"><link rel="modulepreload" href="./data.js">
-<link rel="modulepreload" href="./ui.js"><link rel="modulepreload" href="./owner.js"><link rel="modulepreload" href="./staffview.js"><link rel="modulepreload" href="./pdf.js"><link rel="modulepreload" href="./breaks.js"><link rel="modulepreload" href="./tickets.js"><link rel="modulepreload" href="./manager.js"><link rel="modulepreload" href="./notify.js"><link rel="modulepreload" href="./push.js">
-<link rel="stylesheet" href="./styles.css?v=214">
+<link rel="modulepreload" href="./ui.js"><link rel="modulepreload" href="./staffview.js"><link rel="modulepreload" href="./breaks.js"><link rel="modulepreload" href="./tickets.js"><link rel="modulepreload" href="./notify.js">
+<link rel="stylesheet" href="./styles.css?v=215">
 </head>
 <body>
 <div id="app" class="app" data-screen="boot">
@@ -28,6 +28,19 @@
     <p class="boot-text" id="bootText">Khul raha hai…</p>
   </div>
 </div>
+<script>
+/* v215: pichli screen foran dikhao (app ka JS aane se bhi pehle). Sirf login shuda phone par, 7 din tak. */
+window.__ntT0=(window.performance&&performance.now)?performance.now():0;
+(function(){try{
+  var ls=window.localStorage,s=JSON.parse(ls.getItem('nt-hazri-snap-v1')||'null');
+  if(!s||!s.html||Date.now()-s.at>6048e5)return;
+  if(!(ls.getItem('nt-hazri-session-v200')||ls.getItem('nt-hazri-owner-in')==='1'))return;
+  if(/login=/.test(location.hash))return;
+  var a=document.getElementById('app');if(!a)return;
+  a.innerHTML=s.html;a.setAttribute('data-screen','snapshot');a.setAttribute('data-snap-role',s.role||'');
+  document.documentElement.className+=' is-snap';
+}catch(e){}})();
+</script>
 <div id="sheetHost"></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <noscript><p style="padding:24px;font-family:sans-serif">Is app ke liye browser mein JavaScript on honi chahiye.</p></noscript>
@@ -37,12 +50,13 @@ window.__ntRepair=function(){var done=function(){location.replace(location.pathn
   try{var jobs=[];if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)jobs.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}));
   if(window.caches&&caches.keys)jobs.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}));
   Promise.all(jobs).then(done,done)}catch(e){done()}};
-window.__ntBootMsg=function(html){var t=document.getElementById('bootText');if(t&&document.querySelector('#app[data-screen=boot]'))t.innerHTML=html};
+window.__ntBootMsg=function(html){var t=document.getElementById('bootText');if(t&&document.querySelector('#app[data-screen=boot]')){t.innerHTML=html;return}
+  if(document.querySelector('#app[data-screen=snapshot]')){var b=document.getElementById('snapMsg');if(!b){b=document.createElement('div');b.id='snapMsg';b.className='snap-msg';document.body.appendChild(b)}b.innerHTML=html}};
 /* 15 second mein na khule: internet band ho to wohi batao, warna "taza kholein" (purani copy mita kar). */
-window.__bootTimer=setTimeout(function(){if(!document.querySelector('#app[data-screen=boot]'))return;
+window.__bootTimer=setTimeout(function(){if(!document.querySelector('#app[data-screen=boot],#app[data-screen=snapshot]'))return;
   var off=navigator.onLine===false;
   window.__ntBootMsg((off?'Internet band hai. Internet on kar ke dobara kholein.':'App der se khul rahi hai.')+'<br><button type="button" onclick="window.__ntRepair()" class="btn btn-ghost" style="margin-top:12px">Taza kholein</button>')},15000);
 </script>
-<script type="module" src="./boot.js?v=214"></script>
+<script type="module" src="./boot.js?v=215"></script>
 </body>
 </html>
