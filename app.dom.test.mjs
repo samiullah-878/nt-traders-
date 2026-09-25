@@ -263,6 +263,14 @@ test('v208: malik khana break — bari, waqt, sab wapas', async () => {
   assert.ok(br.every(([k]) => records.get(k).status === 'returned'), 'sab wapas');
   assert.match($('.register').textContent, /Khana .*–/);
 });
+test('v216: malik ka khali "jane ka waqt" larke ka Check-Out na mitaye', async () => {
+  const d = C.addDays(today, -2), key = B + `staffAttendance/${d}_03007654321`, prev = records.get(key);
+  await fake.sdk.setDoc({ path: key }, { id: `${d}_03007654321`, date: d, phone: '03007654321', checkIn: '09:10', checkOut: '19:05' }); await settle(6);
+  await app.data.saveAttendance({ phone: '03007654321', date: d, checkIn: '09:10', checkOut: '', note: 'score' }); await settle(6);
+  assert.equal(records.get(key).checkOut, '19:05', 'Check-Out bacha raha');
+  if (prev) await fake.sdk.setDoc({ path: key }, prev); else await fake.sdk.deleteDoc({ path: key });
+  await settle(4);
+});
 test('v209: malik ka ticket — banana, wapsi, katauti salary mein', async () => {
   await click('[data-action=tab][data-arg=hazri]');
   await click('[data-action=ticket-new]'); assert.ok($('[data-sheet=ticket-new]'));
@@ -396,8 +404,18 @@ test('logout → staff login → check-in / check-out', async () => {
   // salary badal sakta hai (bonus)
   await click('[data-action=tab][data-arg=salary]'); assert.ok($('.totals'), 'salary dikhti hai');
   await click('[data-action=mgr-mode][data-arg=me]');
+  // v216: manager ka Check-Out kisi aur ki khuli parchi band na kare
+  await fake.sdk.setDoc({ path: B + 'staffOuts/other1' }, { phone: '03007654321', name: 'Bilal', date: today, reason: 'Bank', note: '', minutes: 30, status: 'approved', outAt: Date.now(), requestedAt: Date.now(), by: 'x' }); await settle(6);
+  // v216: server ne mana kiya -> pakka paigham, phir dobara dabane par theek
+  fake.fail.denyPath = 'staffAttendance/';
+  await click('[data-action=check-out]'); await settle(10);
+  assert.ok($('.punch-error'), 'mana hone par pakka paigham'); assert.match($('.punch-error').textContent, /Check-Out server par NAHI laga/); assert.match($('.punch-error').textContent, /ijazat/);
+  assert.ok(!records.get(B + `staffAttendance/${today}_03111112223`).checkOut, 'server par check-out nahi laga');
+  fake.fail.denyPath = null;
   await click('[data-action=check-out]'); await settle(10);
   assert.ok(records.get(B + `staffAttendance/${today}_03111112223`).checkOut); assert.match($('.punch').textContent, /mukammal/);
+  assert.equal($('.punch-error'), null, 'kamyabi par paigham hat gaya');
+  assert.equal(records.get(B + 'staffOuts/other1').status, 'approved', 'Bilal ki parchi manager ke Check-Out se band nahi hui');
 });
 test('staff: request bhejna (sirf rules wali keys), salary tab', async () => {
   await click('[data-action=tab][data-arg=request]');

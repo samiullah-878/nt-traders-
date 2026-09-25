@@ -6,7 +6,7 @@ import {
 } from './core.js';
 import { openTicketSheet } from './tickets.js';
 import { NOTIFY_KINDS, newTopic, sendNotify, appLink } from './notify.js';
-import { enablePush, disablePush, currentToken, pushPermission, pushSupported } from './push.js';
+import { enablePush, disablePush, currentToken, pushPermission, pushSupported, refreshPush } from './push.js';
 import { openBreakSheet, breakStatusHtml } from './breaks.js';
 const clock = ms => ms ? fmtTime(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(ms))) : '—';
 const to24FromMin = m => { const x = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
@@ -1005,5 +1005,13 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     forms.att = blocked;
   }
   const renderAll = () => { const html = render(); return manager ? html.replace('<main class="view', '<main data-mgr="1" class="view') : html; };
-  return { render: renderAll, actions, forms, changes, inputs, ui, onData() { refreshSheets(); } };
+  // v216: app khulte hi notification ka token chupke se taza (ijazat pehle se ho to) — har dafa button na dabana pade
+  let pushChecked = false;
+  function autoPush() {
+    if (pushChecked || !S.loaded?.has?.('config') || !S.config.push?.vapidKey) return;
+    pushChecked = true;
+    void refreshPush({ app: data.app, vapidKey: S.config.push.vapidKey, onToken: t => data.savePushToken(t, (navigator.userAgent || '').slice(0, 60)) })
+      .then(t => { if (t) { ui.pushToken = t; ui.pushSaved = true; sheets.notify?.refresh(true); } });
+  }
+  return { render: renderAll, actions, forms, changes, inputs, ui, onData() { refreshSheets(); autoPush(); } };
 }

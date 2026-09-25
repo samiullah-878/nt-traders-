@@ -11,12 +11,12 @@ messaging.onBackgroundMessage(payload => {
   const d = payload.data || {};
   self.registration.showNotification(d.title || 'Noor Traders Hazri', {
     body: d.body || '',
-    icon: './icon-192.png',
-    badge: './icon-192.png',
+    icon: new URL('./icon-192.png', self.location.href).href,
+    badge: new URL('./icon-192.png', self.location.href).href,
     tag: d.tag || 'nt-hazri',
     renotify: true,
     vibrate: [200, 100, 200],
-    data: { link: d.link || './' },
+    data: { link: d.link || new URL('./', self.location.href).href },
     actions: [{ action: 'open', title: 'Kholein' }]
   });
 });
@@ -26,7 +26,7 @@ self.addEventListener('notificationclick', event => {
   const link = event.notification.data?.link || './';
   event.waitUntil((async () => {
     const all = await clients.matchAll({ type: 'window', includeUncontrolled: true });
-    for (const c of all) { if (c.url.includes(self.registration.scope)) { await c.focus(); try { await c.navigate(link); } catch { /* ignore */ } return; } }
+    for (const c of all) { try { if (new URL(c.url).origin === self.location.origin) { await c.focus(); try { await c.navigate(link); } catch { /* ignore */ } return; } } catch { /* ignore */ } }
     await clients.openWindow(link);
   })());
 });

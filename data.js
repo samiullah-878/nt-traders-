@@ -33,7 +33,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     return {
       role: null, phone: '', loaded: new Set(), config: { ...DEFAULT_CONFIG },
       staff: [], months: new Map(), requests: [], schedules: new Map(), payroll: [],
-      account: null, myAttendance: [], outs: [], teamOuts: [], teamAttendance: [], tickets: [], myTickets: [], teamTickets: [], errors: {}, lastSync: {}, pendingWrites: 0
+      account: null, myAttendance: [], punchError: null, outs: [], teamOuts: [], teamAttendance: [], tickets: [], myTickets: [], teamTickets: [], errors: {}, lastSync: {}, pendingWrites: 0
     };
   }
   let unsubs = [], monthSubs = new Map(), epoch = 0, legacyChecked = false;
@@ -420,9 +420,11 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
         finalScore: finalScore === '' || finalScore == null ? (before?.finalScore != null && before.checkIn === inT ? before.finalScore : autoScore) : Math.max(0, Math.min(10, Number(finalScore))),
         shiftStart: schedule.shiftStart || '', ownerNote: String(note || ''), editedAt: Date.now(), editedBy: auth.currentUser.uid
       });
+      // v216: khali "jane ka waqt" se pehle se laga Check-Out (larke ka) kabhi na mitao
+      if (!outT) delete patch.checkOut;
       if (!before) { patch.checkInTs = null; patch.manual = true; }
       if (before && to24(before.checkIn) !== inT) patch.checkInTs = null;
-      if (before && to24(before.checkOut) !== outT) patch.checkOutTs = null;
+      if (before && outT && to24(before.checkOut) !== outT) patch.checkOutTs = null;
       tx.set(r, patch, { merge: true });
       const light = before ? { checkIn: before.checkIn || '', checkOut: before.checkOut || '', finalScore: before.finalScore ?? null } : null;
       audit(tx, 'attendance', id, light, { checkIn: inT, checkOut: outT, finalScore: patch.finalScore }, note || 'Malik ne hazri durust ki');
@@ -776,14 +778,14 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     const minutesLate = Math.max(0, pkMinutes() - start);
     const autoScore = scoreForLate(Math.max(0, minutesLate - Number(schedule.grace ?? 10) + 10), state.config.scores);
     // Selfie alag doc mein (staffSelfies) taake malik ki list halki rahe. serverAt = server ka asal waqt.
-    const write = sdk.setDoc(ref('staffAttendance', id), {
+    const write = watchPunch('checkin', sdk.setDoc(ref('staffAttendance', id), {
       ...clean({
         id, date, phone, name: state.account?.name || '', address: state.account?.address || '',
         checkIn: pkTime24(), checkInTs: Date.now(), checkInLat: gps.lat, checkInLng: gps.lng, checkInAccuracy: gps.accuracy, checkInDistance: gps.distance,
         hasSelfie: true, shopLat: SHOP.lat, shopLng: SHOP.lng, shopRadius: radius, minutesLate, autoScore, finalScore: autoScore, shiftStart: schedule.shiftStart || '09:15'
       }),
       serverAt: sdk.serverTimestamp ? sdk.serverTimestamp() : Date.now()
-    }, { merge: true });
+    }, { merge: true }), id);
     sdk.setDoc(ref('staffSelfies', id), { phone, date, selfie, at: Date.now() }).catch(error => {
       // Purane rules (v204 se pehle) staffSelfies nahi mante: selfie hazri ke record mein hi rakh do
       if (error?.code === 'permission-denied') write.then(() => sdk.setDoc(ref('staffAttendance', id), { selfie, hasSelfie: false }, { merge: true })).catch(e => onProblem('queued-write', e));
@@ -797,12 +799,26 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   async function checkOut(row, gps) {
     if (state.role !== 'staff' && state.role !== 'manager') throw new Error('Staff login zaroori hai.');
     if (!row?.checkIn || row.checkOut) throw new Error('Check-In ka record nahi mila.');
-    const openOut = state.outs.find(o => o.date === row.date && o.status === 'approved');
+    // v216: sirf APNI khuli parchi/break band ho (manager ke paas sab ki parchiyan hoti hain)
+    const openOut = state.outs.find(o => o.phone === state.phone && o.date === row.date && o.status === 'approved');
     if (openOut) { try { await returnOut(openOut, gps); } catch { /* parchi ki wapsi baad mein */ } }
-    const write = sdk.setDoc(ref('staffAttendance', row.id || `${row.date}_${state.phone}`), { ...clean({
+    const write = watchPunch('checkout', sdk.setDoc(ref('staffAttendance', row.id || `${row.date}_${state.phone}`), { ...clean({
       phone: state.phone, checkOut: pkTime24(), checkOutTs: Date.now(), checkOutLat: gps?.lat ?? null, checkOutLng: gps?.lng ?? null, checkOutAccuracy: gps?.accuracy ?? null, checkOutDistance: gps?.distance ?? null
-    }), outServerAt: sdk.serverTimestamp ? sdk.serverTimestamp() : Date.now() }, { merge: true });
+    }), outServerAt: sdk.serverTimestamp ? sdk.serverTimestamp() : Date.now() }, { merge: true }), row.id || `${row.date}_${state.phone}`);
     return settle(write);
+  }
+  /** v216: Check-In/Out server ne qubool kiya ya nahi — nateeja state.punchError mein (larke ki screen par pakka paigham). */
+  function watchPunch(kind, write, id) {
+    if (state.punchError?.kind === kind) state.punchError = null;
+    write.then(() => { if (state.punchError?.kind === kind) { state.punchError = null; changed(); } }, async error => {
+      let code = error?.code || 'error', exists = false;
+      if (kind === 'checkin' && code === 'permission-denied') {
+        try { const snap = await sdk.getDoc(ref('staffAttendance', id)); exists = snap.exists() && !!snap.data()?.checkIn; } catch { /* ignore */ }
+      }
+      state.punchError = { kind, code: exists ? 'already' : code, at: Date.now() };
+      changed();
+    });
+    return write;
   }
   /** Server ka jawab 2.5 second mein na aaye to hazri phone mein qataar mein rehti hai aur signal aate hi chali jati hai. */
   async function settle(write) {

@@ -21,8 +21,24 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
 
   const dutyMin = () => shiftMinutes(schedule()) || Math.round(data.salaryFor(me()).dutyHours * 60);
   const dutyTags = () => { const sch = schedule(); return `<div class="tags center"><span class="tag">${icon('clock', 14)} Duty ${fmtTime(sch.shiftStart)}${sch.shiftEnd ? ' – ' + fmtTime(sch.shiftEnd) : ''}</span><span class="tag">${hm(dutyMin()).replace(' 00m', '')} roz</span></div>`; };
-  const syncLine = row => row?.pending ? `<p class="sync-line is-wait">${icon('clock', 16)} Hazri abhi phone mein hai — internet milte hi malik tak pohanch jayegi. App band na karein.</p>` : row ? `<p class="sync-line">${icon('check', 16)} Malik tak pohanch gayi</p>` : '';
-  function actionCard() {
+  const syncLine = row => row?.pending
+    ? `<p class="sync-line is-wait">${icon('clock', 16)} ${row.checkOut ? 'Check-Out abhi phone mein hai — server tak nahi gaya. Internet on rakhein, app band na karein.' : 'Hazri abhi phone mein hai — internet milte hi malik tak pohanch jayegi. App band na karein.'}</p>`
+    : row ? `<p class="sync-line">${icon('check', 16)} ${row.checkOut ? 'Check-Out malik tak pohanch gaya' : 'Malik tak pohanch gayi'}</p>` : '';
+  /** v216: server ne Check-In/Out mana kiya to pakka paigham (khud gayab nahi hota). */
+  const PUNCH_WHY = {
+    'permission-denied': 'Server ne ijazat nahi di. Logout kar ke dobara login karein. Phir bhi na ho to malik ko batayein.',
+    already: 'Aap ki aaj ki hazri pehle se lagi hui hai. App band kar ke dobara kholein.',
+    unavailable: 'Internet nahi mila. Internet on kar ke dobara dabayein.',
+    'deadline-exceeded': 'Internet bohat kamzor hai. Dobara dabayein.'
+  };
+  const punchBox = () => {
+    const e = S.punchError; if (!e) return '';
+    const what = e.kind === 'checkout' ? 'Check-Out server par NAHI laga' : 'Check-In (hazri) server par NAHI lagi';
+    return `<div class="punch-error" role="alert">${icon('alert', 20)}<div><b>${what}</b><small>${esc(PUNCH_WHY[e.code] || 'Wajah: ' + e.code + '. Dobara dabayein. Phir bhi na ho to malik ko ye screenshot bhejein.')}</small></div>
+      <button type="button" class="btn btn-ghost btn-sm" data-action="punch-error-ok">Theek hai</button></div>`;
+  };
+  function actionCard() { return punchBox() + actionCardInner(); }
+  function actionCardInner() {
     const today = pkDate(), rows = S.myAttendance, todayRow = rows.find(a => a.date === today), open = openRecord(rows), sch = schedule();
     const radius = Number(S.config.radius || SHOP.radius);
     if (S.errors?.myAttendance) return `<section class="punch"><p class="error-line">${icon('alert', 18)} <span>Aap ki hazri server se nahi aayi (${esc(S.errors.myAttendance)}). Internet check karein, phir Logout kar ke dobara login karein.</span></p></section>`;
@@ -203,6 +219,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
     'req-kind'(el) { ui.reqKind = el.dataset.arg; rerender(); },
     'req-half'(el) { ui.reqHalf = el.dataset.arg; rerender(); },
     'fix-missed'(el) { ui.tab = 'request'; ui.reqKind = 'correction'; ui.reqDate = el.dataset.date; rerender(); window.scrollTo?.(0, 0); },
+    'punch-error-ok'() { S.punchError = null; rerender(); },
     async 'check-in'(el) {
       await busy(el, async () => {
         try {
