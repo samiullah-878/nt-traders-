@@ -21,6 +21,7 @@ export function createManagerView(shared) {
     },
     actions: pick('actions'), forms: pick('forms'), changes: pick('changes'), inputs: pick('inputs'),
     onData() { owner.onData?.(); staff.onData?.(); },
+    onConfirmed(p) { staff.onConfirmed?.(p); }, // v217: apni hazri / wapsi ki kamyabi ki animation
     get mode() { return mode; }
   };
 }

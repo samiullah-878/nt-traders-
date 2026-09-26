@@ -14,6 +14,21 @@ async function messagingRegistration(create = false) {
 }
 let mod = null;
 const load = async () => (mod ||= await import(SDK));
+// v219: app KHULI ho to Firebase khabar seedha page ko deta hai (phone par kuch nahi bajta tha). Ab page khud phone ki
+// notification (awaaz + vibration) dikhata hai. Parchi / ticket ki khabar app pehle se toast + awaaz se deti hai — wo dobara nahi.
+let fgBound = false;
+function bindForeground(m, messaging, reg, onMessage) {
+  if (fgBound) return; fgBound = true;
+  m.onMessage(messaging, payload => {
+    const d = payload?.data || {}, tag = String(d.tag || 'nt-hazri');
+    if (/^(out|tkt)-/.test(tag)) return;
+    try {
+      const icon = new URL('./icon-192.png', location.href).href;
+      reg?.showNotification?.(d.title || 'Noor Traders Hazri', { body: d.body || '', icon, badge: icon, tag, renotify: true, vibrate: [200, 100, 200], data: { link: d.link || location.href } });
+    } catch { /* ignore */ }
+    try { onMessage?.(d); } catch { /* ignore */ }
+  });
+}
 
 export async function pushSupported() {
   try { const m = await load(); return (await m.isSupported()) && 'Notification' in window && 'serviceWorker' in navigator; } catch { return false; }
@@ -30,7 +45,7 @@ export async function enablePush({ app, vapidKey, onToken, onMessage }) {
   const m = await load(), messaging = m.getMessaging(app);
   const token = await m.getToken(messaging, { vapidKey, serviceWorkerRegistration: reg });
   if (!token) throw new Error('Token nahi mila. Internet check kar ke dobara koshish karein.');
-  m.onMessage(messaging, payload => { const d = payload?.data || {}; onMessage?.(d); });
+  bindForeground(m, messaging, reg, onMessage);
   await onToken?.(token);
   return token;
 }
@@ -51,12 +66,13 @@ export async function disablePush({ app }) {
 }
 
 /** App khulte hi (ijazat pehle se ho to) chupke se token taza karo — button dabane ki zaroorat nahi. */
-export async function refreshPush({ app, vapidKey, onToken }) {
+export async function refreshPush({ app, vapidKey, onToken, onMessage }) {
   try {
     if (!vapidKey || pushPermission() !== 'granted' || !(await pushSupported())) return '';
     const reg = await messagingRegistration(true);
-    const m = await load();
-    const token = await m.getToken(m.getMessaging(app), { vapidKey, serviceWorkerRegistration: reg });
+    const m = await load(), messaging = m.getMessaging(app);
+    const token = await m.getToken(messaging, { vapidKey, serviceWorkerRegistration: reg });
+    bindForeground(m, messaging, reg, onMessage);
     if (token) await onToken?.(token);
     return token || '';
   } catch (error) { console.warn('push refresh', error); return ''; }

@@ -7,7 +7,7 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Noor Traders Hazri v213. Owner emails auth.js ke OWNER_EMAILS se milni chahiye.
+    // Noor Traders Hazri v218 (v218: staffDiag). Owner emails auth.js ke OWNER_EMAILS se milni chahiye.
     // An arbitrary Firebase email account must never gain business-owner access.
     function isOwner() {
       return signedIn()
@@ -226,6 +226,20 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'returnAt', 'returnBy', 'returnServerAt'])
           && request.resource.data.returnServerAt == request.time);
       allow delete: if isOwner();
+    }
+    // v218: har larke ke phone ka "jaanch ka record" — sirf apna aik doc (phone = session ka phone). Malik/manager parhte hain
+    // (upar wala generic match). Keys data.js DIAG_KEYS se milni chahiye. serverAt = asal server ka waqt.
+    match /businesses/noor-traders/staffDiag/{phone} {
+      allow create, update: if validStaffSession()
+        && phone == sessionPhone()
+        && request.resource.data.phone == sessionPhone()
+        && request.resource.data.keys().hasOnly(['phone', 'name', 'v', 'at', 'serverAt', 'device', 'app', 'pending', 'failKind', 'failCode', 'failAt', 'failId', 'failDate', 'fixedAt', 'lateKind', 'lateMin', 'lateAt'])
+        && request.resource.data.serverAt == request.time
+        && request.resource.data.v is string && request.resource.data.v.size() <= 12
+        && (!('name' in request.resource.data) || (request.resource.data.name is string && request.resource.data.name.size() <= 80))
+        && (!('device' in request.resource.data) || (request.resource.data.device is string && request.resource.data.device.size() <= 80))
+        && (!('failCode' in request.resource.data) || (request.resource.data.failCode is string && request.resource.data.failCode.size() <= 40))
+        && (!('failId' in request.resource.data) || (request.resource.data.failId is string && request.resource.data.failId.size() <= 80));
     }
     // v212: notification ke liye har phone ka token.
     match /businesses/noor-traders/pushTokens/{tokenId} {

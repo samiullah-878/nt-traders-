@@ -5,7 +5,7 @@ import {
 } from './core.js';
 import { openTicketSheet } from './tickets.js';
 import { openBreakSheet, breakStatusHtml } from './breaks.js';
-import { icon, avatar, nameHtml, toast, busy, takeSelfie, getGps, deliverPdf, errorText, timeField, IN_TICKETS, OUT_TICKETS, openSheet, refreshSheets } from './ui.js';
+import { icon, avatar, nameHtml, toast, busy, takeSelfie, getGps, deliverPdf, errorText, timeField, IN_TICKETS, OUT_TICKETS, openSheet, refreshSheets, celebrate } from './ui.js';
 // v215: PDF ka code sirf tab load hota hai jab larka PDF banaye
 const pdfMod = () => import('./pdf.js');
 
@@ -13,7 +13,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
   const S = data.state;
   const TAB_KEY = 'nt-hazri-staff-tab';
   const savedTab = (() => { try { const t = localStorage.getItem(TAB_KEY); return ['hazri', 'salary', 'request'].includes(t) ? t : 'hazri'; } catch { return 'hazri'; } })();
-  const ui = { tab: savedTab, month: pkDate().slice(0, 7), step: '', reqKind: 'leave' };
+  const ui = { tab: savedTab, month: pkDate().slice(0, 7), step: '', stage: '', reqKind: 'leave' };
   const me = () => S.account || { phone: S.phone, name: '' };
   const schedule = () => data.scheduleFor(S.phone);
   const closedToday = () => !openRecord(S.myAttendance) && !S.myAttendance.some(a => a.date === pkDate()) && (S.config.closedDays || []).some(d => d.date === pkDate());
@@ -21,20 +21,32 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
 
   const dutyMin = () => shiftMinutes(schedule()) || Math.round(data.salaryFor(me()).dutyHours * 60);
   const dutyTags = () => { const sch = schedule(); return `<div class="tags center"><span class="tag">${icon('clock', 14)} Duty ${fmtTime(sch.shiftStart)}${sch.shiftEnd ? ' – ' + fmtTime(sch.shiftEnd) : ''}</span><span class="tag">${hm(dutyMin()).replace(' 00m', '')} roz</span></div>`; };
-  const syncLine = row => row?.pending
-    ? `<p class="sync-line is-wait">${icon('clock', 16)} ${row.checkOut ? 'Check-Out abhi phone mein hai — server tak nahi gaya. Internet on rakhein, app band na karein.' : 'Hazri abhi phone mein hai — internet milte hi malik tak pohanch jayegi. App band na karein.'}</p>`
-    : row ? `<p class="sync-line">${icon('check', 16)} ${row.checkOut ? 'Check-Out malik tak pohanch gaya' : 'Malik tak pohanch gayi'}</p>` : '';
+  // v217: halat asal server ke jawab se. sending = bhej rahe hain, waiting = phone mein ruki (internet ka intezar), ok = malik tak pohanch gaya.
+  const syncOf = (kind, id) => (id ? S.sync?.[kind + ':' + id] : null) || null;
+  const retryBtn = key => `<button type="button" class="link sync-retry" data-action="sync-retry" data-key="${esc(key)}">Dobara bhejein</button>`;
+  const syncLine = row => {
+    if (!row) return '';
+    const kind = row.checkOut ? 'checkout' : 'checkin', st = syncOf(kind, row.id), key = kind + ':' + row.id;
+    if (st?.phase === 'sending') return `<p class="sync-line is-send"><i class="sync-dot" aria-hidden="true"></i> ${kind === 'checkout' ? 'Check-Out' : 'Hazri'} server ko ja rahi hai…</p>`;
+    if (row.pending || st?.phase === 'waiting') return `<p class="sync-line is-wait"><i class="sync-dot" aria-hidden="true"></i> <span>${row.checkOut ? 'Check-Out abhi phone mein hai — server tak nahi gaya. Internet on rakhein, app band na karein.' : 'Hazri abhi phone mein hai — internet milte hi malik tak pohanch jayegi. App band na karein.'}${kind === 'checkout' ? ' ' + retryBtn(key) : ''}</span></p>`;
+    return `<p class="sync-line">${icon('check', 16)} ${row.checkOut ? 'Check-Out malik tak pohanch gaya' : 'Malik tak pohanch gayi'}</p>`;
+  };
   /** v216: server ne Check-In/Out mana kiya to pakka paigham (khud gayab nahi hota). */
   const PUNCH_WHY = {
     'permission-denied': 'Server ne ijazat nahi di. Logout kar ke dobara login karein. Phir bhi na ho to malik ko batayein.',
     already: 'Aap ki aaj ki hazri pehle se lagi hui hai. App band kar ke dobara kholein.',
     unavailable: 'Internet nahi mila. Internet on kar ke dobara dabayein.',
-    'deadline-exceeded': 'Internet bohat kamzor hai. Dobara dabayein.'
+    'deadline-exceeded': 'Internet bohat kamzor hai. Dobara dabayein.',
+    lost: 'Hazri server tak nahi pohanchi aur phone se bhi mit gayi. Dobara Check-In karein.',
+    missing: 'Server par aaj ki hazri (Check-In) hi nahi mili, is liye Check-Out nahi lag saka. Request mein "Hazri durust" bhejein ya malik ko batayein.'
   };
   const punchBox = () => {
     const e = S.punchError; if (!e) return '';
     const what = e.kind === 'checkout' ? 'Check-Out server par NAHI laga' : 'Check-In (hazri) server par NAHI lagi';
-    return `<div class="punch-error" role="alert">${icon('alert', 20)}<div><b>${what}</b><small>${esc(PUNCH_WHY[e.code] || 'Wajah: ' + e.code + '. Dobara dabayein. Phir bhi na ho to malik ko ye screenshot bhejein.')}</small></div>
+    const key = Object.keys(S.sync || {}).find(k => S.sync[k].kind === e.kind && S.sync[k].phase === 'fail');
+    const canRetry = e.kind === 'checkout' && key && e.code !== 'missing';
+    return `<div class="punch-error${Date.now() - (e.at || 0) < 1500 ? ' is-shake' : ''}" role="alert">${icon('alert', 20)}<div><b>${what}</b><small>${esc(PUNCH_WHY[e.code] || 'Wajah: ' + e.code + '. Dobara dabayein. Phir bhi na ho to malik ko ye screenshot bhejein.')}</small>
+      ${canRetry ? `<span class="btn-row"><button type="button" class="btn btn-out btn-sm" data-action="sync-retry" data-key="${esc(key)}">Dobara bhejein</button></span>` : ''}</div>
       <button type="button" class="btn btn-ghost btn-sm" data-action="punch-error-ok">Theek hai</button></div>`;
   };
   function actionCard() { return punchBox() + actionCardInner(); }
@@ -53,7 +65,9 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
         <div class="progress" role="img" aria-label="Duty ka hissa"><i style="width:${Math.min(100, Math.round(mins / Math.max(1, dutyMin()) * 100))}%"></i></div>
         <p class="punch-sub"><b>${hm(mins)}</b> ho gaye &nbsp;|&nbsp; ${left > 0 ? `<b>${hm(left)}</b> baqi` : `<b class="txt-ok">Duty poori${left < 0 ? ', ' + hm(-left) + ' overtime' : ''}</b>`}${sch.shiftEnd ? ' &nbsp;|&nbsp; Chutti ' + fmtTime(sch.shiftEnd) : ''}</p>
         ${syncLine(open)}
-        <button type="button" class="btn btn-out btn-xl" data-action="check-out">${icon('out', 22)} Check-Out karein</button>
+        <button type="button" class="btn btn-out btn-xl btn-hold" data-hold="check-out" data-hold-ms="900" aria-label="Check-Out — button daba kar rakhein">
+          <svg class="hold-ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="hold-track" cx="18" cy="18" r="15"/><circle class="hold-fill" cx="18" cy="18" r="15" pathLength="100"/></svg>
+          <span class="hold-text"><b>Check-Out karein</b><small>Daba kar rakhein</small></span></button>
         <p class="punch-step" id="punchStep">${esc(ui.step)}</p></section>`;
     }
     if (todayRow?.checkIn) {
@@ -65,8 +79,23 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
     return `<section class="punch"><p class="punch-state">${esc(dateLabel(today))}</p>
       <p class="punch-big">Duty ${fmtTime(sch.shiftStart)}</p>${dutyTags()}
       <p class="punch-sub ${lateBy > 0 ? 'txt-late' : ''}">${lateBy > 0 ? `Waqt guzar chuka hai — abhi Check-In karein` : 'Dukaan pohanch kar Check-In karein'}</p>
-      <button type="button" class="btn btn-in btn-xl" data-action="check-in">${icon('camera', 22)} Check-In karein</button>
+      ${ui.stage ? stepper() : `<button type="button" class="btn btn-in btn-xl" data-action="check-in">${icon('camera', 22)} Check-In karein</button>`}
       <p class="punch-step" id="punchStep">${esc(ui.step) || `Selfie aur location lagegi. Dukaan se ${radius}m ke andar hona zaroori hai.`}</p></section>`;
+  }
+  /** v217: Check-In ke 3 qadam — selfie, location (radar), server. Jo chal raha hai us par halki animation. */
+  const STAGES = [['selfie', 'camera', 'Selfie'], ['gps', 'pin', 'Location'], ['send', 'check', 'Hazri']];
+  function stepper() {
+    const idx = STAGES.findIndex(x => x[0] === ui.stage);
+    return `<ol class="steps" data-stage="${esc(ui.stage)}" aria-label="Check-In ke qadam">${STAGES.map(([k, ic, label], i) =>
+      `<li class="${i < idx ? 'is-done' : i === idx ? 'is-now' : ''}"><span class="st-dot st-${k}">${i < idx ? icon('check', 18) : icon(ic, 18)}${i === idx && k === 'gps' ? '<i class="radar" aria-hidden="true"></i><i class="radar r2" aria-hidden="true"></i>' : ''}${i === idx && k === 'send' ? '<svg class="st-spin" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17"/></svg>' : ''}</span><small>${label}</small></li>`).join('')}</ol>`;
+  }
+  /** v217: wapsi (Gate Pass / khana break) ki halat — sirf jab ruki ho ya mana hui ho. */
+  function returnSync() {
+    return Object.entries(S.sync || {}).filter(([, v]) => v.kind === 'return' && (v.phase === 'waiting' || v.phase === 'fail')).map(([key, v]) => v.phase === 'fail'
+      ? `<div class="punch-error${Date.now() - (v.at || 0) < 1500 ? ' is-shake' : ''}" role="alert">${icon('alert', 20)}<div><b>Wapsi server par NAHI lagi</b><small>${esc(PUNCH_WHY[v.code] || 'Wajah: ' + v.code + '.')} Malik ki screen par abhi aap bahar hi dikh rahe hain.</small>
+          <span class="btn-row"><button type="button" class="btn btn-in btn-sm" data-action="sync-retry" data-key="${esc(key)}">Dobara bhejein</button></span></div>
+          <button type="button" class="btn btn-ghost btn-sm" data-action="sync-dismiss" data-key="${esc(key)}">Theek hai</button></div>`
+      : `<p class="sync-line is-wait sync-card"><i class="sync-dot" aria-hidden="true"></i> <span>Wapsi abhi phone mein hai — internet milte hi malik tak jayegi. App band na karein. ${retryBtn(key)}</span></p>`).join('');
   }
   function monthBlock() {
     const month = ui.month, sum = summary(month), today = pkDate();
@@ -82,7 +111,8 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
   }
   const clock = ms => ms ? fmtTime(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(ms))) : '—';
   /** Bahar jane ki parchi: button / intezar / Gate Pass. Sirf jab duty par ho. */
-  function outCard() {
+  function outCard() { return returnSync() + outCardInner(); }
+  function outCardInner() {
     const today = pkDate(), open = openRecord(S.myAttendance);
     if (!open || open.date !== today) return '';
     const od = dayOuts(S.outs, S.phone, today), last = [...S.outs].filter(o => o.date === today && o.phone === S.phone && o.kind !== 'break').sort((a, b) => (b.requestedAt || 0) - (a.requestedAt || 0))[0];
@@ -213,42 +243,55 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
   }
 
   const setStep = text => { ui.step = text; const el = document.getElementById('punchStep'); if (el) el.textContent = text; };
+  const setStage = (stage, text) => { const moved = ui.stage !== stage; ui.stage = stage; ui.step = text; if (moved) rerender(); else setStep(text); };
   const actions = {
     tab(el) { ui.tab = el.dataset.arg; try { localStorage.setItem(TAB_KEY, ui.tab); } catch { /* ignore */ } rerender(); window.scrollTo?.(0, 0); },
     'month-step'(el) { const m = addMonths(ui.month, +el.dataset.arg); if (m <= pkDate().slice(0, 7)) ui.month = m; rerender(); },
     'req-kind'(el) { ui.reqKind = el.dataset.arg; rerender(); },
     'req-half'(el) { ui.reqHalf = el.dataset.arg; rerender(); },
     'fix-missed'(el) { ui.tab = 'request'; ui.reqKind = 'correction'; ui.reqDate = el.dataset.date; rerender(); window.scrollTo?.(0, 0); },
-    'punch-error-ok'() { S.punchError = null; rerender(); },
+    'punch-error-ok'() {
+      const key = Object.keys(S.sync || {}).find(k => S.sync[k].kind === S.punchError?.kind && S.sync[k].phase === 'fail');
+      if (key) data.dismissSync(key); S.punchError = null; rerender();
+    },
+    async 'sync-retry'(el) {
+      await busy(el, async () => { const r = await data.retrySync(el.dataset.key); if (r?.queued) toast('Abhi bhi internet ka intezar — signal aate hi khud chali jayegi.', ''); });
+      rerender();
+    },
+    'sync-dismiss'(el) { data.dismissSync(el.dataset.key); rerender(); },
     async 'check-in'(el) {
+      if (ui.stage) return;
       await busy(el, async () => {
         try {
-          setStep('1/3  Selfie lein…');
+          setStage('selfie', 'Selfie lein…');
           const selfie = await takeSelfie();
-          setStep('2/3  Location dekh rahe hain… (15 second tak lag sakte hain)');
+          setStage('gps', 'Dukaan dhoond rahe hain… (15 second tak lag sakte hain)');
           const gps = await getGps();
-          setStep(`3/3  Dukaan se ${Math.round(gps.distance)}m. Hazri lag rahi hai…`);
+          setStage('send', `Dukaan se ${Math.round(gps.distance)}m. Hazri server ko ja rahi hai…`);
           const result = await data.checkIn({ selfie, gps });
-          setStep('');
-          toast(result.queued ? 'Internet kamzor hai — hazri phone mein mehfooz hai, signal aate hi khud chali jayegi.' : 'Check-In ho gaya', 'ok');
+          ui.stage = ''; setStep('');
+          // Kamyabi ki animation tab chalti hai jab server qubool kare (onConfirmed) — yahan sirf dheeme internet ka paigham
+          if (result.queued) toast('Internet kamzor hai — hazri phone mein mehfooz hai, signal aate hi khud chali jayegi.', '');
         } catch (error) {
+          ui.stage = '';
           setStep(error.code === 'app/cancelled' ? '' : errorText(error));
           if (error.code !== 'app/cancelled') throw error;
         }
       });
+      ui.stage = '';
       rerender();
     },
     async 'check-out'(el) {
       const open = openRecord(S.myAttendance);
       if (!open) { toast('Check-In ka record nahi mila. Page dobara kholein.', 'bad'); return; }
-      if (!confirm('Check-Out karein? Is ke baad aaj dobara Check-In nahi hoga.')) return;
+      // v217: purana OK/Cancel dabba nahi — button 0.9 second daba kar rakhna hi tasdeeq hai (app.js data-hold)
       await busy(el, async () => {
         setStep('Location dekh rahe hain…');
         let gps = null; try { gps = await getGps(); } catch { /* check-out location ke baghair bhi ho jata hai */ }
         setStep('Check-Out lag raha hai…');
         const result = await data.checkOut(open, gps);
         setStep('');
-        toast(result.queued ? 'Internet kamzor hai — Check-Out phone mein mehfooz hai, signal aate hi chala jayega.' : 'Check-Out ho gaya', 'ok');
+        if (result.queued) toast('Internet kamzor hai — Check-Out phone mein mehfooz hai, signal aate hi chala jayega.', '');
       });
       rerender();
     },
@@ -291,9 +334,10 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
       await busy(el, async () => {
         let gps = null; try { gps = await getGps(); } catch { /* location na mile to bhi wapsi lag jaye */ }
         if (gps && gps.distance > Number(S.config.radius || SHOP.radius) && !confirm(`Aap abhi dukaan se ${Math.round(gps.distance)}m door hain. Phir bhi "Wapas aa gaya" lagayein? Malik ko ye faasla nazar aayega.`)) return;
-        await data.returnOut(o, gps);
+        const r = await data.returnOut(o, gps);
         ui.gateSheet?.close();
-      }, 'Wapsi lag gayi. Khush aamdeed!');
+        if (r?.queued) toast('Wapsi phone mein mehfooz hai — internet aate hi malik tak jayegi.', '');
+      });
       rerender();
     },
     async 'my-pdf'(el) {
@@ -327,5 +371,26 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
       <main class="view view-staff">${ui.tab === 'hazri' ? hazriTab() : ui.tab === 'salary' ? salaryTab() : requestTab()}
         <p class="foot"><button type="button" class="link" data-action="update">Update check karein</button> &nbsp; ${APP_VERSION}${S.bootMs ? ` · ${(S.bootMs / 1000).toFixed(1)}s mein khuli` : ''} &nbsp; · &nbsp; <button type="button" class="link muted-link" data-action="logout">Logout</button></p></main>`;
   }
-  return { render, actions, forms, changes: {}, inputs: {}, ui, onData() { refreshSheets(); } };
+  /** v217: server ne qubool kar liya -> premium animation. Purani (phone mein ruki) likhai baad mein pohanchi to sirf chhota paigham. */
+  function onConfirmed(p = {}) {
+    const first = String(me().name || '').trim().split(/\s+/)[0] || '';
+    if (!p.fresh) {
+      toast(p.kind === 'checkout' ? 'Pichla Check-Out malik tak pohanch gaya ✓' : p.kind === 'return' ? 'Pichli wapsi malik tak pohanch gayi ✓' : 'Hazri malik tak pohanch gayi ✓', 'ok');
+      return;
+    }
+    const row = S.myAttendance.find(a => a.id === p.id);
+    if (p.kind === 'checkin') {
+      const late = Number(row?.minutesLate || 0), isLate = late > Number(schedule().grace ?? 10);
+      celebrate({ tone: isLate ? 'late' : 'ok', stamp: isLate ? `LATE · ${late} min` : 'HAZIR', title: first ? `Khush aamdeed, ${first}!` : 'Khush aamdeed!',
+        sub: `${row?.checkIn ? fmtTime(row.checkIn) + ' par ' : ''}hazri malik tak pohanch gayi`, chip: isLate ? 'Kal waqt par aayein' : 'Waqt par' });
+    } else if (p.kind === 'checkout') {
+      const mins = row ? workMinutes(row) : null, ot = mins != null ? mins - dutyMin() : 0;
+      celebrate({ tone: 'out', stamp: 'CHUTTI', title: 'Shukriya, kal milte hain', vibrate: [40, 60, 40, 60, 70],
+        count: mins != null ? { to: mins, fmt: hm } : null,
+        sub: row ? `${fmtTime(row.checkIn)} se ${fmtTime(row.checkOut)} · Check-Out malik tak pohanch gaya` : 'Check-Out malik tak pohanch gaya', chip: ot > 0 ? `${hm(ot)} overtime` : '' });
+    } else if (p.kind === 'return') {
+      celebrate({ tone: 'back', stamp: 'WAPAS', title: first ? `Khush aamdeed wapas, ${first}!` : 'Khush aamdeed wapas!', sub: 'Wapsi malik tak pohanch gayi', stay: 3600 });
+    }
+  }
+  return { render, actions, forms, changes: {}, inputs: {}, ui, onConfirmed, onData() { refreshSheets(); } };
 }

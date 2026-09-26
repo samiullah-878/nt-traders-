@@ -23,7 +23,7 @@ const SNAP_KEY = 'nt-hazri-snap-v1';
 export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalStorage(), win = window }) {
   const doc = win.document, root = $('#app', doc);
   let view = null, dirty = false, login = { role: storage?.getItem(ROLE_KEY) || 'staff', error: '', busy: false, showPass: false };
-  let data = null, controller = null, sessionSeq = 0, snapTimer = null, firstPaint = true;
+  let data = null, controller = null, sessionSeq = 0, snapTimer = null, firstPaint = true, hold = null;
   const hint = () => { try { return !!(storage?.getItem(STAFF_CACHE_KEY) || storage?.getItem(OWNER_IN_KEY)); } catch { return false; } };
   // v207: malik ka bheja hua login link  ...#login=03001234567  -> number likhe baghair khud login
   const linkPhone = (() => { const m = String(win.location?.hash || '').match(/login=([+\d\s-]{10,16})/); return m ? normalizePhone(decodeURIComponent(m[1])) : ''; })();
@@ -45,9 +45,11 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
 
   function build(sdk) {
   data = createData({
-    sdk, firebaseConfig,
+    sdk, firebaseConfig, storage,
     onChange: () => { softRender(); view?.onData?.(); },
     onProblem: (name, error) => {
+      // v217: server ne Check-In / Check-Out / Wapsi qubool kar li — ab kamyabi ki animation
+      if (name === 'confirmed') { try { view?.onConfirmed?.(error); } catch (e) { console.warn('celebrate', e); } return; }
       console.warn('data', name, error);
       if (name === 'new-ticket') { toast('Naya "bina bataye gaya" ticket — Hazri tab mein faisla karein', 'bad'); try { win.navigator.vibrate?.([300, 100, 300]); } catch { /* ignore */ } return; }
       if (name === 'new-out') { // nayi parchi: malik ko foran khabar (app khuli ho to)
@@ -153,11 +155,42 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
   /** Data badalne par screen taza hoti hai, lekin agar koi kuch likh raha ho to us ka likha hua nahi mit-ta. */
   function softRender() {
     if (!view) return;
+    if (hold) { dirty = true; return; } // v217: button daba hua hai — beech mein screen na badlo
     const active = doc.activeElement;
     if (active && FIELD.test(active.tagName) && root.contains(active)) { dirty = true; return; }
     render();
   }
   doc.addEventListener('focusout', () => { if (dirty) setTimeout(() => { if (dirty) softRender(); }, 150); });
+  win.addEventListener?.('online', () => { void data?.drainOutbox?.(); });
+
+  /* ---------- v217: "daba kar rakhein" buttons (data-hold="action", data-hold-ms) ----------
+     Ungli rakhte hi ring bharna shuru; poora hone se pehle chhor di to kuch nahi hota (ghalti se Check-Out nahi). */
+  function holdStart(el, pointerId) {
+    if (hold || el.disabled) return;
+    const ms = Math.max(300, Number(el.dataset.holdMs) || 900);
+    el.style.setProperty('--hold-ms', ms + 'ms'); el.classList.remove('is-held'); el.classList.add('is-holding');
+    try { if (pointerId != null) el.setPointerCapture?.(pointerId); } catch { /* ignore */ }
+    hold = { el, timer: setTimeout(() => {
+      const fn = view?.actions[el.dataset.hold]; const h = hold; hold = null;
+      el.classList.remove('is-holding'); el.classList.add('is-held');
+      try { win.navigator.vibrate?.(18); } catch { /* ignore */ }
+      if (dirty) softRender();
+      if (fn && h) Promise.resolve().then(() => fn(el)).catch(error => { console.error(error); toast(errorText(error), 'bad'); });
+    }, ms) };
+  }
+  function holdEnd(early = true) {
+    if (!hold) return;
+    const { el, timer } = hold; hold = null; clearTimeout(timer);
+    el.classList.remove('is-holding');
+    if (early) { el.classList.add('is-short'); setTimeout(() => el.classList.remove('is-short'), 700); toast('Button ko daba kar rakhein — jab tak ring poora na ho', ''); }
+    if (dirty) softRender();
+  }
+  doc.addEventListener('pointerdown', event => { const el = event.target.closest?.('[data-hold]'); if (!el) return; event.preventDefault?.(); holdStart(el, event.pointerId); });
+  doc.addEventListener('pointerup', () => holdEnd(true));
+  doc.addEventListener('pointercancel', () => holdEnd(false));
+  doc.addEventListener('contextmenu', event => { if (event.target.closest?.('[data-hold]')) event.preventDefault(); });
+  doc.addEventListener('keydown', event => { if ((event.key === 'Enter' || event.key === ' ') && !event.repeat) { const el = event.target.closest?.('[data-hold]'); if (el) { event.preventDefault(); holdStart(el); } } });
+  doc.addEventListener('keyup', event => { if ((event.key === 'Enter' || event.key === ' ') && hold) holdEnd(true); });
   win.setInterval?.(() => { if (view && doc.visibilityState !== 'hidden') { softRender(); refreshSheets(); } }, 60000);
   doc.addEventListener('visibilitychange', () => { if (doc.visibilityState === 'visible' && view) { softRender(); refreshSheets(); } });
 

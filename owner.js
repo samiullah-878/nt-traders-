@@ -56,6 +56,10 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       const open = activeStaff().filter(s => data.calcFor(s, prev).daysWorked > 0 && data.payrollFor(s.phone, prev)?.state !== 'final');
       if (open.length) items.push({ tone: 'ink', icon: 'wallet', title: `${monthLabel(prev)} ki salary final nahi`, text: `${open.length} staff baqi`, action: 'salary-month', arg: prev });
     }
+    // v218: phones ki jaanch — kis ka Check-Out/Wapsi server tak nahi gaya, kis ke phone par purani app
+    const ph = phoneHealth(), failed = ph.filter(x => x.fail), old = ph.filter(x => x.old);
+    if (failed.length) items.unshift({ tone: 'bad', icon: 'phone', title: `${failed.length} phone se ${failed.length > 1 ? 'likhai' : failKindText(failed[0].fail.kind)} server tak nahi gayi`, text: failed.slice(0, 2).map(x => `${x.name}: ${failKindText(x.fail.kind)} ${x.fail.time} (${failWhy(x.fail.code)})`).join(', '), action: 'phones', arg: '' });
+    if (old.length) items.push({ tone: 'late', icon: 'phone', title: `${old.length} phone par purani app`, text: old.slice(0, 3).map(x => `${x.name} (${x.v || 'purani'})`).join(', ') + ' — larke se kahein app band kar ke dobara kholein', action: 'phones', arg: '' });
     const undecided = S.tickets.filter(t => t.status !== 'decided');
     if (undecided.length) items.unshift({ tone: 'bad', icon: 'alert', title: `${undecided.length} "bina bataye gaya" ticket ka faisla baqi`, text: [...new Set(undecided.map(t => account(t.phone)?.name || t.name))].slice(0, 3).join(', '), action: 'tickets', arg: '' });
     if (nightShift(S.config)) items.unshift({ tone: 'bad', icon: 'alert', title: `Default duty ghalat lag rahi hai: ${dutyText(resolveBase())}`, text: 'Daba kar AM / PM theek karein', action: 'settings', arg: '' });
@@ -309,6 +313,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         ${tool('links', 'share', 'Update ke links', 'GitHub upload · Firebase rules')}
         ${tool('update', 'down', 'App update check karein', 'Abhi ' + APP_VERSION + (S.bootMs ? ` · ${(S.bootMs / 1000).toFixed(1)}s mein khuli` : ''))}
         ${fixes && !manager ? tool('migrate-selfies', 'camera', 'App ko halka karein (aik dafa)', 'Purani selfies alag karein — hazri list tez khulegi') : ''}
+        ${tool('phones', 'phone', 'Phones ki jaanch', 'Kis phone par kaunsi app · kis ki hazri server tak nahi gayi')}
         ${tool('diag', 'alert', 'App ki jaanch', 'Hazri na dikhe to is ka screenshot bhejein')}
         ${manager ? '' : tool('password', 'edit', 'Malik ka password badlein')}
         ${tool('logout', 'out', 'Logout', '', ' tone-bad')}
@@ -693,6 +698,46 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     void currentToken({ app: data.app, vapidKey: S.config.push?.vapidKey }).then(t => { if (t && t !== ui.pushToken) { ui.pushToken = t; sheet.refresh(true); } });
     return sheet;
   }
+  /* ---------- v218: Phones ki jaanch (staffDiag) ---------- */
+  const verNum = v => Number(String(v || '').replace(/[^0-9]/g, '')) || 0;
+  const FAIL_KIND = { checkout: 'Check-Out', checkin: 'Check-In', return: 'Wapsi' };
+  const failKindText = k => FAIL_KIND[k] || 'Likhai';
+  function failWhy(code) {
+    const c = String(code || '');
+    if (c === 'permission-denied') return 'server ne ijazat nahi di — login / rules';
+    if (['unavailable', 'deadline-exceeded', 'app/slow-network'].includes(c)) return 'internet';
+    if (c === 'missing') return 'Check-In server par tha hi nahi';
+    if (c === 'lost') return 'hazri phone se mit gayi';
+    return c || 'maloom nahi';
+  }
+  const agoText = ms => { if (!ms) return '—'; const m = Math.max(0, Math.round((Date.now() - ms) / 60000)); return m < 1 ? 'abhi' : m < 60 ? `${m} min pehle` : m < 1440 ? `${Math.round(m / 60)} ghante pehle` : `${Math.round(m / 1440)} din pehle`; };
+  const clockOf = ms => fmtTime(new Date(ms).toLocaleTimeString('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', hour12: false }));
+  /** Har kaam wale staff ka phone: version, fail, der. Record na ho lekin aaj Check-In kiya ho = purani app (v218 se pehle wali record nahi likhti). */
+  function phoneHealth() {
+    const today = pkDate(), yday = addDays(today, -1), cur = verNum(APP_VERSION), byPhone = new Map((S.diag || []).map(d => [d.phone, d]));
+    const inToday = new Set(data.attendanceBetween(today, today).filter(a => a.checkIn).map(a => a.phone));
+    return activeStaff().map(acc => {
+      const d = byPhone.get(acc.phone) || null, v = d?.v || '';
+      const fail = d?.failAt && (d.failDate || '') >= yday && !(Number(d.fixedAt || 0) >= Number(d.failAt)) ? { kind: d.failKind, code: d.failCode, at: d.failAt, time: clockOf(d.failAt) } : null;
+      const old = d ? verNum(v) < cur : inToday.has(acc.phone);
+      const late = d?.lateAt && Date.now() - d.lateAt < 2 * 86400000 ? { kind: d.lateKind, min: d.lateMin, at: d.lateAt } : null;
+      return { phone: acc.phone, name: acc.name || acc.phone, d, v, old, fail, late };
+    });
+  }
+  function phonesSheet() {
+    return openSheet({ id: 'phones', wide: true, title: 'Phones ki jaanch', render: () => {
+      const list = phoneHealth().sort((a, b) => (b.fail ? 2 : 0) + (b.old ? 1 : 0) - ((a.fail ? 2 : 0) + (a.old ? 1 : 0)) || String(a.name).localeCompare(String(b.name)));
+      const none = list.filter(x => !x.d).length;
+      const chip = x => !x.d ? `<span class="ver-chip ${x.old ? 'is-old' : 'is-none'}">${x.old ? 'Purani app' : 'Record nahi'}</span>` : `<span class="ver-chip ${x.old ? 'is-old' : 'is-ok'}">${esc(x.v)}</span>`;
+      return `<p class="hint">Har larke ka phone yahan batata hai ke us par kaunsi app hai aur kya server tak nahi gaya. Aap ki app: <b>${esc(APP_VERSION)}</b>.</p>
+        ${none === list.length && list.length ? '<p class="notice tone-late">Kisi phone ka record nahi aaya. Firebase mein v218 wale rules Publish karein, phir larke apni app aik dafa kholein.</p>' : ''}
+        <ul class="ledger phones">${list.map(x => `<li class="${x.fail ? 'is-bad' : ''}"><span><b>${nameHtml(x.name)}</b> ${chip(x)}
+          <small>${x.d ? `${x.d.app === 'home' ? 'Home screen app' : 'Browser mein'} · ${esc(x.d.device || '')} · aakhri dafa ${esc(agoText(x.d.at))}${x.d.pending ? ` · <b class="txt-late">${x.d.pending} likhai phone mein ruki</b>` : ''}` : (x.old ? 'Aaj hazri lagayi lekin phone ne version nahi bataya — v218 se purani app' : 'Abhi tak app nahi kholi')}</small>
+          ${x.fail ? `<small class="txt-bad">${esc(failKindText(x.fail.kind))} server par NAHI laga — ${esc(x.fail.time)} · wajah: ${esc(failWhy(x.fail.code))}</small>` : ''}
+          ${x.late ? `<small class="txt-late">${esc(failKindText(x.late.kind))} ${esc(String(x.late.min))} min phone mein ruka raha, phir pohancha (${esc(agoText(x.late.at))})</small>` : ''}</span></li>`).join('') || '<li class="muted">Koi staff nahi.</li>'}</ul>
+        <p class="hint">Purani app: larke se kahein app poori band kar ke dobara kholein, ya neeche "Update check karein" dabayein. "Internet" wali ghalti: larke ka net kamzor tha — app ab khud dobara bhejti hai. "Ijazat nahi di": larka Logout kar ke dobara login kare.</p>`;
+    } });
+  }
   function diagSheet() {
     return openSheet({ id: 'diag', wide: true, title: 'App ki jaanch', render: () => {
       const today = pkDate(), month = today.slice(0, 7), rowsToday = data.attendanceBetween(today, today);
@@ -798,6 +843,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     },
     khata() { open('khata', khataSheet); },
     diag() { open('diag', diagSheet); },
+    phones() { open('phones', phonesSheet); },
     links() { open('links', linksSheet); },
     'selfies-day'(el) { needMonth(el.dataset.arg.slice(0, 7)); open('selfies', () => selfiesDaySheet(el.dataset.arg)); },
     history() { open('history', historySheet); },
@@ -832,7 +878,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       await busy(el, async () => {
         const list = await data.pushDevices();
         openSheet({ id: 'push-devices', title: 'Notification wale phones', render: () => list.length
-          ? `<ul class="ledger">${list.map(d => `<li><span><b>${esc(d.name || d.phone || '—')}</b> <small>${d.role === 'owner' ? 'Malik' : d.role === 'manager' ? 'Manager' : 'Staff'}${d.device ? ' · ' + esc(d.device.slice(0, 40)) : ''}</small></span><small class="muted">${d.at ? esc(shortDate(pkDate(new Date(d.at)))) : ''}</small></li>`).join('')}</ul>`
+          ? `<ul class="ledger">${list.map(d => `<li><span><b>${esc(d.name || d.phone || '—')}</b> <small>${d.role === 'owner' ? 'Malik' : d.role === 'manager' ? 'Manager' : 'Staff'}${d.device ? ' · ' + esc(String(d.device).replace(/^d:\w+ · /, '').slice(0, 40)) : ''}</small></span><small class="muted">${d.at ? esc(shortDate(pkDate(new Date(d.at)))) : ''}</small></li>`).join('')}</ul>`
           : '<p class="empty-line">Abhi kisi phone par chalu nahi. Har phone par "Is phone par notification chalu karein" dabana hota hai.</p>' });
       });
     },
@@ -1010,7 +1056,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
   function autoPush() {
     if (pushChecked || !S.loaded?.has?.('config') || !S.config.push?.vapidKey) return;
     pushChecked = true;
-    void refreshPush({ app: data.app, vapidKey: S.config.push.vapidKey, onToken: t => data.savePushToken(t, (navigator.userAgent || '').slice(0, 60)) })
+    void refreshPush({ app: data.app, vapidKey: S.config.push.vapidKey, onToken: t => data.savePushToken(t, (navigator.userAgent || '').slice(0, 60)), onMessage: d => toast(`${d.title || ''} ${d.body || ''}`.trim(), 'ok') })
       .then(t => { if (t) { ui.pushToken = t; ui.pushSaved = true; sheets.notify?.refresh(true); } });
   }
   return { render: renderAll, actions, forms, changes, inputs, ui, onData() { refreshSheets(); autoPush(); } };

@@ -1,8 +1,114 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v216   Tareekh: 2026-09-24  (v200-v204: 2026-09-21)
+Version: v219   Tareekh: 2026-09-27  (v217 + v218 bhi isi update mein; v216: 2026-09-24, v200-v204: 2026-09-21)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+0000000000000000000. v219 — SAB KHABREIN FORAN (AIK JAGTI FUNCTION) + TOKEN SAFAI + APP KHULI HO TAB BHI AWAAZ  [HISSA 3 / 3]
+------------------------------------------------------------
+Malik ne v217 aur v218 upload NAHI ki — teeno hisse (v217 + v218 + v219) AIK hi update mein jate hain. Do zip: app wali (repo ki jar
+mein) aur functions wali (repo ke functions/ folder mein).
+Masla: "notification band ho jata hai / usi waqt nahi aata". Wajah (code se): sirf onOut (parchi) FAST (minInstances 1) tha;
+onRequest / onTicket / onCheckIn / onPushTest NORMAL — so jati thin, 1-2 minute der (cold start). Aik phone ke 3 token (list mein
+"Malik" 3 dafa) — Chrome Android sab phones ka UA "Android 10; K" batata hai, is liye purane token pehchane nahi jate the aur har
+khabar 3 token par jati thi. App KHULI ho to Firebase khabar page ko deta hai (onBackgroundMessage nahi) aur onMessage sirf "chalu
+karein" button par lagta tha — autoPush (v216) par nahi — is liye khuli app par kuch nahi bajta tha.
+- functions/index.js: onOut/onRequest/onTicket/onCheckIn/onPushTest ki jagah AIK export: onHazriWrite = onDocumentWritten(
+  { ...FAST (256MiB, minInstances 1, concurrency 20), document: 'businesses/noor-traders/{coll}/{docId}' }). Router: mitaya = kuch nahi;
+  pushTokens (testAt badla) = test khabar; sirf NAYA doc: staffOuts -> handleOut, staffRequests -> handleRequest, staffTickets ->
+  handleTicket, staffAttendance -> handleCheckIn (late). Baqi sab (audit, selfies, diag, blueKhata, updates) foran return. Handlers
+  wahi purane (sirf naam badla). watchDay / monthlySalary (schedule) NORMAL hi. Kharcha: jagta instance pehle bhi aik tha, ab bhi aik.
+  Deploy: GitHub Actions (deploy-functions.yml, "--non-interactive --force") purani 5 functions khud mita deti hai.
+- tokensFor(): aik token aik dafa, aur aik phone (device 'd:<id>') par sirf sab se naya token (at ke hisab se).
+- data.savePushToken(token, label): device = 'd:<deviceId> · <deviceText()>' (deviceId localStorage 'nt-hazri-device-id', random).
+  Save ke baad pushTokens mein isi phone ke purane token delete: wahi deviceId, YA purana record (bina 'd:') jis ka device == label
+  (navigator.userAgent 60 harf) aur role/phone wahi. Wapas: kitne hataye. Rules mein koi nayi key nahi (device string hi hai).
+  owner.js "Notification wale phones" list mein 'd:xxx · ' chhupa kar dikhata hai.
+- push.js bindForeground(): aik dafa m.onMessage — app khuli ho to reg.showNotification (awaaz + vibration, wahi tag). 'out-' aur
+  'tkt-' tag par NAHI (app pehle se toast + awaaz deti hai, dobara na baje). enablePush aur refreshPush (autoPush) dono lagate hain;
+  owner.autoPush ab onMessage (toast) bhi deta hai.
+- Tests: app 76 (+1 sync.test: token safai — isi phone ke purane hat-te, manager / doosre phone ke nahi). functions: logic 5 +
+  router.test.mjs 4 (node --test --experimental-test-module-mocks; firebase-admin/functions naqli mock): minInstances 1 + wildcard,
+  parchi/request/ticket par khabar sirf owner/manager ko aur aik phone ko aik, update/mitana/audit/blueKhata par kuch nahi, test push.
+  (Mock ke liye functions/node_modules mein package resolve hona chahiye — npm install --prefix functions.)
+- Yahan test nahi ho saka: asal Firebase deploy, asal wildcard trigger, asal phone par khabar ki awaaz.
+- Rules: v218 wale hi (is mein v219 ki koi nayi tabdeeli nahi).
+
+------------------------------------------------------------
+000000000000000000. v218 — JAANCH KA RECORD (staffDiag) + PHONES KI JAANCH  [3 hisson ka HISSA 2]
+------------------------------------------------------------
+Malik: "agla kaam, phir aik dafa update karunga" — v217 upload NAHI hui thi, is liye ye zip v217 + v218 dono hai (aik hi upload).
+Maqsad: andaze ki jagah ASAL wajah — kis larke ka Check-Out/Wapsi server tak kyun nahi gaya, aur kis phone par purani app hai.
+- Firestore: businesses/noor-traders/staffDiag/{phone} — har phone apna AIK doc (merge). Keys (data.js DIAG_KEYS = rules hasOnly):
+  phone, name, v (APP_VERSION), at (phone ka ms), serverAt (== request.time), device (UA se chhota: "Android 10; K · 139"),
+  app ('home' = home screen / 'browser'), pending (outbox mein kitni likhai), failKind (checkout|checkin|return), failCode,
+  failAt, failId (doc id), failDate (YYYY-MM-DD), fixedAt, lateKind, lateMin, lateAt.
+- data.diagPing(extra, force): sirf staff/manager. Aam record 30 minute mein aik dafa (localStorage 'nt-hazri-diag-v218'),
+  ya version/pending badle to. failed() -> fail ki wajah foran; confirmed(): pehle fail hui thi -> fixedAt; der se pohanchi
+  (fresh:false, >= 2 min) -> lateKind/lateMin/lateAt + fixedAt; drain mein Check-In 'lost' -> fail. Kab likhta: staff ka apna
+  account doc aate hi; manager ka staff list mein apna account milte hi. Best-effort (.catch chup) — rules na hon to kuch nahi toot-ta.
+- Owner/manager: live(col('staffDiag'), 'diag') -> state.diag. owner.js phoneHealth(): har kaam wala staff -> { d, v, old, fail, late }.
+  old = version malik ki app (APP_VERSION) se kam, YA record hi nahi lekin aaj Check-In kiya (v218 se purani app record nahi likhti).
+  fail = failDate kal/aaj aur fixedAt < failAt. late = pichle 2 din mein der se pohanchi.
+  "Tawajju chahiye": sab se upar surkh "N phone se Check-Out server tak nahi gayi — Sonu: Check-Out 9:05 pm (internet)",
+  aur narangi "N phone par purani app — ... larke se kahein app band kar ke dobara kholein". Dono -> action 'phones'.
+  phonesSheet() "Phones ki jaanch" (Settings > App mein bhi tool): har larka, version chip (hara / narangi / "Record nahi"),
+  Home screen ya browser, phone, aakhri dafa kab kholi, ruki likhai, fail (kya, kab, wajah Roman Urdu mein: internet / ijazat /
+  Check-In tha hi nahi / phone se mit gayi), der se pohanchi (kitne min). Sab ka record na ho -> "v218 rules Publish karein".
+- firestore.rules v218: naya match staffDiag/{phone}: create/update sirf validStaffSession() && phone == sessionPhone(),
+  keys hasOnly, serverAt == request.time, size limits. Parhna: upar wala generic match (malik + manager). MALIK KO v218 RULES
+  PUBLISH KARNE HAIN (warna larkon ke phone record nahi likh sakte; app phir bhi chalti hai).
+- CSS: .phones, .ver-chip (is-ok / is-old / is-none).
+- Tests 75 (+2 sync.test: record likhna, sirf rules wali keys (firestore.rules se parh kar milate hain), 30 min throttle,
+  fail -> failKind/failCode, theek -> fixedAt; der se pohanchi -> lateMin). app.dom.test: purani app + fail Tawajju mein, sheet.
+- Functions mein koi tabdeeli nahi (wo HISSA 3 = v219 mein).
+
+------------------------------------------------------------
+00000000000000000. v217 — PAKKI TASDEEQ (CHECK-IN / CHECK-OUT / WAPSI) + PREMIUM ANIMATION  [3 hisson ka HISSA 1]
+------------------------------------------------------------
+Malik (27 Sep): (1) larke ne Check-Out kiya lekin malik ki app mein "Check-Out baqi" (misal: 25-26 Sep ke 10 log, Sonu);
+(2) notification 1-2 request ke baad / usi waqt nahi aata; (3) larka "Wapas aa gaya" dabata hai, malik ki screen par nahi aata —
+malik/manager ko khud lagana parta hai. Sath: Check-In/Out par larkon ko premium animation. Plan 3 hisson mein (jawab kat gaya tha):
+  HISSA 1 = v217 (ye) — sirf app files. HISSA 2 = v218 — jaanch ka record (fail ki wajah server par) + har phone ka app version
+  (rules badlenge). HISSA 3 = v219 — sab khabrein foran (aik hi jagti function, kharcha wahi) + token safai + app khuli ho tab bhi awaaz.
+ASAL KAMZORI (code mein mili): Check-Out 2.5 s baad, aur staff ki wapsi (quick) 0.6 s baad hi "ho gaya" bol deti thi — server ne
+qubool kiya ho ya nahi. App band / net gaya / server ne mana kiya -> larke ko laga lag gaya, malik tak nahi pohancha. Mana hone par
+Firestore local copy wapas le leta hai -> "Check-Out wapas aa gaya". (Asal Firebase par pakki wajah hissa 2 ke record se milegi.)
+- data.js: watchPunch HATAYA -> tracked(entry, write, fresh). state.sync[key] = { kind, phase: sending|waiting|ok|fail, code, at },
+  key = 'checkin:<id>' | 'checkout:<id>' | 'return:<outId>'. setDoc ka promise tab poora hota hai jab SERVER qubool kare = tasdeeq.
+  2.5 s mein na aaye -> 'waiting'. Mana ho -> pehle onServer() (getDocFromServer, na ho to getDoc) se dekho: pehle hi lag chuka
+  (doosri koshish / malik ne band kiya) = kamyab; record hi nahi = code 'missing'; warna 'fail' + state.punchError {kind, code}.
+- OUTBOX (localStorage 'nt-hazri-outbox-v217', max 12): Check-Out aur Wapsi ki likhai (asal waqt ke sath, fields) jab tak server
+  confirm na kare. Check-In sirf jaanch ke liye (selfie dobara nahi bhejte). drainOutbox(): staff/manager start ke 6 s baad,
+  window 'online' par, aur baqi ho to har 30 s: server par dekho -> lag chuka = confirmed(fresh:false) | net nahi = waiting |
+  Firebase ki apni qataar mein (row/out .pending) = waiting | warna resend() WAHI PURANA WAQT (checkOut/returnAt badalta nahi,
+  sirf outServerAt/returnServerAt = serverTimestamp). Check-In server par na mile aur phone mein bhi na ho -> punchError 'lost'.
+  36 ghante se purani entry chhor di jati hai. retrySync(key) = "Dobara bhejein" (fresh:true), dismissSync(key) = "Theek hai".
+  Staff 'outs' listener ab includeMetadataChanges (o.pending). returnOut(o, gps, wait=true) staff raasta tracked + settle;
+  checkOut apni khuli parchi ki wapsi wait=false se (Check-Out na ruke). createData({ storage }) — app.js deta hai.
+- Kamyabi: data onProblem('confirmed', { kind, id, fresh, at, outKind }) -> app.js -> view.onConfirmed (manager.js aage deta hai)
+  -> staffview.onConfirmed -> ui.celebrate(). fresh:false (baad mein khud pohanchi) = sirf chhota toast "Pichla Check-Out ... ✓".
+- ANIMATION (ui.celebrate, styles.css "v217" hissa): #app ke BAHAR body par .fx overlay (app har data par root.innerHTML dobara
+  banati hai — andar hoti to toot jati). Register ka panna (lakeerein + surkh hashiya), gola + check khud banta (stroke draw),
+  phir STAMP thapp se: HAZIR (hara) | "LATE · N min" (narangi, minutesLate > grace) | CHUTTI (ink, kaam ke ghante 0 se gin kar,
+  overtime chip chamakta) | WAPAS (ink-2). Vibration. 4.6 s ya "Theek hai"/tap/Escape par band. prefers-reduced-motion = bina harkat.
+  Check-In 3 qadam (staffview stepper, ui.stage selfie|gps|send): selfie pulse, location par radar lehrein, server par ghoomta ring;
+  qadam chalte hue Check-In button nahi dikhta (double tap nahi). Server mana kare -> .punch-error mein halka shake (sirf pehle
+  1.5 s, har render par nahi) + checkout ke liye "Dobara bhejein". sync-line: sending (ink, dhadakta nishan) / waiting (narangi +
+  "Dobara bhejein") / pohanch gaya (hara). Wapsi ruki/mana: returnSync() card outCard ke upar.
+- CHECK-OUT "DABA KAR RAKHEIN": purana confirm() HATAYA. Button data-hold="check-out" data-hold-ms="900"; app.js generic
+  pointerdown/pointerup/pointercancel + Enter/Space (keydown/keyup) -> ring (SVG pathLength 100) aur halka parda 0.9 s mein bharta;
+  pehle chhora = kuch nahi + nudge + toast "daba kar rakhein"; hold ke dauran softRender ruka rehta hai (hold != null -> dirty).
+  CSS: touch-action:none, user-select none, contextmenu band.
+- Tests 73 (+5 sync.test.mjs: app band ho kar dobara khuli -> purana waqt khud gaya; malik ne pehle band kiya -> dobara nahi;
+  mana -> fail -> Dobara bhejein; record hi nahi -> missing; wapsi dheemi -> dobara; Check-In confirmed event). app.dom.test:
+  animation (.fx HAZIR/WAPAS/CHUTTI), jaldi chhorne par Check-Out nahi, mana -> Dobara bhejein -> kamyab, outbox khali.
+  test-fake-sdk: getDocFromServer, fail.offline, fail.dropPath, fail.hangPath (promise kabhi poora nahi = app band / net gaya).
+  Headless Chromium mein animation ki tasveer dekhi (HAZIR / CHUTTI card theek). Asal phone, asal Firebase par test nahi hua.
+- Rules / functions mein KOI tabdeeli nahi (rules mein nayi key nahi — resend wahi keys bhejta hai). Blue Khata ko hath nahi laga.
+- Purani faltu files (premium-panels.css, staff-tasks.js ... list neeche section 2 mein) ab bhi GitHub par hain — app par asar nahi,
+  sirf un ke purane tests fail hote hain. Mitani hon to list dekhein.
 
 ------------------------------------------------------------
 0000000000000000. v216 — NOTIFICATION KHUD CHALU RAHE + CHECK-OUT KI TASDEEQ

@@ -35,8 +35,8 @@ export function fakeSdk({ records = new Map(), initialUser = null, ownerPassword
     initializeApp: () => ({}), getFirestore: () => ({}), getAuth: () => auth,
     collection: (parent, ...parts) => ({ path: join(parent, parts), kind: 'collection' }), doc,
     query: (ref, ...filters) => ({ ...ref, filters }), where: (field, op, value) => ({ field, op, value }),
-    getDoc: async ref => snapshot(ref), getDocs: async ref => snapshot(ref),
-    async setDoc(ref, data, options) { if (fail.denyPath && String(ref.path).includes(fail.denyPath)) throw Object.assign(new Error('denied'), { code: 'permission-denied' }); apply([['set', ref, data, options]]); }, async updateDoc(ref, data) { apply([['update', ref, data]]); }, async deleteDoc(ref) { apply([['delete', ref]]); },
+    getDoc: async ref => snapshot(ref), getDocFromServer: async ref => { if (fail.offline) throw Object.assign(new Error('offline'), { code: 'unavailable' }); return snapshot(ref); }, getDocs: async ref => snapshot(ref),
+    async setDoc(ref, data, options) { if (fail.denyPath && String(ref.path).includes(fail.denyPath)) throw Object.assign(new Error('denied'), { code: 'permission-denied' }); if (fail.dropPath && String(ref.path).includes(fail.dropPath)) { sdk.dropped.push(ref.path); return; } if (fail.hangPath && String(ref.path).includes(fail.hangPath)) { sdk.dropped.push(ref.path); return new Promise(() => {}); } apply([['set', ref, data, options]]); }, async updateDoc(ref, data) { apply([['update', ref, data]]); }, async deleteDoc(ref) { apply([['delete', ref]]); },
     onSnapshot(ref, ...args) { const callback = args.find(a => typeof a === 'function'); const entry = { ref, callback }; listeners.add(entry); queueMicrotask(() => { if (listeners.has(entry)) callback(snapshot(ref)); }); return () => listeners.delete(entry); },
     writeBatch() { const writes = []; return { set: (r, d, o) => writes.push(['set', r, d, o]), update: (r, d) => writes.push(['update', r, d]), delete: r => writes.push(['delete', r]), commit: async () => { await null; apply(writes); } }; },
     runTransaction(_fs, fn) { const result = chain.then(async () => { const writes = []; const ret = await fn({ get: async r => snapshot(r), set: (r, d, o) => writes.push(['set', r, d, o]), delete: r => writes.push(['delete', r]) }); apply(writes); return ret; }); chain = result.catch(() => {}); return result; },
@@ -44,7 +44,7 @@ export function fakeSdk({ records = new Map(), initialUser = null, ownerPassword
     signOut: async () => setUser(null),
     signInAnonymously: async () => { if (fail.signIn.length) throw fail.signIn.shift(); const u = { uid: 'anon-' + (++n), isAnonymous: true }; setUser(u); return { user: u }; },
     signInWithEmailAndPassword: async (_a, email, password) => { sdk.attempts.push(email); if (fail.signIn.length) throw fail.signIn.shift(); if (password !== ownerPassword || email !== 'hp6235@gmail.com') throw Object.assign(new Error('wrong'), { code: 'auth/invalid-credential' }); const u = { uid: 'owner-uid', email, isAnonymous: false }; setUser(u); return { user: u }; },
-    attempts: [], now: () => Date.now(), serverTimestamp: () => SERVER, deleteField: () => DELETE, EmailAuthProvider: { credential: () => ({}) }, reauthenticateWithCredential: async () => {}, updatePassword: async () => {}
+    attempts: [], dropped: [], now: () => Date.now(), serverTimestamp: () => SERVER, deleteField: () => DELETE, EmailAuthProvider: { credential: () => ({}) }, reauthenticateWithCredential: async () => {}, updatePassword: async () => {}
   };
   return { sdk, auth, records, setUser, fail, listeners };
 }

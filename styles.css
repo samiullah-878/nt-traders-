@@ -446,3 +446,93 @@ html.is-snap .live-clock,html.is-snap [data-live]{opacity:.6}
 /* ---------- v216: Check-In/Out server ne mana kiya ---------- */
 .punch-error{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;margin-bottom:10px;border-radius:var(--r);background:var(--bad-bg);border:1px solid #f3c2be;color:var(--bad)}
 .punch-error div{flex:1;display:grid;gap:2px}.punch-error small{color:var(--text);font-size:.875rem;line-height:1.35}
+
+/* ---------- v217: pakki tasdeeq + premium animation ----------
+   Aik hi yaadgar lamha: server qubool kare to register card par stamp "thapp" se lagti hai. Baqi sab halka aur chup.
+   Sirf transform/opacity/stroke — purane phone par bhi tez. Reduced-motion par sab seedha (bina harkat). */
+.sync-line.is-send{color:var(--ink-2)}
+.sync-line.is-wait{align-items:flex-start;text-align:left}
+.sync-dot{width:9px;height:9px;margin-top:4px;border-radius:50%;background:currentColor;flex:none;animation:syncPulse 1.2s ease-in-out infinite}
+.sync-line.is-send .sync-dot{margin-top:0}
+.sync-retry{font-weight:700;color:var(--ink);text-decoration:underline;text-underline-offset:2px;padding:0 2px;background:none;border:0;font-size:inherit}
+.sync-card{background:var(--late-bg);border:1px solid #f1d7a8;border-radius:var(--r);padding:10px 12px;margin:0 0 10px}
+@keyframes syncPulse{0%,100%{transform:scale(.7);opacity:.5}50%{transform:scale(1.15);opacity:1}}
+
+/* Check-Out: daba kar rakhein — ring 0.9 second mein bharta hai */
+.btn-hold{position:relative;overflow:hidden;gap:14px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.btn-hold::before{content:"";position:absolute;inset:0;background:rgba(255,255,255,.14);transform:scaleX(0);transform-origin:left center;pointer-events:none}
+.btn-hold.is-holding::before{transform:scaleX(1);transition:transform var(--hold-ms,900ms) linear}
+.hold-ring{position:relative;width:34px;height:34px;flex:none;transform:rotate(-90deg)}
+.hold-ring circle{fill:none;stroke-width:3.4}
+.hold-track{stroke:rgba(255,255,255,.32)}
+.hold-fill{stroke:#fff;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100}
+.btn-hold.is-holding .hold-fill{stroke-dashoffset:0;transition:stroke-dashoffset var(--hold-ms,900ms) linear}
+.btn-hold.is-held .hold-fill{stroke-dashoffset:0}
+.btn-hold.is-busy .hold-ring{opacity:0}
+.hold-text{position:relative;display:grid;text-align:left;line-height:1.12}
+.hold-text small{font-size:.8125rem;font-weight:500;opacity:.88}
+.btn-hold.is-short{animation:holdNudge .45s ease}
+@keyframes holdNudge{25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-2px)}}
+
+/* Check-In ke 3 qadam */
+.steps{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:100%;margin:8px 0 2px}
+.steps::before{content:"";position:absolute;top:22px;left:16.7%;right:16.7%;height:2px;background:var(--rule)}
+.steps li{position:relative;display:grid;justify-items:center;gap:6px;color:var(--muted);font-weight:600}
+.st-dot{position:relative;z-index:1;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--paper);border:2px solid var(--rule);color:var(--muted);transition:background .25s,border-color .25s,color .25s}
+.steps .is-done .st-dot{background:var(--ok);border-color:var(--ok);color:#fff}
+.steps .is-done small{color:var(--ok)}
+.steps .is-now .st-dot{border-color:var(--ink);color:var(--ink);box-shadow:0 0 0 4px var(--ink-soft)}
+.steps .is-now small{color:var(--ink);font-weight:750}
+.is-now .st-selfie{animation:camPulse 1.4s ease-in-out infinite}
+.radar{position:absolute;inset:-2px;border-radius:50%;border:2px solid var(--ink-2);opacity:0;animation:radar 1.8s ease-out infinite;pointer-events:none}
+.radar.r2{animation-delay:.9s}
+.st-spin{position:absolute;inset:-5px;width:calc(100% + 10px);height:calc(100% + 10px);animation:spin 1s linear infinite;pointer-events:none}
+.st-spin circle{fill:none;stroke:var(--ok);stroke-width:3;stroke-linecap:round;stroke-dasharray:28 80}
+@keyframes camPulse{50%{box-shadow:0 0 0 9px rgba(27,42,74,.12)}}
+@keyframes radar{0%{transform:scale(.9);opacity:.75}100%{transform:scale(2.2);opacity:0}}
+
+/* server ne mana kiya — halka sa jhatka (sirf pehli dafa, har render par nahi) */
+.is-shake{animation:shake .5s cubic-bezier(.36,.07,.19,.97)}
+.punch-error .btn-row{display:flex;margin-top:8px}
+@keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-7px)}40%,60%{transform:translateX(7px)}}
+
+/* Kamyabi: register ka panna (lakeerein + surkh hashiya), check khud banta hai, phir stamp */
+.fx{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:24px;background:rgba(18,28,50,.44);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);animation:fxIn .22s ease-out both}
+.fx.is-out{animation:fxOut .26s ease-in both}
+.fx-card{--tone:var(--ok);--tone-bg:var(--ok-bg);position:relative;width:min(360px,100%);display:grid;justify-items:center;gap:6px;padding:24px 20px 18px 36px;text-align:center;border-radius:20px;border-top:6px solid var(--tone);overflow:hidden;
+  background-color:var(--paper);
+  background-image:linear-gradient(90deg,transparent 22px,var(--margin) 22px,var(--margin) 24px,transparent 24px),repeating-linear-gradient(180deg,transparent 0 31px,var(--ink-soft) 31px 32px);
+  box-shadow:0 26px 60px -20px rgba(18,28,50,.6);animation:fxCard .5s cubic-bezier(.2,1.25,.35,1) both,thump .22s 1.05s ease-out}
+.fx-late .fx-card{--tone:var(--late);--tone-bg:var(--late-bg)}
+.fx-out .fx-card{--tone:var(--ink);--tone-bg:var(--ink-soft)}
+.fx-back .fx-card{--tone:var(--ink-2);--tone-bg:var(--ink-soft)}
+.fx-mark{width:84px;height:84px}
+.fx-ring{fill:var(--tone-bg);stroke:var(--tone);stroke-width:4;stroke-dasharray:196;stroke-dashoffset:196;transform:rotate(-90deg);transform-origin:36px 36px;animation:fxDraw .55s .08s ease-out forwards}
+.fx-tick{fill:none;stroke:var(--tone);stroke-width:5.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:48;stroke-dashoffset:48;animation:fxDraw .34s .5s ease-out forwards}
+.fx-title{margin-top:2px;font-size:1.375rem;font-weight:800;letter-spacing:-.015em;line-height:1.2}
+.fx-count{font-size:2.625rem;font-weight:800;letter-spacing:-.035em;line-height:1.05;color:var(--tone);font-variant-numeric:tabular-nums}
+.fx-sub{color:var(--muted);font-size:.9375rem;max-width:30ch}
+.fx-stamp{order:0;margin:10px 0 2px;padding:5px 14px 4px;border:3px double var(--tone);border-radius:8px;color:var(--tone);font-weight:900;font-size:1.375rem;letter-spacing:.14em;line-height:1.1;transform:rotate(-9deg);opacity:0;animation:stamp .42s .8s cubic-bezier(.3,1.6,.5,1) forwards}
+.fx-chip{padding:4px 12px;border-radius:999px;background:var(--tone-bg);color:var(--tone);font-weight:700;font-size:.875rem}
+.fx-out .fx-chip{background:var(--ok-bg);color:var(--ok);animation:chipGlow 1.4s 1.3s ease-in-out 2}
+.fx-ok{margin-top:8px;min-width:150px}
+@keyframes fxIn{from{opacity:0}}
+@keyframes fxOut{to{opacity:0}}
+@keyframes fxCard{from{transform:translateY(26px) scale(.94);opacity:0}}
+@keyframes thump{50%{transform:translateY(3px)}}
+@keyframes fxDraw{to{stroke-dashoffset:0}}
+@keyframes stamp{0%{opacity:0;transform:rotate(-9deg) scale(2.4)}60%{opacity:1;transform:rotate(-9deg) scale(.9)}100%{opacity:.94;transform:rotate(-9deg) scale(1)}}
+@keyframes chipGlow{50%{box-shadow:0 0 0 7px rgba(23,120,77,.16)}}
+@media(prefers-reduced-motion:reduce){
+  .fx,.fx.is-out,.fx-card,.fx-out .fx-chip{animation:none}
+  .fx-ring,.fx-tick{animation:none;stroke-dashoffset:0}
+  .fx-stamp{animation:none;opacity:.94}
+  .sync-dot,.radar,.st-spin,.is-now .st-selfie,.is-shake,.btn-hold.is-short{animation:none}
+}
+
+/* ---------- v218: Phones ki jaanch ---------- */
+.phones li{align-items:flex-start}
+.phones li>span{display:grid;gap:3px;min-width:0}
+.phones li.is-bad{background:linear-gradient(90deg,var(--bad-bg),transparent 70%);margin:0 -10px;padding-left:10px;padding-right:10px;border-radius:8px}
+.ver-chip{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font-size:.75rem;font-weight:700;vertical-align:1px;background:var(--off-bg);color:var(--off)}
+.ver-chip.is-ok{background:var(--ok-bg);color:var(--ok)}.ver-chip.is-old{background:var(--late-bg);color:var(--late)}

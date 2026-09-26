@@ -1,6 +1,6 @@
 {
-  "version": "v216",
+  "version": "v219",
   "variant": "Production",
-  "buildDate": "2026-09-21",
-  "notes": "Notification ab khud chalu rehta hai; Check-Out server ki tasdeeq ke sath; manager wali ghalti theek."
+  "buildDate": "2026-09-27",
+  "notes": "v217 pakki tasdeeq + animation, v218 Phones ki jaanch, v219 sab khabrein foran (aik jagti function) + token safai + app khuli ho tab bhi awaaz."
 }

@@ -59,6 +59,49 @@ export async function busy(button, fn, doneMessage = '') {
   finally { if (button?.isConnected) { button.disabled = false; button.classList.remove('is-busy'); button.innerHTML = label; } }
 }
 
+/* ---------- v217: kamyabi ki animation (Check-In / Check-Out / Wapsi) ----------
+   Sirf tab chalti hai jab SERVER ne qubool kar liya ho. #app ke bahar body par lagti hai — app ki screen har
+   data par dobara banti hai, is liye animation beech mein nahi tootti. Tone: ok (hazir) | late | out (chutti) | back (wapsi). */
+let fxTimer = 0;
+const reduceMotion = () => { try { return !!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches; } catch { return false; } };
+export function celebrate({ tone = 'ok', stamp = '', title = '', sub = '', count = null, chip = '', vibrate = [28, 70, 40], stay = 4600 } = {}) {
+  const body = document.body; if (!body) return null;
+  document.querySelector('.fx')?.remove(); clearTimeout(fxTimer);
+  const el = document.createElement('div');
+  el.className = 'fx fx-' + tone; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'assertive');
+  el.innerHTML = `<div class="fx-card">
+      <svg class="fx-mark" viewBox="0 0 72 72" aria-hidden="true"><circle class="fx-ring" cx="36" cy="36" r="31"/><path class="fx-tick" d="M22 37.5l9.5 9.5L51 27"/></svg>
+      <p class="fx-title"><bdi>${esc(title)}</bdi></p>
+      ${count ? `<p class="fx-count">${esc(count.fmt(reduceMotion() ? count.to : 0))}</p>` : ''}
+      ${stamp ? `<span class="fx-stamp" aria-hidden="true">${esc(stamp)}</span>` : ''}
+      ${sub ? `<p class="fx-sub">${esc(sub)}</p>` : ''}
+      ${chip ? `<p class="fx-chip">${esc(chip)}</p>` : ''}
+      <button type="button" class="btn btn-ghost fx-ok">Theek hai</button>
+    </div>`;
+  let gone = false;
+  const close = () => { if (gone) return; gone = true; clearTimeout(fxTimer); el.classList.add('is-out'); setTimeout(() => el.remove(), 280); };
+  el.addEventListener('click', close);
+  el.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  body.appendChild(el);
+  try { el.querySelector('.fx-ok')?.focus({ preventScroll: true }); } catch { /* ignore */ }
+  try { navigator.vibrate?.(vibrate); } catch { /* ignore */ }
+  // ghante 0 se gin kar poore (1.1 second), check ka nishan banne ke baad
+  const out = el.querySelector('.fx-count');
+  if (out && !reduceMotion() && count.to > 0) {
+    const raf = window.requestAnimationFrame || (f => setTimeout(() => f(Date.now()), 16));
+    const t0 = Date.now() + 480, dur = 1100;
+    const tickFn = () => {
+      if (gone) return;
+      const k = Math.min(1, Math.max(0, (Date.now() - t0) / dur)), eased = 1 - Math.pow(1 - k, 3);
+      out.textContent = count.fmt(Math.round(count.to * eased));
+      if (k < 1) raf(tickFn);
+    };
+    raf(tickFn);
+  }
+  fxTimer = setTimeout(close, stay);
+  return el;
+}
+
 /* ---------- sheets (neeche se uthne wala panel) ---------- */
 const stack = [];
 export function openSheet({ title = '', render, wide = false, onClose, id = '' }) {
