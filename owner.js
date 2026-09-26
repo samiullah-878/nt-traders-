@@ -10,7 +10,7 @@ import { enablePush, disablePush, currentToken, pushPermission, pushSupported, r
 import { openBreakSheet, breakStatusHtml } from './breaks.js';
 const clock = ms => ms ? fmtTime(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(ms))) : '—';
 const to24FromMin = m => { const x = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
-import { icon, avatar, nameHtml, toast, busy, openSheet, refreshSheets, fileToDataUrl, deliverPdf, $, errorText, timeField, IN_TICKETS, OUT_TICKETS } from './ui.js';
+import { icon, avatar, nameHtml, toast, busy, openSheet, refreshSheets, fileToDataUrl, deliverPdf, $, errorText, timeField, IN_TICKETS, OUT_TICKETS, viewImage } from './ui.js';
 import { loadPdfLib, browserTextImages, dailyPdf, staffMonthPdf, registerPdf, salarySheetPdf } from './pdf.js';
 
 const ORDER = { due: 0, late: 1, waiting: 2, absent: 3, loading: 3, present: 4, leave: 5, off: 6, closed: 6, na: 7 };
@@ -313,6 +313,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         ${tool('links', 'share', 'Update ke links', 'GitHub upload · Firebase rules')}
         ${tool('update', 'down', 'App update check karein', 'Abhi ' + APP_VERSION + (S.bootMs ? ` · ${(S.bootMs / 1000).toFixed(1)}s mein khuli` : ''))}
         ${fixes && !manager ? tool('migrate-selfies', 'camera', 'App ko halka karein (aik dafa)', 'Purani selfies alag karein — hazri list tez khulegi') : ''}
+        ${manager ? '' : tool('cameras', 'camera', 'Cameras', camToolText())}
         ${tool('phones', 'phone', 'Phones ki jaanch', 'Kis phone par kaunsi app · kis ki hazri server tak nahi gayi')}
         ${tool('diag', 'alert', 'App ki jaanch', 'Hazri na dikhe to is ka screenshot bhejein')}
         ${manager ? '' : tool('password', 'edit', 'Malik ka password badlein')}
@@ -698,6 +699,60 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     void currentToken({ app: data.app, vapidKey: S.config.push?.vapidKey }).then(t => { if (t && t !== ui.pushToken) { ui.pushToken = t; sheet.refresh(true); } });
     return sheet;
   }
+  /* ---------- v220: CAMERAS (Hissa A) — sirf malik ----------
+     Camera parhne ka kaam shop PC karta hai (ntcam.py); yahan: PC jodna, naam / kaam / on-off, aakhri tasveer, online / offline. */
+  const CAM_DEFAULT_BASE = 'https://samiullah-878.github.io/nt-traders-/';
+  const CAM_ROLE_TEXT = { galla: 'Galla', counter: 'Counter', view: 'Sirf dekhna' };
+  const camOnline = () => !!(S.camPC?.at && Date.now() - S.camPC.at < 6 * 60000);
+  const camToolText = () => { const n = (S.cameras || []).length, on = (S.cameras || []).filter(c => c.status === 'online').length; return !S.camCfg ? 'PC jodein — dukaan ke camera app mein' : `${n} camera · ${on} online · PC ${camOnline() ? 'chalu' : 'band'}`; };
+  function camCommand() {
+    const loc = globalThis.location || globalThis.window?.location || {};
+    const base = /^https?:/.test(loc.origin || '') ? loc.origin + String(loc.pathname || '/').replace(/[^/]*$/, '') : CAM_DEFAULT_BASE;
+    return base === CAM_DEFAULT_BASE ? `irm ${CAM_DEFAULT_BASE}ntcam.txt|iex` : "$b='" + base + "';irm \"$" + "{b}ntcam.txt\"|iex";
+  }
+  function camerasSheet() {
+    data.watchShots(true);
+    return openSheet({ id: 'cameras', wide: true, title: 'Cameras', onClose: () => data.watchShots(false), render: () => {
+      const pc = S.camPC, cfg = S.camCfg, cams = S.cameras || [], on = camOnline();
+      const pcCard = `<section class="cam-pc ${on ? 'is-on' : cfg ? 'is-off' : ''}"><i class="cam-dot" aria-hidden="true"></i><div>
+          <b>${!cfg ? 'Camera PC abhi juda nahi' : on ? 'Camera PC chal raha hai' : 'Camera PC band hai'}</b>
+          <small>${pc?.at ? `Aakhri khabar ${esc(agoText(pc.at))} · NT Camera v${esc(pc.v || '?')} · ${Number(pc.cams || 0)} camera, ${Number(pc.online || 0)} online${pc.host ? ' · ' + esc(pc.host) : ''}` : cfg ? 'PC ne abhi tak koi khabar nahi bheji — PC par command chalayein.' : 'Neeche 4 qadam se PC jodein.'}</small></div></section>`;
+      const cmd = camCommand();
+      const connect = (!cfg || ui.camCode) ? `<section class="panel pad cam-steps"><h3 class="sub">PC jodein</h3><ol class="steps-list">
+          <li><span>${ui.camCode ? `PC code (sirf abhi nazar aa raha hai — likh lein): <b class="cam-code">${esc(ui.camCode)}</b>` : `PC ka code banayein.`}</span>${ui.camCode ? '' : `<button type="button" class="btn btn-primary btn-sm" data-action="cam-code">Code banayein</button>`}</li>
+          <li><span>AnyDesk se shop PC kholein → Start par right-click → <b>Windows PowerShell</b>.</span></li>
+          <li><span>Ye aik command type kar ke Enter dabayein:</span><code class="cmd">${esc(cmd)}</code><button type="button" class="btn btn-ghost btn-sm" data-action="cam-copy">Copy</button></li>
+          <li><span>PC poochega to PC code, camera ka password aur Claude API key <b>PC par hi</b> likhein — phone par nahi.</span></li></ol></section>` : '';
+      const known = new Set(cams.map(c => c.ip));
+      const extra = (pc?.found || []).filter(d => !known.has(d.ip));
+      const foundHtml = extra.length ? `<p class="notice">${icon('camera', 18)} <span>PC ne network par ye bhi dekhe: ${extra.map(d => `<b>${esc(d.ip)}</b> (${esc({ dahua: 'Dahua', hik: 'Hikvision' }[d.brand] || 'camera')})`).join(', ')}. Jodne ke liye PC par desktop icon <b>"NT Camera jodein"</b> chalayein.</span></p>` : '';
+      const card = c => {
+        const shot = S.camShots?.get?.(c.id), src = shot?.jpg ? 'data:image/jpeg;base64,' + shot.jpg : '';
+        const st = c.enabled === false ? 'off' : c.status === 'online' && on ? 'on' : 'down';
+        const stText = { on: 'Online', down: 'Offline', off: 'Band' }[st];
+        const editing = ui.camEdit === c.id;
+        return `<article class="cam-card st-${st}">
+          <button type="button" class="cam-shot" data-action="cam-photo" data-id="${esc(c.id)}" ${src ? '' : 'disabled'} aria-label="${esc(c.name || 'Camera')} ki tasveer poori screen par">
+            ${src ? `<img src="${esc(src)}" alt="" loading="lazy">` : `<span class="cam-empty">${icon('camera', 28)}<small>Tasveer abhi nahi aayi</small></span>`}
+            <span class="cam-status"><i></i>${stText}${shot?.at ? ' · ' + esc(agoText(shot.at)) : ''}</span></button>
+          <div class="cam-body"><p class="cam-name"><b>${esc(c.name || c.id)}</b><span class="cam-role r-${esc(c.role || 'view')}">${esc(CAM_ROLE_TEXT[c.role] || 'Sirf dekhna')}</span></p>
+            <small class="muted">${esc(c.ip || '')}${c.channel > 1 ? ' · channel ' + esc(String(c.channel)) : ''} · ${esc({ dahua: 'Dahua', hik: 'Hikvision' }[c.brand] || 'Camera')}</small>
+            ${c.lastError && st !== 'on' ? `<small class="txt-bad">${esc(c.lastError)}</small>` : ''}
+            ${c.aiTest ? `<small class="cam-ai">${icon('check', 14)} AI test: ${esc(c.aiTest)}</small>` : ''}
+            ${editing ? `<form class="form cam-form" data-form="cam" data-id="${esc(c.id)}">
+                <label>Naam<input name="name" value="${esc(c.name || '')}" maxlength="40" required></label>
+                <div class="cam-roles" role="radiogroup" aria-label="Kaam">${Object.entries(CAM_ROLE_TEXT).map(([k, t]) => `<label class="cam-pick"><input type="radio" name="role" value="${k}" ${(c.role || 'view') === k ? 'checked' : ''}><span>${t}</span></label>`).join('')}</div>
+                <label class="check"><input type="checkbox" name="enabled" ${c.enabled === false ? '' : 'checked'}> Camera chalu (band = PC is ki tasveer nahi lega)</label>
+                <div class="btn-row"><button class="btn btn-primary">Save</button><button type="button" class="btn btn-ghost" data-action="cam-edit" data-id="">Rehne dein</button><button type="button" class="btn btn-ghost txt-bad" data-action="cam-del" data-id="${esc(c.id)}">Hatayein</button></div></form>`
+              : `<div class="btn-row"><button type="button" class="btn btn-ghost btn-sm" data-action="cam-snap" data-id="${esc(c.id)}" ${st === 'off' ? 'disabled' : ''}>${icon('camera', 16)} Abhi ki tasveer</button><button type="button" class="btn btn-ghost btn-sm" data-action="cam-edit" data-id="${esc(c.id)}">${icon('edit', 16)} Badlein</button></div>`}
+          </div></article>`;
+      };
+      return `${pcCard}${connect}${foundHtml}
+        ${cams.length ? `<div class="cam-grid">${cams.map(card).join('')}</div>` : cfg ? '<p class="empty-line">Abhi koi camera nahi juda. PC par command (ya desktop icon "NT Camera jodein") chalayein.</p>' : ''}
+        ${cfg && !ui.camCode ? `<p class="hint">PC badal raha hai ya code kho gaya? <button type="button" class="link" data-action="cam-code">Naya PC code banayein</button> (purana PC band ho jayega).</p>` : ''}
+        <p class="hint">Tasveer har 5 minute mein khud taza hoti hai jab PC chalu ho. Galla nigrani (harkat par AI) agle hisse mein judegi.</p>`;
+    } });
+  }
   /* ---------- v218: Phones ki jaanch (staffDiag) ---------- */
   const verNum = v => Number(String(v || '').replace(/[^0-9]/g, '')) || 0;
   const FAIL_KIND = { checkout: 'Check-Out', checkin: 'Check-In', return: 'Wapsi' };
@@ -844,6 +899,20 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     khata() { open('khata', khataSheet); },
     diag() { open('diag', diagSheet); },
     phones() { open('phones', phonesSheet); },
+    cameras() { if (manager) return toast('Cameras sirf malik ke liye hain', 'bad'); open('cameras', camerasSheet); },
+    async 'cam-code'(el) {
+      if (S.camCfg && !confirm('Naya PC code banayein? Purana PC code band ho jayega — PC par dobara command chalani hogi.')) return;
+      await busy(el, async () => { ui.camCode = await data.createCameraPC(); });
+      sheets.cameras?.refresh(true);
+    },
+    async 'cam-copy'() { const t = camCommand(); try { await navigator.clipboard.writeText(t); toast('Command copy ho gayi', 'ok'); } catch { prompt('Ye command copy karein:', t); } },
+    async 'cam-snap'(el) { await busy(el, () => data.requestShot(el.dataset.id), 'PC ko keh diya — 20-30 second mein nayi tasveer'); },
+    'cam-edit'(el) { ui.camEdit = el.dataset.id || ''; sheets.cameras?.refresh(true); },
+    async 'cam-del'(el) {
+      const c = (S.cameras || []).find(x => x.id === el.dataset.id); if (!c || !confirm(`"${c.name}" camera hatayein? PC par dobara jodna pare ga.`)) return;
+      await busy(el, () => data.deleteCamera(c.id), 'Camera hata diya'); ui.camEdit = ''; sheets.cameras?.refresh(true);
+    },
+    'cam-photo'(el) { const c = (S.cameras || []).find(x => x.id === el.dataset.id), shot = S.camShots?.get?.(el.dataset.id); if (shot?.jpg) viewImage('data:image/jpeg;base64,' + shot.jpg, `${c?.name || 'Camera'} · ${agoText(shot.at)}`); },
     links() { open('links', linksSheet); },
     'selfies-day'(el) { needMonth(el.dataset.arg.slice(0, 7)); open('selfies', () => selfiesDaySheet(el.dataset.arg)); },
     history() { open('history', historySheet); },
@@ -995,6 +1064,10 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     }
   };
   const forms = {
+    async cam(form, v, button) { // v220: camera ka naam / kaam / on-off
+      await busy(button, () => data.saveCamera(form.dataset.id, { name: v.name, role: v.role, enabled: !!v.enabled }), 'Camera save ho gaya');
+      ui.camEdit = ''; sheets.cameras?.refresh(true);
+    },
     async vapid(form, v, button) { await busy(button, async () => { await data.saveConfig({ push: { ...(S.config.push || {}), vapidKey: String(v.vapidKey || '').trim().replace(/\s+/g, ''), on: true }, appUrl: appLink() }); ui.pushMsg = { text: 'Key lag gayi. Ab "Is phone par notification chalu karein" dabayein.' }; sheets.notify?.refresh(true); }, 'Key save ho gayi'); },
     async staff(form, v, button) {
       await busy(button, async () => { await data.saveStaff({ ...v, photo: sheets.staffForm?.getPhoto() }, form.dataset.phone); sheets.staffForm?.close(); }, 'Staff save ho gaya');

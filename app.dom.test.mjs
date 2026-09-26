@@ -21,6 +21,10 @@ const records = new Map([
   [B + `staffAttendance/${today}_03001234567`, { date: today, phone: '03001234567', checkIn: '9:25 am', checkOut: '', autoScore: 6 }],
   // v218: Ali ke phone ka record — purani app aur 2 ghante pehle Check-Out server tak nahi gaya (internet)
   [B + 'staffDiag/03001234567', { phone: '03001234567', name: 'Ali Raza', v: 'v214', at: Date.now() - 3600000, app: 'home', device: 'Android 10; K · 139', pending: 1, failKind: 'checkout', failCode: 'unavailable', failAt: Date.now() - 7200000, failDate: C.pkDate() }],
+  // v220: aik camera (PC ne joda) + PC ki taaza khabar; PC ka login (config) abhi nahi
+  [B + 'cameraPC/status', { at: Date.now() - 60000, v: '1.0', host: 'SHOP-PC', cams: 1, online: 1, found: [{ ip: '192.168.0.105', brand: 'dahua', mac: 'aa11' }, { ip: '192.168.0.110', brand: 'hik', mac: 'bb22' }] }],
+  [B + 'cameras/aa11-ch1', { name: 'Galla', ip: '192.168.0.105', mac: 'aa11', brand: 'dahua', channel: 1, role: 'galla', enabled: true, createdAt: 5, status: 'online', lastShotAt: Date.now() - 120000, aiTest: 'Counter par do log, galla nazar aa raha hai' }],
+  [B + 'cameraShots/aa11-ch1', { jpg: '/9j/4AAQSkZJRgABAQ', w: 640, h: 360, at: Date.now() - 120000, cam: 'aa11-ch1' }],
   [B + `staffRequests/r1`, { phone: '03007654321', kind: 'leave', date: today, to: today, checkIn: '', checkOut: '', reason: 'Bimar', status: 'pending', createdAt: 5, by: 'x' }]
 ]);
 if (yesterday.slice(0, 7) === month) records.set(B + `staffAttendance/${yesterday}_03001234567`, { date: yesterday, phone: '03001234567', checkIn: '09:00', checkOut: '19:30', autoScore: 10 });
@@ -58,6 +62,24 @@ test('malik login → Hazri tab, qataarein, tawajju', async () => {
   assert.match($('[data-sheet=phones]').textContent, /v214/); assert.match($('[data-sheet=phones]').textContent, /Home screen app/); assert.match($('[data-sheet=phones]').textContent, /1 likhai phone mein ruki/);
   assert.match($('[data-sheet=phones]').textContent, /Check-Out server par NAHI laga .* wajah: internet/);
   await click('[data-sheet=phones] [data-sheet-close]');
+  // v220: Cameras (sirf malik) — PC code, tasveer, naam/kaam, nayi tasveer, poori screen
+  await click('[data-action=tab][data-arg=settings]');
+  assert.ok($('[data-action=cameras]'), 'Cameras tool'); await click('[data-action=cameras]'); await settle(8);
+  const cs = () => $('[data-sheet=cameras]');
+  assert.ok(cs(), 'Cameras sheet'); assert.match(cs().textContent, /Camera PC abhi juda nahi/); assert.equal(cs().querySelector('.cmd').textContent, `$b='https://example.test/app/';irm "$` + `{b}ntcam.txt"|iex`, 'repo ke hisab se sahi command');
+  await click('[data-sheet=cameras] [data-action=cam-code]'); await settle(10);
+  const camCfg = records.get(B + 'cameraPC/config'); assert.ok(camCfg?.uid, 'PC ka login bana'); assert.match(camCfg.email, /^cam-[a-z0-9]{6}@nttraders\.local$/);
+  assert.match(cs().querySelector('.cam-code').textContent, /^[a-z0-9]{6}-[a-z0-9]{10}$/, 'PC code dikha');
+  assert.equal(fake.sdk.created.length, 1); assert.equal($('#app').dataset.screen, 'owner', 'malik ka login nahi hila');
+  assert.match(cs().textContent, /Camera PC chal raha hai/); assert.match(cs().textContent, /Galla/); assert.match(cs().textContent, /Online/);
+  assert.ok(cs().querySelector('.cam-shot img[src^="data:image/jpeg;base64,"]'), 'tasveer'); assert.match(cs().textContent, /AI test: Counter par do log/);
+  assert.match(cs().textContent, /192\.168\.0\.110/, 'PC ne jo naya device dekha'); assert.doesNotMatch(cs().querySelector('.notice')?.textContent || '', /192\.168\.0\.105/, 'juda hua dobara nahi');
+  await click('[data-sheet=cameras] [data-action=cam-snap]'); await settle(6); assert.ok(records.get(B + 'cameras/aa11-ch1').snapReq, 'nayi tasveer ki farmaish');
+  await click('[data-sheet=cameras] .cam-card [data-action=cam-edit]'); const camForm = $('[data-sheet=cameras] form[data-form=cam]'); assert.ok(camForm, 'badlne ka form');
+  camForm.elements.name.value = 'Galla wala'; camForm.querySelector('input[value=counter]').checked = true; await submit(camForm);
+  assert.equal(records.get(B + 'cameras/aa11-ch1').name, 'Galla wala'); assert.equal(records.get(B + 'cameras/aa11-ch1').role, 'counter'); assert.equal(records.get(B + 'cameras/aa11-ch1').status, 'online', 'PC wali fields nahi badlin');
+  await click('[data-sheet=cameras] [data-action=cam-photo]'); assert.ok($('body > .viewer img'), 'poori screen tasveer'); await click('.viewer'); assert.equal($('.viewer'), null);
+  await click('[data-sheet=cameras] [data-sheet-close]'); await click('[data-action=tab][data-arg=hazri]');
   assert.ok($$('.row-pdf').length === 2, 'har staff par PDF button');
   assert.match($('.register').textContent, /9:00 am – 7:00 pm/); assert.match($('.register').textContent, /10h duty/);
   assert.match($('.register').textContent, /Aaya 9:25 am/);
@@ -381,6 +403,7 @@ test('logout → staff login → check-in / check-out', async () => {
   // ---- v211: manager panel (Usman) — sab kar sakta hai, sirf hazri nahi ----
   await click('[data-action=mgr-mode][data-arg=panel]'); await settle(8);
   assert.ok($('.tabs [data-arg=salary]') && $('.tabs [data-arg=settings]'), 'malik jaisa panel');
+  await click('.tabs [data-arg=settings]'); assert.equal($('[data-action=cameras]'), null, 'v220: manager ko Cameras nahi'); await click('.tabs [data-arg=hazri]');
   assert.match($('.brand').textContent, /Manager panel/);
   await fake.sdk.setDoc({ path: B + 'staffOuts/m1' }, { phone: '03001234567', name: 'Ali Raza', date: today, reason: 'Washroom (chhoti hajat)', note: '', minutes: 5, status: 'pending', requestedAt: Date.now(), by: 'x' }); await settle(10);
   assert.ok($('.out-card'), 'parchi card');

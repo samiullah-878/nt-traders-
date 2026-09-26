@@ -102,6 +102,19 @@ export function celebrate({ tone = 'ok', stamp = '', title = '', sub = '', count
   return el;
 }
 
+/* ---------- v220: tasveer poori screen par (tap / Escape / "Band karein" se band) ---------- */
+export function viewImage(src, title = '') {
+  document.querySelector('.viewer')?.remove();
+  const el = document.createElement('div');
+  el.className = 'viewer'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', title || 'Tasveer');
+  el.innerHTML = `<img src="${esc(src)}" alt="${esc(title)}"><div class="viewer-bar"><b>${esc(title)}</b><button type="button" class="btn btn-ghost btn-sm">Band karein</button></div>`;
+  const close = () => el.remove();
+  el.addEventListener('click', close); el.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  document.body.appendChild(el);
+  try { el.querySelector('button')?.focus({ preventScroll: true }); } catch { /* ignore */ }
+  return el;
+}
+
 /* ---------- sheets (neeche se uthne wala panel) ---------- */
 const stack = [];
 export function openSheet({ title = '', render, wide = false, onClose, id = '' }) {

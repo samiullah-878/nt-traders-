@@ -33,10 +33,10 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     return {
       role: null, phone: '', loaded: new Set(), config: { ...DEFAULT_CONFIG },
       staff: [], months: new Map(), requests: [], schedules: new Map(), payroll: [],
-      account: null, myAttendance: [], punchError: null, sync: {}, diag: [], outs: [], teamOuts: [], teamAttendance: [], tickets: [], myTickets: [], teamTickets: [], errors: {}, lastSync: {}, pendingWrites: 0
+      account: null, myAttendance: [], punchError: null, sync: {}, diag: [], cameras: [], camPC: null, camCfg: null, camShots: new Map(), outs: [], teamOuts: [], teamAttendance: [], tickets: [], myTickets: [], teamTickets: [], errors: {}, lastSync: {}, pendingWrites: 0
     };
   }
-  let unsubs = [], monthSubs = new Map(), epoch = 0, legacyChecked = false;
+  let unsubs = [], monthSubs = new Map(), epoch = 0, legacyChecked = false, shotsSub = null;
   const changed = () => onChange(state);
   const problem = (name, error) => { state.errors[name] = error?.code || error?.message || 'error'; changed(); onProblem(name, error); };
   const live = (query, name, handler, options) => {
@@ -51,6 +51,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     for (const u of monthSubs.values()) try { u(); } catch { /* ignore */ }
     unsubs = []; monthSubs = new Map(); legacyChecked = false;
     clearTimeout(drainTimer); drainTimer = null;
+    try { shotsSub?.(); } catch { /* ignore */ } shotsSub = null;
     Object.assign(state, fresh());
   }
   const readConfig = snap => {
@@ -74,6 +75,12 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       }, { includeMetadataChanges: true });
     }
     live(ref('staffConfig', 'main'), 'config', snap => { readConfig(snap); queueMicrotask(syncRoster); });
+    // v220: dukaan ke cameras — SIRF malik (manager ke liye rules bhi band)
+    if (state.role === 'owner') {
+      live(col('cameras'), 'cameras', snap => { state.cameras = readList(snap).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)); });
+      live(ref('cameraPC', 'status'), 'camPC', snap => { state.camPC = snap.exists() ? clean(snap.data()) : null; });
+      live(ref('cameraPC', 'config'), 'camCfg', snap => { state.camCfg = snap.exists() ? clean(snap.data()) : null; });
+    }
     // v218: har larke ke phone ka record (version, aakhri dafa, kya server tak nahi gaya)
     live(col('staffDiag'), 'diag', snap => { state.diag = readList(snap).map(d => ({ ...d, phone: normalizePhone(d.phone || d.id) || d.id })); });
     live(col('staffAccounts'), 'staff', snap => {
@@ -1000,8 +1007,45 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     ping('leave', { title: kind === 'leave' ? `${me()} ne chutti mangi` : `${me()}: hazri durust karne ki request`, message: `${shortDateSafe(date)}${end !== date ? ' – ' + shortDateSafe(end) : ''}${half ? (half === 'am' ? ' (aadha din subah)' : ' (aadha din shaam)') : ''} · ${String(reason).trim().slice(0, 120)}`, tags: ['memo'] });
   }
 
+  /* ---------- v220: CAMERAS (Hissa A) — PC ka login, naam / kaam, nayi tasveer ----------
+     Camera ka password aur Claude ki key SIRF shop PC mein (ntcam.py). Yahan sirf naam, kaam, on/off aur tasveerein. */
+  const CAM_ROLES = ['galla', 'counter', 'view'];
+  const ownerOnly = () => { if (state.role !== 'owner') throw new Error('Cameras sirf malik ke liye hain.'); };
+  /** Tasveerein bhaari hoti hain — sirf jab Cameras ka safha khula ho tab suno. */
+  function watchShots(on) {
+    try { shotsSub?.(); } catch { /* ignore */ } shotsSub = null;
+    if (!on || state.role !== 'owner') return;
+    const token = epoch;
+    shotsSub = sdk.onSnapshot(col('cameraShots'), snap => { if (token !== epoch) return; const m = new Map(); snap.forEach(d => m.set(d.id, clean(d.data()))); state.camShots = m; changed(); }, error => { if (token === epoch) problem('camShots', error); });
+  }
+  /** PC ka apna login banao (doosri Firebase app se — malik ka login nahi hilta). Code = "<id>-<password>", sirf aik dafa dikhta hai. */
+  async function createCameraPC() {
+    ownerOnly();
+    const A = 'abcdefghjkmnpqrstuvwxyz23456789', pick = n => Array.from(globalThis.crypto.getRandomValues(new Uint32Array(n)), x => A[x % A.length]).join('');
+    const id = pick(6), secret = pick(10), email = `cam-${id}@nttraders.local`;
+    const app2 = sdk.initializeApp(firebaseConfig, 'ntcam-' + Date.now());
+    let auth2, uid = '';
+    try { auth2 = sdk.initializeAuth && sdk.inMemoryPersistence ? sdk.initializeAuth(app2, { persistence: sdk.inMemoryPersistence }) : sdk.getAuth(app2); } catch { auth2 = sdk.getAuth(app2); }
+    try { uid = (await sdk.createUserWithEmailAndPassword(auth2, email, secret)).user.uid; }
+    catch (error) {
+      if (error?.code === 'auth/operation-not-allowed') throw new Error('Firebase mein "Email/Password" login band hai — Authentication > Sign-in method mein ON karein.');
+      if (error?.code === 'auth/network-request-failed') throw new Error('Internet kamzor hai. Dobara koshish karein.');
+      throw error;
+    } finally { try { await sdk.deleteApp?.(app2); } catch { /* ignore */ } }
+    await fast(async tx => { tx.set(ref('cameraPC', 'config'), { uid, email, at: Date.now(), by: actor() }); audit(tx, 'camera pc', 'config', null, { email }, 'Naya camera PC code'); });
+    return `${id}-${secret}`;
+  }
+  async function saveCamera(id, { name, role, enabled }) {
+    ownerOnly();
+    const n = String(name || '').trim().slice(0, 40);
+    if (!n) throw new Error('Camera ka naam likhein.');
+    await quick(sdk.setDoc(ref('cameras', id), { name: n, role: CAM_ROLES.includes(role) ? role : 'view', enabled: enabled !== false }, { merge: true }));
+  }
+  async function requestShot(id) { ownerOnly(); await quick(sdk.setDoc(ref('cameras', id), { snapReq: Date.now() }, { merge: true })); }
+  async function deleteCamera(id) { ownerOnly(); await quick(sdk.deleteDoc(ref('cameras', id))); try { await sdk.deleteDoc(ref('cameraShots', id)); } catch { /* ignore */ } }
+
   return {
-    app, full, actor, auth, state, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
+    app, full, actor, auth, state, watchShots, createCameraPC, saveCamera, requestShot, deleteCamera, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
     requestOut, cancelOut, returnOut, reviewOut, isManager, isTicketer, startBreak, endBreaks, createTicket, returnTicket, decideTicket, ticketSuggestFor,
     savePushToken, removePushToken, pushDevices, pushTestPing,
     applyDefaultShiftAll, applyDefaultSalaryAll, toggleClosed, quickPresent, closeCheckouts, getSelfie, migrateSelfies, selfiesFor, auditLog,

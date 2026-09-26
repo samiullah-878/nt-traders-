@@ -42,9 +42,10 @@ export function fakeSdk({ records = new Map(), initialUser = null, ownerPassword
     runTransaction(_fs, fn) { const result = chain.then(async () => { const writes = []; const ret = await fn({ get: async r => snapshot(r), set: (r, d, o) => writes.push(['set', r, d, o]), delete: r => writes.push(['delete', r]) }); apply(writes); return ret; }); chain = result.catch(() => {}); return result; },
     onAuthStateChanged(_a, callback) { authListeners.add(callback); queueMicrotask(() => callback(auth.currentUser)); return () => authListeners.delete(callback); },
     signOut: async () => setUser(null),
+    createUserWithEmailAndPassword: async (_a, email) => { sdk.created.push(email); return { user: { uid: 'cam-uid-' + (++n), email } }; }, deleteApp: async () => {},
     signInAnonymously: async () => { if (fail.signIn.length) throw fail.signIn.shift(); const u = { uid: 'anon-' + (++n), isAnonymous: true }; setUser(u); return { user: u }; },
     signInWithEmailAndPassword: async (_a, email, password) => { sdk.attempts.push(email); if (fail.signIn.length) throw fail.signIn.shift(); if (password !== ownerPassword || email !== 'hp6235@gmail.com') throw Object.assign(new Error('wrong'), { code: 'auth/invalid-credential' }); const u = { uid: 'owner-uid', email, isAnonymous: false }; setUser(u); return { user: u }; },
-    attempts: [], dropped: [], now: () => Date.now(), serverTimestamp: () => SERVER, deleteField: () => DELETE, EmailAuthProvider: { credential: () => ({}) }, reauthenticateWithCredential: async () => {}, updatePassword: async () => {}
+    attempts: [], dropped: [], created: [], now: () => Date.now(), serverTimestamp: () => SERVER, deleteField: () => DELETE, EmailAuthProvider: { credential: () => ({}) }, reauthenticateWithCredential: async () => {}, updatePassword: async () => {}
   };
   return { sdk, auth, records, setUser, fail, listeners };
 }

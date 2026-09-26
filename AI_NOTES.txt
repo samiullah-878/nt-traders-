@@ -1,8 +1,53 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v219   Tareekh: 2026-09-27  (v217 + v218 bhi isi update mein; v216: 2026-09-24, v200-v204: 2026-09-21)
+Version: v220   Tareekh: 2026-09-27  (v217-v219: 2026-09-27 — malik ne upload kar ke 'good' kaha; v216: 2026-09-24)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+00000000000000000000. v220 — CAMERAS, HISSA A (shop PC ka camera program + Settings > Cameras)  [camera ke 3 hisson ka pehla]
+------------------------------------------------------------
+Malik: dukaan ke cameras (Dahua DH-IPC-HDW1431T1 fixed 4MP PoE "Counter" + Dahua DH-H3A ghoomne wala WiFi, TP-Link_640C)
+par AI nigrani; pehle GALLA (cash) wala hissa. "Multiple camera add ho saken, koi problem na ho, aur ISI hazri app mein bana do."
+Shop PC (AnyDesk) sirf dukaan ke waqt on. Claude API key malik ne bana li. Plan (OK): Hissa A = PC program + test + Settings >
+Cameras; Hissa B = galla nigrani (hissa mark, harkat par burst, Claude jaanch, "Nigrani" tab, push alert, duty par kaun tha);
+Hissa C = roz ki PDF, 30 din purani tasveerein saaf, AI kharche ki had.
+SACH (malik ko bataya): browser app camera ki RTSP video nahi parh sakti -> parhna shop PC karta hai; app sirf dikhati/sambhalti hai.
+Camera ke password aur Claude key SIRF PC mein (C:\NTCam\secrets.json) — Firebase/app mein kabhi nahi. Nigrani SIRF malik (manager bhi staff hai).
+- ntcam.py (VERSION '1.0', Python 3.12, opencv-python-headless + numpy + requests): setup | run | test.
+  setup (desktop "NT Camera jodein"): PC code -> Firebase login (REST identitytoolkit, apna email/password login, rules lagte hain),
+  Claude key (getpass, right-click paste), network /24 scan (port 554; brand: 37777 = Dahua, 8000 = Hikvision, http text), MAC (arp -a),
+  har device: naam, username [admin], password (getpass), channels (NVR ho to). RTSP: Dahua /cam/realmonitor?channel=N&subtype=0,
+  Hikvision /Streaming/Channels/N01 (rtsp_transport tcp, 8 s timeout). Kamyab -> secrets.cams[<mac>-chN] = {url,user,pw,ip,brand,ch,mac},
+  Firestore cameras/<id> (naya ho to naam/role 'view'/enabled), cameraShots/<id> (640px JPEG base64 <400KB), Claude Haiku 4.5
+  (claude-haiku-4-5-20251001) se 1-2 line ka AI test -> cameras.aiTest. cameraPC/status mein found list.
+  run (Startup shortcut, pythonw, lock port 47391): list har 20 s, tasveer har 5 min ya malik ki "Abhi ki tasveer" (snapReq > lastShotAt),
+  online/offline/off/"password nahi", IP badle to MAC se dhoond kar URL theek, cameraPC/status har 2 min, har 6 ghante GitHub
+  (base.txt = Pages URL) se naya ntcam.py (VERSION bara ho to, compile check, khud dobara shuru) — PC par dobara type nahi karna.
+  Firestore REST patch hamesha updateMask ke sath (sirf apni fields) — malik ka naam/kaam nahi mit-ta.
+- ntcam.txt (PowerShell installer, .txt taake Pages text/plain de): `irm <pages>/ntcam.txt|iex`. $b na ho to
+  'https://samiullah-878.github.io/nt-traders-/' (zip ka naam "nt-traders--main" se repo "nt-traders-" ka andaza). App repo ke hisab se
+  sahi command dikhati hai (alag ho to `$b='<url>';irm "${b}ntcam.txt"|iex`). Python (py/python, winget, ya python.org 3.12.7 silent),
+  pip, ntcam.py, Startup "NT Camera.lnk" (pythonw run) + Desktop "NT Camera jodein.lnk" (setup), phir setup, phir run peeche.
+- ntcam_test.py (python ntcam_test.py): 7 tests — PC code, Firestore values, RTSP URL + password chhupana, JPEG 2560->640 <400KB,
+  version compare, patch sirf apni fields (updateMask), AGENT_KEYS rules mein.
+- App (sirf malik): Settings > "Cameras" (manager ko tool nahi, rules bhi band). data.js: owner live cameras / cameraPC status + config;
+  watchShots(on) sirf sheet khuli ho tab (tasveerein bhaari); createCameraPC(): doosri Firebase app (initializeAuth inMemory) se
+  createUserWithEmailAndPassword('cam-<6>@nttraders.local', <10>) -> deleteApp -> cameraPC/config {uid,email,at,by} + audit; code
+  "<6>-<10>" (harf a-z bina i/l/o, 2-9) sirf aik dafa ui.camCode. saveCamera(name, role galla|counter|view, enabled), requestShot,
+  deleteCamera. owner.js camerasSheet: PC card (chalu = status.at 6 min ke andar, dhadakta hara nishan), "PC jodein" 4 qadam (code, AnyDesk
+  PowerShell, command + Copy, password/key PC par hi), PC ne jo naye device dekhe, camera cards (16:9 tasveer, Online/Offline/Band chip,
+  naam + kaam chip, ip/brand, AI test, ghalti), "Abhi ki tasveer", "Badlein" (naam, kaam chips, chalu), "Hatayein", tasveer tap = ui.viewImage
+  poori screen. "Naya PC code banayein" (tasdeeq: purana PC band).
+- firestore.rules v220: isCameraPC() (password login + cameraPC/config.uid). Generic match: manager ke liye cameras / cameraShots /
+  cameraPC / cameraEvents parhna-likhna band. cameraPC/{doc}: PC sirf 'status' (keys ginti). cameras: PC create (keys ginti, naam <=40),
+  update sirf apni fields. cameraShots: PC likhe (jpg < 400000). Malik generic se sab. MALIK KO v220 RULES PUBLISH KARNE HAIN.
+- Firebase Authentication mein "Email/Password" ON hona chahiye (pehle se hai — malik login isi se).
+- Tests 76 app (app.dom: malik Cameras — PC code bana, malik ka login nahi hila, tasveer, naya device, Abhi ki tasveer, naam/kaam save,
+  PC fields nahi badlin, poori screen; manager ko Cameras nahi) + 7 Python. Headless Chromium mein Cameras sheet dekhi.
+- Yahan test nahi ho saka: asal camera / RTSP (khaas kar H3A), asal Windows PC par installer, asal Firebase rules, Claude ka asal jawab.
+- Agla: Hissa B (galla) — cameras.zone (malik tasveer par hissa mark), ntcam.py mein harkat + burst + Claude, cameraEvents (rules mein naam
+  pehle se band/khula soch kar), "Nigrani" tab, onHazriWrite mein cameraEvents -> push (sirf owner), hazri se duty par kaun tha.
 
 ------------------------------------------------------------
 0000000000000000000. v219 — SAB KHABREIN FORAN (AIK JAGTI FUNCTION) + TOKEN SAFAI + APP KHULI HO TAB BHI AWAAZ  [HISSA 3 / 3]
