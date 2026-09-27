@@ -10,7 +10,7 @@ import { enablePush, disablePush, currentToken, pushPermission, pushSupported, r
 import { openBreakSheet, breakStatusHtml } from './breaks.js';
 const clock = ms => ms ? fmtTime(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(ms))) : '—';
 const to24FromMin = m => { const x = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
-import { icon, avatar, nameHtml, toast, busy, openSheet, refreshSheets, fileToDataUrl, deliverPdf, $, errorText, timeField, IN_TICKETS, OUT_TICKETS, viewImage } from './ui.js';
+import { icon, avatar, nameHtml, toast, busy, openSheet, refreshSheets, fileToDataUrl, deliverPdf, $, errorText, timeField, IN_TICKETS, OUT_TICKETS } from './ui.js';
 import { loadPdfLib, browserTextImages, dailyPdf, staffMonthPdf, registerPdf, salarySheetPdf } from './pdf.js';
 
 const ORDER = { due: 0, late: 1, waiting: 2, absent: 3, loading: 3, present: 4, leave: 5, off: 6, closed: 6, na: 7 };
@@ -56,10 +56,6 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       const open = activeStaff().filter(s => data.calcFor(s, prev).daysWorked > 0 && data.payrollFor(s.phone, prev)?.state !== 'final');
       if (open.length) items.push({ tone: 'ink', icon: 'wallet', title: `${monthLabel(prev)} ki salary final nahi`, text: `${open.length} staff baqi`, action: 'salary-month', arg: prev });
     }
-    // v218: phones ki jaanch — kis ka Check-Out/Wapsi server tak nahi gaya, kis ke phone par purani app
-    const ph = phoneHealth(), failed = ph.filter(x => x.fail), old = ph.filter(x => x.old);
-    if (failed.length) items.unshift({ tone: 'bad', icon: 'phone', title: `${failed.length} phone se ${failed.length > 1 ? 'likhai' : failKindText(failed[0].fail.kind)} server tak nahi gayi`, text: failed.slice(0, 2).map(x => `${x.name}: ${failKindText(x.fail.kind)} ${x.fail.time} (${failWhy(x.fail.code)})`).join(', '), action: 'phones', arg: '' });
-    if (old.length) items.push({ tone: 'late', icon: 'phone', title: `${old.length} phone par purani app`, text: old.slice(0, 3).map(x => `${x.name} (${x.v || 'purani'})`).join(', ') + ' — larke se kahein app band kar ke dobara kholein', action: 'phones', arg: '' });
     const undecided = S.tickets.filter(t => t.status !== 'decided');
     if (undecided.length) items.unshift({ tone: 'bad', icon: 'alert', title: `${undecided.length} "bina bataye gaya" ticket ka faisla baqi`, text: [...new Set(undecided.map(t => account(t.phone)?.name || t.name))].slice(0, 3).join(', '), action: 'tickets', arg: '' });
     if (nightShift(S.config)) items.unshift({ tone: 'bad', icon: 'alert', title: `Default duty ghalat lag rahi hai: ${dutyText(resolveBase())}`, text: 'Daba kar AM / PM theek karein', action: 'settings', arg: '' });
@@ -154,7 +150,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     const closed = isClosed(resolveBase(), date), reason = (S.config.closedDays || []).find(d => d.date === date)?.reason;
     return `${date === today ? breakStatusHtml(S.outs.filter(o => o.kind === 'break' && o.status === 'approved' && o.date === today), Date.now(), o => account(o.phone)?.name || o.name || o.phone) + outCards() + attention() + weekCard() : ''}
       ${closed ? `<p class="closed-line">${icon('alert', 18)} <span><b>${esc(dateLabel(date))}: Dukaan band</b>${reason && reason !== 'Dukaan band' ? ' — ' + esc(reason) : ''}. Is din koi ghair hazir nahi ginta.</span></p>` : ''}
-      <div class="day-tools">${date === today ? `<button type="button" class="btn btn-ghost btn-sm tone-bad-btn" data-action="ticket-new">${icon('alert', 16)} Bina bataye gaya</button>` : ''}${date === today ? `<button type="button" class="btn btn-primary btn-sm" data-action="break-start">${icon('clock', 16)} Khana break</button>` : ''}<button type="button" class="btn btn-ghost btn-sm" data-action="toggle-closed" data-arg="${date}">${closed ? 'Dukaan band hatayein' : (date === today ? 'Aaj' : 'Is din') + ' dukaan band (Eid / chutti)'}</button>${c.absent + c.waiting && data.monthLoaded(month) ? `<button type="button" class="btn btn-ghost btn-sm" data-action="quick-present-all" data-arg="${date}">Sab ghair hazir ko hazir lagao</button>` : ''}<button type="button" class="btn btn-ghost btn-sm" data-action="selfies-day" data-arg="${date}">${icon('camera', 16)} Selfies dekhein</button></div>
+      <div class="day-tools">${date === today ? `<button type="button" class="btn btn-ghost btn-sm" data-action="msg-new">${icon('note', 16)} Paigham bhejein</button>` : ''}${date === today ? `<button type="button" class="btn btn-ghost btn-sm tone-bad-btn" data-action="ticket-new">${icon('alert', 16)} Bina bataye gaya</button>` : ''}${date === today ? `<button type="button" class="btn btn-primary btn-sm" data-action="break-start">${icon('clock', 16)} Khana break</button>` : ''}<button type="button" class="btn btn-ghost btn-sm" data-action="toggle-closed" data-arg="${date}">${closed ? 'Dukaan band hatayein' : (date === today ? 'Aaj' : 'Is din') + ' dukaan band (Eid / chutti)'}</button>${c.absent + c.waiting && data.monthLoaded(month) ? `<button type="button" class="btn btn-ghost btn-sm" data-action="quick-present-all" data-arg="${date}">Sab ghair hazir ko hazir lagao</button>` : ''}<button type="button" class="btn btn-ghost btn-sm" data-action="selfies-day" data-arg="${date}">${icon('camera', 16)} Selfies dekhein</button></div>
       <section class="panel">
         ${strip(c, rows.length)}
         <div class="chips" role="tablist" aria-label="Filter">${FILTERS.map(([k, label]) => `<button type="button" role="tab" class="chip c-${k}" aria-selected="${ui.filter === k}" data-action="filter" data-arg="${k}"><b>${counts[k]}</b> ${label}</button>`).join('')}</div>
@@ -295,6 +291,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       <h2 class="section-label">Rozana ka kaam</h2>
       <section class="panel tools">
         ${tool('requests', 'note', 'Chutti / correction ki requests', pend ? pend + ' ka jawab baqi' : 'Koi nayi request nahi')}
+        ${tool('msg-new', 'note', 'Larkon ko paigham', (() => { const n = S.messages.length; return n ? n + ' paigham (30 din)' : 'Sab ko ya kisi aik ko'; })())}
         ${tool('notify', 'share', 'Notifications (app band ho tab bhi)', S.config.notify?.on ? 'Chalu — ntfy app mein aati hain' : 'Band — chalu karein')}
         ${tool('tickets', 'alert', 'Bina bataye gaya — tickets', (() => { const n = S.tickets.filter(t => t.status !== 'decided').length; return n ? n + ' ka faisla baqi' : 'Maaf / warning / katauti'; })())}
         ${tool('outs', 'out', 'Bahar jane ki parchiyan', (() => { const n = S.outs.filter(o => o.status === 'pending').length, b = S.outs.filter(o => o.status === 'approved').length; return n ? n + ' ka jawab baqi' : b ? b + ' abhi bahar' : 'Aaj ki parchiyan'; })())}
@@ -313,8 +310,6 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         ${tool('links', 'share', 'Update ke links', 'GitHub upload · Firebase rules')}
         ${tool('update', 'down', 'App update check karein', 'Abhi ' + APP_VERSION + (S.bootMs ? ` · ${(S.bootMs / 1000).toFixed(1)}s mein khuli` : ''))}
         ${fixes && !manager ? tool('migrate-selfies', 'camera', 'App ko halka karein (aik dafa)', 'Purani selfies alag karein — hazri list tez khulegi') : ''}
-        ${manager ? '' : tool('cameras', 'camera', 'Cameras', camToolText())}
-        ${tool('phones', 'phone', 'Phones ki jaanch', 'Kis phone par kaunsi app · kis ki hazri server tak nahi gayi')}
         ${tool('diag', 'alert', 'App ki jaanch', 'Hazri na dikhe to is ka screenshot bhejein')}
         ${manager ? '' : tool('password', 'edit', 'Malik ka password badlein')}
         ${tool('logout', 'out', 'Logout', '', ' tone-bad')}
@@ -385,7 +380,8 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         const sum = summaryFor(s, month), sch = data.scheduleFor(phone), calc = data.calcFor(s, month), today = pkDate();
         sh.setTitle(nameHtml(s.name));
         const leaves = S.requests.filter(r => r.phone === phone && r.kind === 'leave' && r.status === 'approved' && r.to >= month + '-01' && r.date <= month + '-31');
-        return `<div class="profile-head">${avatar(s, 'lg')}<div><p class="muted">${esc(s.role || 'Staff')} &nbsp;|&nbsp; Duty ${fmtTime(sch.shiftStart)}${sch.shiftEnd ? ' – ' + fmtTime(sch.shiftEnd) : ''}</p><a class="link" href="tel:${esc(s.phone)}">${icon('phone', 16)} ${esc(s.phone)}</a></div></div>
+        return `<div class="profile-head">${avatar(s, 'lg')}<div><p class="muted">${esc(s.role || 'Staff')} &nbsp;|&nbsp; Duty ${fmtTime(sch.shiftStart)}${sch.shiftEnd ? ' – ' + fmtTime(sch.shiftEnd) : ''}</p><a class="link" href="tel:${esc(s.phone)}">${icon('phone', 16)} ${esc(s.phone)}</a></div>
+          <div class="contact-row"><a class="btn btn-ok-soft" href="tel:${esc(s.phone)}">${icon('phone', 18)} Call</a><a class="btn btn-wa" href="https://wa.me/92${esc(String(s.phone).replace(/^0/, ''))}" target="_blank" rel="noopener">${icon('share', 18)} WhatsApp</a><button type="button" class="btn btn-ghost" data-action="msg-new" data-phone="${esc(s.phone)}">${icon('note', 18)} Paigham</button></div></div>
           <div class="datebar"><button type="button" class="icon-btn" data-action="profile-step" data-arg="-1" aria-label="Pichla mahina">${icon('left')}</button><span class="date-static">${esc(monthLabel(month))}</span><button type="button" class="icon-btn" data-action="profile-step" data-arg="1" aria-label="Agla mahina" ${month >= today.slice(0, 7) ? 'disabled' : ''}>${icon('right')}</button></div>
           ${loadingNote(month)}
           <div class="counts"><div class="st-present"><b>${sum.count.present + sum.count.late}</b><small>Hazir</small></div><div class="st-late"><b>${sum.count.late}</b><small>Late</small></div><div class="st-absent"><b>${sum.count.absent}</b><small>Ghair hazir</small></div><div class="st-leave"><b>${sum.count.leave + sum.count.off}</b><small>Chutti</small></div><div><b>${hm(sum.totalMin)}</b><small>Ghante</small></div></div>
@@ -699,99 +695,31 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     void currentToken({ app: data.app, vapidKey: S.config.push?.vapidKey }).then(t => { if (t && t !== ui.pushToken) { ui.pushToken = t; sheet.refresh(true); } });
     return sheet;
   }
-  /* ---------- v220: CAMERAS (Hissa A) — sirf malik ----------
-     Camera parhne ka kaam shop PC karta hai (ntcam.py); yahan: PC jodna, naam / kaam / on-off, aakhri tasveer, online / offline. */
-  const CAM_DEFAULT_BASE = 'https://samiullah-878.github.io/nt-traders-/';
-  const CAM_ROLE_TEXT = { galla: 'Galla', counter: 'Counter', view: 'Sirf dekhna' };
-  const camOnline = () => !!(S.camPC?.at && Date.now() - S.camPC.at < 6 * 60000);
-  const camToolText = () => { const n = (S.cameras || []).length, on = (S.cameras || []).filter(c => c.status === 'online').length; return !S.camCfg ? 'PC jodein — dukaan ke camera app mein' : `${n} camera · ${on} online · PC ${camOnline() ? 'chalu' : 'band'}`; };
-  function camCommand() {
-    const loc = globalThis.location || globalThis.window?.location || {};
-    const base = /^https?:/.test(loc.origin || '') ? loc.origin + String(loc.pathname || '/').replace(/[^/]*$/, '') : CAM_DEFAULT_BASE;
-    return base === CAM_DEFAULT_BASE ? `irm ${CAM_DEFAULT_BASE}ntcam.txt|iex` : "$b='" + base + "';irm \"$" + "{b}ntcam.txt\"|iex";
-  }
-  function camerasSheet() {
-    data.watchShots(true);
-    return openSheet({ id: 'cameras', wide: true, title: 'Cameras', onClose: () => data.watchShots(false), render: () => {
-      const pc = S.camPC, cfg = S.camCfg, cams = S.cameras || [], on = camOnline();
-      const pcCard = `<section class="cam-pc ${on ? 'is-on' : cfg ? 'is-off' : ''}"><i class="cam-dot" aria-hidden="true"></i><div>
-          <b>${!cfg ? 'Camera PC abhi juda nahi' : on ? 'Camera PC chal raha hai' : 'Camera PC band hai'}</b>
-          <small>${pc?.at ? `Aakhri khabar ${esc(agoText(pc.at))} · NT Camera v${esc(pc.v || '?')} · ${Number(pc.cams || 0)} camera, ${Number(pc.online || 0)} online${pc.host ? ' · ' + esc(pc.host) : ''}` : cfg ? 'PC ne abhi tak koi khabar nahi bheji — PC par command chalayein.' : 'Neeche 4 qadam se PC jodein.'}</small></div></section>`;
-      const cmd = camCommand();
-      const connect = (!cfg || ui.camCode) ? `<section class="panel pad cam-steps"><h3 class="sub">PC jodein</h3><ol class="steps-list">
-          <li><span>${ui.camCode ? `PC code (sirf abhi nazar aa raha hai — likh lein): <b class="cam-code">${esc(ui.camCode)}</b>` : `PC ka code banayein.`}</span>${ui.camCode ? '' : `<button type="button" class="btn btn-primary btn-sm" data-action="cam-code">Code banayein</button>`}</li>
-          <li><span>AnyDesk se shop PC kholein → Start par right-click → <b>Windows PowerShell</b>.</span></li>
-          <li><span>Ye aik command type kar ke Enter dabayein:</span><code class="cmd">${esc(cmd)}</code><button type="button" class="btn btn-ghost btn-sm" data-action="cam-copy">Copy</button></li>
-          <li><span>PC poochega to PC code, camera ka password aur Claude API key <b>PC par hi</b> likhein — phone par nahi.</span></li></ol></section>` : '';
-      const known = new Set(cams.map(c => c.ip));
-      const extra = (pc?.found || []).filter(d => !known.has(d.ip));
-      const foundHtml = extra.length ? `<p class="notice">${icon('camera', 18)} <span>PC ne network par ye bhi dekhe: ${extra.map(d => `<b>${esc(d.ip)}</b> (${esc({ dahua: 'Dahua', hik: 'Hikvision' }[d.brand] || 'camera')})`).join(', ')}. Jodne ke liye PC par desktop icon <b>"NT Camera jodein"</b> chalayein.</span></p>` : '';
-      const card = c => {
-        const shot = S.camShots?.get?.(c.id), src = shot?.jpg ? 'data:image/jpeg;base64,' + shot.jpg : '';
-        const st = c.enabled === false ? 'off' : c.status === 'online' && on ? 'on' : 'down';
-        const stText = { on: 'Online', down: 'Offline', off: 'Band' }[st];
-        const editing = ui.camEdit === c.id;
-        return `<article class="cam-card st-${st}">
-          <button type="button" class="cam-shot" data-action="cam-photo" data-id="${esc(c.id)}" ${src ? '' : 'disabled'} aria-label="${esc(c.name || 'Camera')} ki tasveer poori screen par">
-            ${src ? `<img src="${esc(src)}" alt="" loading="lazy">` : `<span class="cam-empty">${icon('camera', 28)}<small>Tasveer abhi nahi aayi</small></span>`}
-            <span class="cam-status"><i></i>${stText}${shot?.at ? ' · ' + esc(agoText(shot.at)) : ''}</span></button>
-          <div class="cam-body"><p class="cam-name"><b>${esc(c.name || c.id)}</b><span class="cam-role r-${esc(c.role || 'view')}">${esc(CAM_ROLE_TEXT[c.role] || 'Sirf dekhna')}</span></p>
-            <small class="muted">${esc(c.ip || '')}${c.channel > 1 ? ' · channel ' + esc(String(c.channel)) : ''} · ${esc({ dahua: 'Dahua', hik: 'Hikvision' }[c.brand] || 'Camera')}</small>
-            ${c.lastError && st !== 'on' ? `<small class="txt-bad">${esc(c.lastError)}</small>` : ''}
-            ${c.aiTest ? `<small class="cam-ai">${icon('check', 14)} AI test: ${esc(c.aiTest)}</small>` : ''}
-            ${editing ? `<form class="form cam-form" data-form="cam" data-id="${esc(c.id)}">
-                <label>Naam<input name="name" value="${esc(c.name || '')}" maxlength="40" required></label>
-                <div class="cam-roles" role="radiogroup" aria-label="Kaam">${Object.entries(CAM_ROLE_TEXT).map(([k, t]) => `<label class="cam-pick"><input type="radio" name="role" value="${k}" ${(c.role || 'view') === k ? 'checked' : ''}><span>${t}</span></label>`).join('')}</div>
-                <label class="check"><input type="checkbox" name="enabled" ${c.enabled === false ? '' : 'checked'}> Camera chalu (band = PC is ki tasveer nahi lega)</label>
-                <div class="btn-row"><button class="btn btn-primary">Save</button><button type="button" class="btn btn-ghost" data-action="cam-edit" data-id="">Rehne dein</button><button type="button" class="btn btn-ghost txt-bad" data-action="cam-del" data-id="${esc(c.id)}">Hatayein</button></div></form>`
-              : `<div class="btn-row"><button type="button" class="btn btn-ghost btn-sm" data-action="cam-snap" data-id="${esc(c.id)}" ${st === 'off' ? 'disabled' : ''}>${icon('camera', 16)} Abhi ki tasveer</button><button type="button" class="btn btn-ghost btn-sm" data-action="cam-edit" data-id="${esc(c.id)}">${icon('edit', 16)} Badlein</button></div>`}
-          </div></article>`;
-      };
-      return `${pcCard}${connect}${foundHtml}
-        ${cams.length ? `<div class="cam-grid">${cams.map(card).join('')}</div>` : cfg ? '<p class="empty-line">Abhi koi camera nahi juda. PC par command (ya desktop icon "NT Camera jodein") chalayein.</p>' : ''}
-        ${cfg && !ui.camCode ? `<p class="hint">PC badal raha hai ya code kho gaya? <button type="button" class="link" data-action="cam-code">Naya PC code banayein</button> (purana PC band ho jayega).</p>` : ''}
-        <p class="hint">Tasveer har 5 minute mein khud taza hoti hai jab PC chalu ho. Galla nigrani (harkat par AI) agle hisse mein judegi.</p>`;
+  /* ---------- v217: larkon ko paigham ---------- */
+  const MSG_TEMPLATES = ['Kal sab 8 baje aayein', 'Aaj dukaan jaldi band hogi', 'Salary aa gayi hai', 'Kal chutti hai', 'Dukaan saaf rakhein', 'Waqt par aayein'];
+  function messagesSheet(preset = '') {
+    const pick = new Set(preset ? [preset] : []); let toAll = !preset, text = '';
+    const sheet = openSheet({ id: 'messages', wide: true, title: 'Larkon ko paigham', render: () => {
+      const staff = activeStaff();
+      const readCount = m => { const want = m.toList?.includes('all') ? staff.length : (m.toList || []).length; return `${Object.keys(m.readBy || {}).length}/${want}`; };
+      const who = m => m.toList?.includes('all') ? 'Sab staff' : (m.toList || []).map(p => account(p)?.name || p).join(', ');
+      return `<div class="msg-compose">
+          <div class="choice"><button type="button" class="chip" data-action="msg-all" aria-pressed="${toAll}">${icon('people', 16)} Sab staff</button><button type="button" class="chip" data-action="msg-some" aria-pressed="${!toAll}">Kuch larke</button></div>
+          ${toAll ? '' : `<div class="msg-pick">${staff.map(s2 => `<label class="pick-chip ${pick.has(s2.phone) ? 'on' : ''}"><input type="checkbox" data-change="msg-pick" data-arg="${esc(s2.phone)}" ${pick.has(s2.phone) ? 'checked' : ''}>${avatar(s2, 'xs')} ${nameHtml(s2.name)}</label>`).join('')}</div>`}
+          <textarea rows="3" maxlength="500" placeholder="Paigham likhein…" data-input="msg-text">${esc(text)}</textarea>
+          <div class="choice">${MSG_TEMPLATES.map(t => `<button type="button" class="chip chip-sm" data-action="msg-tpl" data-arg="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+          <button type="button" class="btn btn-primary btn-lg" data-action="msg-send">${icon('share', 18)} Bhejein${toAll ? ' — sab ko' : ` — ${pick.size} ko`}</button>
+          <p class="hint">Larke ki Hazri screen par upar dikhega, aur agar us ne notification chalu kiya ho to phone par bhi aayega.</p>
+        </div>
+        <h3 class="sub">Bheje hue (30 din)</h3>
+        <ul class="msg-list">${S.messages.slice(0, 30).map(m => `<li class="msg-item"><div class="msg-top"><b>${esc(who(m))}</b><small class="muted">${esc(shortDate(pkDate(new Date(m.at || 0))))} ${clock(m.at)} · ${esc(m.fromName || '')}</small></div>
+            <p class="msg-text">${nameHtml(m.text)}</p>
+            <p class="msg-meta"><span class="tag t-ok">${icon('check', 14)} ${readCount(m)} ne parh liya</span>
+              <button type="button" class="link-bad" data-action="msg-del" data-id="${esc(m.id)}">Hatayein</button></p>
+            ${Object.entries(m.replies || {}).length ? `<ul class="msg-replies">${Object.entries(m.replies).map(([p, r]) => `<li><b>${nameHtml(account(p)?.name || p)}:</b> ${nameHtml(r.text)} <small class="muted">${clock(r.at)}</small></li>`).join('')}</ul>` : ''}</li>`).join('') || '<li class="empty-line">Abhi koi paigham nahi bheja.</li>'}</ul>`;
     } });
-  }
-  /* ---------- v218: Phones ki jaanch (staffDiag) ---------- */
-  const verNum = v => Number(String(v || '').replace(/[^0-9]/g, '')) || 0;
-  const FAIL_KIND = { checkout: 'Check-Out', checkin: 'Check-In', return: 'Wapsi' };
-  const failKindText = k => FAIL_KIND[k] || 'Likhai';
-  function failWhy(code) {
-    const c = String(code || '');
-    if (c === 'permission-denied') return 'server ne ijazat nahi di — login / rules';
-    if (['unavailable', 'deadline-exceeded', 'app/slow-network'].includes(c)) return 'internet';
-    if (c === 'missing') return 'Check-In server par tha hi nahi';
-    if (c === 'lost') return 'hazri phone se mit gayi';
-    return c || 'maloom nahi';
-  }
-  const agoText = ms => { if (!ms) return '—'; const m = Math.max(0, Math.round((Date.now() - ms) / 60000)); return m < 1 ? 'abhi' : m < 60 ? `${m} min pehle` : m < 1440 ? `${Math.round(m / 60)} ghante pehle` : `${Math.round(m / 1440)} din pehle`; };
-  const clockOf = ms => fmtTime(new Date(ms).toLocaleTimeString('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', hour12: false }));
-  /** Har kaam wale staff ka phone: version, fail, der. Record na ho lekin aaj Check-In kiya ho = purani app (v218 se pehle wali record nahi likhti). */
-  function phoneHealth() {
-    const today = pkDate(), yday = addDays(today, -1), cur = verNum(APP_VERSION), byPhone = new Map((S.diag || []).map(d => [d.phone, d]));
-    const inToday = new Set(data.attendanceBetween(today, today).filter(a => a.checkIn).map(a => a.phone));
-    return activeStaff().map(acc => {
-      const d = byPhone.get(acc.phone) || null, v = d?.v || '';
-      const fail = d?.failAt && (d.failDate || '') >= yday && !(Number(d.fixedAt || 0) >= Number(d.failAt)) ? { kind: d.failKind, code: d.failCode, at: d.failAt, time: clockOf(d.failAt) } : null;
-      const old = d ? verNum(v) < cur : inToday.has(acc.phone);
-      const late = d?.lateAt && Date.now() - d.lateAt < 2 * 86400000 ? { kind: d.lateKind, min: d.lateMin, at: d.lateAt } : null;
-      return { phone: acc.phone, name: acc.name || acc.phone, d, v, old, fail, late };
-    });
-  }
-  function phonesSheet() {
-    return openSheet({ id: 'phones', wide: true, title: 'Phones ki jaanch', render: () => {
-      const list = phoneHealth().sort((a, b) => (b.fail ? 2 : 0) + (b.old ? 1 : 0) - ((a.fail ? 2 : 0) + (a.old ? 1 : 0)) || String(a.name).localeCompare(String(b.name)));
-      const none = list.filter(x => !x.d).length;
-      const chip = x => !x.d ? `<span class="ver-chip ${x.old ? 'is-old' : 'is-none'}">${x.old ? 'Purani app' : 'Record nahi'}</span>` : `<span class="ver-chip ${x.old ? 'is-old' : 'is-ok'}">${esc(x.v)}</span>`;
-      return `<p class="hint">Har larke ka phone yahan batata hai ke us par kaunsi app hai aur kya server tak nahi gaya. Aap ki app: <b>${esc(APP_VERSION)}</b>.</p>
-        ${none === list.length && list.length ? '<p class="notice tone-late">Kisi phone ka record nahi aaya. Firebase mein v218 wale rules Publish karein, phir larke apni app aik dafa kholein.</p>' : ''}
-        <ul class="ledger phones">${list.map(x => `<li class="${x.fail ? 'is-bad' : ''}"><span><b>${nameHtml(x.name)}</b> ${chip(x)}
-          <small>${x.d ? `${x.d.app === 'home' ? 'Home screen app' : 'Browser mein'} · ${esc(x.d.device || '')} · aakhri dafa ${esc(agoText(x.d.at))}${x.d.pending ? ` · <b class="txt-late">${x.d.pending} likhai phone mein ruki</b>` : ''}` : (x.old ? 'Aaj hazri lagayi lekin phone ne version nahi bataya — v218 se purani app' : 'Abhi tak app nahi kholi')}</small>
-          ${x.fail ? `<small class="txt-bad">${esc(failKindText(x.fail.kind))} server par NAHI laga — ${esc(x.fail.time)} · wajah: ${esc(failWhy(x.fail.code))}</small>` : ''}
-          ${x.late ? `<small class="txt-late">${esc(failKindText(x.late.kind))} ${esc(String(x.late.min))} min phone mein ruka raha, phir pohancha (${esc(agoText(x.late.at))})</small>` : ''}</span></li>`).join('') || '<li class="muted">Koi staff nahi.</li>'}</ul>
-        <p class="hint">Purani app: larke se kahein app poori band kar ke dobara kholein, ya neeche "Update check karein" dabayein. "Internet" wali ghalti: larke ka net kamzor tha — app ab khud dobara bhejti hai. "Ijazat nahi di": larka Logout kar ke dobara login kare.</p>`;
-    } });
+    sheet.msg = { pick, get toAll() { return toAll; }, set toAll(v) { toAll = v; }, get text() { return text; }, set text(v) { text = v; } };
+    return sheet;
   }
   function diagSheet() {
     return openSheet({ id: 'diag', wide: true, title: 'App ki jaanch', render: () => {
@@ -898,24 +826,19 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     },
     khata() { open('khata', khataSheet); },
     diag() { open('diag', diagSheet); },
-    phones() { open('phones', phonesSheet); },
-    cameras() { if (manager) return toast('Cameras sirf malik ke liye hain', 'bad'); open('cameras', camerasSheet); },
-    async 'cam-code'(el) {
-      if (S.camCfg && !confirm('Naya PC code banayein? Purana PC code band ho jayega — PC par dobara command chalani hogi.')) return;
-      await busy(el, async () => { ui.camCode = await data.createCameraPC(); });
-      sheets.cameras?.refresh(true);
-    },
-    async 'cam-copy'() { const t = camCommand(); try { await navigator.clipboard.writeText(t); toast('Command copy ho gayi', 'ok'); } catch { prompt('Ye command copy karein:', t); } },
-    async 'cam-snap'(el) { await busy(el, () => data.requestShot(el.dataset.id), 'PC ko keh diya — 20-30 second mein nayi tasveer'); },
-    'cam-edit'(el) { ui.camEdit = el.dataset.id || ''; sheets.cameras?.refresh(true); },
-    async 'cam-del'(el) {
-      const c = (S.cameras || []).find(x => x.id === el.dataset.id); if (!c || !confirm(`"${c.name}" camera hatayein? PC par dobara jodna pare ga.`)) return;
-      await busy(el, () => data.deleteCamera(c.id), 'Camera hata diya'); ui.camEdit = ''; sheets.cameras?.refresh(true);
-    },
-    'cam-photo'(el) { const c = (S.cameras || []).find(x => x.id === el.dataset.id), shot = S.camShots?.get?.(el.dataset.id); if (shot?.jpg) viewImage('data:image/jpeg;base64,' + shot.jpg, `${c?.name || 'Camera'} · ${agoText(shot.at)}`); },
     links() { open('links', linksSheet); },
     'selfies-day'(el) { needMonth(el.dataset.arg.slice(0, 7)); open('selfies', () => selfiesDaySheet(el.dataset.arg)); },
     history() { open('history', historySheet); },
+    'msg-new'(el) { try { sheets.messages?.close?.(); } catch { /* ignore */ } open('messages', () => messagesSheet(el?.dataset?.phone || '')); },
+    'msg-all'() { const m = sheets.messages?.msg; if (m) { m.toAll = true; sheets.messages.refresh(true); } },
+    'msg-some'() { const m = sheets.messages?.msg; if (m) { m.toAll = false; sheets.messages.refresh(true); } },
+    'msg-tpl'(el) { const m = sheets.messages?.msg; if (m) { m.text = el.dataset.arg; sheets.messages.refresh(true); } },
+    async 'msg-send'(el) {
+      const m = sheets.messages?.msg; if (!m) return;
+      await busy(el, async () => { await data.sendMessage({ to: m.toAll ? 'all' : [...m.pick], text: m.text }); m.text = ''; }, 'Paigham bhej diya');
+      sheets.messages?.refresh(true);
+    },
+    async 'msg-del'(el) { if (!confirm('Ye paigham hata dein? Larkon ki screen se bhi hat jayega.')) return; await busy(el, () => data.deleteMessage(el.dataset.id), 'Hata diya'); sheets.messages?.refresh(true); },
     notify() { open('notify', notifySheet); },
     async 'push-on'(el) {
       ui.pushMsg = null; refreshSheets();
@@ -947,7 +870,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       await busy(el, async () => {
         const list = await data.pushDevices();
         openSheet({ id: 'push-devices', title: 'Notification wale phones', render: () => list.length
-          ? `<ul class="ledger">${list.map(d => `<li><span><b>${esc(d.name || d.phone || '—')}</b> <small>${d.role === 'owner' ? 'Malik' : d.role === 'manager' ? 'Manager' : 'Staff'}${d.device ? ' · ' + esc(String(d.device).replace(/^d:\w+ · /, '').slice(0, 40)) : ''}</small></span><small class="muted">${d.at ? esc(shortDate(pkDate(new Date(d.at)))) : ''}</small></li>`).join('')}</ul>`
+          ? `<ul class="ledger">${list.map(d => `<li><span><b>${esc(d.name || d.phone || '—')}</b> <small>${d.role === 'owner' ? 'Malik' : d.role === 'manager' ? 'Manager' : 'Staff'}${d.device ? ' · ' + esc(d.device.slice(0, 40)) : ''}</small></span><small class="muted">${d.at ? esc(shortDate(pkDate(new Date(d.at)))) : ''}</small></li>`).join('')}</ul>`
           : '<p class="empty-line">Abhi kisi phone par chalu nahi. Har phone par "Is phone par notification chalu karein" dabana hota hai.</p>' });
       });
     },
@@ -1064,10 +987,6 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     }
   };
   const forms = {
-    async cam(form, v, button) { // v220: camera ka naam / kaam / on-off
-      await busy(button, () => data.saveCamera(form.dataset.id, { name: v.name, role: v.role, enabled: !!v.enabled }), 'Camera save ho gaya');
-      ui.camEdit = ''; sheets.cameras?.refresh(true);
-    },
     async vapid(form, v, button) { await busy(button, async () => { await data.saveConfig({ push: { ...(S.config.push || {}), vapidKey: String(v.vapidKey || '').trim().replace(/\s+/g, ''), on: true }, appUrl: appLink() }); ui.pushMsg = { text: 'Key lag gayi. Ab "Is phone par notification chalu karein" dabayein.' }; sheets.notify?.refresh(true); }, 'Key save ho gayi'); },
     async staff(form, v, button) {
       await busy(button, async () => { await data.saveStaff({ ...v, photo: sheets.staffForm?.getPhoto() }, form.dataset.phone); sheets.staffForm?.close(); }, 'Staff save ho gaya');
@@ -1094,11 +1013,13 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     async 'push-auto'(el) { await data.saveConfig({ push: { ...(S.config.push || {}), on: el.checked } }).catch(e => toast(errorText(e), 'bad')); },
     async 'push-after'(el) { const n = Math.max(5, Math.min(180, Number(el.value) || 30)); await data.saveConfig({ push: { ...(S.config.push || {}), [el.dataset.arg]: n } }).catch(e => toast(errorText(e), 'bad')); },
     async 'notify-kind'(el) { const n = { ...(S.config.notify || {}) }; n[el.dataset.arg] = el.checked; try { await data.saveConfig({ notify: n }); } catch (e) { toast(errorText(e), 'bad'); } },
+    'msg-pick'(el) { const m = sheets.messages?.msg; if (!m) return; el.checked ? m.pick.add(el.dataset.arg) : m.pick.delete(el.dataset.arg); sheets.messages.refresh(true); },
     'history-who'(el) { sheets.history?.setWho(el.value); },
     'toggle-box'(el) { const box = $('#' + el.dataset.arg, el.closest('form')); if (box) box.hidden = el.dataset.invert ? el.checked : !el.checked; },
     'extra-kind'(el) { const per = el.form.elements.perMonth; if (per) { per.hidden = el.value !== 'loan'; per.required = el.value === 'loan'; } }
   };
   const inputs = {
+    'msg-text'(el) { const m = sheets.messages?.msg; if (m) m.text = el.value; },
     'staff-query'(el) { // list dobara banaye baghair chhanti, taake likhte waqt keyboard band na ho
       ui.staffQuery = el.value; const q = el.value.trim().toLowerCase(); let n = 0;
       for (const li of el.closest('.view').querySelectorAll('[data-search]')) { li.hidden = !!q && !li.dataset.search.includes(q); if (!li.hidden) n++; }
@@ -1129,7 +1050,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
   function autoPush() {
     if (pushChecked || !S.loaded?.has?.('config') || !S.config.push?.vapidKey) return;
     pushChecked = true;
-    void refreshPush({ app: data.app, vapidKey: S.config.push.vapidKey, onToken: t => data.savePushToken(t, (navigator.userAgent || '').slice(0, 60)), onMessage: d => toast(`${d.title || ''} ${d.body || ''}`.trim(), 'ok') })
+    void refreshPush({ app: data.app, vapidKey: S.config.push.vapidKey, onToken: t => data.savePushToken(t, (navigator.userAgent || '').slice(0, 60)) })
       .then(t => { if (t) { ui.pushToken = t; ui.pushSaved = true; sheets.notify?.refresh(true); } });
   }
   return { render: renderAll, actions, forms, changes, inputs, ui, onData() { refreshSheets(); autoPush(); } };
