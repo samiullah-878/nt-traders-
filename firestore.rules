@@ -7,6 +7,8 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Noor Traders Hazri v221 (v218: staffDiag, v220: cameras, v221: bahar se Check-Out request). Owner emails auth.js ke OWNER_EMAILS se milni chahiye.
+    // An arbitrary Firebase email account must never gain business-owner access.
     function isOwner() {
       return signedIn()
         && request.auth.token.firebase.sign_in_provider == 'password'
@@ -35,36 +37,265 @@ service cloud.firestore {
       return isStaff() && enabledStaffAccount(sessionPhone());
     }
 
+    // v206: malik jis staff ko manager banaye, wo bahar jane ki parchi Haan / Nahi kar sakta hai.
     function isOutManager() {
       return validStaffSession()
         && get(/databases/$(database)/documents/businesses/noor-traders/staffAccounts/$(sessionPhone())).data.get('canApproveOuts', false) == true;
     }
 
+    // v209: "Bina bataye gaya" ka ticket: manager ya senior (canTicket) bana sakta hai; faisla sirf malik.
     function isTicketer() {
       return validStaffSession()
         && (get(/databases/$(database)/documents/businesses/noor-traders/staffAccounts/$(sessionPhone())).data.get('canApproveOuts', false) == true
           || get(/databases/$(database)/documents/businesses/noor-traders/staffAccounts/$(sessionPhone())).data.get('canTicket', false) == true);
     }
-
     function isManagerPhone(phone) {
       return get(/databases/$(database)/documents/businesses/noor-traders/staffAccounts/$(phone)).data.get('canApproveOuts', false) == true;
     }
 
-    match /businesses/noor-traders/{collectionName}/{docId} {
-      allow read: if isOwner() || isOutManager();
-      allow write: if isOwner()
-        || (isOutManager() && !(collectionName in ['staffAttendance', 'staffSelfies']));
+    // v220: dukaan ke camera ka PC — malik ne jis login (uid) ko cameraPC/config mein rakha, sirf wohi.
+    function isCameraPC() {
+      return signedIn()
+        && request.auth.token.firebase.sign_in_provider == 'password'
+        && exists(/databases/$(database)/documents/businesses/noor-traders/cameraPC/config)
+        && get(/databases/$(database)/documents/businesses/noor-traders/cameraPC/config).data.uid == request.auth.uid;
     }
 
+    // Malik: sab kuch. v211 Manager: sab dekh sakta hai aur sab badal sakta hai, siwaye hazri (staffAttendance / staffSelfies) ke.
+    // v220: cameras (nigrani) SIRF malik — manager bhi staff hai, is liye na dekh sakta hai na badal sakta hai.
+    match /businesses/noor-traders/{collectionName}/{docId} {
+      allow read: if isOwner()
+        || (isOutManager() && !(collectionName in ['cameras', 'cameraShots', 'cameraPC', 'cameraEvents']));
+      allow write: if isOwner()
+        || (isOutManager() && !(collectionName in ['staffAttendance', 'staffSelfies', 'cameras', 'cameraShots', 'cameraPC', 'cameraEvents']));
+    }
+
+    // Staff can read only the account bound to their own server session.
+    match /businesses/noor-traders/staffAccounts/{phone} {
+      allow get: if isOwner()
+        || (isStaff() && phone == sessionPhone()
+          && (!('active' in resource.data) || resource.data.active == true)
+          && (!('loginEnabled' in resource.data) || resource.data.loginEnabled == true));
+      allow list, create, update, delete: if isOwner();
+    }
+
+    // A phone-as-password login creates one binding for a fresh anonymous UID.
+    // It cannot rebind that UID to another employee later.
+    match /businesses/noor-traders/staffSessions/{uid} {
+      allow create: if isStaff()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['phone', 'createdAt'])
+        && request.resource.data.phone is string
+        && request.resource.data.phone.matches('^03[0-9]{9}$')
+        && enabledStaffAccount(request.resource.data.phone);
+      allow update: if isOwner();
+      allow get: if isOwner() || (isStaff() && request.auth.uid == uid);
+      allow delete, list: if isOwner();
+    }
+
+    // The staff portal needs its attendance policy after authentication.
+    match /businesses/noor-traders/staffConfig/{configId} {
+      allow get: if isOwner() || (configId == 'main' && validStaffSession());
+      allow list, create, update, delete: if isOwner();
+    }
+
+    // Employee can only access attendance rows for the phone attached to their own session.
+    match /businesses/noor-traders/staffAttendance/{attendanceId} {
+      // v208: manager bhi (khane ke break ke liye) dekh sakta hai ke kaun duty par hai.
+      allow read: if isOwner() || isOutManager()
+        || (validStaffSession() && resource.data.phone == sessionPhone());
+
+      // v204: staff sirf apne aaj ke record ka Check-In bana sakta hai; serverAt = asal server ka waqt (phone ki ghari nahi).
+      allow create: if isOwner()
+        || (validStaffSession()
+          && request.resource.data.phone == sessionPhone()
+          && attendanceId == request.resource.data.date + '_' + sessionPhone()
+          && request.resource.data.serverAt == request.time
+          && !('selfie' in request.resource.data));
+
+      // v204: staff baad mein apna aane ka waqt nahi badal sakta. Sirf aik dafa Check-Out lagta hai.
+      allow update: if isOwner()
+        || (validStaffSession()
+          && resource.data.phone == sessionPhone()
+          && request.resource.data.phone == sessionPhone()
+          && (!('checkOut' in resource.data) || resource.data.checkOut == '')
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'checkOut', 'checkOutTs', 'checkOutLat', 'checkOutLng', 'checkOutAccuracy', 'checkOutDistance', 'outServerAt'
+          ])
+          && request.resource.data.outServerAt == request.time);
+
+      allow delete: if isOwner();
+    }
+
+    // Staff v104: owner reviews; staff can only create/read their own requests.
+    match /businesses/noor-traders/staffRequests/{requestId} {
+      allow read: if isOwner() || (validStaffSession() && resource.data.phone == sessionPhone());
+      allow create: if validStaffSession()
+        && request.resource.data.keys().hasOnly(['phone','kind','date','to','half','checkIn','checkOut','reason','status','createdAt','by','via','lat','lng','distance','accuracy','gpsError'])
+        // v221: dukaan se bahar ka Check-Out (sirf jane ka waqt, location ya us ke na milne ki wajah)
+        && (!('via' in request.resource.data) || (request.resource.data.via == 'outside' && request.resource.data.kind == 'correction'
+             && request.resource.data.checkIn == '' && request.resource.data.checkOut.size() == 5))
+        && (!('lat' in request.resource.data) || request.resource.data.lat is number)
+        && (!('lng' in request.resource.data) || request.resource.data.lng is number)
+        && (!('distance' in request.resource.data) || request.resource.data.distance is number)
+        && (!('accuracy' in request.resource.data) || request.resource.data.accuracy is number)
+        && (!('gpsError' in request.resource.data) || (request.resource.data.gpsError is string && request.resource.data.gpsError.size() <= 60))
+        && (!('half' in request.resource.data) || request.resource.data.half == ''
+          || (request.resource.data.half in ['am', 'pm'] && request.resource.data.kind == 'leave' && request.resource.data.to == request.resource.data.date))
+        && request.resource.data.phone == sessionPhone()
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.kind in ['leave','correction','suggestion']
+        && request.resource.data.status == 'pending'
+        && request.resource.data.date is string && request.resource.data.to is string
+        && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.to.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.to >= request.resource.data.date
+        && request.resource.data.checkIn is string && request.resource.data.checkOut is string
+        && request.resource.data.checkIn.size() <= 5 && request.resource.data.checkOut.size() <= 5
+        && request.resource.data.reason is string && request.resource.data.reason.size() > 0 && request.resource.data.reason.size() <= 1000
+        && request.resource.data.createdAt is number;
+      allow update, delete: if isOwner();
+    }
+    // v204: selfie hazri ke record se alag (malik ki list halki/tez). Sirf daba kar dekhne par load hoti hai.
+    match /businesses/noor-traders/staffSelfies/{attendanceId} {
+      allow read: if isOwner() || (validStaffSession() && resource.data.phone == sessionPhone());
+      allow create: if isOwner()
+        || (validStaffSession()
+          && request.resource.data.keys().hasOnly(['phone', 'date', 'selfie', 'at'])
+          && request.resource.data.phone == sessionPhone()
+          && attendanceId == request.resource.data.date + '_' + sessionPhone()
+          && request.resource.data.selfie is string
+          && request.resource.data.selfie.size() <= 300000
+          && request.resource.data.selfie.matches('data:image/jpeg;base64,.*'));
+      allow update, delete: if isOwner();
+    }
+    // v205/v206: bahar jane ki parchi. Staff mangta hai, malik ya manager Haan/Nahi karta hai, staff "Wapas aa gaya" lagata hai.
+    match /businesses/noor-traders/staffOuts/{outId} {
+      allow read: if isOwner() || isOutManager() || (validStaffSession() && resource.data.phone == sessionPhone());
+      allow create: if isOwner()
+        || (validStaffSession()
+          && request.resource.data.keys().hasOnly(['phone', 'name', 'date', 'reason', 'note', 'minutes', 'status', 'requestedAt', 'serverAt', 'by'])
+          && (!('name' in request.resource.data) || (request.resource.data.name is string && request.resource.data.name.size() <= 80))
+          && request.resource.data.phone == sessionPhone()
+          && request.resource.data.by == request.auth.uid
+          && request.resource.data.status == 'pending'
+          && request.resource.data.serverAt == request.time
+          && request.resource.data.date is string && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && request.resource.data.reason is string && request.resource.data.reason.size() > 0 && request.resource.data.reason.size() <= 40
+          && request.resource.data.note is string && request.resource.data.note.size() <= 300
+          && request.resource.data.minutes is number && request.resource.data.minutes >= 1 && request.resource.data.minutes <= 600
+          && request.resource.data.requestedAt is number)
+        || (isOutManager()
+          && request.resource.data.keys().hasOnly(['phone', 'name', 'date', 'reason', 'note', 'minutes', 'status', 'kind', 'batch', 'requestedAt', 'serverAt', 'by', 'outAt', 'approvedAt', 'approvedBy', 'approvedByName', 'approvedServerAt'])
+          && request.resource.data.kind == 'break'
+          && request.resource.data.status == 'approved'
+          && request.resource.data.by == request.auth.uid
+          && request.resource.data.approvedBy == request.auth.uid
+          && request.resource.data.serverAt == request.time
+          && request.resource.data.approvedServerAt == request.time
+          && request.resource.data.phone is string && request.resource.data.phone.matches('^03[0-9]{9}$')
+          && request.resource.data.date is string && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && request.resource.data.minutes is number && request.resource.data.minutes >= 1 && request.resource.data.minutes <= 180);
+      allow update: if isOwner()
+        || (validStaffSession()
+          && resource.data.phone == sessionPhone()
+          && request.resource.data.phone == sessionPhone()
+          && ((resource.data.status == 'pending'
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+                && request.resource.data.status == 'cancelled')
+            || (resource.data.status == 'approved'
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'returnAt', 'returnLat', 'returnLng', 'returnDistance', 'returnAccuracy', 'returnServerAt'])
+                && request.resource.data.status == 'returned'
+                && request.resource.data.returnServerAt == request.time)))
+        || (isOutManager()
+          && (resource.data.phone != sessionPhone() || resource.data.get('kind', '') == 'break')
+          && ((resource.data.status == 'pending' && resource.data.phone != sessionPhone()
+                && request.resource.data.status in ['approved', 'rejected']
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'approvedAt', 'outAt', 'rejectedAt', 'approvedBy', 'approvedByName', 'approvedServerAt'])
+                && request.resource.data.approvedBy == request.auth.uid
+                && request.resource.data.approvedServerAt == request.time)
+            || (resource.data.status == 'approved'
+                && request.resource.data.status == 'returned'
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'returnAt', 'returnBy', 'returnByName', 'returnServerAt'])
+                && request.resource.data.returnServerAt == request.time)));
+      allow delete: if isOwner();
+    }
+    // v209: bina bataye gaya. Koi apne upar ticket nahi bana sakta; senior manager par nahi. Faisla (maaf/warning/katauti) sirf malik.
+    match /businesses/noor-traders/staffTickets/{ticketId} {
+      allow read: if isOwner() || isTicketer() || (validStaffSession() && resource.data.phone == sessionPhone());
+      allow create: if isOwner()
+        || (isTicketer()
+          && request.resource.data.keys().hasOnly(['phone', 'name', 'date', 'from', 'returnAt', 'note', 'status', 'by', 'byName', 'createdAt', 'serverAt'])
+          && request.resource.data.phone is string && request.resource.data.phone.matches('^03[0-9]{9}$')
+          && request.resource.data.phone != sessionPhone()
+          && (isOutManager() || !isManagerPhone(request.resource.data.phone))
+          && request.resource.data.status in ['open', 'returned']
+          && request.resource.data.by == request.auth.uid
+          && request.resource.data.serverAt == request.time
+          && request.resource.data.date is string && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && request.resource.data.from is number
+          && request.resource.data.note is string && request.resource.data.note.size() <= 300
+          && (request.resource.data.status == 'open' || request.resource.data.returnAt is number));
+      allow update: if isOwner()
+        || (isTicketer()
+          && resource.data.phone != sessionPhone()
+          && resource.data.status == 'open'
+          && request.resource.data.status == 'returned'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'returnAt', 'returnBy', 'returnServerAt'])
+          && request.resource.data.returnServerAt == request.time);
+      allow delete: if isOwner();
+    }
+    // v220: camera PC ki halat (online, kitne camera, network par kya mila). config (uid) sirf malik likhta hai.
+    match /businesses/noor-traders/cameraPC/{docId} {
+      allow read: if isCameraPC();
+      allow write: if isCameraPC() && docId == 'status'
+        && request.resource.data.keys().hasOnly(['at', 'v', 'host', 'cams', 'online', 'error', 'python', 'found', 'foundAt']);
+    }
+    // v220: cameras — PC banata hai aur apni halat likhta hai; naam / kaam / on-off malik (upar wala generic match).
+    match /businesses/noor-traders/cameras/{camId} {
+      allow read: if isCameraPC();
+      allow create: if isCameraPC()
+        && request.resource.data.keys().hasOnly(['name', 'ip', 'mac', 'brand', 'channel', 'role', 'enabled', 'createdAt', 'status', 'agent',
+             'lastFrameAt', 'lastShotAt', 'lastError', 'width', 'height', 'aiTest', 'aiTestAt', 'seenAt'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 40;
+      allow update: if isCameraPC()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ip', 'mac', 'brand', 'status', 'lastFrameAt', 'lastShotAt', 'lastError',
+             'width', 'height', 'agent', 'aiTest', 'aiTestAt', 'seenAt']);
+    }
+    // v220: har camera ki aakhri tasveer (chhoti JPEG). Sirf PC likhta hai, malik parhta hai.
+    match /businesses/noor-traders/cameraShots/{camId} {
+      allow write: if isCameraPC()
+        && request.resource.data.keys().hasOnly(['jpg', 'w', 'h', 'at', 'cam'])
+        && request.resource.data.jpg is string && request.resource.data.jpg.size() < 400000;
+    }
+    // v218: har larke ke phone ka "jaanch ka record" — sirf apna aik doc (phone = session ka phone). Malik/manager parhte hain
+    // (upar wala generic match). Keys data.js DIAG_KEYS se milni chahiye. serverAt = asal server ka waqt.
+    match /businesses/noor-traders/staffDiag/{phone} {
+      allow create, update: if validStaffSession()
+        && phone == sessionPhone()
+        && request.resource.data.phone == sessionPhone()
+        && request.resource.data.keys().hasOnly(['phone', 'name', 'v', 'at', 'serverAt', 'device', 'app', 'pending', 'failKind', 'failCode', 'failAt', 'failId', 'failDate', 'fixedAt', 'lateKind', 'lateMin', 'lateAt'])
+        && request.resource.data.serverAt == request.time
+        && request.resource.data.v is string && request.resource.data.v.size() <= 12
+        && (!('name' in request.resource.data) || (request.resource.data.name is string && request.resource.data.name.size() <= 80))
+        && (!('device' in request.resource.data) || (request.resource.data.device is string && request.resource.data.device.size() <= 80))
+        && (!('failCode' in request.resource.data) || (request.resource.data.failCode is string && request.resource.data.failCode.size() <= 40))
+        && (!('failId' in request.resource.data) || (request.resource.data.failId is string && request.resource.data.failId.size() <= 80));
+    }
+    // v212: notification ke liye har phone ka token.
     match /businesses/noor-traders/pushTokens/{tokenId} {
       allow read: if isOwner() || isOutManager();
+      // v222: sakht — larka sirf 'staff' token apne number se; 'owner' / 'manager' token sirf malik / manager
       allow create, update: if signedIn()
         && request.resource.data.keys().hasOnly(['token', 'role', 'phone', 'name', 'device', 'at', 'testAt'])
         && request.resource.data.token is string
-        && request.resource.data.token.size() < 500;
+        && request.resource.data.token.size() < 500
+        && (isOwner() || isOutManager()
+          || (validStaffSession() && request.resource.data.role == 'staff' && request.resource.data.phone == sessionPhone()));
       allow delete: if isOwner() || isOutManager();
     }
 
+    // v222: malik/manager ke paigham. Larka sirf apne naam wale (ya "sab") parh sakta hai, aur sirf apna "parh liya" / jawab likh sakta hai.
     match /businesses/noor-traders/staffMessages/{msgId} {
       allow read: if validStaffSession() && (sessionPhone() in resource.data.toList || 'all' in resource.data.toList);
       allow update: if validStaffSession()
@@ -74,131 +305,17 @@ service cloud.firestore {
         && request.resource.data.replies.diff(resource.data.replies).affectedKeys().hasOnly([sessionPhone()]);
     }
 
-    match /businesses/noor-traders/staffAccounts/{phone} {
-      allow get: if isOwner()
-        || (isStaff() && phone == sessionPhone()
-          && (!('active' in resource.data) || resource.data.active == true)
-          && (!('loginEnabled' in resource.data) || resource.data.loginEnabled == true));
-    }
-
-    match /businesses/noor-traders/staffSessions/{uid} {
-      allow create: if isStaff()
-        && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['phone', 'createdAt'])
-        && request.resource.data.phone is string
-        && request.resource.data.phone.matches('^03[0-9]{9}$')
-        && enabledStaffAccount(request.resource.data.phone);
-      allow get: if isOwner() || (isStaff() && request.auth.uid == uid);
-    }
-
-    match /businesses/noor-traders/staffConfig/{configId} {
-      allow get: if configId == 'main' && validStaffSession();
-    }
-
-    match /businesses/noor-traders/staffAttendance/{attendanceId} {
-      allow read: if validStaffSession() && resource.data.phone == sessionPhone();
-      allow create: if validStaffSession()
-        && request.resource.data.phone == sessionPhone()
-        && attendanceId == request.resource.data.date + '_' + sessionPhone()
-        && request.resource.data.serverAt == request.time
-        && !('selfie' in request.resource.data);
-      allow update: if validStaffSession()
-        && resource.data.phone == sessionPhone()
-        && request.resource.data.phone == sessionPhone()
-        && (!('checkOut' in resource.data) || resource.data.checkOut == '')
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'checkOut', 'checkOutTs', 'checkOutLat', 'checkOutLng', 'checkOutAccuracy', 'checkOutDistance', 'outServerAt'
-        ])
-        && request.resource.data.outServerAt == request.time;
-    }
-
-    match /businesses/noor-traders/staffSelfies/{attendanceId} {
-      allow read: if validStaffSession() && resource.data.phone == sessionPhone();
-      allow create: if validStaffSession()
-        && request.resource.data.keys().hasOnly(['phone', 'date', 'selfie', 'at'])
-        && request.resource.data.phone == sessionPhone()
-        && attendanceId == request.resource.data.date + '_' + sessionPhone()
-        && request.resource.data.selfie is string
-        && request.resource.data.selfie.size() <= 300000;
-    }
-
-    match /businesses/noor-traders/staffRequests/{requestId} {
-      allow read: if validStaffSession() && resource.data.phone == sessionPhone();
-      allow create: if validStaffSession()
-        && request.resource.data.keys().hasOnly(['phone', 'kind', 'date', 'to', 'half', 'checkIn', 'checkOut', 'reason', 'status', 'createdAt', 'by'])
-        && (!('half' in request.resource.data) || request.resource.data.half == ''
-          || (request.resource.data.half in ['am', 'pm'] && request.resource.data.kind == 'leave' && request.resource.data.to == request.resource.data.date))
-        && request.resource.data.phone == sessionPhone()
-        && request.resource.data.by == request.auth.uid
-        && request.resource.data.kind in ['leave', 'correction', 'suggestion']
-        && request.resource.data.status == 'pending'
-        && request.resource.data.date is string
-        && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
-        && request.resource.data.to is string
-        && request.resource.data.to >= request.resource.data.date
-        && request.resource.data.reason is string
-        && request.resource.data.reason.size() <= 1000
-        && request.resource.data.createdAt is number;
-    }
-
-    match /businesses/noor-traders/staffOuts/{outId} {
-      allow read: if isTicketer() || (validStaffSession() && resource.data.phone == sessionPhone());
-      allow create: if (validStaffSession()
-          && request.resource.data.keys().hasOnly(['phone', 'name', 'date', 'reason', 'note', 'minutes', 'status', 'requestedAt', 'serverAt', 'by'])
-          && request.resource.data.phone == sessionPhone()
-          && request.resource.data.by == request.auth.uid
-          && request.resource.data.status == 'pending'
-          && request.resource.data.serverAt == request.time
-          && request.resource.data.minutes is number
-          && request.resource.data.minutes >= 1
-          && request.resource.data.minutes <= 600)
-        || (isOutManager()
-          && request.resource.data.kind == 'break'
-          && request.resource.data.status == 'approved'
-          && request.resource.data.by == request.auth.uid
-          && request.resource.data.serverAt == request.time
-          && request.resource.data.minutes is number
-          && request.resource.data.minutes >= 1
-          && request.resource.data.minutes <= 180);
-      allow update: if (validStaffSession()
-          && resource.data.phone == sessionPhone()
-          && request.resource.data.phone == sessionPhone()
-          && ((resource.data.status == 'pending'
-                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
-                && request.resource.data.status == 'cancelled')
-            || (resource.data.status == 'approved'
-                && request.resource.data.status == 'returned'
-                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'returnAt', 'returnLat', 'returnLng', 'returnDistance', 'returnAccuracy', 'returnServerAt'])
-                && request.resource.data.returnServerAt == request.time)))
-        || (isOutManager()
-          && ((resource.data.status == 'pending' && resource.data.phone != sessionPhone())
-            || resource.data.status == 'approved'));
-    }
-
-    match /businesses/noor-traders/staffTickets/{ticketId} {
-      allow read: if isTicketer() || (validStaffSession() && resource.data.phone == sessionPhone());
-      allow create: if isTicketer()
-        && request.resource.data.keys().hasOnly(['phone', 'name', 'date', 'from', 'returnAt', 'note', 'status', 'by', 'byName', 'createdAt', 'serverAt'])
-        && request.resource.data.phone != sessionPhone()
-        && (isOutManager() || !isManagerPhone(request.resource.data.phone))
-        && request.resource.data.status in ['open', 'returned']
-        && request.resource.data.by == request.auth.uid
-        && request.resource.data.serverAt == request.time
-        && request.resource.data.from is number;
-      allow update: if isTicketer()
-        && resource.data.phone != sessionPhone()
-        && resource.data.status == 'open'
-        && request.resource.data.status == 'returned'
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'returnAt', 'returnBy', 'returnServerAt'])
-        && request.resource.data.returnServerAt == request.time;
-    }
-
     match /businesses/noor-traders/staffSchedules/{phone} {
-      allow read: if validStaffSession() && resource.data.phone == sessionPhone();
+      allow read: if isOwner() || (validStaffSession() && resource.data.phone == sessionPhone());
+      allow write: if isOwner();
+    }
+    match /businesses/noor-traders/staffPayroll/{payrollId} {
+      allow read: if isOwner() || (validStaffSession() && resource.data.phone == sessionPhone());
+      allow write: if isOwner();
+    }
+    match /businesses/noor-traders/staffAudit/{eventId} {
+      allow read, create: if isOwner();
     }
 
-    match /businesses/noor-traders/staffPayroll/{payrollId} {
-      allow read: if validStaffSession() && resource.data.phone == sessionPhone();
-    }
   }
 }

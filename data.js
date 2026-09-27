@@ -1,6 +1,6 @@
 // data.js — Firebase se baat sirf yahan hoti hai. sdk bahar se aata hai (boot.js asal SDK deta hai, test naqli).
 import {
-  BUSINESS_ID, DEFAULT_CONFIG, SHOP, normalizePhone, normalizeAttendance, pkDate, pkTime24, pkMinutes, parseTime, to24,
+  APP_VERSION, BUSINESS_ID, DEFAULT_CONFIG, SHOP, normalizePhone, normalizeAttendance, pkDate, pkTime24, pkMinutes, parseTime, to24,
   monthRange, addMonths, addDays, resolveSchedule, lateMinutes, scoreForLate, salaryCalc, salarySnapshot, isMonth, isDate, shiftMinutes, salaryConfig, workMinutes, fmtTime, rosterOf, ticketMinutes, ticketSuggest, pkTimeMs
 } from './core.js';
 import { isOwnerUser } from './auth.js';
@@ -9,7 +9,7 @@ import { sendNotify, appLink } from './notify.js';
 const clean = value => JSON.parse(JSON.stringify(value ?? null));
 const timeout = (promise, ms) => { let t; return Promise.race([promise, new Promise((_, reject) => { t = setTimeout(() => reject(Object.assign(new Error('timeout'), { code: 'app/slow-network' })), ms); })]).finally(() => clearTimeout(t)); };
 
-export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem = () => {}, notifyFetch }) {
+export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem = () => {}, notifyFetch, storage = null }) {
   const app = sdk.initializeApp(firebaseConfig);
   let auth;
   try {
@@ -33,10 +33,10 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     return {
       role: null, phone: '', loaded: new Set(), config: { ...DEFAULT_CONFIG },
       staff: [], months: new Map(), requests: [], schedules: new Map(), payroll: [],
-      account: null, myAttendance: [], punchError: null, messages: [], msgMine: [], msgAll: [], outs: [], teamOuts: [], teamAttendance: [], tickets: [], myTickets: [], teamTickets: [], errors: {}, lastSync: {}, pendingWrites: 0
+      account: null, myAttendance: [], punchError: null, messages: [], msgMine: [], msgAll: [], sync: {}, diag: [], cameras: [], camPC: null, camCfg: null, camShots: new Map(), outs: [], teamOuts: [], teamAttendance: [], tickets: [], myTickets: [], teamTickets: [], errors: {}, lastSync: {}, pendingWrites: 0
     };
   }
-  let unsubs = [], monthSubs = new Map(), epoch = 0, legacyChecked = false;
+  let unsubs = [], monthSubs = new Map(), epoch = 0, legacyChecked = false, shotsSub = null;
   const changed = () => onChange(state);
   const problem = (name, error) => { state.errors[name] = error?.code || error?.message || 'error'; changed(); onProblem(name, error); };
   const live = (query, name, handler, options) => {
@@ -50,6 +50,8 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     for (const u of unsubs) try { u(); } catch { /* ignore */ }
     for (const u of monthSubs.values()) try { u(); } catch { /* ignore */ }
     unsubs = []; monthSubs = new Map(); legacyChecked = false;
+    clearTimeout(drainTimer); drainTimer = null;
+    try { shotsSub?.(); } catch { /* ignore */ } shotsSub = null;
     Object.assign(state, fresh());
   }
   const readConfig = snap => {
@@ -65,7 +67,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   function startOwner(opt = {}) {
     stop(); state.role = opt.role === 'manager' ? 'manager' : 'owner';
     if (state.role === 'manager') {
-      state.phone = opt.phone; state.account = opt.account ? toAccount(opt.phone, opt.account) : null;
+      state.phone = opt.phone; state.account = opt.account ? toAccount(opt.phone, opt.account) : null; scheduleDrain(6000);
       const mine = name => sdk.query(col(name), sdk.where('phone', '==', opt.phone));
       live(mine('staffAttendance'), 'myAttendance', snap => {
         const rows = []; snap.forEach(d => rows.push({ ...normalizeAttendance(clean(d.data()), d.id), pending: !!d.metadata?.hasPendingWrites }));
@@ -73,16 +75,24 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       }, { includeMetadataChanges: true });
     }
     live(ref('staffConfig', 'main'), 'config', snap => { readConfig(snap); queueMicrotask(syncRoster); });
+    // v220: dukaan ke cameras — SIRF malik (manager ke liye rules bhi band)
+    if (state.role === 'owner') {
+      live(col('cameras'), 'cameras', snap => { state.cameras = readList(snap).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)); });
+      live(ref('cameraPC', 'status'), 'camPC', snap => { state.camPC = snap.exists() ? clean(snap.data()) : null; });
+      live(ref('cameraPC', 'config'), 'camCfg', snap => { state.camCfg = snap.exists() ? clean(snap.data()) : null; });
+    }
+    // v218: har larke ke phone ka record (version, aakhri dafa, kya server tak nahi gaya)
+    live(col('staffDiag'), 'diag', snap => { state.diag = readList(snap).map(d => ({ ...d, phone: normalizePhone(d.phone || d.id) || d.id })); });
     live(col('staffAccounts'), 'staff', snap => {
       state.staff = readList(snap).map(d => toAccount(d.id, d)).sort((a, b) => String(a.name).localeCompare(String(b.name)));
-      if (state.role === 'manager') { const me = state.staff.find(x => x.phone === state.phone); if (me) state.account = me; }
+      if (state.role === 'manager') { const me = state.staff.find(x => x.phone === state.phone); if (me) { state.account = me; queueMicrotask(() => diagPing()); } }
       if (state.role === 'owner' && !state.staff.length && !legacyChecked) { legacyChecked = true; void importLegacyStaff(); }
       queueMicrotask(syncRoster);
     });
     live(col('staffRequests'), 'requests', snap => { state.requests = readList(snap).map(r => ({ ...r, phone: normalizePhone(r.phone) || r.phone })); });
     live(col('staffSchedules'), 'schedules', snap => { state.schedules = new Map(readList(snap).map(s => [s.id, s])); });
     live(col('staffPayroll'), 'payroll', snap => { state.payroll = readList(snap); });
-    // v217: larkon ko paigham (pichle 30 din)
+    // v222: larkon ko paigham (pichle 30 din)
     live(sdk.query(col('staffMessages'), sdk.where('at', '>=', Date.now() - 30 * 864e5)), 'messages', snap => {
       state.messages = readList(snap).sort((a, b) => (b.at || 0) - (a.at || 0));
     });
@@ -188,11 +198,11 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     } else if (!on && ticketSub) { try { ticketSub(); } catch { /* ignore */ } ticketSub = null; state.teamTickets = []; changed(); }
   }
   function startStaff(phone, cachedAccount) {
-    stop(); state.role = 'staff'; state.phone = phone;
+    stop(); state.role = 'staff'; state.phone = phone; scheduleDrain(6000);
     state.account = cachedAccount ? toAccount(phone, cachedAccount) : null;
     queueMicrotask(managerWatch); queueMicrotask(ticketWatch);
     live(ref('staffConfig', 'main'), 'config', readConfig);
-    live(ref('staffAccounts', phone), 'account', snap => { if (snap.exists()) { state.account = toAccount(phone, clean(snap.data())); managerWatch(); ticketWatch(); } });
+    live(ref('staffAccounts', phone), 'account', snap => { if (snap.exists()) { state.account = toAccount(phone, clean(snap.data())); managerWatch(); ticketWatch(); queueMicrotask(() => diagPing()); } });
     const mine = name => sdk.query(col(name), sdk.where('phone', '==', phone));
     // includeMetadataChanges: pata chalta hai ke hazri server par pohanch gayi ya abhi phone mein ruki hai.
     live(mine('staffAttendance'), 'myAttendance', snap => {
@@ -202,9 +212,9 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     live(mine('staffRequests'), 'requests', snap => { state.requests = readList(snap); });
     live(mine('staffSchedules'), 'schedules', snap => { state.schedules = new Map(readList(snap).map(s => [s.id, s])); });
     live(mine('staffPayroll'), 'payroll', snap => { state.payroll = readList(snap); });
-    live(mine('staffOuts'), 'outs', snap => { state.outs = readList(snap); });
+    live(mine('staffOuts'), 'outs', snap => { const out = []; snap.forEach(d => out.push({ id: d.id, ...clean(d.data()), pending: !!d.metadata?.hasPendingWrites })); state.outs = out; }, { includeMetadataChanges: true });
     live(mine('staffTickets'), 'myTickets', snap => { state.myTickets = readList(snap); });
-    // v217: malik ke paigham — sirf mere naam ke ya "sab" wale
+    // v222: malik ke paigham — sirf mere naam ke ya "sab" wale (do queries: toList array-contains phone / 'all')
     const mergeMsgs = () => { const seen = new Map(); for (const m of [...state.msgMine, ...state.msgAll]) seen.set(m.id, m); state.messages = [...seen.values()].sort((a, b) => (b.at || 0) - (a.at || 0)); };
     live(sdk.query(col('staffMessages'), sdk.where('toList', 'array-contains', phone)), 'msgMine', snap => { state.msgMine = readList(snap); mergeMsgs(); });
     live(sdk.query(col('staffMessages'), sdk.where('toList', 'array-contains', 'all')), 'msgAll', snap => { state.msgAll = readList(snap); mergeMsgs(); });
@@ -473,6 +483,8 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
         const p = { ownerNote: note || 'Correction manzoor', editedAt: Date.now(), editedBy: auth.currentUser.uid };
         if (r.checkIn) { p.checkIn = to24(r.checkIn) || r.checkIn; p.checkInTs = null; p.minutesLate = lateMinutes({ checkIn: p.checkIn }, scheduleFor(phone)); }
         if (r.checkOut) { p.checkOut = to24(r.checkOut) || r.checkOut; p.checkOutTs = null; }
+        // v221: dukaan se bahar ka Check-Out — kahan se hua, record mein bhi
+        if (r.via === 'outside' && r.checkOut) Object.assign(p, { checkOutVia: 'outside', checkOutLat: r.lat ?? null, checkOutLng: r.lng ?? null, checkOutDistance: r.distance ?? null, checkOutAccuracy: r.accuracy ?? null });
         if (!old.exists()) {
           if (!r.checkIn) throw new Error('Us din ki hazri nahi hai aur request mein aane ka waqt bhi nahi. "Hazri durust karein" se khud lagayein.');
           Object.assign(p, { id: ar.id, date: r.date, phone, name: state.staff.find(s => s.phone === phone)?.name || '', manual: true });
@@ -634,7 +646,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     await quick(sdk.setDoc(ref('staffOuts', id), { status: 'cancelled' }, { merge: true }));
   }
   /** Staff: wapas aa gaya (GPS ke sath). Owner bhi laga sakta hai (larka bhool jaye). */
-  async function returnOut(o, gps = null) {
+  async function returnOut(o, gps = null, wait = true) {
     if (!o?.id) throw new Error('Parchi nahi mili.');
     if (isManager() && o.phone !== state.phone) {
       await quick(sdk.setDoc(ref('staffOuts', o.id), { status: 'returned', returnAt: Date.now(), returnBy: 'manager', returnByName: String(state.account?.name || 'Manager').slice(0, 80), returnServerAt: sdk.serverTimestamp ? sdk.serverTimestamp() : Date.now() }, { merge: true }));
@@ -645,7 +657,11 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       await fast(async tx => { tx.set(ref('staffOuts', o.id), { status: 'returned', returnAt: Date.now(), returnBy: state.role === 'owner' ? 'malik' : 'manager', returnByName: actor() }, { merge: true }); audit(tx, 'bahar wapsi', o.id, { status: o.status }, { status: 'returned' }, 'Malik ne wapsi lagayi'); });
       return;
     }
-    await quick(sdk.setDoc(ref('staffOuts', o.id), { ...clean({ status: 'returned', returnAt: Date.now(), returnLat: gps?.lat ?? null, returnLng: gps?.lng ?? null, returnDistance: gps?.distance ?? null, returnAccuracy: gps?.accuracy ?? null }), returnServerAt: sdk.serverTimestamp ? sdk.serverTimestamp() : Date.now() }, { merge: true }));
+    // v217: larke ki apni wapsi — pakki tasdeeq (server ka jawab), phone mein yaad, na pohanche to khud dobara.
+    const fields = clean({ status: 'returned', returnAt: Date.now(), returnLat: gps?.lat ?? null, returnLng: gps?.lng ?? null, returnDistance: gps?.distance ?? null, returnAccuracy: gps?.accuracy ?? null });
+    const entry = { key: 'return:' + o.id, kind: 'return', coll: 'staffOuts', id: o.id, phone: state.phone, fields, at: Date.now(), outKind: o.kind === 'break' ? 'break' : 'out' };
+    const write = tracked(entry, sdk.setDoc(ref('staffOuts', o.id), { ...fields, returnServerAt: stamp() }, { merge: true }));
+    return wait ? settle(write) : { queued: true, write };
   }
   /** Malik: Haan / Nahi. Haan par Gate Pass khulta hai aur bahar ka waqt shuru. */
   async function reviewOut(id, approve, note = '') {
@@ -671,10 +687,29 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   }
 
   /* ---------- notification ka token (is phone ke liye) ---------- */
+  /** v219: har phone ki apni pehchan (localStorage) — Android ke Chrome sab phones ko aik jaisa "Android 10; K" batata hai. */
+  const DEVICE_KEY = 'nt-hazri-device-id';
+  function deviceId() {
+    try { let id = storage?.getItem(DEVICE_KEY) || ''; if (!/^\w{6,16}$/.test(id)) { id = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); storage?.setItem(DEVICE_KEY, id); } return id; }
+    catch { return ''; }
+  }
   async function savePushToken(token, label = '') {
-    if (!token) return;
-    const role = state.role === 'owner' ? 'owner' : state.role === 'manager' ? 'manager' : 'staff';
-    await sdk.setDoc(ref('pushTokens', token.slice(-40)), clean({ token, role, phone: state.phone || '', name: state.account?.name || (role === 'owner' ? 'Malik' : ''), device: String(label || '').slice(0, 60), at: Date.now() }), { merge: true });
+    if (!token) return 0;
+    const role = state.role === 'owner' ? 'owner' : state.role === 'manager' ? 'manager' : 'staff', phone = state.phone || '', did = deviceId();
+    const device = (did ? `d:${did} · ` : '') + deviceText();
+    await sdk.setDoc(ref('pushTokens', token.slice(-40)), clean({ token, role, phone, name: state.account?.name || (role === 'owner' ? 'Malik' : ''), device: device.slice(0, 80), at: Date.now() }), { merge: true });
+    // v219: token safai — isi phone ke purane token hatao (pehle aik phone ke 3-3 token bante the aur list lambi hoti thi).
+    // Pehchan: wahi device id; ya purana (v218 tak ka) record jis ka role/phone aur browser ka likha hua naam (label) bilkul wahi ho.
+    try {
+      const legacy = String(label || '').slice(0, 60), snap = await sdk.getDocs(col('pushTokens')), old = [];
+      snap.forEach(d => {
+        const t = d.data() || {}; if (!t.token || t.token === token) return;
+        const dev = String(t.device || '');
+        if ((did && dev.startsWith(`d:${did} `)) || (!dev.startsWith('d:') && legacy && dev === legacy && t.role === role && (t.phone || '') === phone)) old.push(d.id);
+      });
+      await Promise.all(old.map(id => sdk.deleteDoc(ref('pushTokens', id)).catch(() => {})));
+      return old.length;
+    } catch { return 0; }
   }
   /** Test: apne hi token par khabar mangwana (Cloud Function testAt dekh kar bhejti hai). */
   async function pushTestPing(token) {
@@ -684,7 +719,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   async function removePushToken(token) { if (token) await sdk.deleteDoc(ref('pushTokens', token.slice(-40))).catch(() => {}); }
   async function pushDevices() { const snap = await sdk.getDocs(col('pushTokens')); const out = []; snap.forEach(d => out.push({ id: d.id, ...clean(d.data()) })); return out.sort((a, b) => (b.at || 0) - (a.at || 0)); }
 
-  /* ---------- v217: paigham (malik/manager -> larke) ---------- */
+  /* ---------- v222: paigham (malik/manager -> larke) ---------- */
   async function sendMessage({ to = 'all', text }) {
     guardOwner();
     const body = String(text || '').trim().slice(0, 500);
@@ -809,14 +844,15 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     const minutesLate = Math.max(0, pkMinutes() - start);
     const autoScore = scoreForLate(Math.max(0, minutesLate - Number(schedule.grace ?? 10) + 10), state.config.scores);
     // Selfie alag doc mein (staffSelfies) taake malik ki list halki rahe. serverAt = server ka asal waqt.
-    const write = watchPunch('checkin', sdk.setDoc(ref('staffAttendance', id), {
+    const entry = { key: 'checkin:' + id, kind: 'checkin', coll: 'staffAttendance', id, phone, at: Date.now() };
+    const write = tracked(entry, sdk.setDoc(ref('staffAttendance', id), {
       ...clean({
         id, date, phone, name: state.account?.name || '', address: state.account?.address || '',
         checkIn: pkTime24(), checkInTs: Date.now(), checkInLat: gps.lat, checkInLng: gps.lng, checkInAccuracy: gps.accuracy, checkInDistance: gps.distance,
         hasSelfie: true, shopLat: SHOP.lat, shopLng: SHOP.lng, shopRadius: radius, minutesLate, autoScore, finalScore: autoScore, shiftStart: schedule.shiftStart || '09:15'
       }),
-      serverAt: sdk.serverTimestamp ? sdk.serverTimestamp() : Date.now()
-    }, { merge: true }), id);
+      serverAt: stamp()
+    }, { merge: true }));
     sdk.setDoc(ref('staffSelfies', id), { phone, date, selfie, at: Date.now() }).catch(error => {
       // Purane rules (v204 se pehle) staffSelfies nahi mante: selfie hazri ke record mein hi rakh do
       if (error?.code === 'permission-denied') write.then(() => sdk.setDoc(ref('staffAttendance', id), { selfie, hasSelfie: false }, { merge: true })).catch(e => onProblem('queued-write', e));
@@ -832,29 +868,178 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     if (!row?.checkIn || row.checkOut) throw new Error('Check-In ka record nahi mila.');
     // v216: sirf APNI khuli parchi/break band ho (manager ke paas sab ki parchiyan hoti hain)
     const openOut = state.outs.find(o => o.phone === state.phone && o.date === row.date && o.status === 'approved');
-    if (openOut) { try { await returnOut(openOut, gps); } catch { /* parchi ki wapsi baad mein */ } }
-    const write = watchPunch('checkout', sdk.setDoc(ref('staffAttendance', row.id || `${row.date}_${state.phone}`), { ...clean({
-      phone: state.phone, checkOut: pkTime24(), checkOutTs: Date.now(), checkOutLat: gps?.lat ?? null, checkOutLng: gps?.lng ?? null, checkOutAccuracy: gps?.accuracy ?? null, checkOutDistance: gps?.distance ?? null
-    }), outServerAt: sdk.serverTimestamp ? sdk.serverTimestamp() : Date.now() }, { merge: true }), row.id || `${row.date}_${state.phone}`);
+    if (openOut) { try { await returnOut(openOut, gps, false); } catch { /* parchi ki wapsi baad mein */ } }
+    const id = row.id || `${row.date}_${state.phone}`;
+    // v217: waqt aik dafa yahin likha jata hai — dobara bhejna pade to bhi yahi (asal) waqt jata hai.
+    const fields = clean({ phone: state.phone, checkOut: pkTime24(), checkOutTs: Date.now(), checkOutLat: gps?.lat ?? null, checkOutLng: gps?.lng ?? null, checkOutAccuracy: gps?.accuracy ?? null, checkOutDistance: gps?.distance ?? null });
+    const entry = { key: 'checkout:' + id, kind: 'checkout', coll: 'staffAttendance', id, phone: state.phone, fields, at: Date.now() };
+    const write = tracked(entry, sdk.setDoc(ref('staffAttendance', id), { ...fields, outServerAt: stamp() }, { merge: true }));
     return settle(write);
   }
-  /** v216: Check-In/Out server ne qubool kiya ya nahi — nateeja state.punchError mein (larke ki screen par pakka paigham). */
-  function watchPunch(kind, write, id) {
-    if (state.punchError?.kind === kind) state.punchError = null;
-    write.then(() => { if (state.punchError?.kind === kind) { state.punchError = null; changed(); } }, async error => {
-      let code = error?.code || 'error', exists = false;
-      if (kind === 'checkin' && code === 'permission-denied') {
-        try { const snap = await sdk.getDoc(ref('staffAttendance', id)); exists = snap.exists() && !!snap.data()?.checkIn; } catch { /* ignore */ }
-      }
-      state.punchError = { kind, code: exists ? 'already' : code, at: Date.now() };
-      changed();
+  /* ---------- v217: PAKKI TASDEEQ (Check-In / Check-Out / Wapsi) ----------
+     Pehle: 0.6-2.5 second baad "ho gaya" — chahe server ne qubool na kiya ho. Ab:
+     - har likhai ka nateeja state.sync[key] = { kind, phase: sending|waiting|ok|fail, code, at }
+     - Check-Out / Wapsi phone mein (localStorage OUTBOX_KEY) yaad rehti hai jab tak server confirm na kare;
+       app band kar ke kholein, internet wapas aaye ya har 30 second — server se dekh kar (getDocFromServer)
+       na mile to wahi PURANA waqt dobara bhejti hai. Check-In (selfie) dobara nahi bhejti, sirf jaanch.
+     - mana ho to pehle server par dekhti hai: pehle hi lag chuka (doosri koshish / malik ne band kiya) = kamyab.
+     - kamyabi par onProblem('confirmed', { kind, id, fresh }) -> app.js -> staffview celebration. */
+  const OUTBOX_KEY = 'nt-hazri-outbox-v217';
+  const stamp = () => (sdk.serverTimestamp ? sdk.serverTimestamp() : Date.now());
+  const readBox = () => { try { const v = JSON.parse(storage?.getItem(OUTBOX_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; } };
+  const writeBox = list => { try { if (list.length) storage?.setItem(OUTBOX_KEY, JSON.stringify(list.slice(-12))); else storage?.removeItem(OUTBOX_KEY); } catch { /* jagah na ho */ } };
+  const boxPut = e => writeBox([...readBox().filter(x => x.key !== e.key), e]);
+  const boxDrop = key => writeBox(readBox().filter(x => x.key !== key));
+  const punchKind = kind => (kind === 'checkin' || kind === 'checkout');
+  function setSync(key, patch) { state.sync = { ...state.sync, [key]: { ...(state.sync[key] || {}), ...patch, at: Date.now() } }; changed(); }
+  /** Server par asal halat: 'yes' (lag chuka) | 'no' | 'missing' (record hi nahi) | 'unknown' (internet). */
+  async function onServer(e) {
+    try {
+      const get = sdk.getDocFromServer || sdk.getDoc;
+      const snap = await timeout(get(ref(e.coll, e.id)), 8000);
+      if (!snap.exists()) return 'missing';
+      const d = snap.data() || {};
+      if (e.kind === 'checkout') return d.checkOut ? 'yes' : 'no';
+      if (e.kind === 'checkin') return d.checkIn ? 'yes' : 'no';
+      return ['returned', 'cancelled', 'rejected'].includes(d.status) ? 'yes' : 'no';
+    } catch { return 'unknown'; }
+  }
+  function confirmed(e, fresh) {
+    const had = readBox().find(x => x.key === e.key), lateMin = Math.round((Date.now() - (e.at || Date.now())) / 60000);
+    boxDrop(e.key);
+    // v218: der se pohanchi ya pehle fail hui thi -> malik ke "Phones ki jaanch" mein nazar aaye
+    if (!fresh && lateMin >= 2) diagPing({ lateKind: e.kind, lateMin, lateAt: Date.now(), fixedAt: Date.now() }, true);
+    else if (had?.lastError) diagPing({ fixedAt: Date.now() }, true);
+    if (punchKind(e.kind) && state.punchError?.kind === e.kind) state.punchError = null;
+    setSync(e.key, { kind: e.kind, phase: 'ok', code: '' });
+    onProblem('confirmed', { kind: e.kind, id: e.id, fresh, at: e.at, outKind: e.outKind || '' });
+  }
+  function failed(e, code) {
+    const box = readBox().find(x => x.key === e.key);
+    if (box) boxPut({ ...box, lastError: code, tries: (box.tries || 0) + 1 });
+    if (punchKind(e.kind)) state.punchError = { kind: e.kind, code, at: Date.now() };
+    setSync(e.key, { kind: e.kind, phase: 'fail', code });
+    diagPing({ failKind: e.kind, failCode: String(code).slice(0, 40), failAt: Date.now(), failId: String(e.id || '').slice(0, 80), failDate: pkDate() }, true);
+    scheduleDrain(30000);
+  }
+  /** Likhai ko track karo. write = setDoc ka promise (Firestore isay tab poora karta hai jab SERVER qubool kar le). */
+  function tracked(e, write, fresh = null) {
+    if (e.kind !== 'checkin') boxPut(e); else boxPut({ ...e, fields: undefined });
+    setSync(e.key, { kind: e.kind, phase: 'sending', code: '' });
+    const slow = setTimeout(() => { if (state.sync[e.key]?.phase === 'sending') { setSync(e.key, { phase: 'waiting' }); scheduleDrain(30000); } }, 2500);
+    write.then(() => { clearTimeout(slow); confirmed(e, fresh ?? (Date.now() - e.at < 120000)); }, async error => {
+      clearTimeout(slow);
+      const code = error?.code || 'error', seen = await onServer(e);
+      if (seen === 'yes') { confirmed(e, false); return; }
+      failed(e, seen === 'missing' && e.kind !== 'checkin' ? 'missing' : code);
     });
     return write;
+  }
+  let drainTimer = null, draining = false;
+  function scheduleDrain(ms) {
+    clearTimeout(drainTimer);
+    drainTimer = setTimeout(() => { drainTimer = null; void drainOutbox(); }, ms);
+  }
+  /** Phone mein ruki hui likhai: server par dekho, na mile to dobara bhejo (wahi purana waqt). */
+  async function drainOutbox() {
+    if (draining || !['staff', 'manager'].includes(state.role) || !state.phone) return 0;
+    if (!state.loaded.has('myAttendance')) { scheduleDrain(4000); return 0; }
+    const list = readBox().filter(e => e.phone === state.phone);
+    if (!list.length) return 0;
+    draining = true; let sent = 0;
+    try {
+      for (const e of list) {
+        if (Date.now() - e.at > 36 * 3600000) { boxDrop(e.key); continue; }       // bohat purani — chhor do
+        if (state.sync[e.key]?.phase === 'sending') continue;                       // abhi isi dafa ja rahi hai
+        const local = e.coll === 'staffOuts' ? state.outs.find(o => o.id === e.id) : state.myAttendance.find(a => a.id === e.id);
+        const seen = await onServer(e);
+        if (seen === 'yes') { confirmed(e, false); continue; }
+        if (seen === 'unknown') { setSync(e.key, { kind: e.kind, phase: 'waiting' }); continue; }
+        if (e.kind === 'checkin') {                                                 // selfie dobara nahi bhejte — sirf batao
+          if (local?.pending) { setSync(e.key, { kind: e.kind, phase: 'waiting' }); continue; }
+          boxDrop(e.key); state.punchError = { kind: 'checkin', code: 'lost', at: Date.now() }; setSync(e.key, { kind: e.kind, phase: 'fail', code: 'lost' });
+          diagPing({ failKind: 'checkin', failCode: 'lost', failAt: Date.now(), failId: String(e.id || '').slice(0, 80), failDate: pkDate() }, true); continue;
+        }
+        if (local?.pending) { setSync(e.key, { kind: e.kind, phase: 'waiting' }); continue; } // Firebase khud bhej raha hai
+        if (seen === 'missing') { failed(e, 'missing'); continue; }
+        resend(e); sent++;
+      }
+    } finally { draining = false; }
+    if (readBox().some(e => e.phone === state.phone)) scheduleDrain(30000);
+    return sent;
+  }
+  /** fresh=false: khud (app kholne par) dobara gayi — sirf chhota paigham; true: larke ne "Dobara bhejein" dabaya — poori animation. */
+  function resend(e, fresh = false) {
+    const extra = e.kind === 'checkout' ? { outServerAt: stamp() } : { returnServerAt: stamp() };
+    return tracked(e, sdk.setDoc(ref(e.coll, e.id), { ...e.fields, ...extra }, { merge: true }), fresh);
+  }
+  /** "Dobara bhejein" button. */
+  async function retrySync(key) {
+    const e = readBox().find(x => x.key === key && x.phone === state.phone);
+    if (!e) { await drainOutbox(); return; }
+    if (e.kind === 'checkin') { await drainOutbox(); return; }
+    const seen = await onServer(e);
+    if (seen === 'yes') { confirmed(e, true); return; }
+    if (seen === 'missing') { failed(e, 'missing'); return; }
+    return settle(resend(e, true));
+  }
+  /** "Theek hai": paigham band. Check-Out/Wapsi phir bhi baqi ho to button wapas aa jata hai, larka dobara daba sakta hai. */
+  function dismissSync(key) {
+    const s = state.sync[key]; boxDrop(key);
+    if (s && punchKind(s.kind) && state.punchError?.kind === s.kind) state.punchError = null;
+    const next = { ...state.sync }; delete next[key]; state.sync = next; changed();
+  }
+  const pendingSync = () => readBox().filter(e => e.phone === state.phone);
+
+  /* ---------- v218: JAANCH KA RECORD (staffDiag/{phone}) ----------
+     Har larke ka phone apna aik doc likhta hai: app version, home screen app ya browser, phone, aakhri dafa kab khuli, kitni
+     likhai phone mein ruki hai, aakhri FAIL (kya, kyun, kab) aur der se pohanchi likhai. Malik "Tawajju chahiye" / "Phones ki jaanch"
+     mein dekhta hai — andaze ki jagah asal wajah. Keys firestore.rules (staffDiag) mein ginti ki hui hain. Best-effort: rules na
+     hon ya net na ho to chup (Firebase qataar mein rakhta hai). Aam record 30 minute mein aik dafa; fail/fix foran. */
+  const DIAG_KEY = 'nt-hazri-diag-v218';
+  const DIAG_KEYS = ['phone', 'name', 'v', 'at', 'serverAt', 'device', 'app', 'pending', 'failKind', 'failCode', 'failAt', 'failId', 'failDate', 'fixedAt', 'lateKind', 'lateMin', 'lateAt'];
+  function deviceText() {
+    const ua = String(globalThis.navigator?.userAgent || '');
+    const os = (ua.match(/Android [\d.]+(?:; [^;)]+)?/) || ua.match(/iPhone OS [\d_]+|iPad|Windows NT [\d.]+|Mac OS X [\d_]+/) || [''])[0].replace(/_/g, '.');
+    const br = (ua.match(/(?:Chrome|CriOS|Firefox|SamsungBrowser|Version)\/(\d+)/) || [])[0] || '';
+    return (os + (br ? ' · ' + br : '')).slice(0, 80) || 'Nama\'loom';
+  }
+  function appMode() {
+    try { return (globalThis.matchMedia?.('(display-mode: standalone)')?.matches || globalThis.navigator?.standalone) ? 'home' : 'browser'; } catch { return 'browser'; }
+  }
+  function diagPing(extra = {}, force = false) {
+    if (!['staff', 'manager'].includes(state.role) || !state.phone || !sdk.setDoc) return false;
+    let last = {}; try { last = JSON.parse(storage?.getItem(DIAG_KEY) || '{}') || {}; } catch { last = {}; }
+    const now = Date.now(), pending = pendingSync().length;
+    if (!force && last.phone === state.phone && last.v === APP_VERSION && last.pending === pending && now - (last.at || 0) < 30 * 60000) return false;
+    const rec = { phone: state.phone, name: String(state.account?.name || '').slice(0, 80), v: APP_VERSION, at: now, device: deviceText(), app: appMode(), pending, ...extra, serverAt: stamp() };
+    for (const k of Object.keys(rec)) if (!DIAG_KEYS.includes(k)) delete rec[k];
+    try { storage?.setItem(DIAG_KEY, JSON.stringify({ phone: state.phone, v: APP_VERSION, pending, at: now })); } catch { /* ignore */ }
+    Promise.resolve().then(() => sdk.setDoc(ref('staffDiag', state.phone), rec, { merge: true })).catch(() => { /* rules v218 publish nahi / net nahi — chup */ });
+    return true;
   }
   /** Server ka jawab 2.5 second mein na aaye to hazri phone mein qataar mein rehti hai aur signal aate hi chali jati hai. */
   async function settle(write) {
     try { await timeout(write, 2500); return { queued: false }; }
     catch (error) { if (error.code === 'app/slow-network') { write.catch(e => onProblem('queued-write', e)); return { queued: true }; } throw error; }
+  }
+  /** v221: dukaan se BAHAR (ya location na mile) — seedha Check-Out nahi; malik ko request (kind correction, via outside).
+      Malik "Manzoor" kare to reviewRequest wahi waqt + location hazri mein lagata hai. Keys firestore.rules mein ginti ki hain. */
+  async function requestOutsideCheckout({ row, time, reason, note = '', gps = null, gpsError = '' }) {
+    if (state.role !== 'staff' && state.role !== 'manager') throw new Error('Staff login zaroori hai.');
+    if (!row?.checkIn || row.checkOut) throw new Error('Check-In ka record nahi mila.');
+    const outT = to24(time); if (!outT) throw new Error('Dukaan se kab nikle, wo waqt chunein.');
+    if (workMinutes({ checkIn: row.checkIn, checkOut: outT }) == null) throw new Error(`Nikalne ka waqt (${fmtTime(outT)}) aane ke waqt (${fmtTime(row.checkIn)}) se pehle hai ya 16 ghante se zyada. AM / PM check karein.`);
+    if (row.date === pkDate() && (parseTime(outT) ?? 0) > pkMinutes() + 2 && (parseTime(outT) ?? 0) > (parseTime(row.checkIn) ?? 0)) throw new Error('Aane wala waqt nahi chun sakte.');
+    const why = String(reason || '').trim(); if (!why) throw new Error('Wajah chunein.');
+    if (state.requests.some(r => r.phone === state.phone && r.kind === 'correction' && r.via === 'outside' && r.date === row.date && r.status === 'pending')) throw new Error('Is din ki bahar se Check-Out request pehle se malik ke paas hai.');
+    const id = sdk.doc(col('staffRequests')).id;
+    const where = gps && Number.isFinite(gps.lat) ? { lat: Math.round(gps.lat * 1e6) / 1e6, lng: Math.round(gps.lng * 1e6) / 1e6, distance: Math.round(gps.distance), accuracy: Math.round(gps.accuracy || 0) } : { gpsError: String(gpsError || 'Location nahi mili').slice(0, 60) };
+    const write = sdk.setDoc(ref('staffRequests', id), { phone: state.phone, kind: 'correction', via: 'outside', date: row.date, to: row.date, half: '', checkIn: '', checkOut: outT,
+      reason: (why + (String(note || '').trim() ? ' — ' + String(note).trim() : '')).slice(0, 1000), status: 'pending', createdAt: Date.now(), by: auth.currentUser.uid, ...where });
+    write.catch(e => problem('save', e));
+    ping('leave', { title: `${me()}: dukaan se bahar Check-Out`, message: `${fmtTime(outT)} · ${where.distance != null ? (where.distance >= 1000 ? (where.distance / 1000).toFixed(1) + ' km' : where.distance + ' m') + ' door' : 'location nahi'} · ${why}`, tags: ['house'] });
+    return settle(write);
   }
   async function sendRequest({ kind, date, to, checkIn, checkOut, reason, half = '' }) {
     if (state.role !== 'staff' && state.role !== 'manager') throw new Error('Staff login zaroori hai.');
@@ -873,8 +1058,45 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     ping('leave', { title: kind === 'leave' ? `${me()} ne chutti mangi` : `${me()}: hazri durust karne ki request`, message: `${shortDateSafe(date)}${end !== date ? ' – ' + shortDateSafe(end) : ''}${half ? (half === 'am' ? ' (aadha din subah)' : ' (aadha din shaam)') : ''} · ${String(reason).trim().slice(0, 120)}`, tags: ['memo'] });
   }
 
+  /* ---------- v220: CAMERAS (Hissa A) — PC ka login, naam / kaam, nayi tasveer ----------
+     Camera ka password aur Claude ki key SIRF shop PC mein (ntcam.py). Yahan sirf naam, kaam, on/off aur tasveerein. */
+  const CAM_ROLES = ['galla', 'counter', 'view'];
+  const ownerOnly = () => { if (state.role !== 'owner') throw new Error('Cameras sirf malik ke liye hain.'); };
+  /** Tasveerein bhaari hoti hain — sirf jab Cameras ka safha khula ho tab suno. */
+  function watchShots(on) {
+    try { shotsSub?.(); } catch { /* ignore */ } shotsSub = null;
+    if (!on || state.role !== 'owner') return;
+    const token = epoch;
+    shotsSub = sdk.onSnapshot(col('cameraShots'), snap => { if (token !== epoch) return; const m = new Map(); snap.forEach(d => m.set(d.id, clean(d.data()))); state.camShots = m; changed(); }, error => { if (token === epoch) problem('camShots', error); });
+  }
+  /** PC ka apna login banao (doosri Firebase app se — malik ka login nahi hilta). Code = "<id>-<password>", sirf aik dafa dikhta hai. */
+  async function createCameraPC() {
+    ownerOnly();
+    const A = 'abcdefghjkmnpqrstuvwxyz23456789', pick = n => Array.from(globalThis.crypto.getRandomValues(new Uint32Array(n)), x => A[x % A.length]).join('');
+    const id = pick(6), secret = pick(10), email = `cam-${id}@nttraders.local`;
+    const app2 = sdk.initializeApp(firebaseConfig, 'ntcam-' + Date.now());
+    let auth2, uid = '';
+    try { auth2 = sdk.initializeAuth && sdk.inMemoryPersistence ? sdk.initializeAuth(app2, { persistence: sdk.inMemoryPersistence }) : sdk.getAuth(app2); } catch { auth2 = sdk.getAuth(app2); }
+    try { uid = (await sdk.createUserWithEmailAndPassword(auth2, email, secret)).user.uid; }
+    catch (error) {
+      if (error?.code === 'auth/operation-not-allowed') throw new Error('Firebase mein "Email/Password" login band hai — Authentication > Sign-in method mein ON karein.');
+      if (error?.code === 'auth/network-request-failed') throw new Error('Internet kamzor hai. Dobara koshish karein.');
+      throw error;
+    } finally { try { await sdk.deleteApp?.(app2); } catch { /* ignore */ } }
+    await fast(async tx => { tx.set(ref('cameraPC', 'config'), { uid, email, at: Date.now(), by: actor() }); audit(tx, 'camera pc', 'config', null, { email }, 'Naya camera PC code'); });
+    return `${id}-${secret}`;
+  }
+  async function saveCamera(id, { name, role, enabled }) {
+    ownerOnly();
+    const n = String(name || '').trim().slice(0, 40);
+    if (!n) throw new Error('Camera ka naam likhein.');
+    await quick(sdk.setDoc(ref('cameras', id), { name: n, role: CAM_ROLES.includes(role) ? role : 'view', enabled: enabled !== false }, { merge: true }));
+  }
+  async function requestShot(id) { ownerOnly(); await quick(sdk.setDoc(ref('cameras', id), { snapReq: Date.now() }, { merge: true })); }
+  async function deleteCamera(id) { ownerOnly(); await quick(sdk.deleteDoc(ref('cameras', id))); try { await sdk.deleteDoc(ref('cameraShots', id)); } catch { /* ignore */ } }
+
   return {
-    app, full, actor, auth, state, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
+    app, full, actor, auth, state, watchShots, createCameraPC, saveCamera, requestShot, deleteCamera, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
     requestOut, cancelOut, returnOut, reviewOut, isManager, isTicketer, startBreak, endBreaks, createTicket, returnTicket, decideTicket, ticketSuggestFor,
     savePushToken, removePushToken, pushDevices, pushTestPing, sendMessage, deleteMessage, readMessage,
     applyDefaultShiftAll, applyDefaultSalaryAll, toggleClosed, quickPresent, closeCheckouts, getSelfie, migrateSelfies, selfiesFor, auditLog,
@@ -884,6 +1106,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       async createSession(uid, phone) { await sdk.setDoc(ref('staffSessions', uid), { phone, createdAt: Date.now() }); }
     },
     saveStaff, deleteStaff, saveConfig, saveAttendance, deleteAttendance, markLeave, cancelLeave, reviewRequest,
-    addExtra, removeExtra, toggleFinal, addPayment, checkIn, checkOut, sendRequest
+    addExtra, removeExtra, toggleFinal, addPayment, checkIn, checkOut, sendRequest, requestOutsideCheckout,
+    retrySync, dismissSync, drainOutbox, pendingSync, diagPing
   };
 }

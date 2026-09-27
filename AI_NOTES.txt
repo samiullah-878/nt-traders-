@@ -1,46 +1,216 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v217   Tareekh: 2026-09-27  (v200-v204: 2026-09-21)
+Version: v222   Tareekh: 2026-09-27  (v221 + doosri chat ka v217 kaam yahan jora; v220 cameras, v217-v219 pehle se)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
 
 ------------------------------------------------------------
-00000000000000000. v217 — PREMIUM SHAKAL + LARKON KO PAIGHAM + CALL/WHATSAPP
+0000000000000000000000. v222 — v221 + PREMIUM SHAKAL + LARKON KO PAIGHAM + CALL/WHATSAPP (+ pushTokens sakht)
 ------------------------------------------------------------
-Malik: premium look; larkon ko direct paigham jo un ki hazri screen par dikhe; app se call. (In-app call nahi banaya — alag server,
-dono taraf app khuli, mobile data par kamzor; is ki jagah Call (tel:) aur WhatsApp (wa.me/92...) buttons. Dark mode abhi nahi —
-bohat se hard-coded rang hain, alag se test kar ke.)
-- Premium CSS (styles.css aakhir mein "v217" hissa): gradient header/primary button, cards par naram saya aur 14px kone, rows ki moti
-  patti, avatar ka naam se apna rang (ui.avatar -> --av-h hueOf(name)), gol chips/tags, bottom tabs blur, sheet 22px kone.
-- Paigham: businesses/noor-traders/staffMessages/{auto} { toList: ['all'] | [phones], text (<=500), fromName, by, at, serverAt,
-  readBy: {phone: ms}, replies: {phone: {text, at}} }. data.sendMessage/deleteMessage (malik/manager, guardOwner), data.readMessage(id, reply)
-  (larka: setDoc merge sirf apna readBy/replies). Malik listener: at >= 30 din. Larka: do queries toList array-contains phone / 'all'
-  (msgMine + msgAll -> messages).
-  Malik UI: Hazri (aaj) "Paigham bhejein", Settings "Larkon ko paigham", profile "Paigham"; sheet: Sab staff / Kuch larke (chips),
-  templates, bheje hue list "N/M ne parh liya", jawab, Hatayein. Profile mein Call + WhatsApp buttons.
-  Larka UI: Hazri ke upar paigham card (Parh liya / Theek hai / Aa raha hoon / Jawab likhein), parhe hue "Purane paigham" mein.
-  Manager mode ki "Meri hazri" mein sirf apne/sab wale paigham.
-- Larke ke phone par notification: staff view mein "Notification chalu karein" chhota card (key lagi ho aur ijazat na ho), aur app
-  khulte hi refreshPush (role 'staff' token). functions/index.js: onMessage (staffMessages create) -> role staff tokens (phone in toList
-  ya 'all'). FUNCTIONS DOBARA DEPLOY KARNI HAIN.
-- Rules v217: firestore.rules ab CHHOTA version (mobile console par "unknown error" se bachne ke liye) + pushTokens testAt +
-  staffMessages (read: apne/sab; update: sirf readBy/replies aur un mein sirf apna phone). MALIK KO RULES PUBLISH KARNE HAIN.
-- Tests 74 (+ paigham bhejna, larke ki screen par card, Theek hai jawab, profile Call/WhatsApp).
-- Yaad: screenshot mein "2 phone par purani app: Abdulh dhal, Imran" — un ka Check-Out masla purani app se tha; update karwana.
-  Khata app (Reminder/Notes) ka notification error: wahan "Push key" nahi lagi thi — wohi Web Push key laga sakte hain (same project).
+Pas-e-manzar: aik DOOSRI chat ne purani v216 par apna "v217" (premium CSS, paigham, Call/WhatsApp) banaya; malik ne wo 27 Sep 11:06 ko
+GitHub par chadha diya aur v220 ki 12 files (data, owner, staffview, ui, styles, core, sw, index, version, rules, AI_NOTES, app.dom.test)
+purani ho gayin; 11:05 ko functions/index.js mein sirf 29 lakeerein (adhoori) paste hui thin. v221 GitHub par kabhi nahi gayi thi.
+Git history (git clone, commit d626623 = v220) se poori v220 nikali, malik ki bheji v221 files (data, owner, core, index, rules,
+staffview, AI_NOTES, app.dom.test) upar lagayin, v221 ke .co-* CSS dobara likhe (asal v221 styles.css nahi mili), sw/version v221,
+phir ye v222. Malik ko "nt-hazri-v220-WAPAS.zip" bhi di thi (agar beech mein bachana ho).
+- Premium CSS (styles.css aakhir "v222"): gradient header + primary button, cards/panels 14px + naram saya, avatar ka naam se apna rang
+  (ui.avatar -> --av-h = hueOf(name)), gol tags/chips, mobile par neeche tabs shisha (blur) — desktop (>=860px) par tabs header mein
+  hi (unhein nahi chhera). v217 ki pakki-tasdeeq animation (btn-hold, stamp) ko bilkul nahi chhera.
+- Paigham: businesses/noor-traders/staffMessages/{auto} { toList: ['all'] | [phones], text <=500, fromName, by, at, serverAt,
+  readBy {phone: ms}, replies {phone: {text, at}} }. data.sendMessage / deleteMessage (guardOwner: malik/manager), data.readMessage(id,
+  reply) (larka: merge sirf apna readBy/replies). Malik listener at >= 30 din; larka do queries (toList array-contains phone / 'all').
+  Malik: Hazri (aaj) "Paigham bhejein", Settings "Larkon ko paigham", profile "Paigham" + Call (tel:) + WhatsApp (wa.me/92...).
+  Sheet: Sab staff / Kuch larke (chips), templates, bheje hue "N/M ne parh liya", jawab, Hatayein.
+  Larka: Hazri ke upar paigham card (Parh liya / Theek hai / Aa raha hoon / Jawab likhein) + "Purane paigham"; chhota neela card
+  "Notification chalu karein" (key lagi ho aur ijazat na ho) + app khulte hi refreshPush (role 'staff').
+- functions/index.js (v219 router onHazriWrite): coll 'staffMessages' create -> handleMessage: role 'staff' tokens (phone in toList ya
+  'all'), aik phone aik khabar, mare token saaf. router.test.mjs +1 test (5). FUNCTIONS DOBARA DEPLOY.
+- firestore.rules v222: staffMessages (read: apne/sab; update: sirf readBy/replies aur un mein sirf apna phone). pushTokens SAKHT
+  (v221 ka Hissa-2 wada): create/update sirf malik/manager, ya larka role 'staff' + phone == sessionPhone(). MALIK KO RULES PUBLISH.
+- In-app call NAHI (alag server, dono taraf app, data par kamzor) — Call/WhatsApp buttons. Dark mode NAHI (bohat se hard-coded rang).
+- v221 ka baqi Hissa 2 (chutti ke waqt larke ke phone par khud yaad-dehani) abhi NAHI — alag plan + OK.
+- Tests: app 82 pass (+ paigham: bhejna, larke ki screen card, Theek hai, profile Call/WhatsApp) + functions router 5 (npm install ke baad,
+  --experimental-test-module-mocks). sync.test.mjs asal v221 wala nahi mila (repo wala v220).
 
 ------------------------------------------------------------
-v216 ke baad — clean.ps1 (PC se repo ki safai)
+000000000000000000000. v221 — CHECK-OUT PAR LOCATION ZAROORI + DUKAAN SE BAHAR HO TO MALIK KO REQUEST  [naye kaam ka HISSA 1 / 2]
 ------------------------------------------------------------
-Malik ne ghalti se Noor Traders KHATA app ki files hazri repo (nt-traders-) mein upload kar di thin; khata khulne lagi / malik login
-masla. Poori hazri zip (48 files) dobara di. Phir khata ki faltu files hatane ke liye clean.ps1:
-- Malik clean.ps1 ko phone se hazri repo mein upload karta hai; shop PC (AnyDesk) par AIK line:
-  iex (irm https://raw.githubusercontent.com/samiullah-878/nt-traders-/main/clean.ps1)
-- Script: git na ho to winget se install; repo temp folder mein clone; hifazat (boot.js + staffview.js na hon to kuch nahi karta;
-  index.html hazri wali na ho to warning); whitelist = .git, .github, functions + hazri ki 48 files; baqi sab (clean.ps1 samet)
-  ki list dikha kar Y maangta hai; git rm + commit + push (pehli dafa Git Credential Manager browser login); temp folder khud saaf.
-- pwsh 7.4 par naqli repo ke sath test hua: Y par sirf faltu files hatin, N par kuch nahi.
-- Khata ka apna repo nahi chhera gaya.
+Malik: "Check-Out ka time location plus; agar ghar se bhi karna ho to request ke sath". Sath (Hissa 2 = v222, baad mein): chutti ke waqt
+larke ke APNE phone par khud yaad-dehani, larke ke phone par notification (kaise aayega), aur malik kisi bhi larke ko paigham/notification
+bhej sake. Hissa 2 mein pushTokens rules bhi tight karne hain (abhi koi bhi logged-in phone role 'owner' wala token likh sakta hai).
+- staffview 'check-out' (hold ke baad): getGps ZAROORI. Andar = gps.distance - min(accuracy, 100) <= radius (default 200 m) -> purana
+  data.checkOut (tasdeeq + animation). Bahar ya location na mile (ijazat band / GPS band) -> outsideSheet(open): "Aap dukaan se X km door
+  hain" / "Location nahi mili (wajah)", "Dukaan par hoon — location dobara dekhein" (co-regps: andar mila to seedha Check-Out), form
+  'co-outside': kab nikle (Abhi / Chutti ka waqt — sirf agar guzar chuka aur check-in ke baad / Apna waqt), wajah chips (CO_REASONS),
+  note. Punch card: outsideLine() — pending = narangi "Bahar se Check-Out — malik ke paas" (waqt + faasla), rejected = surkh notice.
+  Hold button ab bhi (dukaan par aa kar seedha Check-Out). Staff Request list: "Bahar se Check-Out 9:05 pm · 3.2 km door".
+- data.requestOutsideCheckout({ row, time, reason, note, gps, gpsError }): staffRequests { kind:'correction', via:'outside', date=to=row.date,
+  half:'', checkIn:'', checkOut:'HH:MM', reason ("wajah — note"), status pending, createdAt, by } + { lat, lng (6 decimal), distance,
+  accuracy (m, integer) } YA { gpsError (<=60) }. Jaanch: waqt zaroori, check-in se pehle / 16 ghante se zyada nahi (workMinutes), aaj ka
+  record ho to aane wala waqt nahi, aik din ki aik pending. settle(write) 2.5 s. ntfy ping (purana).
+- reviewRequest: correction + via outside manzoor -> hazri mein checkOut + checkOutVia:'outside', checkOutLat/Lng/Distance/Accuracy.
+- owner.js: Tawajju text "Sonu: bahar se Check-Out (3.2 km)"; Requests card "Dukaan se bahar Check-Out", faasla chip (±accuracy),
+  "Naqsha dekhein" (google.com/maps?q=lat,lng), "Manzoor karne par Check-Out X lagega". Register row chip "Check-Out bahar se · 3.2 km"
+  jab checkOutVia outside ya purana checkOutDistance > radius. kmText() helper (staffview + owner).
+- firestore.rules v221: staffRequests create keys + 'via','lat','lng','distance','accuracy','gpsError' (via == 'outside' sirf correction,
+  checkIn '' aur checkOut 5 harf; number/string jaanch). MALIK KO v221 RULES PUBLISH KARNE HAIN (warna bahar wali request mana hogi).
+- Server par "andar/bahar" ki pakki jaanch nahi (GPS phone deta hai) — malik ko faasla + naqsha dikhta hai, faisla malik ka.
+- CSS: .co-wait, .co-head(.is-nogps), .co-regps, .co-set, .co-time, .co-where (chips .cam-pick dobara istemal).
+- Tests 78 (+2 sync.test: request -> sirf rules wali keys -> malik manzoor -> checkOut + via + faasla; location na mile -> gpsError.
+  app.dom: 2 ghante pehle aaya, 4 km door hold -> sheet, seedha Check-Out nahi, request (keys/location/wajah), "malik ke paas" card,
+  dobara request mana; phir dukaan par wapas -> purane tests (mana -> Dobara bhejein -> kamyab)). Tests asal waqt ke hisab se (raat 1 baje bhi).
+- Yahan test nahi: asal phone ka GPS (andar dukaan mein kamzor signal par accuracy), asal rules.
+
+------------------------------------------------------------
+00000000000000000000. v220 — CAMERAS, HISSA A (shop PC ka camera program + Settings > Cameras)  [camera ke 3 hisson ka pehla]
+------------------------------------------------------------
+Malik: dukaan ke cameras (Dahua DH-IPC-HDW1431T1 fixed 4MP PoE "Counter" + Dahua DH-H3A ghoomne wala WiFi, TP-Link_640C)
+par AI nigrani; pehle GALLA (cash) wala hissa. "Multiple camera add ho saken, koi problem na ho, aur ISI hazri app mein bana do."
+Shop PC (AnyDesk) sirf dukaan ke waqt on. Claude API key malik ne bana li. Plan (OK): Hissa A = PC program + test + Settings >
+Cameras; Hissa B = galla nigrani (hissa mark, harkat par burst, Claude jaanch, "Nigrani" tab, push alert, duty par kaun tha);
+Hissa C = roz ki PDF, 30 din purani tasveerein saaf, AI kharche ki had.
+SACH (malik ko bataya): browser app camera ki RTSP video nahi parh sakti -> parhna shop PC karta hai; app sirf dikhati/sambhalti hai.
+Camera ke password aur Claude key SIRF PC mein (C:\NTCam\secrets.json) — Firebase/app mein kabhi nahi. Nigrani SIRF malik (manager bhi staff hai).
+- ntcam.py (VERSION '1.0', Python 3.12, opencv-python-headless + numpy + requests): setup | run | test.
+  setup (desktop "NT Camera jodein"): PC code -> Firebase login (REST identitytoolkit, apna email/password login, rules lagte hain),
+  Claude key (getpass, right-click paste), network /24 scan (port 554; brand: 37777 = Dahua, 8000 = Hikvision, http text), MAC (arp -a),
+  har device: naam, username [admin], password (getpass), channels (NVR ho to). RTSP: Dahua /cam/realmonitor?channel=N&subtype=0,
+  Hikvision /Streaming/Channels/N01 (rtsp_transport tcp, 8 s timeout). Kamyab -> secrets.cams[<mac>-chN] = {url,user,pw,ip,brand,ch,mac},
+  Firestore cameras/<id> (naya ho to naam/role 'view'/enabled), cameraShots/<id> (640px JPEG base64 <400KB), Claude Haiku 4.5
+  (claude-haiku-4-5-20251001) se 1-2 line ka AI test -> cameras.aiTest. cameraPC/status mein found list.
+  run (Startup shortcut, pythonw, lock port 47391): list har 20 s, tasveer har 5 min ya malik ki "Abhi ki tasveer" (snapReq > lastShotAt),
+  online/offline/off/"password nahi", IP badle to MAC se dhoond kar URL theek, cameraPC/status har 2 min, har 6 ghante GitHub
+  (base.txt = Pages URL) se naya ntcam.py (VERSION bara ho to, compile check, khud dobara shuru) — PC par dobara type nahi karna.
+  Firestore REST patch hamesha updateMask ke sath (sirf apni fields) — malik ka naam/kaam nahi mit-ta.
+- ntcam.txt (PowerShell installer, .txt taake Pages text/plain de): `irm <pages>/ntcam.txt|iex`. $b na ho to
+  'https://samiullah-878.github.io/nt-traders-/' (zip ka naam "nt-traders--main" se repo "nt-traders-" ka andaza). App repo ke hisab se
+  sahi command dikhati hai (alag ho to `$b='<url>';irm "${b}ntcam.txt"|iex`). Python (py/python, winget, ya python.org 3.12.7 silent),
+  pip, ntcam.py, Startup "NT Camera.lnk" (pythonw run) + Desktop "NT Camera jodein.lnk" (setup), phir setup, phir run peeche.
+- ntcam_test.py (python ntcam_test.py): 7 tests — PC code, Firestore values, RTSP URL + password chhupana, JPEG 2560->640 <400KB,
+  version compare, patch sirf apni fields (updateMask), AGENT_KEYS rules mein.
+- App (sirf malik): Settings > "Cameras" (manager ko tool nahi, rules bhi band). data.js: owner live cameras / cameraPC status + config;
+  watchShots(on) sirf sheet khuli ho tab (tasveerein bhaari); createCameraPC(): doosri Firebase app (initializeAuth inMemory) se
+  createUserWithEmailAndPassword('cam-<6>@nttraders.local', <10>) -> deleteApp -> cameraPC/config {uid,email,at,by} + audit; code
+  "<6>-<10>" (harf a-z bina i/l/o, 2-9) sirf aik dafa ui.camCode. saveCamera(name, role galla|counter|view, enabled), requestShot,
+  deleteCamera. owner.js camerasSheet: PC card (chalu = status.at 6 min ke andar, dhadakta hara nishan), "PC jodein" 4 qadam (code, AnyDesk
+  PowerShell, command + Copy, password/key PC par hi), PC ne jo naye device dekhe, camera cards (16:9 tasveer, Online/Offline/Band chip,
+  naam + kaam chip, ip/brand, AI test, ghalti), "Abhi ki tasveer", "Badlein" (naam, kaam chips, chalu), "Hatayein", tasveer tap = ui.viewImage
+  poori screen. "Naya PC code banayein" (tasdeeq: purana PC band).
+- firestore.rules v220: isCameraPC() (password login + cameraPC/config.uid). Generic match: manager ke liye cameras / cameraShots /
+  cameraPC / cameraEvents parhna-likhna band. cameraPC/{doc}: PC sirf 'status' (keys ginti). cameras: PC create (keys ginti, naam <=40),
+  update sirf apni fields. cameraShots: PC likhe (jpg < 400000). Malik generic se sab. MALIK KO v220 RULES PUBLISH KARNE HAIN.
+- Firebase Authentication mein "Email/Password" ON hona chahiye (pehle se hai — malik login isi se).
+- Tests 76 app (app.dom: malik Cameras — PC code bana, malik ka login nahi hila, tasveer, naya device, Abhi ki tasveer, naam/kaam save,
+  PC fields nahi badlin, poori screen; manager ko Cameras nahi) + 7 Python. Headless Chromium mein Cameras sheet dekhi.
+- Yahan test nahi ho saka: asal camera / RTSP (khaas kar H3A), asal Windows PC par installer, asal Firebase rules, Claude ka asal jawab.
+- Agla: Hissa B (galla) — cameras.zone (malik tasveer par hissa mark), ntcam.py mein harkat + burst + Claude, cameraEvents (rules mein naam
+  pehle se band/khula soch kar), "Nigrani" tab, onHazriWrite mein cameraEvents -> push (sirf owner), hazri se duty par kaun tha.
+
+------------------------------------------------------------
+0000000000000000000. v219 — SAB KHABREIN FORAN (AIK JAGTI FUNCTION) + TOKEN SAFAI + APP KHULI HO TAB BHI AWAAZ  [HISSA 3 / 3]
+------------------------------------------------------------
+Malik ne v217 aur v218 upload NAHI ki — teeno hisse (v217 + v218 + v219) AIK hi update mein jate hain. Do zip: app wali (repo ki jar
+mein) aur functions wali (repo ke functions/ folder mein).
+Masla: "notification band ho jata hai / usi waqt nahi aata". Wajah (code se): sirf onOut (parchi) FAST (minInstances 1) tha;
+onRequest / onTicket / onCheckIn / onPushTest NORMAL — so jati thin, 1-2 minute der (cold start). Aik phone ke 3 token (list mein
+"Malik" 3 dafa) — Chrome Android sab phones ka UA "Android 10; K" batata hai, is liye purane token pehchane nahi jate the aur har
+khabar 3 token par jati thi. App KHULI ho to Firebase khabar page ko deta hai (onBackgroundMessage nahi) aur onMessage sirf "chalu
+karein" button par lagta tha — autoPush (v216) par nahi — is liye khuli app par kuch nahi bajta tha.
+- functions/index.js: onOut/onRequest/onTicket/onCheckIn/onPushTest ki jagah AIK export: onHazriWrite = onDocumentWritten(
+  { ...FAST (256MiB, minInstances 1, concurrency 20), document: 'businesses/noor-traders/{coll}/{docId}' }). Router: mitaya = kuch nahi;
+  pushTokens (testAt badla) = test khabar; sirf NAYA doc: staffOuts -> handleOut, staffRequests -> handleRequest, staffTickets ->
+  handleTicket, staffAttendance -> handleCheckIn (late). Baqi sab (audit, selfies, diag, blueKhata, updates) foran return. Handlers
+  wahi purane (sirf naam badla). watchDay / monthlySalary (schedule) NORMAL hi. Kharcha: jagta instance pehle bhi aik tha, ab bhi aik.
+  Deploy: GitHub Actions (deploy-functions.yml, "--non-interactive --force") purani 5 functions khud mita deti hai.
+- tokensFor(): aik token aik dafa, aur aik phone (device 'd:<id>') par sirf sab se naya token (at ke hisab se).
+- data.savePushToken(token, label): device = 'd:<deviceId> · <deviceText()>' (deviceId localStorage 'nt-hazri-device-id', random).
+  Save ke baad pushTokens mein isi phone ke purane token delete: wahi deviceId, YA purana record (bina 'd:') jis ka device == label
+  (navigator.userAgent 60 harf) aur role/phone wahi. Wapas: kitne hataye. Rules mein koi nayi key nahi (device string hi hai).
+  owner.js "Notification wale phones" list mein 'd:xxx · ' chhupa kar dikhata hai.
+- push.js bindForeground(): aik dafa m.onMessage — app khuli ho to reg.showNotification (awaaz + vibration, wahi tag). 'out-' aur
+  'tkt-' tag par NAHI (app pehle se toast + awaaz deti hai, dobara na baje). enablePush aur refreshPush (autoPush) dono lagate hain;
+  owner.autoPush ab onMessage (toast) bhi deta hai.
+- Tests: app 76 (+1 sync.test: token safai — isi phone ke purane hat-te, manager / doosre phone ke nahi). functions: logic 5 +
+  router.test.mjs 4 (node --test --experimental-test-module-mocks; firebase-admin/functions naqli mock): minInstances 1 + wildcard,
+  parchi/request/ticket par khabar sirf owner/manager ko aur aik phone ko aik, update/mitana/audit/blueKhata par kuch nahi, test push.
+  (Mock ke liye functions/node_modules mein package resolve hona chahiye — npm install --prefix functions.)
+- Yahan test nahi ho saka: asal Firebase deploy, asal wildcard trigger, asal phone par khabar ki awaaz.
+- Rules: v218 wale hi (is mein v219 ki koi nayi tabdeeli nahi).
+
+------------------------------------------------------------
+000000000000000000. v218 — JAANCH KA RECORD (staffDiag) + PHONES KI JAANCH  [3 hisson ka HISSA 2]
+------------------------------------------------------------
+Malik: "agla kaam, phir aik dafa update karunga" — v217 upload NAHI hui thi, is liye ye zip v217 + v218 dono hai (aik hi upload).
+Maqsad: andaze ki jagah ASAL wajah — kis larke ka Check-Out/Wapsi server tak kyun nahi gaya, aur kis phone par purani app hai.
+- Firestore: businesses/noor-traders/staffDiag/{phone} — har phone apna AIK doc (merge). Keys (data.js DIAG_KEYS = rules hasOnly):
+  phone, name, v (APP_VERSION), at (phone ka ms), serverAt (== request.time), device (UA se chhota: "Android 10; K · 139"),
+  app ('home' = home screen / 'browser'), pending (outbox mein kitni likhai), failKind (checkout|checkin|return), failCode,
+  failAt, failId (doc id), failDate (YYYY-MM-DD), fixedAt, lateKind, lateMin, lateAt.
+- data.diagPing(extra, force): sirf staff/manager. Aam record 30 minute mein aik dafa (localStorage 'nt-hazri-diag-v218'),
+  ya version/pending badle to. failed() -> fail ki wajah foran; confirmed(): pehle fail hui thi -> fixedAt; der se pohanchi
+  (fresh:false, >= 2 min) -> lateKind/lateMin/lateAt + fixedAt; drain mein Check-In 'lost' -> fail. Kab likhta: staff ka apna
+  account doc aate hi; manager ka staff list mein apna account milte hi. Best-effort (.catch chup) — rules na hon to kuch nahi toot-ta.
+- Owner/manager: live(col('staffDiag'), 'diag') -> state.diag. owner.js phoneHealth(): har kaam wala staff -> { d, v, old, fail, late }.
+  old = version malik ki app (APP_VERSION) se kam, YA record hi nahi lekin aaj Check-In kiya (v218 se purani app record nahi likhti).
+  fail = failDate kal/aaj aur fixedAt < failAt. late = pichle 2 din mein der se pohanchi.
+  "Tawajju chahiye": sab se upar surkh "N phone se Check-Out server tak nahi gayi — Sonu: Check-Out 9:05 pm (internet)",
+  aur narangi "N phone par purani app — ... larke se kahein app band kar ke dobara kholein". Dono -> action 'phones'.
+  phonesSheet() "Phones ki jaanch" (Settings > App mein bhi tool): har larka, version chip (hara / narangi / "Record nahi"),
+  Home screen ya browser, phone, aakhri dafa kab kholi, ruki likhai, fail (kya, kab, wajah Roman Urdu mein: internet / ijazat /
+  Check-In tha hi nahi / phone se mit gayi), der se pohanchi (kitne min). Sab ka record na ho -> "v218 rules Publish karein".
+- firestore.rules v218: naya match staffDiag/{phone}: create/update sirf validStaffSession() && phone == sessionPhone(),
+  keys hasOnly, serverAt == request.time, size limits. Parhna: upar wala generic match (malik + manager). MALIK KO v218 RULES
+  PUBLISH KARNE HAIN (warna larkon ke phone record nahi likh sakte; app phir bhi chalti hai).
+- CSS: .phones, .ver-chip (is-ok / is-old / is-none).
+- Tests 75 (+2 sync.test: record likhna, sirf rules wali keys (firestore.rules se parh kar milate hain), 30 min throttle,
+  fail -> failKind/failCode, theek -> fixedAt; der se pohanchi -> lateMin). app.dom.test: purani app + fail Tawajju mein, sheet.
+- Functions mein koi tabdeeli nahi (wo HISSA 3 = v219 mein).
+
+------------------------------------------------------------
+00000000000000000. v217 — PAKKI TASDEEQ (CHECK-IN / CHECK-OUT / WAPSI) + PREMIUM ANIMATION  [3 hisson ka HISSA 1]
+------------------------------------------------------------
+Malik (27 Sep): (1) larke ne Check-Out kiya lekin malik ki app mein "Check-Out baqi" (misal: 25-26 Sep ke 10 log, Sonu);
+(2) notification 1-2 request ke baad / usi waqt nahi aata; (3) larka "Wapas aa gaya" dabata hai, malik ki screen par nahi aata —
+malik/manager ko khud lagana parta hai. Sath: Check-In/Out par larkon ko premium animation. Plan 3 hisson mein (jawab kat gaya tha):
+  HISSA 1 = v217 (ye) — sirf app files. HISSA 2 = v218 — jaanch ka record (fail ki wajah server par) + har phone ka app version
+  (rules badlenge). HISSA 3 = v219 — sab khabrein foran (aik hi jagti function, kharcha wahi) + token safai + app khuli ho tab bhi awaaz.
+ASAL KAMZORI (code mein mili): Check-Out 2.5 s baad, aur staff ki wapsi (quick) 0.6 s baad hi "ho gaya" bol deti thi — server ne
+qubool kiya ho ya nahi. App band / net gaya / server ne mana kiya -> larke ko laga lag gaya, malik tak nahi pohancha. Mana hone par
+Firestore local copy wapas le leta hai -> "Check-Out wapas aa gaya". (Asal Firebase par pakki wajah hissa 2 ke record se milegi.)
+- data.js: watchPunch HATAYA -> tracked(entry, write, fresh). state.sync[key] = { kind, phase: sending|waiting|ok|fail, code, at },
+  key = 'checkin:<id>' | 'checkout:<id>' | 'return:<outId>'. setDoc ka promise tab poora hota hai jab SERVER qubool kare = tasdeeq.
+  2.5 s mein na aaye -> 'waiting'. Mana ho -> pehle onServer() (getDocFromServer, na ho to getDoc) se dekho: pehle hi lag chuka
+  (doosri koshish / malik ne band kiya) = kamyab; record hi nahi = code 'missing'; warna 'fail' + state.punchError {kind, code}.
+- OUTBOX (localStorage 'nt-hazri-outbox-v217', max 12): Check-Out aur Wapsi ki likhai (asal waqt ke sath, fields) jab tak server
+  confirm na kare. Check-In sirf jaanch ke liye (selfie dobara nahi bhejte). drainOutbox(): staff/manager start ke 6 s baad,
+  window 'online' par, aur baqi ho to har 30 s: server par dekho -> lag chuka = confirmed(fresh:false) | net nahi = waiting |
+  Firebase ki apni qataar mein (row/out .pending) = waiting | warna resend() WAHI PURANA WAQT (checkOut/returnAt badalta nahi,
+  sirf outServerAt/returnServerAt = serverTimestamp). Check-In server par na mile aur phone mein bhi na ho -> punchError 'lost'.
+  36 ghante se purani entry chhor di jati hai. retrySync(key) = "Dobara bhejein" (fresh:true), dismissSync(key) = "Theek hai".
+  Staff 'outs' listener ab includeMetadataChanges (o.pending). returnOut(o, gps, wait=true) staff raasta tracked + settle;
+  checkOut apni khuli parchi ki wapsi wait=false se (Check-Out na ruke). createData({ storage }) — app.js deta hai.
+- Kamyabi: data onProblem('confirmed', { kind, id, fresh, at, outKind }) -> app.js -> view.onConfirmed (manager.js aage deta hai)
+  -> staffview.onConfirmed -> ui.celebrate(). fresh:false (baad mein khud pohanchi) = sirf chhota toast "Pichla Check-Out ... ✓".
+- ANIMATION (ui.celebrate, styles.css "v217" hissa): #app ke BAHAR body par .fx overlay (app har data par root.innerHTML dobara
+  banati hai — andar hoti to toot jati). Register ka panna (lakeerein + surkh hashiya), gola + check khud banta (stroke draw),
+  phir STAMP thapp se: HAZIR (hara) | "LATE · N min" (narangi, minutesLate > grace) | CHUTTI (ink, kaam ke ghante 0 se gin kar,
+  overtime chip chamakta) | WAPAS (ink-2). Vibration. 4.6 s ya "Theek hai"/tap/Escape par band. prefers-reduced-motion = bina harkat.
+  Check-In 3 qadam (staffview stepper, ui.stage selfie|gps|send): selfie pulse, location par radar lehrein, server par ghoomta ring;
+  qadam chalte hue Check-In button nahi dikhta (double tap nahi). Server mana kare -> .punch-error mein halka shake (sirf pehle
+  1.5 s, har render par nahi) + checkout ke liye "Dobara bhejein". sync-line: sending (ink, dhadakta nishan) / waiting (narangi +
+  "Dobara bhejein") / pohanch gaya (hara). Wapsi ruki/mana: returnSync() card outCard ke upar.
+- CHECK-OUT "DABA KAR RAKHEIN": purana confirm() HATAYA. Button data-hold="check-out" data-hold-ms="900"; app.js generic
+  pointerdown/pointerup/pointercancel + Enter/Space (keydown/keyup) -> ring (SVG pathLength 100) aur halka parda 0.9 s mein bharta;
+  pehle chhora = kuch nahi + nudge + toast "daba kar rakhein"; hold ke dauran softRender ruka rehta hai (hold != null -> dirty).
+  CSS: touch-action:none, user-select none, contextmenu band.
+- Tests 73 (+5 sync.test.mjs: app band ho kar dobara khuli -> purana waqt khud gaya; malik ne pehle band kiya -> dobara nahi;
+  mana -> fail -> Dobara bhejein; record hi nahi -> missing; wapsi dheemi -> dobara; Check-In confirmed event). app.dom.test:
+  animation (.fx HAZIR/WAPAS/CHUTTI), jaldi chhorne par Check-Out nahi, mana -> Dobara bhejein -> kamyab, outbox khali.
+  test-fake-sdk: getDocFromServer, fail.offline, fail.dropPath, fail.hangPath (promise kabhi poora nahi = app band / net gaya).
+  Headless Chromium mein animation ki tasveer dekhi (HAZIR / CHUTTI card theek). Asal phone, asal Firebase par test nahi hua.
+- Rules / functions mein KOI tabdeeli nahi (rules mein nayi key nahi — resend wahi keys bhejta hai). Blue Khata ko hath nahi laga.
+- Purani faltu files (premium-panels.css, staff-tasks.js ... list neeche section 2 mein) ab bhi GitHub par hain — app par asar nahi,
+  sirf un ke purane tests fail hote hain. Mitani hon to list dekhein.
 
 ------------------------------------------------------------
 0000000000000000. v216 — NOTIFICATION KHUD CHALU RAHE + CHECK-OUT KI TASDEEQ
@@ -551,7 +721,7 @@ PDF mein Urdu lipi wala matn tasveer bana kar lagta hai (jsPDF Urdu font nahi ba
 ------------------------------------------------------------
 1) App mein Staff > "Update ke links" > "GitHub — files upload karein" (ya repo > "Add file" > "Upload files") -> zip ke andar ki SAB files ek sath daal dein (folder nahi, sirf files) -> Commit.
 2) Upar wali list ki purani files delete karein (har file kholein -> ... -> Delete file).
-3) 1-2 minute baad app kholein; neeche/login par "v217" likha aaye. Staff ke phone par bhi v217 aana zaroori hai (purani na chal rahi ho).
+3) 1-2 minute baad app kholein; neeche/login par "v216" likha aaye. Staff ke phone par bhi v216 aana zaroori hai (purani na chal rahi ho).
 v204 se Firestore rules NAYE hain (upar 0000 dekhein) — app ke baad publish karne hain. Authentication mein "Anonymous" aur "Email/Password" dono ON rehne chahiye.
 
 ------------------------------------------------------------
