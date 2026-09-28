@@ -27,11 +27,14 @@ const records = new Map([
   // v222: galla nigrani — galla camera (dabba mark), aaj 2 harkatein (1 shak), 6 tasveerein, din ki ginti
   [B + 'cameras/cc33-ch1', { name: 'Tokri', ip: '192.168.0.143', mac: 'cc33', brand: 'dahua', channel: 1, role: 'galla', enabled: true, createdAt: 9, status: 'online', watch: 'on', fps: 12.5, stream: 'main', zone: { x: 0.2, y: 0.3, w: 0.4, h: 0.35 } }],
   [B + 'cameraEvents/cc33-ch1-2', { cam: 'cc33-ch1', camName: 'Tokri', at: Date.now() - 600000, date: C.pkDate(), verdict: 'shak', why: 'Note jeb ki taraf gaya', thumb: '/9j/AA', n: 6, ms: 900, model: 'm', agent: '1.1' }],
-  [B + 'cameraEvents/cc33-ch1-1', { cam: 'cc33-ch1', camName: 'Tokri', at: Date.now() - 1200000, date: C.pkDate(), verdict: 'normal', why: 'Customer ko baqaya diya', thumb: '/9j/BB', n: 6, ms: 800, model: 'm', agent: '1.2', flow: 'len_den', matchState: 'ok', match: { kind: 'sale', no: '00119008', amount: 1215, at: Date.now() - 1190000, party: 'Cash', who: '' } }],
+  [B + 'cameraEvents/cc33-ch1-1', { cam: 'cc33-ch1', camName: 'Tokri', at: Date.now() - 1200000, date: C.pkDate(), verdict: 'normal', why: 'Customer ko baqaya diya', thumb: '/9j/BB', n: 6, ms: 800, model: 'm', agent: '1.2', flow: 'len_den', matchState: 'ok', match: { kind: 'sale', no: '00119008', amount: 9000, at: Date.now() - 1190000, party: 'Cash', who: '', changed: 'cancel', after: 0, alertId: '00119008-1' } }],
   // v223: paisa nikla, 5 minute tak koi entry nahi
   [B + 'cameraEvents/cc33-ch1-0', { cam: 'cc33-ch1', camName: 'Tokri', at: Date.now() - 1800000, date: C.pkDate(), verdict: 'normal', why: 'Galla se note nikal kar diye', thumb: '/9j/CC', n: 10, ms: 800, model: 'm', agent: '1.2', flow: 'nikla', matchState: 'missing' }],
   [B + 'cameraFrames/cc33-ch1-2', { frames: ['/9j/F1', '/9j/F2', '/9j/F3', '/9j/F4', '/9j/F5', '/9j/F6'], at: Date.now() - 600000, cam: 'cc33-ch1' }],
   [B + `cameraStats/cc33-ch1_${C.pkDate()}`, { cam: 'cc33-ch1', date: C.pkDate(), touches: 7, checks: 2, shak: 1, unchecked: 1, at: Date.now(), moneyIn: 5, moneyOut: 2, matched: 6, missing: 1 }],
+  // v224: ghee ka bill 9,000 cancel -> naya 100; camera ka card usi bill se juda tha
+  [B + `cameraStats/pos_${C.pkDate()}`, { cam: 'pos', date: C.pkDate(), alerts: 1, at: Date.now() }],
+  [B + 'posAlerts/00119008-1', { kind: 'cancel', no: '00119008', before: 9000, after: 0, amount: 9000, at: Date.now() - 1190000, when: Date.now() - 1000000, by: 'Ali', date: C.pkDate(), eventId: 'cc33-ch1-1', replacedBy: { no: '00119009', amount: 100, at: Date.now() - 900000 } }],
   [B + 'cameraPC/status', { at: Date.now() - 60000, v: '1.2', host: 'SHOP-PC', cams: 1, online: 1, pos: 'POS theek · Galla screen theek', found: [{ ip: '192.168.0.105', brand: 'dahua', mac: 'aa11' }, { ip: '192.168.0.110', brand: 'hik', mac: 'bb22' }] }],
   [B + `staffRequests/r1`, { phone: '03007654321', kind: 'leave', date: today, to: today, checkIn: '', checkOut: '', reason: 'Bimar', status: 'pending', createdAt: 5, by: 'x' }]
 ]);
@@ -91,14 +94,21 @@ test('malik login → Hazri tab, qataarein, tawajju', async () => {
   await click('[data-sheet=cameras] [data-sheet-close]');
   // v222: NIGRANI — Tawajju se tab, khulasa, filter, event + 6 tasveerein, duty, malik ka faisla, galla ka hissa
   await click('[data-action=tab][data-arg=hazri]');
-  assert.match($('.attention').textContent, /Aaj 1 dafa galla par shak/);
+  assert.match($('.attention').textContent, /Aaj 1 dafa galla par shak/); assert.match($('.attention').textContent, /Aaj 1 bill cancel \/ badle/);
   await click('.attention [data-action=tab][data-arg=nigrani]'); await settle(12);
   assert.ok($('main.view-nigrani'), 'Nigrani tab'); assert.match($('.nig-cams').textContent, /Tokri · nigrani chalu/);
   const sumText = $('.nig-sum').textContent; assert.match(sumText, /7\s*galla chhua/); assert.match(sumText, /2\s*AI jaanch/); assert.match(sumText, /1\s*shak/); assert.match(sumText, /0\/1\s*shak dekhe/);
   assert.match($('main').textContent, /1 dafa AI jaanch nahi hui/);
   assert.equal($$('.nig-ev').length, 3, 'teeno harkatein'); assert.match($$('.nig-ev')[0].textContent, /Shak/); assert.match($$('.nig-ev')[0].textContent, /jeb/);
   // v223 milaan: bill mila / entry nahi, khulasa, filter
-  assert.match($('.nig-ev[data-id="cc33-ch1-1"]').textContent, /Liya \+ baqaya/); assert.match($('.nig-ev[data-id="cc33-ch1-1"]').textContent, /Bill #00119008 · Rs 1,215/);
+  assert.match($('.nig-ev[data-id="cc33-ch1-1"]').textContent, /Liya \+ baqaya/); assert.match($('.nig-ev[data-id="cc33-ch1-1"]').textContent, /Bill #00119008 · Rs 9,000/);
+  // v224: bill cancel hua — card par chip, Tawajju, notice, "Bill badle" filter ke cards
+  assert.match($('.nig-ev[data-id="cc33-ch1-1"]').textContent, /Bill cancel hua → Rs 0/);
+  assert.match($('.nig-notice').textContent, /1 bill cancel \/ badle/);
+  await click('[data-action=nig-filter][data-arg=alerts]'); assert.equal($$('.nig-alert').length, 1);
+  assert.match($('.nig-alert').textContent, /Bill cancel hua: #00119008 · Rs 9,000/); assert.match($('.nig-alert').textContent, /naya bill: #00119009 · Rs 100/); assert.match($('.nig-alert').textContent, /Ali/);
+  await click('.nig-alert [data-action=nig-open]'); await settle(8); assert.match($('[data-sheet=nig-ev] .nig-match').textContent, /Bill cancel hua → Rs 0/); await click('[data-sheet=nig-ev] [data-sheet-close]');
+  await click('[data-action=nig-filter][data-arg=all]');
   assert.match($('.nig-ev[data-id="cc33-ch1-0"]').textContent, /Paisa nikla/); assert.match($('.nig-ev[data-id="cc33-ch1-0"]').textContent, /Entry nahi/);
   const milaan = $('.nig-milaan').textContent; assert.match(milaan, /5\s*paisa aaya/); assert.match(milaan, /6\s*bill \/ entry mili/); assert.match(milaan, /1\s*entry nahi/);
   await click('[data-action=nig-filter][data-arg=missing]'); assert.equal($$('.nig-ev').length, 1, 'sirf Entry nahi');

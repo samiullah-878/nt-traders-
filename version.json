@@ -1,6 +1,6 @@
 {
-  "version": "v223",
+  "version": "v224",
   "variant": "Production",
   "buildDate": "2026-09-29",
-  "notes": "Galla milaan: har len-den POS bill / refund / Galla screen 'de diye' se milta hai; Entry nahi par khabar."
+  "notes": "Bill cancel / badla pakarna: POS mein bill ban ne ke baad cancel ya raqam kam ho to Nigrani mein alert + khabar."
 }

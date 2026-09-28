@@ -33,7 +33,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     return {
       role: null, phone: '', loaded: new Set(), config: { ...DEFAULT_CONFIG },
       staff: [], months: new Map(), requests: [], schedules: new Map(), payroll: [],
-      account: null, myAttendance: [], punchError: null, sync: {}, diag: [], cameras: [], camPC: null, camCfg: null, camShots: new Map(), camStats: [], camEvents: [], camDayStats: [], camDay: '', outs: [], teamOuts: [], teamAttendance: [], tickets: [], myTickets: [], teamTickets: [], errors: {}, lastSync: {}, pendingWrites: 0
+      account: null, myAttendance: [], punchError: null, sync: {}, diag: [], cameras: [], camPC: null, camCfg: null, camShots: new Map(), camStats: [], camEvents: [], camDayStats: [], camDay: '', posAlerts: [], outs: [], teamOuts: [], teamAttendance: [], tickets: [], myTickets: [], teamTickets: [], errors: {}, lastSync: {}, pendingWrites: 0
     };
   }
   let unsubs = [], monthSubs = new Map(), epoch = 0, legacyChecked = false, shotsSub = null, eventSubs = [];
@@ -1072,7 +1072,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   function watchEvents(date) {
     for (const u of eventSubs) { try { u(); } catch { /* ignore */ } } eventSubs = [];
     state.camDay = date || '';
-    if (!date || state.role !== 'owner') { state.camEvents = []; state.camDayStats = []; return; }
+    if (!date || state.role !== 'owner') { state.camEvents = []; state.camDayStats = []; state.posAlerts = []; return; }
     const token = epoch;
     eventSubs.push(sdk.onSnapshot(sdk.query(col('cameraEvents'), sdk.where('date', '==', date)), snap => {
       if (token !== epoch || state.camDay !== date) return;
@@ -1082,6 +1082,11 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       if (token !== epoch || state.camDay !== date) return;
       state.camDayStats = readList(snap); changed();
     }, error => { if (token === epoch) problem('camDayStats', error); }));
+    // v224: us din ke bill cancel / badle (PC ne POS mein dekhe)
+    eventSubs.push(sdk.onSnapshot(sdk.query(col('posAlerts'), sdk.where('date', '==', date)), snap => {
+      if (token !== epoch || state.camDay !== date) return;
+      state.posAlerts = readList(snap).sort((a, b) => (b.when || 0) - (a.when || 0)); changed();
+    }, error => { if (token === epoch) problem('posAlerts', error); }));
   }
   async function loadFrames(id) { ownerOnly(); const snap = await sdk.getDoc(ref('cameraFrames', id)); return snap.exists() ? (snap.data().frames || []) : []; }
   async function reviewEvent(id, status, note = '') {
@@ -1100,7 +1105,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   async function cleanupCam(days = 30) {
     if (state.role !== 'owner') return 0;
     const cutoff = addDays(pkDate(), -days - 1); let n = 0;
-    for (const coll of ['cameraEvents', 'cameraStats']) {
+    for (const coll of ['cameraEvents', 'cameraStats', 'posAlerts']) {
       const snap = await sdk.getDocs(sdk.query(col(coll), sdk.where('date', '<=', cutoff), ...(sdk.limit ? [sdk.limit(40)] : [])));
       const ids = []; snap.forEach(d => ids.push(d.id));
       for (const id of ids) {

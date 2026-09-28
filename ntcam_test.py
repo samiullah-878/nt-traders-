@@ -178,6 +178,51 @@ class Milaan(unittest.TestCase):
         self.assertIn("affectedKeys().hasOnly(['matchState', 'match', 'matchAt'])", rules)
 
 
+class BillBadla(unittest.TestCase):
+    """v1.3 — bill cancel / raqam kam / items badle -> posAlerts, replacedBy, camera card par chip."""
+    def _pos(self):
+        import datetime
+        writes = []
+        class F:
+            def get(s, path): return {'match': {'kind': 'sale', 'no': '00119008', 'amount': 9000.0}} if 'cameraEvents' in path else None
+            def patch(s, path, data): writes.append((path, data)); return True
+        p = ntcam.Pos(F()); p.users = {8: 'Ali'}
+        g = types.SimpleNamespace(by_bill={'00119008': 'cam-ev-1'}, bump=lambda cid, d, **kv: writes.append(('bump', (cid, kv))))
+        p.galla = g
+        base = datetime.datetime.utcfromtimestamp(time_now() + 5 * 3600 - 600).replace(second=0, microsecond=0)   # PK ka sada waqt, 10 min pehle
+        d = lambda m: base + datetime.timedelta(minutes=m)
+        row = lambda sid, no, total, st, mins, n=1, h=11, upd=None: {'SaleID': sid, 'SaleNo': no, 'CreatedOn': d(mins), 'UpdatedOn': d(upd) if upd else None, 'CreatedBy': 8, 'UpdatedBy': 8 if upd else None, 'TotalSale': total, 'DocStatusID': st, 'n': n, 'h': h}
+        return p, writes, row
+
+    def test_cancel_phir_naya_sasta_bill(self):
+        p, writes, row = self._pos()
+        p.watch_bills({1: row(1, '00119008', 9000, 2, 5)})
+        self.assertEqual(p.alerts, {}, 'pehli dafa dekha — alert nahi')
+        p.watch_bills({1: row(1, '00119008', 9000, 3, 5, upd=7)})                       # cancel
+        self.assertEqual(len(p.alerts), 1); a = list(p.alerts.values())[0]
+        self.assertEqual((a['kind'], a['no'], a['before'], a['after'], a['by'], a['eventId']), ('cancel', '00119008', 9000.0, 0.0, 'Ali', 'cam-ev-1'))
+        pa = [d for pth, d in writes if isinstance(pth, str) and '/posAlerts/' in pth]; self.assertEqual(pa[0]['kind'], 'cancel'); self.assertEqual(pa[0]['amount'], 9000.0)
+        ev = [d for pth, d in writes if isinstance(pth, str) and '/cameraEvents/cam-ev-1' in pth][0]
+        self.assertEqual((ev['match']['changed'], ev['match']['after']), ('cancel', 0.0), 'camera card par chip')
+        self.assertIn(('bump', ('pos', {'alerts': 1})), writes)
+        p.watch_bills({1: row(1, '00119008', 9000, 3, 5, upd=7), 2: row(2, '00119009', 100, 2, 9)})   # 2 min baad naya sasta
+        self.assertEqual(a['replacedBy']['no'], '00119009'); self.assertEqual(a['replacedBy']['amount'], 100.0)
+        p.watch_bills({1: row(1, '00119008', 9000, 3, 5, upd=7), 2: row(2, '00119009', 100, 2, 9)})
+        self.assertEqual(len(p.alerts), 1, 'dobara alert nahi')
+        rules = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'firestore.rules'), encoding='utf-8').read()
+        blk = rules[rules.index('posAlerts/{alertId}'):]; blk = blk[:blk.index('\n    }')]
+        for k in pa[-1]: self.assertIn("'" + k + "'", blk, 'rules mein nahi: ' + k)
+
+    def test_edit_aur_items(self):
+        p, writes, row = self._pos()
+        p.watch_bills({1: row(1, 'A', 9000, 2, 5), 2: row(2, 'B', 500, 2, 6, n=2, h=77)})
+        p.watch_bills({1: row(1, 'A', 100, 2, 5, upd=8), 2: row(2, 'B', 500, 2, 6, n=2, h=78)})
+        kinds = sorted(a['kind'] for a in p.alerts.values()); self.assertEqual(kinds, ['edit', 'items'])
+        e = [a for a in p.alerts.values() if a['kind'] == 'edit'][0]; self.assertEqual((e['before'], e['after']), (9000.0, 100.0))
+        p.watch_bills({1: row(1, 'A', 100, 2, 5, upd=8), 2: row(2, 'B', 500, 2, 6, n=2, h=78), 3: row(3, 'C', 12000, 2, 9)})
+        self.assertNotIn('replacedBy', e, 'mehnga bill "iski jagah" nahi')
+
+
 class Nigrani(unittest.TestCase):
     """v1.1 galla nigrani — harkat, tukre, AI faisla, ginti (bina camera / Claude ke)."""
     def test_zone_px(self):

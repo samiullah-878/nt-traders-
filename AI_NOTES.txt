@@ -1,8 +1,30 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v223   Tareekh: 2026-09-29  (galla milaan; ntcam.py v1.2)
+Version: v224   Tareekh: 2026-09-29  (bill cancel / badla; ntcam.py v1.3; v223 galla milaan bhi isi mein)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+000000000000000000000000. v224 + ntcam.py v1.3 — BILL CANCEL / BADLA
+------------------------------------------------------------
+28 Sep raat: rules v223 publish ke baad sab chal gaya (PC card "chal raha hai", Galla nigrani chalu). Pehle 3 AI jaanch 403 par
+gum huin (ginti rahi, card nahi). Malik ka naya nuqta: ghee ka Rs 9,000 bill print, phir POS mein cancel/edit kar ke Rs 100 ka
+naya bill — camera ne 9,000 dekha, POS mein 100. Chahiye: yeh bhi card ke sath.
+- ntcam.py v1.3 Pos: har poll (20 s) pichle 4 ghante ke SAB bill (cancel wale bhi) + SaleDetail COUNT aur CHECKSUM_AGG(ItemID,
+  Qty, Rate). watch_bills(): pichli haalat se muqabla — DocStatusID 3 = 'cancel'; TotalSale kam = 'edit'; total wahi lekin items
+  badle (h/n) = 'items'. alert(): posAlerts/<no>-<whenMs> {kind, no, before, after, amount(=before), at (bill bana ms), when
+  (badla ms), by (POS user naam: Users/UserMaster/tblUsers/AppUsers/Login table best-effort, warna "user 8"), date, eventId,
+  replacedBy {no, amount, at}}. replacedBy = cancel/edit ke -1..+10 min mein naya bill jis ki raqam pehle se kam (15 min tak dekhta).
+  Galla.by_bill (bill no -> camera event id, match/recheck par) -> cameraEvents.match += {changed, after, alertId} (rules: match
+  update allowed). cameraStats cam='pos' alerts +1 (Tawajju). Pos(fire), pos.galla = galla. ntcam_test 25 (+2 BillBadla).
+- rules v224: posAlerts (PC create/update, keys ginti, kind list); manager ke liye posAlerts band; cameraStats + 'alerts'. PUBLISH.
+- functions: handlePosAlert (naye posAlerts par) -> owner push "Bill cancel: #.. · Rs 9,000" / "Bill badla: .. → .." (+ naya bill
+  agar replacedBy pehle se). router.test 7.
+- App v224: data.watchEvents + posAlerts (us din); cleanupCam posAlerts bhi. Nigrani: surkh notice "N bill cancel / badle" (tap =
+  filter 'alerts'), filter chip "Bill badle", alert cards (kind, bill, raqam pehle -> baad, kab bana / kab badla, kis ne,
+  "Is ki jagah naya bill", "Us waqt ki photos" -> camera event). Camera card + event sheet: match.changed -> surkh chip
+  "Bill cancel hua → Rs 0" / "Bill badla → Rs 100". Tawajju: "Aaj N bill cancel / badle". app.dom 78 pass.
+- Sach: jaiz cancel bhi alert hote hain (customer ne wapas kiya) — faisla malik. PC band ho to badlav agle din PC on hote hi.
 
 ------------------------------------------------------------
 00000000000000000000000. v223 + ntcam.py v1.2 — GALLA MILAAN

@@ -1,4 +1,5 @@
 # ntcam.py — Noor Traders Hazri: dukaan ke CAMERAS (shop PC par chalta hai). Hissa A.
+# v1.3: BILL BADLA / CANCEL — bill ban ne ke baad cancel (status 3), raqam kam, ya items badle -> posAlerts + card + khabar.
 # v1.2: GALLA MILAAN — har len-den POS ke sale bill / refund aur Blue Khata Galla screen ki "de diye" se milana (sirf parhna).
 # v1.1 (Hissa B): GALLA NIGRANI — 'galla' kaam wale camera ki video lagatar, malik ke mark kiye dabbe mein harkat par
 # 6 tasveerein (1.5 s pehle + 1.5 s baad), Claude se Normal / Shak, cameraEvents + cameraFrames + cameraStats. Password par ****.
@@ -7,7 +8,7 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '1.2'
+VERSION = '1.3'
 
 import base64, collections, getpass, ipaddress, json, os, queue, re, socket, subprocess, sys, threading, time, traceback, urllib.parse
 from concurrent.futures import ThreadPoolExecutor
@@ -681,11 +682,12 @@ def clock(ts):
 class Pos(threading.Thread):
     """Har 20 s: POS se naye sale bill + refund (SQL Server, khata-sync ki setting), aur Blue Khata ki Galla screen se
     "de diye" payments (firebase-key.json). Sirf PARHTA hai — POS / Blue Khata mein kuch nahi likhta. Aakhri 4 ghante yaad."""
-    def __init__(self):
+    def __init__(self, fire=None):
         super().__init__(daemon=True)
         self.recs, self.lock = collections.deque(maxlen=3000), threading.Lock()
         self.last_sale = self.last_ret = 0
         self.seen = set()
+        self.fire, self.galla, self.bills, self.alerts, self.users = fire, None, {}, {}, None
         self.sql_at = self.bk_at = 0
         self.sql_err = self.bk_err = ''
         self.bk_creds = None
@@ -757,6 +759,13 @@ class Pos(threading.Thread):
                 start = pk_epoch(r['BiltyDate']) if r.get('BiltyDate') and abs(pk_epoch(r['BiltyDate']) - at) < 1800 else at
                 self.add({'kind': 'sale', 'no': str(r['SaleNo'] or r['SaleID']).strip(), 'at': at, 'start': start,
                           'amount': float(r.get('TotalSale') or 0), 'credit': bool(r.get('IsCreditSale')), 'party': str(r.get('PartyName') or '')[:60]})
+            # v1.3: pichle 4 ghante ke SAB bill (cancel wale bhi) — badla / cancel pakarne ke liye
+            cur.execute("SELECT s.SaleID, s.SaleNo, s.CreatedOn, s.UpdatedOn, s.CreatedBy, s.UpdatedBy, s.TotalSale, s.DocStatusID, "
+                        "(SELECT COUNT(*) FROM dbo.SaleDetail d WHERE d.SaleID = s.SaleID) AS n, "
+                        "(SELECT CHECKSUM_AGG(CHECKSUM(d.ItemID, d.Qty, d.Rate)) FROM dbo.SaleDetail d WHERE d.SaleID = s.SaleID) AS h "
+                        "FROM dbo.Sale s WHERE s.CreatedOn >= DATEADD(HOUR, -4, GETDATE()) OR s.UpdatedOn >= DATEADD(HOUR, -4, GETDATE())")
+            rows = {int(r['SaleID']): r for r in cur.fetchall()}
+            self.watch_bills(rows)
             cur.execute("SELECT TOP 100 SaleReturnID, SaleReturnNo, CreatedOn, TotalSaleReturn FROM dbo.SaleReturn "
                         "WHERE SaleReturnID > %d AND DocStatusID <> 3 ORDER BY SaleReturnID", (self.last_ret,))
             for r in cur.fetchall():
@@ -766,6 +775,104 @@ class Pos(threading.Thread):
                               'amount': float(r.get('TotalSaleReturn') or 0), 'party': ''})
         finally:
             con.close()
+
+    def user_name(self, uid):
+        """POS ka user naam (best-effort) — table na mile to 'user 8'."""
+        if uid in (None, '', 0):
+            return ''
+        if self.users is None:
+            self.users = {}
+            try:
+                cfg = (load_json(os.path.join(KHATA_DIR, 'local-config.json'), {}) or {}).get('sql') or {}
+                pymssql = need('pymssql', 'pymssql')
+                con = pymssql.connect(server=cfg['server'], user=cfg.get('user'), password=cfg.get('password'), database=cfg.get('database', 'POS'),
+                                      login_timeout=10, timeout=20, as_dict=True)
+                try:
+                    cur = con.cursor()
+                    cur.execute("SELECT TOP 1 TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME IN ('Users','UserMaster','tblUsers','AppUsers','Login','LoginUser')")
+                    t = cur.fetchone()
+                    if t:
+                        cur.execute("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = %s", (t['TABLE_NAME'],))
+                        cols = [c['COLUMN_NAME'] for c in cur.fetchall()]
+                        idc = next((c for c in cols if c.lower() in ('userid', 'id', 'loginid')), None)
+                        nc = next((c for c in cols if c.lower() in ('username', 'name', 'loginname', 'fullname', 'displayname')), None)
+                        if idc and nc:
+                            cur.execute(f"SELECT [{idc}] AS i, [{nc}] AS n FROM dbo.[{t['TABLE_NAME']}]")
+                            self.users = {int(r['i']): str(r['n'])[:40] for r in cur.fetchall() if r.get('i') is not None}
+                finally:
+                    con.close()
+            except Exception as e:
+                log('pos users:', e)
+        return self.users.get(int(uid), f'user {uid}')
+
+    def watch_bills(self, rows):
+        """v1.3: bill ki agli haalat — CANCEL (DocStatusID 3), raqam KAM (edit), ya ITEMS badle (raqam wahi)."""
+        now = time.time()
+        for sid, r in rows.items():
+            cur = {'no': str(r.get('SaleNo') or sid).strip(), 'total': float(r.get('TotalSale') or 0), 'status': int(r.get('DocStatusID') or 0),
+                   'n': int(r.get('n') or 0), 'h': r.get('h'), 'at': pk_epoch(r['CreatedOn']) if r.get('CreatedOn') else now,
+                   'by': r.get('UpdatedBy') or r.get('CreatedBy'), 'when': pk_epoch(r['UpdatedOn']) if r.get('UpdatedOn') else now}
+            old = self.bills.get(sid)
+            self.bills[sid] = cur
+            if old is None or old['status'] == 3:
+                continue
+            kind = None
+            if cur['status'] == 3:
+                kind = 'cancel'
+            elif cur['total'] < old['total'] - 0.5:
+                kind = 'edit'
+            elif cur['h'] != old['h'] or cur['n'] != old['n']:
+                kind = 'items'
+            if kind:
+                self.alert(kind, sid, old, cur)
+        for sid in [k for k in self.bills if now - self.bills[k]['at'] > 5 * 3600]:
+            self.bills.pop(sid, None)
+        # cancel / edit ke 10 min ke andar naya (sasta) bill = "iski jagah"
+        for aid, a in list(self.alerts.items()):
+            if a.get('replacedBy') or now - a['when'] > 900:
+                continue
+            for sid, b in self.bills.items():
+                if b['status'] != 3 and b['no'] != a['no'] and a['when'] - 60 <= b['at'] <= a['when'] + 600 and b['total'] < a['before']:
+                    a['replacedBy'] = {'no': b['no'], 'amount': b['total'], 'at': int(b['at'] * 1000)}
+                    self.write_alert(aid, a)
+                    break
+
+    def alert(self, kind, sid, old, cur):
+        aid = f"{cur['no']}-{int(cur['when'] * 1000)}"
+        if aid in self.alerts:
+            return
+        a = {'kind': kind, 'no': cur['no'], 'before': old['total'], 'after': 0.0 if kind == 'cancel' else cur['total'], 'at': int(cur['at'] * 1000),
+             'when': cur['when'], 'by': str(self.user_name(cur['by']))[:40], 'date': pk_date(cur['when']), 'eventId': ''}
+        try:
+            if self.galla:
+                a['eventId'] = self.galla.by_bill.get(cur['no'], '')
+        except Exception:
+            pass
+        self.alerts[aid] = a
+        log('bill', kind, a['no'], a['before'], '->', a['after'])
+        self.write_alert(aid, a)
+        if self.galla:
+            self.galla.bump('pos', a['date'], alerts=1)
+        # camera ke card par bhi
+        if a['eventId'] and self.fire:
+            try:
+                ev = self.fire.get(f"{BIZ}/cameraEvents/{a['eventId']}") or {}
+                m = dict(ev.get('match') or {})
+                m.update({'changed': kind, 'after': a['after'], 'alertId': aid})
+                self.fire.patch(f"{BIZ}/cameraEvents/{a['eventId']}", {'match': m, 'matchAt': now_ms()})
+            except Exception as e:
+                log('card par bill badla nahi likha:', e)
+
+    def write_alert(self, aid, a):
+        if not self.fire:
+            return
+        doc = {k: v for k, v in a.items() if k != 'when'}
+        doc['when'] = int(a['when'] * 1000)
+        doc['amount'] = a['before']
+        try:
+            self.fire.patch(f'{BIZ}/posAlerts/{aid}', doc)
+        except Exception as e:
+            log('posAlerts nahi likha:', e)
 
     def poll_bk(self):
         import requests
@@ -894,6 +1001,7 @@ class Galla(threading.Thread):
         self.fire, self.pos, self.q, self.stats, self.dirty = fire, pos, queue.Queue(maxsize=40), {}, set()
         self.last_ai, self.pause_until, self.lock = {}, 0, threading.Lock()
         self.hold, self.waiting, self.examples, self.ex_at = [], [], '', 0
+        self.by_bill = {}                                      # v1.3: bill no -> camera event id
 
     def stat(self, cid, date):
         k = (cid, date)
@@ -903,7 +1011,7 @@ class Galla(threading.Thread):
             except Exception:
                 old = {}
             self.stats[k] = {'cam': cid, 'date': date, **{n: int(old.get(n) or 0) for n in
-                             ('touches', 'checks', 'shak', 'unchecked', 'moneyIn', 'moneyOut', 'matched', 'missing')}}
+                             ('touches', 'checks', 'shak', 'unchecked', 'moneyIn', 'moneyOut', 'matched', 'missing', 'alerts')}}
         return self.stats[k]
 
     def bump(self, cid, date, **kv):
@@ -989,6 +1097,10 @@ class Galla(threading.Thread):
                'thumb': jpeg_b64(frames[len(frames) // 2], width=320, quality=60)[0], 'n': len(crops), 'ms': ms, 'model': MODEL, 'agent': VERSION}
         if m:
             doc['match'] = match_doc(m)
+            if m['kind'] == 'sale':
+                self.by_bill[str(m['no'])] = eid
+                if len(self.by_bill) > 500:
+                    self.by_bill = dict(list(self.by_bill.items())[-300:])
         self.fire.patch(f'{BIZ}/cameraEvents/{eid}', doc)
         if state == 'wait':
             self.waiting.append({'eid': eid, 'cid': w.cid, 'date': date, 'flow': fl, 't0': t0, 't1': t1, 'made': time.time()})
@@ -1004,6 +1116,8 @@ class Galla(threading.Thread):
             state, m = match(e['flow'], e['t0'], e['t1'], self.recs(e['t0'] - 180, e['t1'] + 400), self.pos_ok(), self.bk_ok())
             if state == 'ok':
                 self.fire.patch(f"{BIZ}/cameraEvents/{e['eid']}", {'matchState': 'ok', 'match': match_doc(m), 'matchAt': now_ms()})
+                if m['kind'] == 'sale':
+                    self.by_bill[str(m['no'])] = e['eid']
                 self.bump(e['cid'], e['date'], matched=1)
             elif state == 'nopos':
                 self.fire.patch(f"{BIZ}/cameraEvents/{e['eid']}", {'matchState': 'nopos', 'matchAt': now_ms()})
@@ -1210,9 +1324,10 @@ def run():
             time.sleep(wait)
             wait = min(120, wait * 2)
     cams, shot_at, asked, state, watchers = {}, {}, {}, {}, {}
-    pos = Pos()                                    # v1.2: POS + Galla screen (sirf parhna)
-    pos.start()
+    pos = Pos(fire)                                # v1.2: POS + Galla screen (sirf parhna); v1.3: bill badla / cancel
     galla = Galla(fire, pos)
+    pos.galla = galla
+    pos.start()
     galla.start()
     last_list = last_status = 0
     last_update = time.time() - UPDATE_EVERY + 120   # shuru ke 2 minute baad pehli jaanch
