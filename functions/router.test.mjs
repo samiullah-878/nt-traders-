@@ -51,3 +51,10 @@ test('Test notification: testAt badle to usi token par', async () => {
   assert.equal(s.length, 1); assert.equal(s[0].token, 'NEW'); assert.equal(s[0].data.tag, 'test');
   assert.equal((await write('pushTokens', 't2', { token: 'NEW', testAt: 9, at: 7 }, { token: 'NEW', testAt: 9 })).length, 0, 'testAt wahi — dobara nahi');
 });
+
+test('v222: galla SHAK -> sirf malik ko khabar; normal par kuch nahi', async () => {
+  const a = await write('cameraEvents', 'aa11-ch1-1700000000000', { cam: 'aa11-ch1', camName: 'Galla', at: Date.now(), date: '2026-09-28', verdict: 'shak', why: 'Note jeb ki taraf gaya' });
+  assert.deepEqual(a.map(m => m.token), ['NEW'], 'sirf owner (manager ko nahi)');
+  assert.match(a[0].data.title, /Galla: shak · Galla/); assert.equal(a[0].data.tag, 'cam-aa11-ch1-1700000000000'); assert.match(a[0].data.body, /jeb/);
+  assert.equal((await write('cameraEvents', 'x2', { verdict: 'normal', why: 'baqaya diya' })).length, 0);
+});

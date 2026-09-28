@@ -112,28 +112,11 @@ async function handlePushTest(before, after) {
 }
 
 
-/* ---------- v222: malik ka paigham -> larke (staff) ke phone par ---------- */
-async function handleMessage(event) {
-  const m = event.data?.data(); if (!m?.text) return;
-  const all = (m.toList || []).includes('all'), phones = new Set(m.toList || []);
-  const snap = await col('pushTokens').get();
-  const list = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(t => t.token && t.role === 'staff' && (all || phones.has(t.phone)))
-    .sort((a, b) => Number(b.at || 0) - Number(a.at || 0));
-  // aik phone (device id) / aik token par aik hi khabar
-  const seenTok = new Set(), seenDev = new Set(), targets = [];
-  for (const t of list) { const dev = (String(t.device || '').match(/^d:(\w+)/) || [])[1] || ''; if (seenTok.has(t.token) || (dev && seenDev.has(dev))) continue; seenTok.add(t.token); if (dev) seenDev.add(dev); targets.push(t); }
-  if (!targets.length) { logger.info('paigham: kisi larke ka phone register nahi'); return; }
-  const link = await appLink();
-  const res = await getMessaging().sendEach(targets.map(t => ({
-    token: t.token,
-    data: { title: `${m.fromName || 'Malik'} ka paigham`, body: String(m.text).slice(0, 300), tag: 'msg-' + event.params.id, link },
-    android: { priority: 'high' },
-    webpush: { headers: { Urgency: 'high', TTL: '86400' }, fcmOptions: { link } }
-  })));
-  const dead = [];
-  res.responses.forEach((r, i) => { if (!r.success && /registration-token-not-registered|invalid-argument/.test(r.error?.code || '')) dead.push(targets[i].id); });
-  await Promise.all(dead.map(id => col('pushTokens').doc(id).delete().catch(() => {})));
-  logger.info(`paigham bheja: ${res.successCount}/${targets.length}`);
+/* ---------- v222: galla par SHAK — sirf malik ko (manager bhi staff hai, nigrani us ke liye band) ---------- */
+async function handleCamEvent(event) {
+  const e = event.data?.data(); if (!e || e.verdict !== 'shak') return;
+  const time = new Date(Number(e.at) || Date.now()).toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit' }).toLowerCase();
+  await push({ title: `Galla: shak · ${e.camName || 'camera'} · ${time}`, body: `${String(e.why || 'AI ko shak hua').slice(0, 140)} — photos Nigrani mein`, tag: `cam-${event.params.id}`, kinds: ['owner'] });
 }
 
 /* ---------- v219: AIK HI JAGTI FUNCTION — sab foran wali khabrein ----------
@@ -153,7 +136,7 @@ export const onHazriWrite = onDocumentWritten({ ...FAST, document: `${BIZ}/{coll
     if (coll === 'staffRequests') return await handleRequest(ev);
     if (coll === 'staffTickets') return await handleTicket(ev);
     if (coll === 'staffAttendance') return await handleCheckIn(ev);
-    if (coll === 'staffMessages') return await handleMessage(ev);
+    if (coll === 'cameraEvents') return await handleCamEvent(ev);
   } catch (error) { logger.error('khabar', coll, docId, error); }
 });
 
