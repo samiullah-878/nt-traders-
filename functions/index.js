@@ -113,6 +113,15 @@ async function handlePushTest(before, after) {
 
 
 /* ---------- v222: galla par SHAK — sirf malik ko (manager bhi staff hai, nigrani us ke liye band) ---------- */
+/* ---------- v224: bill cancel / badla — sirf malik ko ---------- */
+const money = n => 'Rs ' + Math.round(Number(n) || 0).toLocaleString('en-PK');
+async function handlePosAlert(event) {
+  const a = event.data?.data(); if (!a) return;
+  const t = ms => new Date(Number(ms) || Date.now()).toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit' }).toLowerCase();
+  const title = a.kind === 'cancel' ? `Bill cancel: #${a.no} · ${money(a.before)}` : a.kind === 'edit' ? `Bill badla: #${a.no} · ${money(a.before)} → ${money(a.after)}` : `Bill ke items badle: #${a.no} · ${money(a.before)}`;
+  const body = `${t(a.at)} ka bill ${t(a.when)} par ${a.kind === 'cancel' ? 'cancel' : 'edit'} hua${a.by ? ' (' + a.by + ')' : ''}${a.replacedBy ? ` — naya #${a.replacedBy.no} ${money(a.replacedBy.amount)}` : ''} · Nigrani mein dekhein`;
+  await push({ title, body, tag: `bill-${event.params.id}`, kinds: ['owner'] });
+}
 const FLOW_TXT = { aaya: 'paisa aaya', nikla: 'paisa nikla', len_den: 'len-den hua' };
 async function handleCamEvent(event, before = null) {
   const e = event.data?.data(); if (!e) return;
@@ -147,6 +156,7 @@ export const onHazriWrite = onDocumentWritten({ ...FAST, document: `${BIZ}/{coll
     if (coll === 'staffTickets') return await handleTicket(ev);
     if (coll === 'staffAttendance') return await handleCheckIn(ev);
     if (coll === 'cameraEvents') return await handleCamEvent(ev);
+    if (coll === 'posAlerts') return await handlePosAlert(ev);
   } catch (error) { logger.error('khabar', coll, docId, error); }
 });
 

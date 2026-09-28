@@ -67,3 +67,11 @@ test('v223: galla milaan — wait -> missing par aik dafa "entry nahi"; ok par k
   assert.equal((await write('cameraEvents', 'ev9', { ...base, matchState: 'ok' }, { ...base, matchState: 'wait' })).length, 0, 'mil gaya');
   assert.equal((await write('cameraEvents', 'ev10', { ...base, matchState: 'wait' })).length, 0, 'naya normal: kuch nahi');
 });
+
+test('v224: bill cancel / badla -> sirf malik ko khabar (naye par hi)', async () => {
+  const a = await write('posAlerts', '00119008-1', { kind: 'cancel', no: '00119008', before: 9000, after: 0, amount: 9000, at: Date.now() - 120000, when: Date.now(), by: 'Ali', date: '2026-09-28', eventId: '', replacedBy: { no: '00119009', amount: 100, at: Date.now() } });
+  assert.deepEqual(a.map(m => m.token), ['NEW']); assert.match(a[0].data.title, /Bill cancel: #00119008 · Rs 9,000/); assert.match(a[0].data.body, /naya #00119009 Rs 100/);
+  const e = await write('posAlerts', 'x-2', { kind: 'edit', no: '5', before: 9000, after: 100, amount: 9000, at: 1, when: 2, by: '', date: '2026-09-28', eventId: '' });
+  assert.match(e[0].data.title, /Bill badla: #5 · Rs 9,000 → Rs 100/);
+  assert.equal((await write('posAlerts', 'x-2', { kind: 'edit', replacedBy: { no: '6' } }, { kind: 'edit' })).length, 0, 'update par dobara nahi');
+});
