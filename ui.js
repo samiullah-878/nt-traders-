@@ -29,14 +29,12 @@ export function nameHtml(text) {
   const t = String(text ?? '');
   return hasArabic(t) ? `<span class="ur" dir="rtl" lang="ur">${esc(t)}</span>` : esc(t);
 }
-/** v222: har naam ka apna halka rang (avatar), hamesha wohi. */
-function hueOf(name) { let h = 0; for (const c of String(name)) h = (h * 31 + c.codePointAt(0)) % 360; return h; }
 export function avatar(account, size = '') {
   const name = String(account?.name || '?').trim();
   const initials = hasArabic(name) ? name.slice(0, 1) : name.split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
   return account?.photo
     ? `<span class="avatar ${size}"><img src="${esc(account.photo)}" alt="" loading="lazy"></span>`
-    : `<span class="avatar ${size}" style="--av-h:${hueOf(name)}" aria-hidden="true">${esc(initials || '?')}</span>`;
+    : `<span class="avatar ${size}" aria-hidden="true">${esc(initials || '?')}</span>`;
 }
 
 /* ---------- toast ---------- */

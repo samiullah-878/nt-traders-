@@ -7,7 +7,7 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Noor Traders Hazri v221 (v218: staffDiag, v220: cameras, v221: bahar se Check-Out request). Owner emails auth.js ke OWNER_EMAILS se milni chahiye.
+    // Noor Traders Hazri v222 (v218: staffDiag, v220: cameras, v221: bahar se Check-Out, v222: galla nigrani). Owner emails auth.js ke OWNER_EMAILS se milni chahiye.
     // An arbitrary Firebase email account must never gain business-owner access.
     function isOwner() {
       return signedIn()
@@ -65,9 +65,9 @@ service cloud.firestore {
     // v220: cameras (nigrani) SIRF malik — manager bhi staff hai, is liye na dekh sakta hai na badal sakta hai.
     match /businesses/noor-traders/{collectionName}/{docId} {
       allow read: if isOwner()
-        || (isOutManager() && !(collectionName in ['cameras', 'cameraShots', 'cameraPC', 'cameraEvents']));
+        || (isOutManager() && !(collectionName in ['cameras', 'cameraShots', 'cameraPC', 'cameraEvents', 'cameraFrames', 'cameraStats']));
       allow write: if isOwner()
-        || (isOutManager() && !(collectionName in ['staffAttendance', 'staffSelfies', 'cameras', 'cameraShots', 'cameraPC', 'cameraEvents']));
+        || (isOutManager() && !(collectionName in ['staffAttendance', 'staffSelfies', 'cameras', 'cameraShots', 'cameraPC', 'cameraEvents', 'cameraFrames', 'cameraStats']));
     }
 
     // Staff can read only the account bound to their own server session.
@@ -260,13 +260,33 @@ service cloud.firestore {
         && request.resource.data.name is string && request.resource.data.name.size() <= 40;
       allow update: if isCameraPC()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ip', 'mac', 'brand', 'status', 'lastFrameAt', 'lastShotAt', 'lastError',
-             'width', 'height', 'agent', 'aiTest', 'aiTestAt', 'seenAt']);
+             'width', 'height', 'agent', 'aiTest', 'aiTestAt', 'seenAt', 'watch', 'fps', 'stream', 'lastMotionAt']);
     }
     // v220: har camera ki aakhri tasveer (chhoti JPEG). Sirf PC likhta hai, malik parhta hai.
     match /businesses/noor-traders/cameraShots/{camId} {
       allow write: if isCameraPC()
         && request.resource.data.keys().hasOnly(['jpg', 'w', 'h', 'at', 'cam'])
         && request.resource.data.jpg is string && request.resource.data.jpg.size() < 400000;
+    }
+    // v222: GALLA NIGRANI — PC har harkat ka faisla (chhoti thumb), 6 tasveerein alag, aur din ki ginti. Malik parhta /
+    // "Theek hai" / "Shak pakka" likhta / 30 din baad mitata (generic match). Manager ke liye band (upar).
+    match /businesses/noor-traders/cameraEvents/{eventId} {
+      allow create: if isCameraPC()
+        && request.resource.data.keys().hasOnly(['cam', 'camName', 'at', 'date', 'verdict', 'why', 'thumb', 'n', 'ms', 'model', 'agent'])
+        && request.resource.data.verdict in ['normal', 'shak', 'saaf_nahi', 'error']
+        && request.resource.data.date is string && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.why is string && request.resource.data.why.size() <= 300
+        && request.resource.data.thumb is string && request.resource.data.thumb.size() < 80000;
+    }
+    match /businesses/noor-traders/cameraFrames/{eventId} {
+      allow create: if isCameraPC()
+        && request.resource.data.keys().hasOnly(['frames', 'at', 'cam'])
+        && request.resource.data.frames is list && request.resource.data.frames.size() <= 8;
+    }
+    match /businesses/noor-traders/cameraStats/{statId} {
+      allow read: if isCameraPC();
+      allow create, update: if isCameraPC()
+        && request.resource.data.keys().hasOnly(['cam', 'date', 'touches', 'checks', 'shak', 'unchecked', 'at']);
     }
     // v218: har larke ke phone ka "jaanch ka record" — sirf apna aik doc (phone = session ka phone). Malik/manager parhte hain
     // (upar wala generic match). Keys data.js DIAG_KEYS se milni chahiye. serverAt = asal server ka waqt.
@@ -285,24 +305,11 @@ service cloud.firestore {
     // v212: notification ke liye har phone ka token.
     match /businesses/noor-traders/pushTokens/{tokenId} {
       allow read: if isOwner() || isOutManager();
-      // v222: sakht — larka sirf 'staff' token apne number se; 'owner' / 'manager' token sirf malik / manager
       allow create, update: if signedIn()
         && request.resource.data.keys().hasOnly(['token', 'role', 'phone', 'name', 'device', 'at', 'testAt'])
         && request.resource.data.token is string
-        && request.resource.data.token.size() < 500
-        && (isOwner() || isOutManager()
-          || (validStaffSession() && request.resource.data.role == 'staff' && request.resource.data.phone == sessionPhone()));
+        && request.resource.data.token.size() < 500;
       allow delete: if isOwner() || isOutManager();
-    }
-
-    // v222: malik/manager ke paigham. Larka sirf apne naam wale (ya "sab") parh sakta hai, aur sirf apna "parh liya" / jawab likh sakta hai.
-    match /businesses/noor-traders/staffMessages/{msgId} {
-      allow read: if validStaffSession() && (sessionPhone() in resource.data.toList || 'all' in resource.data.toList);
-      allow update: if validStaffSession()
-        && (sessionPhone() in resource.data.toList || 'all' in resource.data.toList)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy', 'replies'])
-        && request.resource.data.readBy.diff(resource.data.readBy).affectedKeys().hasOnly([sessionPhone()])
-        && request.resource.data.replies.diff(resource.data.replies).affectedKeys().hasOnly([sessionPhone()]);
     }
 
     match /businesses/noor-traders/staffSchedules/{phone} {

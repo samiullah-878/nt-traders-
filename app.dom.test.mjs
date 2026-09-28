@@ -25,6 +25,12 @@ const records = new Map([
   [B + 'cameraPC/status', { at: Date.now() - 60000, v: '1.0', host: 'SHOP-PC', cams: 1, online: 1, found: [{ ip: '192.168.0.105', brand: 'dahua', mac: 'aa11' }, { ip: '192.168.0.110', brand: 'hik', mac: 'bb22' }] }],
   [B + 'cameras/aa11-ch1', { name: 'Galla', ip: '192.168.0.105', mac: 'aa11', brand: 'dahua', channel: 1, role: 'galla', enabled: true, createdAt: 5, status: 'online', lastShotAt: Date.now() - 120000, aiTest: 'Counter par do log, galla nazar aa raha hai' }],
   [B + 'cameraShots/aa11-ch1', { jpg: '/9j/4AAQSkZJRgABAQ', w: 640, h: 360, at: Date.now() - 120000, cam: 'aa11-ch1' }],
+  // v222: galla nigrani — galla camera (dabba mark), aaj 2 harkatein (1 shak), 6 tasveerein, din ki ginti
+  [B + 'cameras/cc33-ch1', { name: 'Tokri', ip: '192.168.0.143', mac: 'cc33', brand: 'dahua', channel: 1, role: 'galla', enabled: true, createdAt: 9, status: 'online', watch: 'on', fps: 12.5, stream: 'main', zone: { x: 0.2, y: 0.3, w: 0.4, h: 0.35 } }],
+  [B + 'cameraEvents/cc33-ch1-2', { cam: 'cc33-ch1', camName: 'Tokri', at: Date.now() - 600000, date: C.pkDate(), verdict: 'shak', why: 'Note jeb ki taraf gaya', thumb: '/9j/AA', n: 6, ms: 900, model: 'm', agent: '1.1' }],
+  [B + 'cameraEvents/cc33-ch1-1', { cam: 'cc33-ch1', camName: 'Tokri', at: Date.now() - 1200000, date: C.pkDate(), verdict: 'normal', why: 'Customer ko baqaya diya', thumb: '/9j/BB', n: 6, ms: 800, model: 'm', agent: '1.1' }],
+  [B + 'cameraFrames/cc33-ch1-2', { frames: ['/9j/F1', '/9j/F2', '/9j/F3', '/9j/F4', '/9j/F5', '/9j/F6'], at: Date.now() - 600000, cam: 'cc33-ch1' }],
+  [B + `cameraStats/cc33-ch1_${C.pkDate()}`, { cam: 'cc33-ch1', date: C.pkDate(), touches: 7, checks: 2, shak: 1, unchecked: 1, at: Date.now() }],
   [B + `staffRequests/r1`, { phone: '03007654321', kind: 'leave', date: today, to: today, checkIn: '', checkOut: '', reason: 'Bimar', status: 'pending', createdAt: 5, by: 'x' }]
 ]);
 if (yesterday.slice(0, 7) === month) records.set(B + `staffAttendance/${yesterday}_03001234567`, { date: yesterday, phone: '03001234567', checkIn: '09:00', checkOut: '19:30', autoScore: 10 });
@@ -79,7 +85,32 @@ test('malik login → Hazri tab, qataarein, tawajju', async () => {
   camForm.elements.name.value = 'Galla wala'; camForm.querySelector('input[value=counter]').checked = true; await submit(camForm);
   assert.equal(records.get(B + 'cameras/aa11-ch1').name, 'Galla wala'); assert.equal(records.get(B + 'cameras/aa11-ch1').role, 'counter'); assert.equal(records.get(B + 'cameras/aa11-ch1').status, 'online', 'PC wali fields nahi badlin');
   await click('[data-sheet=cameras] [data-action=cam-photo]'); assert.ok($('body > .viewer img'), 'poori screen tasveer'); await click('.viewer'); assert.equal($('.viewer'), null);
-  await click('[data-sheet=cameras] [data-sheet-close]'); await click('[data-action=tab][data-arg=hazri]');
+  await click('[data-sheet=cameras] [data-sheet-close]');
+  // v222: NIGRANI — Tawajju se tab, khulasa, filter, event + 6 tasveerein, duty, malik ka faisla, galla ka hissa
+  await click('[data-action=tab][data-arg=hazri]');
+  assert.match($('.attention').textContent, /Aaj 1 dafa galla par shak/);
+  await click('.attention [data-action=tab][data-arg=nigrani]'); await settle(12);
+  assert.ok($('main.view-nigrani'), 'Nigrani tab'); assert.match($('.nig-cams').textContent, /Tokri · nigrani chalu/);
+  const sumText = $('.nig-sum').textContent; assert.match(sumText, /7\s*galla chhua/); assert.match(sumText, /2\s*AI jaanch/); assert.match(sumText, /1\s*shak/); assert.match(sumText, /0\/1\s*shak dekhe/);
+  assert.match($('main').textContent, /1 dafa AI jaanch nahi hui/);
+  assert.equal($$('.nig-ev').length, 2, 'dono harkatein'); assert.match($$('.nig-ev')[0].textContent, /Shak/); assert.match($$('.nig-ev')[0].textContent, /jeb/);
+  await click('[data-action=nig-filter][data-arg=open]'); assert.equal($$('.nig-ev').length, 1, 'na dekhe shak');
+  await click('.nig-ev[data-id="cc33-ch1-2"]'); await settle(12);
+  const ev = () => $('[data-sheet=nig-ev]'); assert.ok(ev(), 'event sheet');
+  assert.equal(ev().querySelectorAll('.nig-strip img').length, 6, '6 tasveerein'); assert.match(ev().textContent, /Us waqt duty par/); assert.match(ev().textContent, /AI: Note jeb/);
+  await click('[data-sheet=nig-ev] [data-action=nig-idx][data-arg="3"]'); assert.ok(ev().querySelector('.nig-big img[src$="F4"]'), 'chauthi tasveer badi');
+  await click('[data-sheet=nig-ev] [data-action=nig-full]'); assert.ok($('body > .viewer img[src$="F4"]')); await click('.viewer');
+  await submit(ev().querySelector('form[data-form=nig-review]'));
+  assert.equal(records.get(B + 'cameraEvents/cc33-ch1-2').reviewed, 'ok', 'malik ka faisla'); assert.equal(ev(), null, 'sheet band');
+  assert.equal($$('.nig-ev').length, 0, 'na dekhe shak khatam'); await click('[data-action=nig-filter][data-arg=all]'); assert.match($('.nig-sum').textContent, /1\/1\s*shak dekhe/);
+  await click('[data-action=nig-day][data-arg="-1"]'); await settle(10); assert.match($('main').textContent, /koi harkat record nahi/); await click('[data-action=nig-day][data-arg="1"]'); await settle(10);
+  // galla ka hissa: saaf -> save = nigrani band ka paigham; phir wapas
+  await app.data.saveZone('cc33-ch1', null); await settle(8); assert.match($('main').textContent, /galla ka hissa mark nahi/);
+  await click('main [data-action=cam-zone][data-id="cc33-ch1"]'); assert.ok($('[data-sheet=cam-zone] .zone-box'), 'dabba banane ki sheet');
+  await assert.rejects(app.data.saveZone('cc33-ch1', { x: 0.1, y: 0.1, w: 0.01, h: 0.3 }), /chhota/);
+  await app.data.saveZone('cc33-ch1', { x: 0.2004, y: 0.3, w: 0.4, h: 0.35 }); assert.deepEqual(records.get(B + 'cameras/cc33-ch1').zone, { x: 0.2, y: 0.3, w: 0.4, h: 0.35 });
+  await click('[data-sheet=cam-zone] [data-sheet-close]');
+  await click('[data-action=tab][data-arg=hazri]');
   assert.ok($$('.row-pdf').length === 2, 'har staff par PDF button');
   assert.match($('.register').textContent, /9:00 am – 7:00 pm/); assert.match($('.register').textContent, /10h duty/);
   assert.match($('.register').textContent, /Aaya 9:25 am/);
@@ -347,21 +378,6 @@ test('v210: chutti — aadha din, paisa katega / nahi', async () => {
   assert.ok(lv, 'aadhi chutti lagi'); assert.equal(lv[1].paid, true); assert.equal(lv[1].to, lv[1].date);
   await click('[data-sheet=profile] [data-sheet-close]');
 });
-test('v222: malik ka paigham — sheet se bhejna, profile mein Call/WhatsApp', async () => {
-  await click('[data-action=tab][data-arg=hazri]');
-  await click('[data-action=msg-new]'); assert.ok($('[data-sheet=messages]'), 'paigham sheet');
-  await click('[data-sheet=messages] [data-action=msg-some]');
-  const cb = $('[data-sheet=messages] [data-change=msg-pick][data-arg="03111112223"]'); cb.checked = true; cb.dispatchEvent(new win.Event('change', { bubbles: true })); await settle();
-  const ta = $('[data-sheet=messages] textarea'); ta.value = 'Kal 8 baje aana'; ta.dispatchEvent(new win.Event('input', { bubbles: true })); await settle();
-  await click('[data-sheet=messages] [data-action=msg-send]'); await settle(8);
-  const msg = [...records].find(([k, v]) => k.includes('staffMessages/') && v.text === 'Kal 8 baje aana');
-  assert.ok(msg, 'paigham bana'); assert.deepEqual(msg[1].toList, ['03111112223']); assert.deepEqual(msg[1].readBy, {});
-  assert.match($('[data-sheet=messages]').textContent, /0\/1 ne parh liya/);
-  await click('[data-sheet=messages] [data-sheet-close]');
-  await click('.row-main[data-phone="03001234567"]');
-  assert.ok($('[data-sheet=profile] a.btn-wa[href^="https://wa.me/92300"]'), 'WhatsApp button'); assert.ok($('[data-sheet=profile] a[href="tel:03001234567"].btn'), 'Call button');
-  await click('[data-sheet=profile] [data-sheet-close]');
-});
 test('logout → staff login → check-in / check-out', async () => {
   records.delete(B + `staffAttendance/${today}_03111112223`); // upar malik ne hazri lagayi thi
   await click('[data-action=tab][data-arg=staff]'); await click('.row-main[data-phone="03111112223"]');
@@ -380,12 +396,6 @@ test('logout → staff login → check-in / check-out', async () => {
   assert.ok($('.mode-bar'), 'manager: Meri hazri / Manager panel switch'); assert.match($('.view').textContent + $('.top').textContent, /Manager panel|Noor Traders/);
   await click('[data-action=mgr-mode][data-arg=me]');
   assert.ok($('[data-action=check-in]'), 'Check-In button'); assert.match($('.punch').textContent, /9h 45m roz/);
-  // v222: malik ka paigham larke ki Hazri screen par
-  assert.ok($('.msg-card'), 'paigham card'); assert.match($('.msg-card').textContent, /Kal 8 baje aana/);
-  await click('.msg-card [data-action=msg-reply][data-arg="Theek hai"]'); await settle(8);
-  const mrec = [...records].find(([k, v]) => k.includes('staffMessages/') && v.text === 'Kal 8 baje aana')[1];
-  assert.ok(mrec.readBy['03111112223'], 'parh liya laga'); assert.equal(mrec.replies['03111112223'].text, 'Theek hai');
-  assert.equal($('.msg-card'), null, 'parhne ke baad card hat gaya'); assert.ok($('.msg-old'), 'purane paigham mein');
   // v215: screen ki tasveer phone mein (agli dafa foran dikhane ke liye)
   await new Promise(r => setTimeout(r, 1000));
   const snap = JSON.parse(storage.getItem('nt-hazri-snap-v1') || 'null');
@@ -424,7 +434,7 @@ test('logout → staff login → check-in / check-out', async () => {
   // ---- v211: manager panel (Usman) — sab kar sakta hai, sirf hazri nahi ----
   await click('[data-action=mgr-mode][data-arg=panel]'); await settle(8);
   assert.ok($('.tabs [data-arg=salary]') && $('.tabs [data-arg=settings]'), 'malik jaisa panel');
-  await click('.tabs [data-arg=settings]'); assert.equal($('[data-action=cameras]'), null, 'v220: manager ko Cameras nahi'); await click('.tabs [data-arg=hazri]');
+  await click('.tabs [data-arg=settings]'); assert.equal($('[data-action=cameras]'), null, 'v220: manager ko Cameras nahi'); assert.equal($('.tabs [data-arg=nigrani]'), null, 'v222: manager ko Nigrani nahi'); await click('.tabs [data-arg=hazri]');
   assert.match($('.brand').textContent, /Manager panel/);
   await fake.sdk.setDoc({ path: B + 'staffOuts/m1' }, { phone: '03001234567', name: 'Ali Raza', date: today, reason: 'Washroom (chhoti hajat)', note: '', minutes: 5, status: 'pending', requestedAt: Date.now(), by: 'x' }); await settle(10);
   assert.ok($('.out-card'), 'parchi card');

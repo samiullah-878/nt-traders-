@@ -33,10 +33,10 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     return {
       role: null, phone: '', loaded: new Set(), config: { ...DEFAULT_CONFIG },
       staff: [], months: new Map(), requests: [], schedules: new Map(), payroll: [],
-      account: null, myAttendance: [], punchError: null, messages: [], msgMine: [], msgAll: [], sync: {}, diag: [], cameras: [], camPC: null, camCfg: null, camShots: new Map(), outs: [], teamOuts: [], teamAttendance: [], tickets: [], myTickets: [], teamTickets: [], errors: {}, lastSync: {}, pendingWrites: 0
+      account: null, myAttendance: [], punchError: null, sync: {}, diag: [], cameras: [], camPC: null, camCfg: null, camShots: new Map(), camStats: [], camEvents: [], camDayStats: [], camDay: '', outs: [], teamOuts: [], teamAttendance: [], tickets: [], myTickets: [], teamTickets: [], errors: {}, lastSync: {}, pendingWrites: 0
     };
   }
-  let unsubs = [], monthSubs = new Map(), epoch = 0, legacyChecked = false, shotsSub = null;
+  let unsubs = [], monthSubs = new Map(), epoch = 0, legacyChecked = false, shotsSub = null, eventSubs = [];
   const changed = () => onChange(state);
   const problem = (name, error) => { state.errors[name] = error?.code || error?.message || 'error'; changed(); onProblem(name, error); };
   const live = (query, name, handler, options) => {
@@ -52,6 +52,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     unsubs = []; monthSubs = new Map(); legacyChecked = false;
     clearTimeout(drainTimer); drainTimer = null;
     try { shotsSub?.(); } catch { /* ignore */ } shotsSub = null;
+    for (const u of eventSubs) { try { u(); } catch { /* ignore */ } } eventSubs = [];
     Object.assign(state, fresh());
   }
   const readConfig = snap => {
@@ -80,6 +81,8 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       live(col('cameras'), 'cameras', snap => { state.cameras = readList(snap).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)); });
       live(ref('cameraPC', 'status'), 'camPC', snap => { state.camPC = snap.exists() ? clean(snap.data()) : null; });
       live(ref('cameraPC', 'config'), 'camCfg', snap => { state.camCfg = snap.exists() ? clean(snap.data()) : null; });
+      // v222: aaj ki galla ginti (chhote docs) — Tawajju card ke liye
+      live(sdk.query(col('cameraStats'), sdk.where('date', '==', pkDate())), 'camStats', snap => { state.camStats = readList(snap); });
     }
     // v218: har larke ke phone ka record (version, aakhri dafa, kya server tak nahi gaya)
     live(col('staffDiag'), 'diag', snap => { state.diag = readList(snap).map(d => ({ ...d, phone: normalizePhone(d.phone || d.id) || d.id })); });
@@ -92,10 +95,6 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     live(col('staffRequests'), 'requests', snap => { state.requests = readList(snap).map(r => ({ ...r, phone: normalizePhone(r.phone) || r.phone })); });
     live(col('staffSchedules'), 'schedules', snap => { state.schedules = new Map(readList(snap).map(s => [s.id, s])); });
     live(col('staffPayroll'), 'payroll', snap => { state.payroll = readList(snap); });
-    // v222: larkon ko paigham (pichle 30 din)
-    live(sdk.query(col('staffMessages'), sdk.where('at', '>=', Date.now() - 30 * 864e5)), 'messages', snap => {
-      state.messages = readList(snap).sort((a, b) => (b.at || 0) - (a.at || 0));
-    });
     // Bina bataye gaya ke tickets: pichle 45 din
     live(sdk.query(col('staffTickets'), sdk.where('date', '>=', addDays(pkDate(), -45))), 'tickets', snap => {
       const before = new Set(state.tickets.map(t => t.id)), first = !state.loaded.has('tickets');
@@ -214,10 +213,6 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     live(mine('staffPayroll'), 'payroll', snap => { state.payroll = readList(snap); });
     live(mine('staffOuts'), 'outs', snap => { const out = []; snap.forEach(d => out.push({ id: d.id, ...clean(d.data()), pending: !!d.metadata?.hasPendingWrites })); state.outs = out; }, { includeMetadataChanges: true });
     live(mine('staffTickets'), 'myTickets', snap => { state.myTickets = readList(snap); });
-    // v222: malik ke paigham — sirf mere naam ke ya "sab" wale (do queries: toList array-contains phone / 'all')
-    const mergeMsgs = () => { const seen = new Map(); for (const m of [...state.msgMine, ...state.msgAll]) seen.set(m.id, m); state.messages = [...seen.values()].sort((a, b) => (b.at || 0) - (a.at || 0)); };
-    live(sdk.query(col('staffMessages'), sdk.where('toList', 'array-contains', phone)), 'msgMine', snap => { state.msgMine = readList(snap); mergeMsgs(); });
-    live(sdk.query(col('staffMessages'), sdk.where('toList', 'array-contains', 'all')), 'msgAll', snap => { state.msgAll = readList(snap); mergeMsgs(); });
   }
 
   /* ---------- helpers ---------- */
@@ -719,29 +714,6 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   async function removePushToken(token) { if (token) await sdk.deleteDoc(ref('pushTokens', token.slice(-40))).catch(() => {}); }
   async function pushDevices() { const snap = await sdk.getDocs(col('pushTokens')); const out = []; snap.forEach(d => out.push({ id: d.id, ...clean(d.data()) })); return out.sort((a, b) => (b.at || 0) - (a.at || 0)); }
 
-  /* ---------- v222: paigham (malik/manager -> larke) ---------- */
-  async function sendMessage({ to = 'all', text }) {
-    guardOwner();
-    const body = String(text || '').trim().slice(0, 500);
-    if (!body) throw new Error('Paigham likhein.');
-    const list = to === 'all' ? ['all'] : [...new Set((Array.isArray(to) ? to : [to]).map(normalizePhone).filter(Boolean))];
-    if (!list.length) throw new Error('Kam az kam aik larka chunein.');
-    const r = sdk.doc(col('staffMessages'));
-    await quick(sdk.setDoc(r, { toList: list, text: body, fromName: actor(), by: auth.currentUser.uid, at: Date.now(), serverAt: sdk.serverTimestamp ? sdk.serverTimestamp() : Date.now(), readBy: {}, replies: {} }));
-    return r.id;
-  }
-  async function deleteMessage(id) { guardOwner(); await quick(sdk.deleteDoc(ref('staffMessages', id))); }
-  /** Larka: "Parh liya" aur chhota jawab. Sirf apna naam wala hissa badalta hai (rules). */
-  async function readMessage(id, reply = '') {
-    if (state.role !== 'staff' && state.role !== 'manager') throw new Error('Staff login zaroori hai.');
-    const patch = { readBy: { [state.phone]: Date.now() } };
-    const t = String(reply || '').trim().slice(0, 200);
-    if (t) patch.replies = { [state.phone]: { text: t, at: Date.now() } };
-    const local = state.messages.find(m => m.id === id);
-    if (local) { local.readBy = { ...(local.readBy || {}), ...patch.readBy }; if (patch.replies) local.replies = { ...(local.replies || {}), ...patch.replies }; changed(); }
-    await quick(sdk.setDoc(ref('staffMessages', id), patch, { merge: true }));
-  }
-
   /* ---------- bina bataye gaya: ticket ---------- */
   /** Malik, manager ya senior banata hai. Koi apne aap par nahi; senior manager par nahi. */
   async function createTicket({ phone, from, back = '', note = '' }) {
@@ -1086,19 +1058,67 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     await fast(async tx => { tx.set(ref('cameraPC', 'config'), { uid, email, at: Date.now(), by: actor() }); audit(tx, 'camera pc', 'config', null, { email }, 'Naya camera PC code'); });
     return `${id}-${secret}`;
   }
-  async function saveCamera(id, { name, role, enabled }) {
+  async function saveCamera(id, { name, role, enabled, aiCap, sens }) {
     ownerOnly();
     const n = String(name || '').trim().slice(0, 40);
     if (!n) throw new Error('Camera ka naam likhein.');
-    await quick(sdk.setDoc(ref('cameras', id), { name: n, role: CAM_ROLES.includes(role) ? role : 'view', enabled: enabled !== false }, { merge: true }));
+    const cap = Math.round(Number(aiCap));
+    await quick(sdk.setDoc(ref('cameras', id), { name: n, role: CAM_ROLES.includes(role) ? role : 'view', enabled: enabled !== false,
+      aiCap: Number.isFinite(cap) && cap > 0 ? Math.min(2000, cap) : 300, sens: CAM_SENS.includes(sens) ? sens : 'mid' }, { merge: true }));
+  }
+  /* ---------- v222: GALLA NIGRANI (malik) ---------- */
+  const CAM_SENS = ['low', 'mid', 'high'];
+  /** Aik din ke galla events (chhoti thumb ke sath) + us din ki ginti. Sirf jab Nigrani tab khula ho. */
+  function watchEvents(date) {
+    for (const u of eventSubs) { try { u(); } catch { /* ignore */ } } eventSubs = [];
+    state.camDay = date || '';
+    if (!date || state.role !== 'owner') { state.camEvents = []; state.camDayStats = []; return; }
+    const token = epoch;
+    eventSubs.push(sdk.onSnapshot(sdk.query(col('cameraEvents'), sdk.where('date', '==', date)), snap => {
+      if (token !== epoch || state.camDay !== date) return;
+      state.camEvents = readList(snap).sort((a, b) => (b.at || 0) - (a.at || 0)); state.loaded.add('camEvents'); changed();
+    }, error => { if (token === epoch) problem('camEvents', error); }));
+    eventSubs.push(sdk.onSnapshot(sdk.query(col('cameraStats'), sdk.where('date', '==', date)), snap => {
+      if (token !== epoch || state.camDay !== date) return;
+      state.camDayStats = readList(snap); changed();
+    }, error => { if (token === epoch) problem('camDayStats', error); }));
+  }
+  async function loadFrames(id) { ownerOnly(); const snap = await sdk.getDoc(ref('cameraFrames', id)); return snap.exists() ? (snap.data().frames || []) : []; }
+  async function reviewEvent(id, status, note = '') {
+    ownerOnly();
+    if (!['ok', 'confirmed', ''].includes(status)) throw new Error('Ghalat faisla');
+    await quick(sdk.setDoc(ref('cameraEvents', id), { reviewed: status, reviewedAt: Date.now(), reviewNote: String(note || '').slice(0, 200) }, { merge: true }));
+  }
+  async function saveZone(id, zone) {
+    ownerOnly();
+    const r = v => Math.round(Math.min(1, Math.max(0, Number(v) || 0)) * 1000) / 1000;
+    const z = zone ? { x: r(zone.x), y: r(zone.y), w: r(zone.w), h: r(zone.h) } : null;
+    if (z && (z.w < 0.04 || z.h < 0.04)) throw new Error('Dabba bohat chhota hai — galla ke gird thora bara banayein.');
+    await quick(sdk.setDoc(ref('cameras', id), { zone: z }, { merge: true }));
+  }
+  /** 30 din se purane events + tasveerein + ginti mitao (malik ki app khulne par, thore thore). */
+  async function cleanupCam(days = 30) {
+    if (state.role !== 'owner') return 0;
+    const cutoff = addDays(pkDate(), -days - 1); let n = 0;
+    for (const coll of ['cameraEvents', 'cameraStats']) {
+      const snap = await sdk.getDocs(sdk.query(col(coll), sdk.where('date', '<=', cutoff), ...(sdk.limit ? [sdk.limit(40)] : [])));
+      const ids = []; snap.forEach(d => ids.push(d.id));
+      for (const id of ids) {
+        await sdk.deleteDoc(ref(coll, id)).catch(() => {});
+        if (coll === 'cameraEvents') await sdk.deleteDoc(ref('cameraFrames', id)).catch(() => {});
+        n++;
+      }
+    }
+    return n;
   }
   async function requestShot(id) { ownerOnly(); await quick(sdk.setDoc(ref('cameras', id), { snapReq: Date.now() }, { merge: true })); }
   async function deleteCamera(id) { ownerOnly(); await quick(sdk.deleteDoc(ref('cameras', id))); try { await sdk.deleteDoc(ref('cameraShots', id)); } catch { /* ignore */ } }
 
   return {
-    app, full, actor, auth, state, watchShots, createCameraPC, saveCamera, requestShot, deleteCamera, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
+    app, full, actor, auth, state, watchShots, createCameraPC, saveCamera, requestShot, deleteCamera,
+    watchEvents, loadFrames, reviewEvent, saveZone, cleanupCam, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
     requestOut, cancelOut, returnOut, reviewOut, isManager, isTicketer, startBreak, endBreaks, createTicket, returnTicket, decideTicket, ticketSuggestFor,
-    savePushToken, removePushToken, pushDevices, pushTestPing, sendMessage, deleteMessage, readMessage,
+    savePushToken, removePushToken, pushDevices, pushTestPing,
     applyDefaultShiftAll, applyDefaultSalaryAll, toggleClosed, quickPresent, closeCheckouts, getSelfie, migrateSelfies, selfiesFor, auditLog,
     accounts: {
       async getSession(uid) { const s = await sdk.getDoc(ref('staffSessions', uid)); return s.exists() ? s.data() : null; },

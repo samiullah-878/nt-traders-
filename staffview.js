@@ -4,7 +4,6 @@ import {
   monthSummary, openRecord, workMinutes, parseTime, checkoutDue, shiftMinutes, dayOuts, outMinutes, OUT_REASONS, OUT_MINUTES, reasonUr, minutesUr, dayColor, durText, hasArabic, breakGroup, ticketMinutes, ticketText
 } from './core.js';
 import { openTicketSheet } from './tickets.js';
-import { enablePush, refreshPush, pushPermission, pushSupported } from './push.js';
 import { openBreakSheet, breakStatusHtml } from './breaks.js';
 import { icon, avatar, nameHtml, toast, busy, takeSelfie, getGps, deliverPdf, errorText, timeField, IN_TICKETS, OUT_TICKETS, openSheet, refreshSheets, celebrate } from './ui.js';
 // v215: PDF ka code sirf tab load hota hai jab larka PDF banaye
@@ -50,38 +49,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
       ${canRetry ? `<span class="btn-row"><button type="button" class="btn btn-out btn-sm" data-action="sync-retry" data-key="${esc(key)}">Dobara bhejein</button></span>` : ''}</div>
       <button type="button" class="btn btn-ghost btn-sm" data-action="punch-error-ok">Theek hai</button></div>`;
   };
-  /* ---------- v222: malik ke paigham ---------- */
-  const clockOf = ms => { try { return new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(Number(ms))).toLowerCase(); } catch { return ''; } };
-  function messagesCard() {
-    const list = (S.messages || []).filter(m => Date.now() - (m.at || 0) < 30 * 864e5 && ((m.toList || []).includes(S.phone) || (m.toList || []).includes('all')));
-    const unread = list.filter(m => !(m.readBy || {})[S.phone]), old = list.filter(m => (m.readBy || {})[S.phone]).slice(0, 5);
-    if (!unread.length && !old.length) return '';
-    return `${unread.map(m => `<section class="msg-card" role="status">
-        <p class="msg-from">${icon('note', 18)} <b>${esc(m.fromName || 'Malik')} ka paigham</b> <small>${esc(clockOf(m.at))}</small></p>
-        <p class="msg-body">${nameHtml(m.text)}</p>
-        <div class="msg-actions"><button type="button" class="btn btn-primary btn-sm" data-action="msg-read" data-id="${esc(m.id)}">${icon('check', 16)} Parh liya</button>
-          <button type="button" class="chip chip-sm" data-action="msg-reply" data-id="${esc(m.id)}" data-arg="Theek hai">Theek hai</button>
-          <button type="button" class="chip chip-sm" data-action="msg-reply" data-id="${esc(m.id)}" data-arg="Aa raha hoon">Aa raha hoon</button>
-          <button type="button" class="chip chip-sm" data-action="msg-reply-own" data-id="${esc(m.id)}">Jawab likhein</button></div></section>`).join('')}
-      ${old.length ? `<details class="msg-old"><summary>${icon('note', 16)} Purane paigham (${old.length})</summary><ul>${old.map(m => `<li><small class="muted">${esc(clockOf(m.at))} · ${esc(m.fromName || 'Malik')}</small><p>${nameHtml(m.text)}</p></li>`).join('')}</ul></details>` : ''}`;
-  }
-  /** Paigham ki khabar phone par — larka aik dafa chalu kare. */
-  function pushCard() {
-    const key = S.config?.push?.vapidKey;
-    if (!key || ui.pushHide) return '';
-    const perm = pushPermission();
-    if (perm === 'granted' || perm === 'unsupported') return '';
-    return `<section class="push-mini">${icon('clock', 18)}<span>Malik ke paigham ki khabar phone par paane ke liye</span>
-      <button type="button" class="btn btn-ghost btn-sm" data-action="push-on-staff">Notification chalu karein</button>
-      <button type="button" class="icon-btn" data-action="push-hide" aria-label="Band">${icon('close', 16)}</button></section>`;
-  }
-  let pushChecked = false;
-  function autoPush() {
-    if (pushChecked || !S.config?.push?.vapidKey || !S.phone) return;
-    pushChecked = true;
-    void refreshPush({ app: data.app, vapidKey: S.config.push.vapidKey, onToken: t => data.savePushToken(t, (navigator.userAgent || '').slice(0, 60)) });
-  }
-  function actionCard() { return messagesCard() + punchBox() + pushCard() + actionCardInner(); }
+  function actionCard() { return punchBox() + actionCardInner(); }
   function actionCardInner() {
     const today = pkDate(), rows = S.myAttendance, todayRow = rows.find(a => a.date === today), open = openRecord(rows), sch = schedule();
     const radius = Number(S.config.radius || SHOP.radius);
@@ -312,17 +280,6 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
     'req-kind'(el) { ui.reqKind = el.dataset.arg; rerender(); },
     'req-half'(el) { ui.reqHalf = el.dataset.arg; rerender(); },
     'fix-missed'(el) { ui.tab = 'request'; ui.reqKind = 'correction'; ui.reqDate = el.dataset.date; rerender(); window.scrollTo?.(0, 0); },
-    async 'msg-read'(el) { await busy(el, () => data.readMessage(el.dataset.id), 'Shukriya'); rerender(); },
-    async 'msg-reply'(el) { await busy(el, () => data.readMessage(el.dataset.id, el.dataset.arg), 'Jawab chala gaya'); rerender(); },
-    async 'msg-reply-own'(el) { const t = prompt('Apna jawab likhein:'); if (!t || !t.trim()) return; await busy(el, () => data.readMessage(el.dataset.id, t), 'Jawab chala gaya'); rerender(); },
-    'push-hide'() { ui.pushHide = true; rerender(); },
-    async 'push-on-staff'(el) {
-      await busy(el, async () => {
-        if (!(await pushSupported())) throw new Error('Is phone ke browser mein notification nahi chalti. App ko home screen par laga kar wahan se kholein.');
-        await enablePush({ app: data.app, vapidKey: S.config.push?.vapidKey, onToken: t => data.savePushToken(t, (navigator.userAgent || '').slice(0, 60)) });
-      }, 'Notification chalu ho gaya');
-      rerender();
-    },
     'punch-error-ok'() {
       const key = Object.keys(S.sync || {}).find(k => S.sync[k].kind === S.punchError?.kind && S.sync[k].phase === 'fail');
       if (key) data.dismissSync(key); S.punchError = null; rerender();
@@ -498,5 +455,5 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
       celebrate({ tone: 'back', stamp: 'WAPAS', title: first ? `Khush aamdeed wapas, ${first}!` : 'Khush aamdeed wapas!', sub: 'Wapsi malik tak pohanch gayi', stay: 3600 });
     }
   }
-  return { render, actions, forms, changes: {}, inputs: {}, ui, onConfirmed, onData() { refreshSheets(); autoPush(); } };
+  return { render, actions, forms, changes: {}, inputs: {}, ui, onConfirmed, onData() { refreshSheets(); } };
 }

@@ -1,12 +1,14 @@
 # ntcam.py — Noor Traders Hazri: dukaan ke CAMERAS (shop PC par chalta hai). Hissa A.
+# v1.1 (Hissa B): GALLA NIGRANI — 'galla' kaam wale camera ki video lagatar, malik ke mark kiye dabbe mein harkat par
+# 6 tasveerein (1.5 s pehle + 1.5 s baad), Claude se Normal / Shak, cameraEvents + cameraFrames + cameraStats. Password par ****.
 # Kaam: network par camera dhoondna, password se jodna (password SIRF is PC mein), har 5 minute (ya malik ke kehne par) tasveer
 # lena aur hazri app (Settings > Cameras) ko bhejna, online/offline batana. Hissa B mein isi mein galla nigrani judegi.
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '1.0'
+VERSION = '1.1'
 
-import base64, getpass, ipaddress, json, os, re, socket, subprocess, sys, threading, time, traceback, urllib.parse
+import base64, collections, getpass, ipaddress, json, os, queue, re, socket, subprocess, sys, threading, time, traceback, urllib.parse
 from concurrent.futures import ThreadPoolExecutor
 
 HOME = os.environ.get('NTCAM_HOME') or (r'C:\NTCam' if os.name == 'nt' else os.path.join(os.path.expanduser('~'), 'ntcam'))
@@ -85,6 +87,32 @@ def base_url():
 def mask(url):
     """Log / screen par password kabhi nahi."""
     return re.sub(r'(rtsp://[^:/@]+:)[^@]*@', r'\1****@', str(url))
+
+
+def secret_input(prompt):
+    """Password / key: likhte waqt **** nazar aaye (pehle kuch nazar nahi aata tha — log samajhte the likha hi nahi ja raha)."""
+    if os.name == 'nt' and sys.stdin is not None and sys.stdin.isatty():
+        import msvcrt
+        print(prompt, end='', flush=True)
+        buf = []
+        while True:
+            ch = msvcrt.getwch()
+            if ch in ('\r', '\n'):
+                print(flush=True)
+                return ''.join(buf)
+            if ch == '\x03':
+                raise KeyboardInterrupt
+            if ch in ('\x00', '\xe0'):
+                msvcrt.getwch()
+                continue
+            if ch == '\x08':
+                if buf:
+                    buf.pop()
+                    print('\b \b', end='', flush=True)
+                continue
+            buf.append(ch)
+            print('*', end='', flush=True)
+    return getpass.getpass(prompt)
 
 
 # ---------------------------------------------------------------- PC code
@@ -325,13 +353,17 @@ def rtsp_urls(brand, ip, user, pw, ch=1):
     return [hik, dahua] if brand == 'hik' else [dahua, hik]
 
 
-def grab(url, reads=10):
-    """Aik saaf frame. Pehle 2-3 frame aksar kharab/grey hote hain — thore parh kar aakhri lo."""
+def open_capture(url):
     import cv2
     try:
-        cap = cv2.VideoCapture(url, cv2.CAP_FFMPEG, [cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 8000, cv2.CAP_PROP_READ_TIMEOUT_MSEC, 8000])
+        return cv2.VideoCapture(url, cv2.CAP_FFMPEG, [cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 8000, cv2.CAP_PROP_READ_TIMEOUT_MSEC, 8000])
     except TypeError:
-        cap = cv2.VideoCapture(url, cv2.CAP_FFMPEG)
+        return cv2.VideoCapture(url, cv2.CAP_FFMPEG)
+
+
+def grab(url, reads=10):
+    """Aik saaf frame. Pehle 2-3 frame aksar kharab/grey hote hain — thore parh kar aakhri lo."""
+    cap = open_capture(url)
     try:
         if not cap.isOpened():
             return None
@@ -377,8 +409,64 @@ def ai_describe(key, b64):
     return ' '.join(b.get('text', '') for b in r.json().get('content', []) if b.get('type') == 'text').strip()[:300]
 
 
+def check_key(key):
+    """Chhota sa sawaal (taqreeban muft) — key aur credit theek hain ya nahi."""
+    import requests
+    try:
+        r = requests.post('https://api.anthropic.com/v1/messages', timeout=40,
+                          headers={'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json'},
+                          json={'model': MODEL, 'max_tokens': 5, 'messages': [{'role': 'user', 'content': 'ok'}]})
+    except Exception as e:
+        return False, f'Claude tak internet nahi pohancha: {e}'
+    if r.status_code == 200:
+        return True, 'Claude key chal rahi hai (AI tayyar).'
+    if r.status_code == 401:
+        return False, 'Claude key ghalat hai — nayi key daalein.'
+    if 'credit' in r.text.lower():
+        return False, 'Claude mein credit nahi — console mein credit daalein.'
+    return False, f'Claude ne jawab nahi diya ({r.status_code}).'
+
+
+GALLA_PROMPT = ('Ye {n} tasveerein aik dukaan ke GALLA (cash / paise rakhne ki jagah) ki CCTV se hain, waqt ki tarteeb mein '
+                '(har do ke beech taqreeban aadha second). Dekho: kya kisi ne galla se paise (note) nikal kar apni JEB, qameez, '
+                'shalwar, ya kisi chhupi jagah mein rakhe? Aam kaam NORMAL hai: customer ko baqaya dena, paise galla mein rakhna, '
+                'note ginna, drawer kholna / band karna. Tasveer saaf na ho ya haath nazar na aayein to "saaf_nahi". '
+                'Kisi insaan ki pehchan, naam ya chehre ki baat mat karo. Jawab SIRF JSON: '
+                '{{"verdict": "normal" ya "shak" ya "saaf_nahi", "why": "Roman Urdu (English harf) mein aik chhoti line"}}')
+
+
+def parse_verdict(text):
+    m = re.search(r'\{.*\}', text or '', re.S)
+    try:
+        j = json.loads(m.group(0)) if m else {}
+    except ValueError:
+        j = {}
+    v = str(j.get('verdict', '')).strip().lower().replace(' ', '_')
+    v = {'suspicious': 'shak', 'unclear': 'saaf_nahi'}.get(v, v)
+    if v not in ('normal', 'shak', 'saaf_nahi'):
+        v = 'saaf_nahi'
+    return v, str(j.get('why') or (text or '')[:200]).strip()[:280]
+
+
+def ai_judge(key, crops_b64):
+    import requests
+    content = [{'type': 'text', 'text': GALLA_PROMPT.format(n=len(crops_b64))}]
+    for i, b in enumerate(crops_b64, 1):
+        content += [{'type': 'text', 'text': f'Tasveer {i}'}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': b}}]
+    t0 = time.time()
+    r = requests.post('https://api.anthropic.com/v1/messages', timeout=90,
+                      headers={'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json'},
+                      json={'model': MODEL, 'max_tokens': 200, 'messages': [{'role': 'user', 'content': content}]})
+    if r.status_code != 200:
+        raise RuntimeError('credit nahi' if 'credit' in r.text.lower() else ('key ghalat' if r.status_code == 401 else f'AI {r.status_code}'))
+    txt = ' '.join(b.get('text', '') for b in r.json().get('content', []) if b.get('type') == 'text')
+    v, why = parse_verdict(txt)
+    return v, why, int((time.time() - t0) * 1000)
+
+
 # ---------------------------------------------------------------- Firebase mein likhna
-AGENT_KEYS = ('ip', 'mac', 'brand', 'status', 'lastFrameAt', 'lastShotAt', 'lastError', 'width', 'height', 'agent', 'aiTest', 'aiTestAt', 'seenAt')
+AGENT_KEYS = ('ip', 'mac', 'brand', 'status', 'lastFrameAt', 'lastShotAt', 'lastError', 'width', 'height', 'agent', 'aiTest', 'aiTestAt', 'seenAt',
+              'watch', 'fps', 'stream', 'lastMotionAt')
 
 
 def put_shot(fire, cid, frame):
@@ -398,6 +486,201 @@ def put_status(fire, cams=0, online=0, found=None, error=''):
     fire.patch(f'{BIZ}/cameraPC/status', data)
 
 
+# ---------------------------------------------------------------- v1.1 GALLA NIGRANI
+COOLDOWN = 20            # do AI jaanchon ke beech kam se kam (second) — beech ki harkat sirf ginti mein
+AI_PAUSE = 600           # AI ghalti (credit / key) par 10 minute ruko
+SENS = {'low': (35, 0.06), 'mid': (28, 0.035), 'high': (22, 0.02)}   # (pixel farq, dabbe ka kitna hissa badla)
+
+
+def pk_date(ts=None):
+    return time.strftime('%Y-%m-%d', time.gmtime((ts if ts is not None else time.time()) + 5 * 3600))
+
+
+def zone_px(zone, w, h, pad=0.0):
+    """Malik ka dabba (0-1) -> pixel. pad: har taraf dabbe ke size ka itna hissa aur (AI ko haath / jeb bhi dikhe)."""
+    try:
+        x, y, zw, zh = (float(zone.get(k, 0)) for k in ('x', 'y', 'w', 'h'))
+    except (TypeError, ValueError, AttributeError):
+        return 0, 0, 0, 0
+    x0, y0 = max(0, int((x - zw * pad) * w)), max(0, int((y - zh * pad) * h))
+    x1, y1 = min(w, int((x + zw * (1 + pad)) * w)), min(h, int((y + zh * (1 + pad)) * h))
+    return x0, y0, x1, y1
+
+
+class Motion:
+    """Dabbe mein harkat: chhoti grey tasveer ka peechay wali (dheere badalti) tasveer se farq. Do lagatar sample = harkat."""
+    def __init__(self, sens='mid'):
+        self.bg, self.hits = None, 0
+        self.set(sens)
+
+    def set(self, sens):
+        self.t, self.r = SENS.get(sens, SENS['mid'])
+
+    def feed(self, crop):
+        import cv2
+        g = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+        g = cv2.GaussianBlur(cv2.resize(g, (160, max(1, int(160 * g.shape[0] / max(1, g.shape[1]))))), (5, 5), 0)
+        if self.bg is None or self.bg.shape != g.shape:
+            self.bg = g.astype('float32')
+            return False, 0.0
+        ratio = float((cv2.absdiff(g, cv2.convertScaleAbs(self.bg)) > self.t).mean())
+        cv2.accumulateWeighted(g, self.bg, 0.05 if ratio < self.r else 0.01)
+        self.hits = self.hits + 1 if ratio > self.r else 0
+        return self.hits >= 2, ratio
+
+
+def pick(items, n=6):
+    if len(items) <= n:
+        return list(items)
+    return [items[round(i * (len(items) - 1) / (n - 1))] for i in range(n)]
+
+
+class Watch(threading.Thread):
+    """Aik galla camera: video lagatar parho (taaza frame app ki tasveer ke liye bhi), dabbe mein harkat par 1.6 s pehle + 1.6 s
+    baad ke tukre (2 fps) kaam ki qataar mein. Dheema PC (3 fps se kam) ho to khud halki (sub) video par."""
+    def __init__(self, cid, url, cam, jobs):
+        super().__init__(daemon=True)
+        self.cid, self.url, self.jobs, self.alive = cid, url, jobs, True
+        self.motion, self.ring, self.pending = Motion(), collections.deque(maxlen=10), None
+        self.latest, self.latest_at, self.fps, self.last_motion, self.last_trigger, self.stream = None, 0, 0.0, 0, 0, 'main'
+        self.apply(cam)
+
+    def apply(self, cam):
+        self.name = str(cam.get('name') or self.cid)[:40]
+        self.zone = cam.get('zone') or {}
+        self.sens = cam.get('sens') or 'mid'
+        self.cap_day = int(cam.get('aiCap') or 300)
+        self.motion.set(self.sens)
+
+    def stop(self):
+        self.alive = False
+
+    def run(self):
+        url, wait = self.url, 3
+        while self.alive:
+            cap = open_capture(url)
+            if not cap.isOpened():
+                log('nigrani: video nahi', self.cid)
+                time.sleep(wait)
+                wait = min(60, wait * 2)
+                continue
+            wait, n, t0, last_sample, last_ring = 3, 0, time.time(), 0, 0
+            try:
+                while self.alive:
+                    ok, f = cap.read()
+                    if not ok or f is None:
+                        break
+                    now = time.time()
+                    n += 1
+                    self.latest, self.latest_at = f, now
+                    if now - t0 >= 10:
+                        self.fps, n, t0 = n / (now - t0), 0, now
+                        if self.fps < 3 and self.stream == 'main' and 'subtype=0' in url:
+                            url, self.stream = url.replace('subtype=0', 'subtype=1'), 'sub'
+                            log('nigrani: PC dheema — halki video', self.cid)
+                            break
+                    if not self.zone.get('w') or now - last_sample < 0.2:
+                        continue
+                    last_sample = now
+                    h, w = f.shape[:2]
+                    x0, y0, x1, y1 = zone_px(self.zone, w, h)
+                    if x1 - x0 < 8 or y1 - y0 < 8:
+                        continue
+                    moved, _ = self.motion.feed(f[y0:y1, x0:x1])
+                    if now - last_ring >= 0.5:
+                        last_ring = now
+                        X0, Y0, X1, Y1 = zone_px(self.zone, w, h, 0.5)
+                        self.ring.append((now, f[Y0:Y1, X0:X1].copy()))
+                    if self.pending and now >= self.pending['until']:
+                        frames = pick([c for t, c in self.ring if t >= self.pending['from']])
+                        try:
+                            self.jobs.put_nowait((self, self.pending['at'], frames))
+                        except queue.Full:
+                            pass
+                        self.pending = None
+                    if moved:
+                        self.last_motion = now
+                        if now - self.last_trigger > 3 and not self.pending:
+                            self.last_trigger = now
+                            self.pending = {'at': now, 'from': now - 1.6, 'until': now + 1.6}
+            finally:
+                cap.release()
+
+
+class Galla(threading.Thread):
+    """Harkat ki qataar: ginti (cameraStats), waqfa (COOLDOWN) aur roz ki had ke andar Claude se jaanch, phir
+    cameraFrames (6 tasveer) + cameraEvents (chhoti thumb + faisla). Event bante hi Cloud Function 'shak' par malik ko khabar."""
+    def __init__(self, fire):
+        super().__init__(daemon=True)
+        self.fire, self.q, self.stats, self.dirty = fire, queue.Queue(maxsize=20), {}, set()
+        self.last_ai, self.pause_until, self.lock = {}, 0, threading.Lock()
+
+    def stat(self, cid, date):
+        k = (cid, date)
+        if k not in self.stats:
+            try:
+                old = self.fire.get(f'{BIZ}/cameraStats/{cid}_{date}') or {}
+            except Exception:
+                old = {}
+            self.stats[k] = {'cam': cid, 'date': date, 'touches': int(old.get('touches') or 0), 'checks': int(old.get('checks') or 0),
+                             'shak': int(old.get('shak') or 0), 'unchecked': int(old.get('unchecked') or 0)}
+        return self.stats[k]
+
+    def run(self):
+        while True:
+            w, at, frames = self.q.get()
+            try:
+                self.handle(w, at, frames)
+            except Exception as e:
+                log('nigrani ghalti:', e, traceback.format_exc()[-300:])
+
+    def handle(self, w, at, frames):
+        date = pk_date(at)
+        with self.lock:
+            st = self.stat(w.cid, date)
+            st['touches'] += 1
+            self.dirty.add((w.cid, date))
+        if not frames or at - self.last_ai.get(w.cid, 0) < COOLDOWN:
+            return
+        key = secrets().get('claudeKey')
+        if not key or st['checks'] >= w.cap_day or time.time() < self.pause_until:
+            with self.lock:
+                st['unchecked'] += 1
+            return
+        self.last_ai[w.cid] = at
+        crops = [jpeg_b64(c, width=512, quality=70)[0] for c in frames]
+        try:
+            v, why, ms = ai_judge(key, crops)
+            with self.lock:
+                st['checks'] += 1
+                st['shak'] += 1 if v == 'shak' else 0
+        except Exception as e:
+            v, why, ms = 'error', f'AI nahi chala: {e}'[:280], 0
+            self.pause_until = time.time() + AI_PAUSE
+        eid, t = f'{w.cid}-{int(at * 1000)}', int(at * 1000)
+        self.fire.patch(f'{BIZ}/cameraFrames/{eid}', {'frames': crops, 'at': t, 'cam': w.cid})
+        self.fire.patch(f'{BIZ}/cameraEvents/{eid}', {'cam': w.cid, 'camName': w.name, 'at': t, 'date': date, 'verdict': v, 'why': why,
+                                                      'thumb': jpeg_b64(frames[len(frames) // 2], width=320, quality=60)[0], 'n': len(crops),
+                                                      'ms': ms, 'model': MODEL, 'agent': VERSION})
+        log('nigrani', w.cid, v, why)
+
+    def flush(self):
+        with self.lock:
+            keys, self.dirty = list(self.dirty), set()
+            rows = [dict(self.stats[k]) for k in keys]
+        for row in rows:
+            row['at'] = now_ms()
+            self.fire.patch(f"{BIZ}/cameraStats/{row['cam']}_{row['date']}", row)
+        # purane din yaad se hatao
+        today = pk_date()
+        for k in [k for k in self.stats if k[1] < today and k not in self.dirty]:
+            self.stats.pop(k, None)
+
+
+def watch_wanted(c, s):
+    return bool(s) and c.get('enabled') is not False and c.get('role') == 'galla' and bool((c.get('zone') or {}).get('w'))
+
+
 # ---------------------------------------------------------------- setup (desktop icon "NT Camera jodein")
 def setup():
     say('=' * 58)
@@ -408,13 +691,21 @@ def setup():
     say('  [OK] Firebase se jud gaya.')
     if not sec.get('claudeKey'):
         say('\nClaude API key (sk-ant-...) — PC par Gmail/WhatsApp Web se copy kar ke yahan RIGHT-CLICK se paste karein.')
-        k = getpass.getpass('API key (screen par nazar nahi aayegi; baad mein dena ho to sirf Enter): ').strip()
+        k = secret_input('API key (baad mein dena ho to sirf Enter): ').strip()
         if k.startswith('sk-ant-'):
             sec['claudeKey'] = k
             save_json(SECRETS, sec)
             say('  [OK] API key is PC mein mehfooz.')
+        elif k.startswith('apikey_'):
+            say('  [!!] Ye key ki ID hai, asal key nahi. Console > API keys > "Create Key" par jo lambi sk-ant-api03-... aik dafa dikhti hai, wo copy karein.')
         elif k:
             say('  [!!] Ye Claude ki key nahi lagti (sk-ant- se shuru hoti hai). Baad mein dobara chalayein.')
+    if sec.get('claudeKey'):
+        ok, msg = check_key(sec['claudeKey'])
+        say(('  [OK] ' if ok else '  [!!] ') + msg)
+        if not ok and 'ghalat' in msg:
+            sec.pop('claudeKey', None)
+            save_json(SECRETS, sec)
     say('\nNetwork par camera dhoond rahe hain... (10-20 second)')
     found = scan()
     try:
@@ -439,7 +730,7 @@ def setup():
         if not name:
             continue
         user = input('   Username [admin]: ').strip() or 'admin'
-        pw = getpass.getpass('   Camera ka password (DMSS app > Device Info > aankh wala nishan): ')
+        pw = secret_input('   Camera ka password (DMSS app > Device Info > aankh wala nishan): ')
         n = input('   Is device par kitne camera? (aam camera = 1, NVR/DVR = jitne channel) [1]: ').strip() or '1'
         n = max(1, min(16, int(n))) if n.isdigit() else 1
         for ch in range(1, n + 1):
@@ -560,7 +851,9 @@ def run():
             log('net nahi:', e)
             time.sleep(wait)
             wait = min(120, wait * 2)
-    cams, shot_at, asked, state = {}, {}, {}, {}
+    cams, shot_at, asked, state, watchers = {}, {}, {}, {}, {}
+    galla = Galla(fire)
+    galla.start()
     last_list = last_status = 0
     last_update = time.time() - UPDATE_EVERY + 120   # shuru ke 2 minute baad pehli jaanch
     last_scan = 0
@@ -571,6 +864,20 @@ def run():
                 cams = dict(fire.list('cameras'))
                 last_list = t
                 sec = secrets()                # setup ne naya camera joda ho
+                # v1.1: galla nigrani — kaam 'galla' + dabba mark + chalu = video lagatar
+                for cid, c in cams.items():
+                    s = sec['cams'].get(cid)
+                    if watch_wanted(c, s):
+                        if cid not in watchers or not watchers[cid].is_alive():
+                            watchers[cid] = Watch(cid, s['url'], c, galla.q)
+                            watchers[cid].start()
+                            log('nigrani shuru', cid)
+                        else:
+                            watchers[cid].apply(c)
+                for cid in [k for k in watchers if not watch_wanted(cams.get(k, {}), sec['cams'].get(k))]:
+                    watchers.pop(cid).stop()
+                    fire.patch(f'{BIZ}/cameras/{cid}', {'watch': 'off', 'seenAt': now_ms()})
+                    log('nigrani band', cid)
             online = 0
             for cid, c in cams.items():
                 s = sec['cams'].get(cid)
@@ -588,7 +895,8 @@ def run():
                 due = t - shot_at.get(cid, 0) > SHOT_EVERY or (req > int(c.get('lastShotAt') or 0) and req > asked.get(cid, 0))
                 if due:
                     asked[cid] = max(req, asked.get(cid, 0))
-                    frame = grab(s['url'])
+                    wt = watchers.get(cid)
+                    frame = wt.latest.copy() if wt and wt.latest is not None and t - wt.latest_at < 10 else grab(s['url'])
                     shot_at[cid] = t
                     if frame is not None:
                         put_shot(fire, cid, frame)
@@ -610,6 +918,10 @@ def run():
                     online += 1
             if t - last_status > STATUS_EVERY:
                 put_status(fire, cams=len(cams), online=online)
+                for cid, wt in watchers.items():
+                    fire.patch(f'{BIZ}/cameras/{cid}', {'watch': 'on' if wt.latest_at and t - wt.latest_at < 30 else 'down', 'fps': round(wt.fps, 1),
+                                                         'stream': wt.stream, 'lastMotionAt': int(wt.last_motion * 1000), 'seenAt': now_ms()})
+                galla.flush()
                 last_status = t
             if t - last_update > UPDATE_EVERY:
                 last_update = t

@@ -2,7 +2,7 @@
 import test from 'node:test'; import assert from 'node:assert/strict';
 import { fakeSdk, memoryStorage, B } from './test-fake-sdk.mjs';
 import { createData } from './data.js';
-import { pkDate } from './core.js';
+import { pkDate, pkTime24 } from './core.js';
 
 const today = pkDate(), phone = '03001112223', id = `${today}_${phone}`, BOX = 'nt-hazri-outbox-v217';
 const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -147,4 +147,40 @@ test('v219: naya token save hote hi isi phone ke purane hat jate hain, doosre ph
   assert.match(mine.device, /^d:\w+ · /, 'phone ki apni pehchan');
   assert.equal(await a.data.savePushToken('TOKEN-NEW-2', legacyUA), 1, 'agla naya token: pichla hata');
   assert.deepEqual(keys(), ['TOK-M', 'TOK-O', 'TOKEN-NEW-2']);
+});
+
+// ---------- v221: bahar se Check-Out — sirf rules wali keys, malik manzoor kare to waqt + location hazri mein ----------
+const reqKeys = (() => { const r = readFileSync(new URL('./firestore.rules', import.meta.url), 'utf8'); const m = r.slice(r.indexOf('staffRequests/{requestId}')).match(/hasOnly\(\[([^\]]+)\]\)/); return m[1].split(',').map(x => x.trim().replace(/'/g, '')); })();
+test('v221: bahar se Check-Out request -> malik manzoor -> Check-Out + location record mein', async () => {
+  const records = base(), storage = memoryStorage();
+  // asal waqt ke hisab se: 3 ghante pehle aaya, 1 ghanta pehle nikla (raat ke 1-2 baje test chale tab bhi sahi)
+  const tIn = new Date(Date.now() - 3 * 3600000), tOut = new Date(Date.now() - 3600000), inDate = pkDate(tIn), rid = `${inDate}_${phone}`;
+  records.set(B + `staffAttendance/${rid}`, { id: rid, date: inDate, phone, checkIn: pkTime24(tIn), checkInTs: tIn.getTime() });
+  const a = setup(records, storage); a.fake.auth.currentUser = { uid: 'anon-1' }; await started(a.data);
+  const row = a.data.state.myAttendance.find(r => r.id === rid);
+  await assert.rejects(a.data.requestOutsideCheckout({ row, time: '', reason: 'x' }), /waqt chunein/);
+  await assert.rejects(a.data.requestOutsideCheckout({ row, time: pkTime24(new Date(tIn.getTime() - 5 * 60000)), reason: 'x' }), /pehle hai|16 ghante/);
+  const outT = pkTime24(tOut);
+  const r = await a.data.requestOutsideCheckout({ row, time: outT, reason: 'Chutti ke baad Check-Out bhool gaya', note: 'ghar pohanch gaya', gps: { lat: 32.8301234567, lng: 73.99, accuracy: 14.4, distance: 4321.7 } });
+  assert.equal(r.queued, false); await wait(10);
+  const [rk, rv] = [...records].find(([k, v]) => k.includes('staffRequests/') && v.via === 'outside');
+  for (const k of Object.keys(rv)) assert.ok(reqKeys.includes(k), 'rules mein nahi: ' + k);
+  assert.equal(rv.distance, 4322); assert.equal(rv.lat, 32.830123); assert.match(rv.reason, /bhool gaya — ghar pohanch gaya/);
+  a.data.stop();
+  // malik manzoor kare
+  const o = setup(records, storage); o.fake.auth.currentUser = { uid: 'owner-uid', email: 'hp6235@gmail.com', isAnonymous: false }; o.data.startOwner(); await wait(30);
+  await o.data.reviewRequest(rk.split('/').pop(), 'approved'); await wait(10);
+  const att = records.get(B + `staffAttendance/${rid}`);
+  assert.equal(att.checkOut, outT); assert.equal(att.checkOutVia, 'outside'); assert.equal(att.checkOutDistance, 4322); assert.equal(records.get(rk).status, 'approved');
+  o.data.stop();
+});
+test('v221: location na mile to bhi request (wajah ke sath)', async () => {
+  const records = base(), storage = memoryStorage();
+  const tIn = new Date(Date.now() - 3 * 3600000), inDate = pkDate(tIn), rid = `${inDate}_${phone}`;
+  records.set(B + `staffAttendance/${rid}`, { id: rid, date: inDate, phone, checkIn: pkTime24(tIn), checkInTs: tIn.getTime() });
+  const a = setup(records, storage); a.fake.auth.currentUser = { uid: 'anon-1' }; await started(a.data);
+  const row = a.data.state.myAttendance.find(r => r.id === rid);
+  await a.data.requestOutsideCheckout({ row, time: pkTime24(new Date(Date.now() - 3600000)), reason: 'Doosri wajah', gpsError: 'Location ki ijazat band hai. Browser ki settings mein is site ke liye Location "Allow" karein.' }); await wait(10);
+  const [, rv] = [...records].find(([k, v]) => k.includes('staffRequests/') && v.via === 'outside');
+  assert.equal(rv.lat, undefined); assert.ok(rv.gpsError.length <= 60); a.data.stop();
 });
