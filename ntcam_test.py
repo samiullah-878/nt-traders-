@@ -59,6 +59,47 @@ class T(unittest.TestCase):
             self.assertIn("'" + k + "'", block, 'rules mein nahi: ' + k)
 
 
+class KeyFix(unittest.TestCase):
+    """v1.1.1: key ke chhupe harf (AnyDesk paste) -> 400 bina wajah. Saaf karna + saaf ghalti."""
+    def test_clean_key(self):
+        self.assertEqual(ntcam.clean_key('\x16sk-ant-api03-Ab_9-xY\r\n \u200b'), 'sk-ant-api03-Ab_9-xY')
+        self.assertEqual(ntcam.clean_key(None), '')
+
+    def test_saved_key_saaf(self):
+        ntcam.save_json(ntcam.SECRETS, {'claudeKey': 'sk-ant-api03-AAA\x16', 'cams': {}})
+        self.assertEqual(ntcam.secrets()['claudeKey'], 'sk-ant-api03-AAA')
+        self.assertEqual(ntcam.load_json(ntcam.SECRETS, {})['claudeKey'], 'sk-ant-api03-AAA', 'file mein bhi saaf')
+
+    def _resp(self, code, body):
+        class R:
+            status_code = code
+            text = body if isinstance(body, str) else json.dumps(body)
+            def json(s):
+                if isinstance(body, str):
+                    raise ValueError('not json')
+                return body
+        return R()
+
+    def test_api_error_texts(self):
+        e = ntcam.api_error
+        self.assertIn('chhupa ghalat harf', e(self._resp(400, '')))
+        self.assertIn('credit nahi', e(self._resp(400, {'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low'}})))
+        self.assertIn('key ghalat', e(self._resp(401, {'error': {'message': 'invalid x-api-key'}})))
+        self.assertEqual(e(self._resp(400, {'error': {'message': 'messages: bad'}})), 'Claude (400): messages: bad')
+
+    def test_check_key_code(self):
+        sent = {}
+        def post(url, **k):
+            sent['h'] = k['headers']['x-api-key']
+            return self._resp(400, '')
+        with mock.patch.dict(sys.modules, {'requests': types.SimpleNamespace(post=post)}):
+            ok, msg, code = ntcam.check_key('sk-ant-api03-ZZ\x16')
+        self.assertEqual((ok, code), (False, 400)); self.assertEqual(sent['h'], 'sk-ant-api03-ZZ', 'bhejte waqt bhi saaf')
+
+    def test_version(self):
+        self.assertTrue(ntcam.newer('1.1.1', '1.1'), 'PC khud naya le')
+
+
 class Nigrani(unittest.TestCase):
     """v1.1 galla nigrani — harkat, tukre, AI faisla, ginti (bina camera / Claude ke)."""
     def test_zone_px(self):

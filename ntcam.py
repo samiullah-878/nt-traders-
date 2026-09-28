@@ -6,7 +6,7 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '1.1'
+VERSION = '1.1.1'
 
 import base64, collections, getpass, ipaddress, json, os, queue, re, socket, subprocess, sys, threading, time, traceback, urllib.parse
 from concurrent.futures import ThreadPoolExecutor
@@ -67,9 +67,23 @@ def save_json(path, value):
     os.replace(tmp, path)
 
 
+def clean_key(k):
+    """v1.1.1: Claude key mein sirf harf, ginti, - aur _ hote hain. AnyDesk (mobile) se paste par chhupe harf (jaise Ctrl+V ka
+    nishan) aa jate the — server 400 (khali wajah) deta tha. Baqi sab hata do."""
+    return re.sub(r'[^A-Za-z0-9_\-]', '', str(k or ''))
+
+
 def secrets():
     s = load_json(SECRETS, {})
     s.setdefault('cams', {})
+    k = s.get('claudeKey')
+    if k and clean_key(k) != k:              # purani save hui key mein chhupe harf — khud saaf
+        s['claudeKey'] = clean_key(k)
+        try:
+            save_json(SECRETS, s)
+            log('claude key saaf ki (chhupe harf hataye)')
+        except OSError:
+            pass
     return s
 
 
@@ -399,32 +413,41 @@ def ai_describe(key, b64):
                                  'batao ke kya nazar aa raha hai: kitne log, counter, aur galla/cash nazar aa raha hai ya nahi. '
                                  'Kisi insaan ki pehchan ya naam mat batao.'}]}]}
     r = requests.post('https://api.anthropic.com/v1/messages', json=body, timeout=60,
-                      headers={'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json'})
-    if r.status_code == 401:
-        raise RuntimeError('API key ghalat hai')
-    if r.status_code == 400 and 'credit' in r.text.lower():
-        raise RuntimeError('API mein credit nahi — console mein credit daalein')
+                      headers={'x-api-key': clean_key(key), 'anthropic-version': '2023-06-01', 'content-type': 'application/json'})
     if r.status_code != 200:
-        raise RuntimeError(f'AI {r.status_code}: {r.text[:160]}')
+        raise RuntimeError(api_error(r))
     return ' '.join(b.get('text', '') for b in r.json().get('content', []) if b.get('type') == 'text').strip()[:300]
 
 
+def api_error(r):
+    """Claude ki ghalti Roman Urdu mein, asal wajah ke sath (v1.1.1 — pehle khali '400' aata tha)."""
+    try:
+        j = r.json()
+        msg = str((j.get('error') or {}).get('message') or '')
+    except ValueError:
+        msg = (r.text or '').strip()
+    low = msg.lower()
+    if r.status_code == 401 or 'x-api-key' in low or 'authentication' in low:
+        return 'Claude key ghalat hai — nayi key daalein.'
+    if 'credit' in low or 'billing' in low:
+        return 'Claude mein credit nahi — console mein credit daalein.'
+    if not msg:
+        return f'Claude ne request wapas ki ({r.status_code}) bina wajah — aam taur par key mein chhupa ghalat harf. Key dobara paste karein.'
+    return f'Claude ({r.status_code}): {msg[:150]}'
+
+
 def check_key(key):
-    """Chhota sa sawaal (taqreeban muft) — key aur credit theek hain ya nahi."""
+    """Chhota sa sawaal (taqreeban muft) — key aur credit theek hain ya nahi. Wapas: (theek?, paigham, status code)."""
     import requests
     try:
         r = requests.post('https://api.anthropic.com/v1/messages', timeout=40,
-                          headers={'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json'},
+                          headers={'x-api-key': clean_key(key), 'anthropic-version': '2023-06-01', 'content-type': 'application/json'},
                           json={'model': MODEL, 'max_tokens': 5, 'messages': [{'role': 'user', 'content': 'ok'}]})
     except Exception as e:
-        return False, f'Claude tak internet nahi pohancha: {e}'
+        return False, f'Claude tak internet nahi pohancha: {e}', 0
     if r.status_code == 200:
-        return True, 'Claude key chal rahi hai (AI tayyar).'
-    if r.status_code == 401:
-        return False, 'Claude key ghalat hai — nayi key daalein.'
-    if 'credit' in r.text.lower():
-        return False, 'Claude mein credit nahi — console mein credit daalein.'
-    return False, f'Claude ne jawab nahi diya ({r.status_code}).'
+        return True, 'Claude key chal rahi hai (AI tayyar).', 200
+    return False, api_error(r), r.status_code
 
 
 GALLA_PROMPT = ('Ye {n} tasveerein aik dukaan ke GALLA (cash / paise rakhne ki jagah) ki CCTV se hain, waqt ki tarteeb mein '
@@ -455,10 +478,10 @@ def ai_judge(key, crops_b64):
         content += [{'type': 'text', 'text': f'Tasveer {i}'}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': b}}]
     t0 = time.time()
     r = requests.post('https://api.anthropic.com/v1/messages', timeout=90,
-                      headers={'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json'},
+                      headers={'x-api-key': clean_key(key), 'anthropic-version': '2023-06-01', 'content-type': 'application/json'},
                       json={'model': MODEL, 'max_tokens': 200, 'messages': [{'role': 'user', 'content': content}]})
     if r.status_code != 200:
-        raise RuntimeError('credit nahi' if 'credit' in r.text.lower() else ('key ghalat' if r.status_code == 401 else f'AI {r.status_code}'))
+        raise RuntimeError(api_error(r))
     txt = ' '.join(b.get('text', '') for b in r.json().get('content', []) if b.get('type') == 'text')
     v, why = parse_verdict(txt)
     return v, why, int((time.time() - t0) * 1000)
@@ -691,7 +714,7 @@ def setup():
     say('  [OK] Firebase se jud gaya.')
     if not sec.get('claudeKey'):
         say('\nClaude API key (sk-ant-...) — PC par Gmail/WhatsApp Web se copy kar ke yahan RIGHT-CLICK se paste karein.')
-        k = secret_input('API key (baad mein dena ho to sirf Enter): ').strip()
+        k = clean_key(secret_input('API key (baad mein dena ho to sirf Enter): '))
         if k.startswith('sk-ant-'):
             sec['claudeKey'] = k
             save_json(SECRETS, sec)
@@ -700,12 +723,21 @@ def setup():
             say('  [!!] Ye key ki ID hai, asal key nahi. Console > API keys > "Create Key" par jo lambi sk-ant-api03-... aik dafa dikhti hai, wo copy karein.')
         elif k:
             say('  [!!] Ye Claude ki key nahi lagti (sk-ant- se shuru hoti hai). Baad mein dobara chalayein.')
-    if sec.get('claudeKey'):
-        ok, msg = check_key(sec['claudeKey'])
+    for _ in range(3):                                   # v1.1.1: na chale to wahin nayi key (3 dafa tak)
+        if not sec.get('claudeKey'):
+            break
+        ok, msg, code = check_key(sec['claudeKey'])
         say(('  [OK] ' if ok else '  [!!] ') + msg)
-        if not ok and 'ghalat' in msg:
-            sec.pop('claudeKey', None)
-            save_json(SECRETS, sec)
+        if ok or code not in (400, 401, 403):
+            break
+        if input('   Nayi key daalein? (h = haan, Enter = baad mein): ').strip().lower() not in ('h', 'haan', 'y', 'yes'):
+            break
+        k = clean_key(secret_input('   Claude API key (right-click se paste): '))
+        if not k.startswith('sk-ant-'):
+            say('  [!!] Ye Claude ki key nahi (sk-ant-api03-... honi chahiye). Console > API keys > Create Key.')
+            break
+        sec['claudeKey'] = k
+        save_json(SECRETS, sec)
     say('\nNetwork par camera dhoond rahe hain... (10-20 second)')
     found = scan()
     try:

@@ -5,6 +5,20 @@ Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf)
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
 
 ------------------------------------------------------------
+ntcam.py v1.1.1 (2026-09-28 raat) — Claude "400" bina wajah
+------------------------------------------------------------
+28 Sep raat: malik ne camera 192.168.0.32 ko "galla" naam se joda — Online, wahi galla ki tasveer (192.168.0.143 wala
+"Galla" offline; dono aik hi jagah dikhate hain — malik ko kaha purana hata de, nahi to ginti / AI kharcha dugna).
+AI test: "AI nahi chala: AI 400:" aur v1.1 check_key: "Claude ne jawab nahi diya (400)" — chhoti "ok" request par bhi, aur
+jawab ka matn KHALI. Andaza (pakka nahi): save hui key mein chhupa control harf (AnyDesk mobile ke Ctrl+V / paste se) — header
+mein ja kar server 400 bina body deta hai. Credit ya ghalat key par Claude saaf JSON wajah deta hai, is liye wo nahi lagta.
+- clean_key(): sirf [A-Za-z0-9_-]. secrets() purani save key khud saaf kar ke file mein likhta hai; har request par bhi saaf.
+- api_error(r): JSON error.message / 401 / credit / khali body -> Roman Urdu paigham (khali = "chhupa ghalat harf, dobara paste").
+  ai_describe + ai_judge dono isi se. check_key() ab (ok, msg, code).
+- setup: key check na chale (400/401/403) to wahin "Nayi key daalein? (h)" — 3 dafa tak, paste bhi saaf.
+- ntcam_test.py 18 (+5 KeyFix). Agar clean ke baad bhi 400 aaye to agla shak: shop network / antivirus HTTPS jaanch.
+
+------------------------------------------------------------
 0000000000000000000000. v222 — GALLA NIGRANI (camera HISSA B) + ntcam.py v1.1
 ------------------------------------------------------------
 28 Sep: shop PC par NT Camera install ho gaya (Windows 10, PS 5.1). Network par 4 Dahua: 192.168.0.32, .88, .110 (password
