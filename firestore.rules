@@ -7,7 +7,7 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Noor Traders Hazri v222 (v218: staffDiag, v220: cameras, v221: bahar se Check-Out, v222: galla nigrani). Owner emails auth.js ke OWNER_EMAILS se milni chahiye.
+    // Noor Traders Hazri v223 (v218: staffDiag, v220: cameras, v221: bahar se Check-Out, v222: galla nigrani, v223: galla milaan). Owner emails auth.js ke OWNER_EMAILS se milni chahiye.
     // An arbitrary Firebase email account must never gain business-owner access.
     function isOwner() {
       return signedIn()
@@ -249,7 +249,7 @@ service cloud.firestore {
     match /businesses/noor-traders/cameraPC/{docId} {
       allow read: if isCameraPC();
       allow write: if isCameraPC() && docId == 'status'
-        && request.resource.data.keys().hasOnly(['at', 'v', 'host', 'cams', 'online', 'error', 'python', 'found', 'foundAt']);
+        && request.resource.data.keys().hasOnly(['at', 'v', 'host', 'cams', 'online', 'error', 'python', 'found', 'foundAt', 'pos']);
     }
     // v220: cameras — PC banata hai aur apni halat likhta hai; naam / kaam / on-off malik (upar wala generic match).
     match /businesses/noor-traders/cameras/{camId} {
@@ -270,9 +270,17 @@ service cloud.firestore {
     }
     // v222: GALLA NIGRANI — PC har harkat ka faisla (chhoti thumb), 6 tasveerein alag, aur din ki ginti. Malik parhta /
     // "Theek hai" / "Shak pakka" likhta / 30 din baad mitata (generic match). Manager ke liye band (upar).
+    // v223: GALLA MILAAN — flow (aaya/nikla/len_den/ginti/kuch_nahi/saaf_nahi), matchState (ok/wait/missing/none/nopos),
+    // match {kind sale|return|pay, no, amount, at, party, who}. PC baad mein sirf milaan badal sakta hai; malik ke faisle parh sakta hai.
     match /businesses/noor-traders/cameraEvents/{eventId} {
+      allow read: if isCameraPC();
+      allow update: if isCameraPC()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['matchState', 'match', 'matchAt'])
+        && request.resource.data.matchState in ['ok', 'wait', 'missing', 'none', 'nopos'];
       allow create: if isCameraPC()
-        && request.resource.data.keys().hasOnly(['cam', 'camName', 'at', 'date', 'verdict', 'why', 'thumb', 'n', 'ms', 'model', 'agent'])
+        && request.resource.data.keys().hasOnly(['cam', 'camName', 'at', 'date', 'verdict', 'why', 'thumb', 'n', 'ms', 'model', 'agent',
+             'flow', 'matchState', 'match', 'start', 'end'])
+        && (!('matchState' in request.resource.data) || request.resource.data.matchState in ['ok', 'wait', 'missing', 'none', 'nopos'])
         && request.resource.data.verdict in ['normal', 'shak', 'saaf_nahi', 'error']
         && request.resource.data.date is string && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
         && request.resource.data.why is string && request.resource.data.why.size() <= 300
@@ -286,7 +294,7 @@ service cloud.firestore {
     match /businesses/noor-traders/cameraStats/{statId} {
       allow read: if isCameraPC();
       allow create, update: if isCameraPC()
-        && request.resource.data.keys().hasOnly(['cam', 'date', 'touches', 'checks', 'shak', 'unchecked', 'at']);
+        && request.resource.data.keys().hasOnly(['cam', 'date', 'touches', 'checks', 'shak', 'unchecked', 'at', 'moneyIn', 'moneyOut', 'matched', 'missing']);
     }
     // v218: har larke ke phone ka "jaanch ka record" — sirf apna aik doc (phone = session ka phone). Malik/manager parhte hain
     // (upar wala generic match). Keys data.js DIAG_KEYS se milni chahiye. serverAt = asal server ka waqt.

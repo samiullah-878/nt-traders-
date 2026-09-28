@@ -100,6 +100,84 @@ class KeyFix(unittest.TestCase):
         self.assertTrue(ntcam.newer('1.1.1', '1.1'), 'PC khud naya le'); self.assertTrue(ntcam.newer(ntcam.VERSION, '1.1.1'))
 
 
+class Milaan(unittest.TestCase):
+    """v1.2 GALLA MILAAN — bill / payment se milana, baqaya, der se entry, POS band ho to alarm nahi."""
+    S = {'kind': 'sale', 'no': '00119008', 'at': 1000.0, 'start': 970.0, 'amount': 1215.0, 'party': 'Cash'}
+    P = {'kind': 'pay', 'no': 'p1', 'at': 2000.0, 'amount': 5000.0, 'party': 'Supplier X', 'who': 'Ali'}
+
+    def test_pk_epoch(self):
+        import datetime
+        utc = datetime.datetime(2026, 9, 28, 13, 43, 2, tzinfo=datetime.timezone.utc).timestamp()
+        self.assertEqual(ntcam.pk_epoch(datetime.datetime(2026, 9, 28, 18, 43, 2)), utc, '6:43:02 pm PK = 13:43:02 UTC')
+
+    def test_match(self):
+        m = ntcam.match
+        self.assertEqual(m('aaya', 990, 1005, [self.S])[0], 'ok', 'bill 10 s baad save — theek')
+        self.assertEqual(m('len_den', 1050, 1060, [self.S])[1]['no'], '00119008', 'baqaya ke sath')
+        self.assertEqual(m('nikla', 995, 1004, [self.S])[0], 'ok', 'baqaya dena "nikla" lagta hai — bill ho to theek')
+        self.assertEqual(m('nikla', 1990, 2003, [self.S, self.P])[1]['kind'], 'pay', 'de diye pehle')
+        self.assertEqual(m('aaya', 1500, 1510, [self.S])[0], 'wait', 'door ka bill nahi')
+        self.assertEqual(m('ginti', 990, 1005, [])[0], 'none')
+        self.assertEqual(m('aaya', 1500, 1510, [], pos_ok=False)[0], 'nopos', 'POS parh na sake to alarm nahi')
+        self.assertEqual(m('nikla', 1500, 1510, [], True, False)[0], 'nopos')
+
+    def test_context_and_flow(self):
+        c = ntcam.context_text([self.S, self.P])
+        self.assertIn('Bill #00119008 Rs 1,215', c); self.assertIn('Supplier X ko Rs 5,000 de diye', c)
+        self.assertIn('NAHI', ntcam.context_text([]))
+        self.assertEqual(ntcam.parse_flow('{"flow":"len_den","verdict":"normal","why":"baqaya diya"}'), ('len_den', 'normal', 'baqaya diya'))
+        self.assertEqual(ntcam.parse_flow('{"flow":"udaa","verdict":"x"}')[:2], ('saaf_nahi', 'saaf_nahi'))
+        self.assertIn('haath seene', ntcam.GALLA_PROMPT2, 'seene par haath shak nahi')
+
+    def _g(self, recs, ok=True):
+        writes = []
+        class F:
+            def get(s, path): return None
+            def patch(s, path, data): writes.append((path, data)); return True
+            def query(s, *a, **k): return [{'why': 'haath jeb ki taraf', 'verdict': 'shak', 'reviewed': 'ok', 'reviewNote': 'qalam rakha', 'at': 5}]
+        pos = types.SimpleNamespace(near=lambda a, b: [r for r in recs if a <= r['at'] <= b], ok_sql=lambda: ok, ok_bk=lambda: ok)
+        return ntcam.Galla(F(), pos), writes
+
+    def test_handle_bill_milaan_aur_misaal(self):
+        import numpy as np
+        g, writes = self._g([self.S])
+        seen = {}
+        def judge(key, crops, ctx, gap, ex=''):
+            seen.update(ctx=ctx, ex=ex, n=len(crops)); return 'len_den', 'normal', 'paisa liya, baqaya diya', 700
+        w = types.SimpleNamespace(cid='c1', name='Galla', cap_day=300)
+        fr = [(np.random.rand(120, 160, 3) * 255).astype('uint8') for _ in range(10)]
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_judge2', judge):
+            g.handle(w, 995.0, 991.0, 1008.0, fr)
+        self.assertIn('Bill #00119008', seen['ctx'], 'AI ko bill bataya'); self.assertIn('qalam rakha', seen['ex'], 'malik ki misaal'); self.assertEqual(seen['n'], 10)
+        ev = [d for p, d in writes if '/cameraEvents/' in p][0]
+        self.assertEqual((ev['flow'], ev['matchState'], ev['match']['no'], ev['match']['amount']), ('len_den', 'ok', '00119008', 1215.0))
+        rules = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'firestore.rules'), encoding='utf-8').read()
+        blk = rules[rules.index('cameraEvents/{eventId}'):]; blk = blk[:blk.index('\n    }')]
+        for k in ev: self.assertIn("'" + k + "'", blk, 'rules mein nahi: ' + k)
+        st = g.stats[('c1', ntcam.pk_date(995.0))]; self.assertEqual((st['moneyIn'], st['matched']), (1, 1))
+
+    def test_wait_phir_ok_ya_missing(self):
+        import numpy as np
+        recs = []
+        g, writes = self._g(recs)
+        w = types.SimpleNamespace(cid='c1', name='Galla', cap_day=300)
+        fr = [(np.random.rand(120, 160, 3) * 255).astype('uint8') for _ in range(4)]
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), \
+             mock.patch.object(ntcam, 'ai_judge2', lambda *a: ('aaya', 'normal', 'paisa galla mein rakha', 500)):
+            g.handle(w, 3000.0, 2996.0, 3006.0, fr)
+            g.handle(w, 4000.0, 3996.0, 4006.0, fr)
+        evs = [d for p, d in writes if '/cameraEvents/' in p]; self.assertEqual([e['matchState'] for e in evs], ['wait', 'wait'])
+        recs.append({'kind': 'sale', 'no': 'late1', 'at': 3040.0, 'amount': 500.0, 'party': ''})   # bill der se bana
+        g.recheck()
+        upd = [(p, d) for p, d in writes if '/cameraEvents/' in p and 'matchAt' in d]
+        self.assertEqual(upd[0][1]['matchState'], 'ok'); self.assertEqual(upd[0][1]['match']['no'], 'late1')
+        self.assertEqual(len(g.waiting), 1, 'doosra ab bhi intezar mein')
+        g.waiting[0]['made'] -= 400; g.recheck()
+        self.assertEqual([d for p, d in writes if 'matchAt' in d][-1]['matchState'], 'missing'); self.assertEqual(g.waiting, [])
+        rules = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'firestore.rules'), encoding='utf-8').read()
+        self.assertIn("affectedKeys().hasOnly(['matchState', 'match', 'matchAt'])", rules)
+
+
 class Nigrani(unittest.TestCase):
     """v1.1 galla nigrani — harkat, tukre, AI faisla, ginti (bina camera / Claude ke)."""
     def test_zone_px(self):
@@ -120,7 +198,7 @@ class Nigrani(unittest.TestCase):
         self.assertTrue(m.feed(moved)[0], 'do lagatar = harkat')
 
     def test_pick_and_verdict(self):
-        self.assertEqual(ntcam.pick(list(range(10)), 6), [0, 2, 4, 5, 7, 9])
+        self.assertEqual(ntcam.pick(list(range(10)), 6), [0, 2, 4, 5, 7, 9]); self.assertEqual(len(ntcam.pick(list(range(40)), 10)), 10)
         self.assertEqual(ntcam.parse_verdict('ok {"verdict": "shak", "why": "Note jeb mein"} bas'), ('shak', 'Note jeb mein'))
         self.assertEqual(ntcam.parse_verdict('{"verdict":"Normal","why":"baqaya diya"}')[0], 'normal')
         self.assertEqual(ntcam.parse_verdict('samajh nahi aaya')[0], 'saaf_nahi')
@@ -140,16 +218,16 @@ class Nigrani(unittest.TestCase):
     def test_galla_flow(self):
         g, w, frames, writes = self._galla()
         with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), \
-             mock.patch.object(ntcam, 'ai_judge', lambda key, crops: ('shak', 'Note jeb ki taraf', 900)):
-            g.handle(w, 1000.0, frames)                 # jaanch
-            g.handle(w, 1010.0, frames)                 # 20 s ke andar: sirf ginti
-            g.handle(w, 1031.0, frames)                 # doosri jaanch
-            g.handle(w, 1060.0, frames)                 # had (2) poori: ginti + unchecked
+             mock.patch.object(ntcam, 'ai_judge2', lambda key, crops, ctx, gap, ex='': ('kuch_nahi', 'shak', 'Note jeb ki taraf', 900)):
+            g.handle(w, 1000.0, 996.0, 1005.0, frames)  # jaanch
+            g.handle(w, 1010.0, 1006.0, 1012.0, frames) # 20 s ke andar: sirf ginti
+            g.handle(w, 1031.0, 1027.0, 1036.0, frames) # doosri jaanch
+            g.handle(w, 1060.0, 1056.0, 1065.0, frames) # had (2) poori: ginti + unchecked
         st = g.stats[('aa11-ch1', ntcam.pk_date(1000.0))]
         self.assertEqual((st['touches'], st['checks'], st['shak'], st['unchecked']), (4, 2, 2, 1))
         ev = [d for p, d in writes if '/cameraEvents/' in p]; fr = [d for p, d in writes if '/cameraFrames/' in p]
         self.assertEqual(len(ev), 2); self.assertEqual(len(fr), 2)
-        self.assertEqual(ev[0]['verdict'], 'shak'); self.assertEqual(len(fr[0]['frames']), 6)
+        self.assertEqual(ev[0]['verdict'], 'shak'); self.assertEqual(len(fr[0]['frames']), 6); self.assertEqual(ev[0]['matchState'], 'none')
         self.assertLess(len(ev[0]['thumb']), 80000, 'rules ki had'); self.assertLess(sum(len(x) for x in fr[0]['frames']), 900000, 'Firestore 1 MB')
         order = [p.split('/')[2] for p, d in writes]
         self.assertEqual(order[:2], ['cameraFrames', 'cameraEvents'], 'pehle tasveerein, phir event (event par khabar jati hai)')
@@ -161,13 +239,14 @@ class Nigrani(unittest.TestCase):
         self.assertIn('(Shak)', card[-1]['aiTest'])
         g.flush()
         sw = [d for p, d in writes if '/cameraStats/' in p][0]
-        self.assertEqual(sorted(sw), sorted(['cam', 'date', 'touches', 'checks', 'shak', 'unchecked', 'at']))
+        rb = rules[rules.index('cameraStats/{statId}'):]; rb = rb[:rb.index('\n    }')]
+        for k in sw: self.assertIn("'" + k + "'", rb, 'stats rules mein nahi: ' + k)
 
     def test_ai_error_pause(self):
         g, w, frames, writes = self._galla()
-        def boom(key, crops): raise RuntimeError('credit nahi')
-        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_judge', boom):
-            g.handle(w, 2000.0, frames)
+        def boom(*a): raise RuntimeError('credit nahi')
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_judge2', boom):
+            g.handle(w, 2000.0, 1996.0, 2005.0, frames)
         ev = [d for p, d in writes if '/cameraEvents/' in p][0]
         self.assertEqual(ev['verdict'], 'error'); self.assertIn('credit', ev['why'])
         self.assertGreater(g.pause_until, time_now() - 1)

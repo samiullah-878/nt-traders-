@@ -629,3 +629,13 @@ html.is-snap .live-clock,html.is-snap [data-live]{opacity:.6}
 .zone-rect{position:absolute;border:3px solid #ffb020;border-radius:6px;background:rgba(255,176,32,.18);box-shadow:0 0 0 9999px rgba(13,20,36,.35);pointer-events:auto}
 .zone-rect::after{content:"GALLA";position:absolute;left:4px;top:-22px;padding:1px 6px;border-radius:4px;background:#ffb020;color:#1b2a4a;font-size:.6875rem;font-weight:900;letter-spacing:.08em}
 @media(max-width:420px){.nig-sum b{font-size:1.25rem}.nig-ev{grid-template-columns:96px 1fr}.nig-ev img,.nig-noimg{width:96px;height:70px}}
+
+/* ---------- v223: Galla milaan ---------- */
+.nig-rec{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.nig-milaan div.is-ok b{color:var(--ok)}
+.nig-milaan{margin-top:-2px}
+.nig-match{display:flex;gap:8px;align-items:flex-start;padding:10px 12px;border-radius:12px;margin:6px 0 8px;background:var(--off-bg);color:var(--text)}
+.nig-match.m-ok{background:var(--ok-bg)}.nig-match.m-ok svg{color:var(--ok)}
+.nig-match.m-missing{background:var(--bad-bg)}.nig-match.m-missing svg{color:var(--bad)}
+.nig-match.m-nopos svg,.nig-match.m-wait svg{color:var(--late)}
+.nig-ev.is-missing{border-left-color:var(--bad)}

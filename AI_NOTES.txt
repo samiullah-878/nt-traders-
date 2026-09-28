@@ -1,8 +1,44 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v222   Tareekh: 2026-09-28  (v220 cameras + v221 bahar se Check-Out bhi isi zip mein; ntcam.py v1.1)
+Version: v223   Tareekh: 2026-09-29  (galla milaan; ntcam.py v1.2)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+00000000000000000000000. v223 + ntcam.py v1.2 — GALLA MILAAN
+------------------------------------------------------------
+Malik: har sale bill POS par scan hota hai, paisa kuch second baad; galla ki har harkat ko bill / Galla screen "de diye" se
+milao taake paisa kisi aur ko dena bhi pakra jaye (jeb hi nahi). Nayi screen NAHI — shop PC khud kare. posdekho se pakka: dbo.Sale
+CreatedOn / SaleDate second tak (PK ka sada waqt, timezone ke baghair), BiltyDate = bill shuru, CashReceived / TotalSale, SaleNo,
+IsCreditSale; SaleReturn (TotalSaleReturn, CreatedOn); Voucher (CRV / JV / CPV) CreatedOn. Malik ne 17:05:40-54 ki DMSS tasveerein
+dikhayin: 14 s ka len-den (note gine, bill kaaghaz, laal note baqaya, aakhir mein SEENE PAR HAATH = qalam/phone) — purani 3 s ki
+6 tasveer mein AI isay "jeb" samajh sakta tha. Is liye: bill pehle, poori kahani, sakht shak, malik ke faislon se seekhna.
+- ntcam.py v1.2: Pos thread (har 20 s, SIRF parhna): pymssql (khud pip install) C:\khata-sync\local-config.json ki sql setting se
+  — naye Sale (SaleID > aakhri; shuru mein pichle 4 ghante) + SaleReturn; google-auth (khud install) + C:\khata-sync\firebase-key.json
+  (Blue Khata service account) se Firestore runQuery gallaCalls paidAt >= 4 ghante (status paid, amount PAISA /100, partyName,
+  paidName). recs deque (kind sale|return|pay, no, at epoch s, amount Rs, party, who). pk_epoch(): naive PK waqt - 5 ghante.
+  status: cameraPC/status.pos = "POS theek · Galla screen theek" / "nahi: <ghalti>".
+  Watch: harkat par pending {from now-4, until now+5}, harkat chalti rahe to until = now+3 (at+20 tak) -> 10 tasveer (pick).
+  Galla: len-den khatam hone ke 45 s baad kaam (POS record aa jaye). near = recs(t0-180, t1+120) -> context_text ("POS sale Bill
+  #00119008 Rs 1,215 save 6:43:02 pm ..."). ai_judge2 (GALLA_PROMPT2): flow aaya | nikla | len_den | ginti | kuch_nahi (+ saaf_nahi),
+  verdict; "shak SIRF jab note jeb/qameez/shalwar/chhupi jagah mein saaf jaye; seene/jeb ke paas haath, qalam, phone shak NAHI;
+  bill hai aur customer se liya/baqaya diya = normal". load_examples(): Fire.query cameraEvents reviewed IN [ok, confirmed] (40,
+  naye 6) -> "Malik ke pichle faisle" prompt mein (10 min cache). match(): aaya/len_den -> sale [t0-180, t1+60] qareeb tar;
+  nikla -> pay/return [t0-120, t1+120] ya sale (baqaya); ginti/kuch_nahi -> none; na mile -> wait; POS (ya nikla par Galla screen)
+  parh na sake -> nopos (ALARM NAHI); AI error -> nopos. Event: flow, matchState, match {kind, no, amount, at ms, party, who},
+  start, end. recheck() har 2 s loop mein: wait -> ok (bill der se) / nopos / 5 min baad missing. Stats + moneyIn, moneyOut, matched,
+  missing. ntcam_test 23 (+5 Milaan: pk_epoch, match ke 8 haalat, context/flow/prompt, handle: AI ko bill + malik ki misaal, rules
+  keys; wait -> ok (der se bill) / missing).
+- rules v223: cameraPC status + 'pos'; cameraEvents: PC read (misaalein), PC update SIRF matchState/match/matchAt (matchState list),
+  create keys + flow, matchState, match, start, end; cameraStats + moneyIn, moneyOut, matched, missing. PUBLISH ZAROORI.
+- functions: handleCamEvent(ev, before): naya + shak = khabar (pehle jaisa); update par matchState -> 'missing' (pehli dafa, shak
+  na ho) = "Galla: entry nahi · <camera> · <waqt>" sirf owner. Router: cameraEvents update bhi. router.test 6.
+- App v223 (Nigrani): card par flow chip (Paisa aaya / nikla / Liya + baqaya / Sirf ginti) + milaan chip (hara "Bill #.. · Rs ..",
+  surkh "Entry nahi", "Bill dhoond rahe…", "POS se jaanch nahi"), Entry nahi wale card ka hashiya surkh; doosri khulasa qataar
+  (paisa aaya, nikla, bill / entry mili, entry nahi); filter "Entry nahi"; event sheet mein "Record mila / Entry nahi" dabba.
+  Cameras sheet PC card par "Galla milaan: POS theek · Galla screen theek". app.dom 78 pass; Chromium mein Nigrani dekha.
+- Yahan test NAHI: asal SQL Server (pymssql named instance localhost\SQLEXPRESS — SQL Browser chahiye), asal Blue Khata runQuery,
+  asal Claude faisla. POS ya Galla screen na parh sake to milaan 'nopos' (alarm nahi) aur Cameras card par wajah.
 
 ------------------------------------------------------------
 posdekho.txt (2026-09-28 raat) — GALLA MILAAN ki tayyari: POS ka data dekhna (sirf jaanch)
