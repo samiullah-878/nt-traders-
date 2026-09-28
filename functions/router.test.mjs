@@ -58,3 +58,12 @@ test('v222: galla SHAK -> sirf malik ko khabar; normal par kuch nahi', async () 
   assert.match(a[0].data.title, /Galla: shak · Galla/); assert.equal(a[0].data.tag, 'cam-aa11-ch1-1700000000000'); assert.match(a[0].data.body, /jeb/);
   assert.equal((await write('cameraEvents', 'x2', { verdict: 'normal', why: 'baqaya diya' })).length, 0);
 });
+
+test('v223: galla milaan — wait -> missing par aik dafa "entry nahi"; ok par kuch nahi', async () => {
+  const base = { cam: 'aa11-ch1', camName: 'Galla', at: Date.now(), date: '2026-09-28', verdict: 'normal', why: 'paisa rakha', flow: 'aaya' };
+  const a = await write('cameraEvents', 'ev9', { ...base, matchState: 'missing' }, { ...base, matchState: 'wait' });
+  assert.deepEqual(a.map(m => m.token), ['NEW']); assert.match(a[0].data.title, /Galla: entry nahi/); assert.match(a[0].data.body, /paisa aaya lekin POS bill/);
+  assert.equal((await write('cameraEvents', 'ev9', { ...base, matchState: 'missing', reviewed: 'ok' }, { ...base, matchState: 'missing' })).length, 0, 'dobara nahi');
+  assert.equal((await write('cameraEvents', 'ev9', { ...base, matchState: 'ok' }, { ...base, matchState: 'wait' })).length, 0, 'mil gaya');
+  assert.equal((await write('cameraEvents', 'ev10', { ...base, matchState: 'wait' })).length, 0, 'naya normal: kuch nahi');
+});

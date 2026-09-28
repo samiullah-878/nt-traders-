@@ -113,10 +113,19 @@ async function handlePushTest(before, after) {
 
 
 /* ---------- v222: galla par SHAK — sirf malik ko (manager bhi staff hai, nigrani us ke liye band) ---------- */
-async function handleCamEvent(event) {
-  const e = event.data?.data(); if (!e || e.verdict !== 'shak') return;
+const FLOW_TXT = { aaya: 'paisa aaya', nikla: 'paisa nikla', len_den: 'len-den hua' };
+async function handleCamEvent(event, before = null) {
+  const e = event.data?.data(); if (!e) return;
   const time = new Date(Number(e.at) || Date.now()).toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit' }).toLowerCase();
-  await push({ title: `Galla: shak · ${e.camName || 'camera'} · ${time}`, body: `${String(e.why || 'AI ko shak hua').slice(0, 140)} — photos Nigrani mein`, tag: `cam-${event.params.id}`, kinds: ['owner'] });
+  // naya event: shak par foran
+  if (!before && e.verdict === 'shak') {
+    await push({ title: `Galla: shak · ${e.camName || 'camera'} · ${time}`, body: `${String(e.why || 'AI ko shak hua').slice(0, 140)} — photos Nigrani mein`, tag: `cam-${event.params.id}`, kinds: ['owner'] });
+    return;
+  }
+  // v223 GALLA MILAAN: 5 minute tak bill / entry na mili (wait -> missing) — sirf aik dafa
+  if (e.matchState === 'missing' && (before?.matchState || '') !== 'missing' && e.verdict !== 'shak') {
+    await push({ title: `Galla: entry nahi · ${e.camName || 'camera'} · ${time}`, body: `${FLOW_TXT[e.flow] || 'paisa hila'} lekin POS bill / Galla screen entry nahi mili — photos Nigrani mein`, tag: `camm-${event.params.id}`, kinds: ['owner'] });
+  }
 }
 
 /* ---------- v219: AIK HI JAGTI FUNCTION — sab foran wali khabrein ----------
@@ -131,6 +140,7 @@ export const onHazriWrite = onDocumentWritten({ ...FAST, document: `${BIZ}/{coll
   const created = !before?.exists, ev = { data: after, params: { id: docId } };
   try {
     if (coll === 'pushTokens') return await handlePushTest(before?.exists ? before.data() : null, after.data());
+    if (coll === 'cameraEvents' && !created) return await handleCamEvent(ev, before.data()); // v223: milaan badla (wait -> missing)
     if (!created) return;
     if (coll === 'staffOuts') return await handleOut(ev);
     if (coll === 'staffRequests') return await handleRequest(ev);
