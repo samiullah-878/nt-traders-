@@ -5,6 +5,15 @@ Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf)
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
 
 ------------------------------------------------------------
+ntcam.py v1.1.2 (2026-09-28 raat) — camera card ki "AI test" line taaza
+------------------------------------------------------------
+Nayi key (PC par hi copy + right-click paste) chal gayi. Malik ko app mein phir bhi "Claude key ghalat" dikh raha tha = purani
+aiTest line (sirf setup mein badalti thi) aur ghalat-key ke waqt ke 'error' events. Ab: run() shuru hote hi aik dafa check_key ->
+har camera ki aiTest ("AI tayyar — Claude key chal rahi hai" / "AI nahi chala: ..."); Galla.handle har jaanch ke baad aiTest =
+"AI chal raha hai — aakhri jaanch 10:42 pm (Normal/Shak/Saaf nahi)" ya ghalti. Malik ne poocha "mera panel kahan" = Nigrani tab.
+Upload: sirf ntcam.py (+test, notes); PC khud leta hai (shuru ke 2 min baad / har 6 ghante). ntcam_test 18 pass.
+
+------------------------------------------------------------
 ntcam.py v1.1.1 (2026-09-28 raat) — Claude "400" bina wajah
 ------------------------------------------------------------
 28 Sep raat: malik ne camera 192.168.0.32 ko "galla" naam se joda — Online, wahi galla ki tasveer (192.168.0.143 wala

@@ -6,7 +6,7 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '1.1.1'
+VERSION = '1.1.2'
 
 import base64, collections, getpass, ipaddress, json, os, queue, re, socket, subprocess, sys, threading, time, traceback, urllib.parse
 from concurrent.futures import ThreadPoolExecutor
@@ -686,6 +686,10 @@ class Galla(threading.Thread):
                                                       'thumb': jpeg_b64(frames[len(frames) // 2], width=320, quality=60)[0], 'n': len(crops),
                                                       'ms': ms, 'model': MODEL, 'agent': VERSION})
         log('nigrani', w.cid, v, why)
+        # v1.1.2: camera card ki "AI test" line hamesha taaza (purani ghalti atki na rahe)
+        when = time.strftime('%I:%M %p', time.gmtime(at + 5 * 3600)).lstrip('0').lower()
+        label = {'normal': 'Normal', 'shak': 'Shak', 'saaf_nahi': 'Saaf nahi'}.get(v, '')
+        self.fire.patch(f'{BIZ}/cameras/{w.cid}', {'aiTest': (f'AI chal raha hai — aakhri jaanch {when} ({label})' if v != 'error' else why)[:200], 'aiTestAt': t})
 
     def flush(self):
         with self.lock:
@@ -889,6 +893,7 @@ def run():
     last_list = last_status = 0
     last_update = time.time() - UPDATE_EVERY + 120   # shuru ke 2 minute baad pehli jaanch
     last_scan = 0
+    key_note = False                               # v1.1.2: shuru mein aik dafa AI ki halat cards par
     while True:
         try:
             t = time.time()
@@ -896,6 +901,18 @@ def run():
                 cams = dict(fire.list('cameras'))
                 last_list = t
                 sec = secrets()                # setup ne naya camera joda ho
+                if not key_note and cams:
+                    key_note = True
+                    if sec.get('claudeKey'):
+                        ok, msg, _ = check_key(sec['claudeKey'])
+                        note = 'AI tayyar — Claude key chal rahi hai' if ok else 'AI nahi chala: ' + msg
+                    else:
+                        note = 'AI nahi chala: PC mein Claude key nahi — "NT Camera jodein" chala kar daalein'
+                    for cid in cams:
+                        try:
+                            fire.patch(f'{BIZ}/cameras/{cid}', {'aiTest': note[:200], 'aiTestAt': now_ms()})
+                        except Exception as e:
+                            log('ai note nahi:', e)
                 # v1.1: galla nigrani — kaam 'galla' + dabba mark + chalu = video lagatar
                 for cid, c in cams.items():
                     s = sec['cams'].get(cid)

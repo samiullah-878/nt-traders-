@@ -97,7 +97,7 @@ class KeyFix(unittest.TestCase):
         self.assertEqual((ok, code), (False, 400)); self.assertEqual(sent['h'], 'sk-ant-api03-ZZ', 'bhejte waqt bhi saaf')
 
     def test_version(self):
-        self.assertTrue(ntcam.newer('1.1.1', '1.1'), 'PC khud naya le')
+        self.assertTrue(ntcam.newer('1.1.1', '1.1'), 'PC khud naya le'); self.assertTrue(ntcam.newer(ntcam.VERSION, '1.1.1'))
 
 
 class Nigrani(unittest.TestCase):
@@ -156,6 +156,9 @@ class Nigrani(unittest.TestCase):
         rules = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'firestore.rules'), encoding='utf-8').read()
         blk = rules[rules.index('cameraEvents/{eventId}'):]; blk = blk[:blk.index('\n    }')]
         for k in ev[0]: self.assertIn("'" + k + "'", blk, 'rules mein nahi: ' + k)
+        card = [d for p, d in writes if p.endswith('/cameras/aa11-ch1')]
+        self.assertTrue(card and card[-1]['aiTest'].startswith('AI chal raha hai — aakhri jaanch'), 'v1.1.2: card ki AI line taaza')
+        self.assertIn('(Shak)', card[-1]['aiTest'])
         g.flush()
         sw = [d for p, d in writes if '/cameraStats/' in p][0]
         self.assertEqual(sorted(sw), sorted(['cam', 'date', 'touches', 'checks', 'shak', 'unchecked', 'at']))
