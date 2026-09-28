@@ -1,36 +1,17 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v222   Tareekh: 2026-09-27  (v221 + doosri chat ka v217 kaam yahan jora; v220 cameras, v217-v219 pehle se)
+Version: v221   Tareekh: 2026-09-27  (v220 cameras bhi isi zip mein; v217-v219 malik ne upload kar ke 'good' kaha)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
 
 ------------------------------------------------------------
-0000000000000000000000. v222 — v221 + PREMIUM SHAKAL + LARKON KO PAIGHAM + CALL/WHATSAPP (+ pushTokens sakht)
+ntcam.txt v1.0.1 (2026-09-28) — PC par pehli asal chalai ka sabaq
 ------------------------------------------------------------
-Pas-e-manzar: aik DOOSRI chat ne purani v216 par apna "v217" (premium CSS, paigham, Call/WhatsApp) banaya; malik ne wo 27 Sep 11:06 ko
-GitHub par chadha diya aur v220 ki 12 files (data, owner, staffview, ui, styles, core, sw, index, version, rules, AI_NOTES, app.dom.test)
-purani ho gayin; 11:05 ko functions/index.js mein sirf 29 lakeerein (adhoori) paste hui thin. v221 GitHub par kabhi nahi gayi thi.
-Git history (git clone, commit d626623 = v220) se poori v220 nikali, malik ki bheji v221 files (data, owner, core, index, rules,
-staffview, AI_NOTES, app.dom.test) upar lagayin, v221 ke .co-* CSS dobara likhe (asal v221 styles.css nahi mili), sw/version v221,
-phir ye v222. Malik ko "nt-hazri-v220-WAPAS.zip" bhi di thi (agar beech mein bachana ho).
-- Premium CSS (styles.css aakhir "v222"): gradient header + primary button, cards/panels 14px + naram saya, avatar ka naam se apna rang
-  (ui.avatar -> --av-h = hueOf(name)), gol tags/chips, mobile par neeche tabs shisha (blur) — desktop (>=860px) par tabs header mein
-  hi (unhein nahi chhera). v217 ki pakki-tasdeeq animation (btn-hold, stamp) ko bilkul nahi chhera.
-- Paigham: businesses/noor-traders/staffMessages/{auto} { toList: ['all'] | [phones], text <=500, fromName, by, at, serverAt,
-  readBy {phone: ms}, replies {phone: {text, at}} }. data.sendMessage / deleteMessage (guardOwner: malik/manager), data.readMessage(id,
-  reply) (larka: merge sirf apna readBy/replies). Malik listener at >= 30 din; larka do queries (toList array-contains phone / 'all').
-  Malik: Hazri (aaj) "Paigham bhejein", Settings "Larkon ko paigham", profile "Paigham" + Call (tel:) + WhatsApp (wa.me/92...).
-  Sheet: Sab staff / Kuch larke (chips), templates, bheje hue "N/M ne parh liya", jawab, Hatayein.
-  Larka: Hazri ke upar paigham card (Parh liya / Theek hai / Aa raha hoon / Jawab likhein) + "Purane paigham"; chhota neela card
-  "Notification chalu karein" (key lagi ho aur ijazat na ho) + app khulte hi refreshPush (role 'staff').
-- functions/index.js (v219 router onHazriWrite): coll 'staffMessages' create -> handleMessage: role 'staff' tokens (phone in toList ya
-  'all'), aik phone aik khabar, mare token saaf. router.test.mjs +1 test (5). FUNCTIONS DOBARA DEPLOY.
-- firestore.rules v222: staffMessages (read: apne/sab; update: sirf readBy/replies aur un mein sirf apna phone). pushTokens SAKHT
-  (v221 ka Hissa-2 wada): create/update sirf malik/manager, ya larka role 'staff' + phone == sessionPhone(). MALIK KO RULES PUBLISH.
-- In-app call NAHI (alag server, dono taraf app, data par kamzor) — Call/WhatsApp buttons. Dark mode NAHI (bohat se hard-coded rang).
-- v221 ka baqi Hissa 2 (chutti ke waqt larke ke phone par khud yaad-dehani) abhi NAHI — alag plan + OK.
-- Tests: app 82 pass (+ paigham: bhejna, larke ki screen card, Theek hai, profile Call/WhatsApp) + functions router 5 (npm install ke baad,
-  --experimental-test-module-mocks). sync.test.mjs asal v221 wala nahi mila (repo wala v220).
+Malik ne shop PC (Windows 10, Windows PowerShell 5.1, user 'Dell') par command chalayi: 1/4 Python 3.12 install ho gaya
+(C:\Users\Dell\AppData\Local\Programs\Python\Python312), phir 2/4 par laal ghalti: pip ki "WARNING: The scripts pip.exe ...
+not on PATH" (stderr) — `2>$null` ke sath aur $ErrorActionPreference = 'Stop' par PowerShell 5.1 isay NativeCommandError bana kar
+script rok deta hai. Asal masla nahi tha (pip upgrade ho chuka tha). Theek: pip ke waqt 'Continue', --no-warn-script-location,
+faisla $LASTEXITCODE se. Sabaq: PS 5.1 mein native command ka stderr redirect + 'Stop' = ghalti. ntcam.py nahi badla.
 
 ------------------------------------------------------------
 000000000000000000000. v221 — CHECK-OUT PAR LOCATION ZAROORI + DUKAAN SE BAHAR HO TO MALIK KO REQUEST  [naye kaam ka HISSA 1 / 2]

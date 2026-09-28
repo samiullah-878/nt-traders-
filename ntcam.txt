@@ -44,9 +44,14 @@ if (-not $py) {
 } else { Write-Host "  1/4  Python mil gaya: $py" }
 
 Write-Host '  2/4  Camera ki libraries (OpenCV) — thora waqt lagega...'
-& $py -m pip install --upgrade pip --quiet --disable-pip-version-check 2>$null | Out-Null
-& $py -m pip install --quiet --disable-pip-version-check opencv-python-headless numpy requests
-if ($LASTEXITCODE -ne 0) { Write-Host '  [!!] Libraries install nahi huin. Internet check kar ke dobara chalayein.' -ForegroundColor Red; return }
+# v1.0.1: pip ki "WARNING ... not on PATH" (stderr) ko Windows PowerShell 5.1 'Stop' par ghalti samajh kar rok deta tha.
+# Ab pip ke waqt 'Continue', warning band (--no-warn-script-location), aur faisla sirf exit code se.
+$ErrorActionPreference = 'Continue'
+& $py -m pip install --upgrade pip --quiet --disable-pip-version-check --no-warn-script-location 2>&1 | Out-Null
+& $py -m pip install --quiet --disable-pip-version-check --no-warn-script-location opencv-python-headless numpy requests 2>&1 | ForEach-Object { if ("$_" -notmatch 'WARNING') { "$_" } }
+$pipCode = $LASTEXITCODE
+$ErrorActionPreference = 'Stop'
+if ($pipCode -ne 0) { Write-Host '  [!!] Libraries install nahi huin. Internet check kar ke dobara chalayein.' -ForegroundColor Red; return }
 
 Write-Host '  3/4  Program GitHub se...'
 Invoke-WebRequest ($b + 'ntcam.py?t=' + [DateTime]::Now.Ticks) -OutFile "$d\ntcam.py" -UseBasicParsing
