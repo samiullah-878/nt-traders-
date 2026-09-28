@@ -1,0 +1,25 @@
+# posdekho.txt — sirf JAANCH (kuch nahi badalta): POS (SQL Server) ke Sale / Voucher table ke columns + aakhri 3 bill ke
+# waqt / raqam wale khane. Chalana (PC, PowerShell):  irm https://samiullah-878.github.io/nt-traders-/posdekho.txt|iex
+# khata-sync ka node + mssql + sql-config.js istemal karta hai. Password kabhi screen / file mein nahi.
+$ErrorActionPreference = 'Continue'
+$js = @'
+const sql = require('mssql'); const cfg = require('./sql-config.js');
+const pick = o => Object.fromEntries(Object.entries(o || {}).filter(([k]) => /date|time|amount|total|net|cash|paid|receiv|bill|no$|creat|entry|modif|user|status|type|party/i.test(k)));
+(async () => {
+  const p = await sql.connect(cfg); const out = [];
+  for (const t of ['Sale', 'SaleReturn', 'Voucher', 'VoucherDetail']) {
+    const r = await p.request().query("SELECT COLUMN_NAME + ' ' + DATA_TYPE AS c FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '" + t + "'");
+    out.push('== ' + t + ': ' + r.recordset.map(x => x.c).join(', '));
+  }
+  const s = await p.request().query("SELECT TOP 3 * FROM dbo.Sale WHERE DocStatusID <> 3 ORDER BY SaleID DESC");
+  out.push('', '== AAKHRI 3 SALE (sirf waqt / raqam wale khane):'); for (const r of s.recordset) out.push(JSON.stringify(pick(r)));
+  const v = await p.request().query("SELECT TOP 3 * FROM dbo.Voucher ORDER BY VoucherID DESC");
+  out.push('', '== AAKHRI 3 VOUCHER:'); for (const r of v.recordset) out.push(JSON.stringify(pick(r)));
+  console.log(out.join('\n')); process.exit(0);
+})().catch(e => { console.log('ERR ' + e.message); process.exit(1); });
+'@
+Set-Location C:\khata-sync
+[IO.File]::WriteAllText("C:\khata-sync\_posdekho.js", $js)
+if (-not (Get-Command node -ErrorAction SilentlyContinue)) { Write-Host '  [!!] node nahi mila — khata-sync wala node PATH par nahi.' -ForegroundColor Red; return }
+node _posdekho.js 2>&1 | Out-File -Encoding utf8 _pos.txt
+notepad _pos.txt

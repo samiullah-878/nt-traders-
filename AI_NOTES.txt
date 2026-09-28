@@ -5,6 +5,19 @@ Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf)
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
 
 ------------------------------------------------------------
+posdekho.txt (2026-09-28 raat) — GALLA MILAAN ki tayyari: POS ka data dekhna (sirf jaanch)
+------------------------------------------------------------
+Malik: camera ki har "paisa aaya / nikla" harkat ko sale bill (POS par scan — waqt mein sirf kuch second ka farq) aur Galla
+screen ki "de diye" payment se milana; nayi screen NAHI. Blue Khata alag Firebase (note-traders-khata-7ccc1), Hazri nt-traders.
+Shop PC C:\khata-sync: node + mssql, sql-config.js -> local-config.json { sql: { server localhost\SQLEXPRESS, database POS,
+user sa, password } } (PC par hi), firebase-key.json (Blue Khata admin). POS tables: dbo.Sale (SaleID, SaleNo, SaleDate, PartyID,
+BranchID, Description, DocStatusID <> 3 = zinda), SaleDetail, SaleReturn(+Detail), Party, Items, Voucher/VoucherDetail, Purchase.
+Galla screen payments: Blue Khata Firestore gallaCalls {amount paisa, partyName, status paid, paidAt, paidName, date}.
+posdekho.txt (PowerShell, Pages se `irm .../posdekho.txt|iex`): _posdekho.js likh kar node se Sale/SaleReturn/Voucher/
+VoucherDetail ke columns + aakhri 3 sale/voucher ke sirf waqt/raqam wale khane -> _pos.txt -> notepad. (Pehli command PowerShell
+ke backtick / $ ki wajah se JS tod deti thi — isi liye here-string file.) Agla: SaleDate mein asal waqt hai ya nahi -> ntcam v1.2.
+
+------------------------------------------------------------
 ntcam.py v1.1.2 (2026-09-28 raat) — camera card ki "AI test" line taaza
 ------------------------------------------------------------
 Nayi key (PC par hi copy + right-click paste) chal gayi. Malik ko app mein phir bhi "Claude key ghalat" dikh raha tha = purani
