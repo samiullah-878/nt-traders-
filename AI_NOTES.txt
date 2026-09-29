@@ -62,6 +62,9 @@ desktop icon se sahi (DMSS wala) password.
 - Yahan test NAHI: asal POS ke Voucher table ke khane (dhoond khud hoti hai — Cameras card par "Voucher: ..." dekhein; 'nahi mila'
   aaye to posdekho jaisi jaanch chahiye), asal Claude ka "khula".
 - Upload: sab files (ntcam.py + ntcam_test.py + AI_NOTES.txt + app). Rules publish ZAROORI NAHI.
+- ntup.txt (naya, Pages par): PC ko ABHI naya ntcam.py dilana — `irm https://samiullah-878.github.io/nt-traders-/ntup.txt|iex`:
+  base.txt se URL, ntcam.py utaar kar VERSION + py_compile jaanch, purana pythonw band, Startup shortcut se dobara shuru, v purana ->
+  naya dikhata hai; Pages taaza na ho to peela paigham (2 min baad dobara). Aage har update par yahi command (6 ghante ka intezar nahi).
 
 ------------------------------------------------------------
 0000000000000000000000000. v225 + ntcam.py v1.4 / v1.5 — VIDEO CLIPS + BILL SIRF APNE WAQT KA
