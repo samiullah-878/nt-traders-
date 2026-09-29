@@ -1,6 +1,6 @@
 {
-  "version": "v227",
+  "version": "v228",
   "variant": "Production",
   "buildDate": "2026-09-29",
-  "notes": "Nigrani ka layout phone par theek (page side mein nahi khisakta), camera card par Recording ki halat, har card par video chip + aaj ki videos ka khulasa. ntcam.py v1.7: aik len-den = aik jaanch, gode par ginti shak nahi, shak par doosri raaye (Sonnet)."
+  "notes": "Nigrani ka mawad ab daayen se nahi katta (asal wajah theek — sab tabs par); video na banne ki wajah khulase mein."
 }

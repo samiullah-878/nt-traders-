@@ -1,8 +1,23 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v227   Tareekh: 2026-09-29  (Nigrani layout + video ki halat; ntcam.py v1.7 aik len-den / doosri raaye; v226 voucher bhi)
+Version: v228   Tareekh: 2026-09-29  (layout ki ASAL wajah .view grid column; videos ki wajah khulase mein; ntcam.py v1.7 wahi)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+0000000000000000000000000000. v228 — LAYOUT KI ASAL WAJAH (.view grid) + VIDEO NA BANNE KI WAJAH KHULASE MEIN
+------------------------------------------------------------
+29 Sep 4:31 pm malik ka screenshot (v227): header ab poora, lekin Nigrani ka sab mawad (khulasa, notice, cards) daayen se KATA hua,
+aur "🎬 Aaj videos: 0 bani · 26 nahi bani". v227 ka overflow-x:clip sirf chhupa raha tha.
+- ASAL WAJAH: .view {display:grid} ka aik hi column = auto -> kisi bhi nowrap cheez ka min-content poora column chauda karta. Is dafa
+  "Mangwayi hui clips" (nig-clip-row) ki .tag "Nahi bani: Us waqt ki recording PC par nahi mili (...)" nowrap -> main 390 ke andar,
+  column 676 (150% font par 950) -> sab kata. Harness (happy-dom se asal HTML + Playwright Chromium 390 px, 100/130/150% font) se
+  pakra. Theek: .view{grid-template-columns:minmax(0,1fr)} + .view > *{min-width:0;max-width:100%} (sab tabs par, aage kabhi aisa
+  nahi); .nig-clip-row wrap, us ki .tag aur .nig-vid .tag wrap. Baad: main 390 / scroll 390 har font par.
+- vidSum(): sab se zyada aane wali ghalti "Wajah (N mein): ..." surkh line (card khole baghair); "card khol kar ▶" sirf jab koi bani ho.
+- VIDEO 0/26: wajah abhi malik se maloom karni hai — camera card ki "🎬 Recording ..." line (v227) aur khulase ki "Wajah" line.
+  Mumkin: recording chal hi nahi rahi (imageio-ffmpeg Windows par / cameras.rec ghalti) ya PC purana (v1.5) tha. ntcam nahi badla.
+- core/sw v228, index.html ?v=228. app.dom 1-3 pass (Hazri, Cameras, Nigrani).
 
 ------------------------------------------------------------
 000000000000000000000000000. v227 + ntcam.py v1.7 — NIGRANI LAYOUT, VIDEO KI HALAT, AIK LEN-DEN = AIK JAANCH, SHAK KI DOOSRI RAAYE

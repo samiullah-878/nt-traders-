@@ -793,7 +793,10 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     if (!cl.length) return '';
     const n = st => cl.filter(c => st.includes(c.status)).length;
     const ok = n(['ok']), bad = n(['error']), wait = n(['making', 'req']);
-    return `<p class="nig-vid">🎬 Aaj videos: <b>${ok}</b> bani${wait ? ` · <b>${wait}</b> ban rahi` : ''}${bad ? ` · <b class="txt-bad">${bad}</b> nahi bani` : ''} <small>(card khol kar ▶ dekhein)</small></p>`;
+    // v228: sab se zyada aane wali wajah — card khole baghair pata chale video kyun nahi bani
+    const why = {}; cl.filter(c => c.status === 'error' && c.error).forEach(c => { why[c.error] = (why[c.error] || 0) + 1; });
+    const top = Object.entries(why).sort((a, b) => b[1] - a[1])[0];
+    return `<p class="nig-vid">🎬 Aaj videos: <b>${ok}</b> bani${wait ? ` · <b>${wait}</b> ban rahi` : ''}${bad ? ` · <b class="txt-bad">${bad}</b> nahi bani` : ''}${ok ? ' <small>(card khol kar ▶ dekhein)</small>' : ''}${top ? `<span class="why">Wajah${top[1] > 1 ? ` (${top[1]} mein)` : ''}: ${esc(top[0])}</span>` : ''}</p>`;
   }
   function nigraniTab() {
     const today = pkDate(), day = ui.nigDay || today;

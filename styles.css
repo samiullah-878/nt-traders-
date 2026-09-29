@@ -671,3 +671,13 @@ html.is-snap .live-clock,html.is-snap [data-live]{opacity:.6}
 .cam-rec.is-bad{color:var(--bad)}.cam-rec.is-off{color:var(--muted)}
 .cam-rec small{color:var(--muted);font-weight:500}
 .nig-ev .nig-ev-body > small:not(.muted){display:-webkit-box;-webkit-line-clamp:3;line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+/* v228: asal wajah — .view grid ka aik hi column 'auto' tha; kisi bhi nowrap cheez (maslan "Mangwayi hui clips" ki lambi ghalti)
+   se poora column phone se chauda ho jata aur overflow clip mein kat jata. Ab column kabhi phone se chauda nahi. */
+.view{grid-template-columns:minmax(0,1fr)}
+.view > *{min-width:0;max-width:100%}
+.nig-clip-row{flex-wrap:wrap;min-width:0}
+.nig-clip-row > span{min-width:0}
+.nig-clip-row .tag,.nig-vid .tag{white-space:normal;text-align:left;line-height:1.3;padding:3px 8px;max-width:100%;overflow-wrap:anywhere}
+.nig-vid{overflow-wrap:anywhere}
+.nig-vid .why{flex-basis:100%;color:var(--bad);font-weight:600}
