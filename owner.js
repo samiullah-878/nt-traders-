@@ -757,14 +757,14 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
                 <label>Roz AI jaanch ki had (kharcha qaabu)<input type="number" name="aiCap" min="1" max="2000" value="${esc(String(c.aiCap || 300))}" inputmode="numeric"></label>
                 <div class="cam-roles" role="radiogroup" aria-label="Harkat ki hissasiyat">${[['low', 'Kam'], ['mid', 'Aam'], ['high', 'Zyada']].map(([k, t]) => `<label class="cam-pick"><input type="radio" name="sens" value="${k}" ${(c.sens || 'mid') === k ? 'checked' : ''}><span>Harkat: ${t}</span></label>`).join('')}</div>
                 <div class="btn-row"><button class="btn btn-primary">Save</button><button type="button" class="btn btn-ghost" data-action="cam-edit" data-id="">Rehne dein</button><button type="button" class="btn btn-ghost txt-bad" data-action="cam-del" data-id="${esc(c.id)}">Hatayein</button></div></form>`
-              : `${c.role === 'galla' ? `<p class="cam-watch ${c.zone?.w ? '' : 'is-need'}">${c.zone?.w ? `${icon('check', 14)} Galla ka hissa mark hai${c.watch === 'on' && on ? ` · nigrani chalu${c.fps ? ' (' + esc(String(c.fps)) + ' fps' + (c.stream === 'sub' ? ', halki video' : '') + ')' : ''}` : ' · PC par nigrani shuru hone ka intezar'}` : `${icon('alert', 14)} Galla ka hissa abhi mark nahi — nigrani band`}</p>` : ''}
+              : `${c.role === 'galla' ? `<p class="cam-watch ${c.zone?.w ? '' : 'is-need'}">${c.zone?.w ? `${icon('check', 14)} Galla ka hissa mark hai${c.watch === 'on' && on ? ` · nigrani chalu${c.fps ? ' (' + esc(String(c.fps)) + ' fps' + (c.stream === 'sub' ? ', halki video' : '') + ')' : ''}` : ' · PC par nigrani shuru hone ka intezar'}` : `${icon('alert', 14)} Galla ka hissa abhi mark nahi — nigrani band`}</p>${recLine(c, on)}` : ''}
                 <div class="btn-row"><button type="button" class="btn btn-ghost btn-sm" data-action="cam-snap" data-id="${esc(c.id)}" ${st === 'off' ? 'disabled' : ''}>${icon('camera', 16)} Abhi ki tasveer</button>${c.role === 'galla' ? `<button type="button" class="btn ${c.zone?.w ? 'btn-ghost' : 'btn-primary'} btn-sm" data-action="cam-zone" data-id="${esc(c.id)}">${icon('edit', 16)} Galla ka hissa</button>` : ''}<button type="button" class="btn btn-ghost btn-sm" data-action="cam-edit" data-id="${esc(c.id)}">${icon('edit', 16)} Badlein</button></div>`}
           </div></article>`;
       };
       return `${pcCard}${connect}${foundHtml}
         ${cams.length ? `<div class="cam-grid">${cams.map(card).join('')}</div>` : cfg ? '<p class="empty-line">Abhi koi camera nahi juda. PC par command (ya desktop icon "NT Camera jodein") chalayein.</p>' : ''}
         ${cfg && !ui.camCode ? `<p class="hint">PC badal raha hai ya code kho gaya? <button type="button" class="link" data-action="cam-code">Naya PC code banayein</button> (purana PC band ho jayega).</p>` : ''}
-        <p class="hint">Tasveer har 5 minute mein khud taza hoti hai jab PC chalu ho. Galla nigrani (harkat par AI) agle hisse mein judegi.</p>`;
+        <p class="hint">Tasveer har 5 minute mein khud taza hoti hai jab PC chalu ho. Galla camera par PC 2 din ki recording rakhta hai — shak aur "bina voucher" par video khud banti hai (Nigrani tab).</p>`;
     } });
   }
   /* ---------- v222: NIGRANI tab (sirf malik) — galla par har harkat, AI ka faisla, photos, duty par kaun tha ---------- */
@@ -786,6 +786,14 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     const m = pkMinOf(ms);
     return data.attendanceBetween(date, date).filter(a => a.checkIn && (parseTime(a.checkIn) ?? 9999) <= m && (!a.checkOut || (parseTime(a.checkOut) ?? -1) >= m))
       .map(a => { const out = S.outs.find(o => o.phone === a.phone && o.date === date && ['approved', 'returned'].includes(o.status) && (o.outAt || o.approvedAt || 0) <= ms && (!o.returnAt || o.returnAt >= ms)); return { name: account(a.phone)?.name || a.phone, out: !!out }; });
+  }
+  /** v227: aaj ki videos ka khulasa (shak / bina voucher par PC khud banata hai). */
+  function vidSum() {
+    const cl = (S.camClips || []).filter(c => c.kind === 'shak');
+    if (!cl.length) return '';
+    const n = st => cl.filter(c => st.includes(c.status)).length;
+    const ok = n(['ok']), bad = n(['error']), wait = n(['making', 'req']);
+    return `<p class="nig-vid">🎬 Aaj videos: <b>${ok}</b> bani${wait ? ` · <b>${wait}</b> ban rahi` : ''}${bad ? ` · <b class="txt-bad">${bad}</b> nahi bani` : ''} <small>(card khol kar ▶ dekhein)</small></p>`;
   }
   function nigraniTab() {
     const today = pkDate(), day = ui.nigDay || today;
@@ -813,7 +821,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     const card = e => { const [vt, vc] = VERDICT[e.verdict] || VERDICT.saaf_nahi; return `<button type="button" class="nig-ev v-${esc(e.verdict)} ${e.matchState === 'missing' ? 'is-missing' : ''} ${e.reviewed ? 'is-seen' : ''}" data-action="nig-open" data-id="${esc(e.id)}">
         ${e.thumb ? `<img src="data:image/jpeg;base64,${esc(e.thumb)}" alt="" loading="lazy">` : `<span class="nig-noimg">${icon('camera', 22)}</span>`}
         <span class="nig-ev-body"><span class="nig-ev-top"><b>${esc(clockOf(e.at))}</b><span class="tag ${vc}">${vt}</span>${e.reviewed ? `<span class="tag">${e.reviewed === 'ok' ? 'Theek' : 'Pakka shak'}</span>` : ''}</span>
-          ${e.flow && FLOW[e.flow] || e.matchState ? `<span class="nig-rec">${e.flow && FLOW[e.flow] ? `<span class="tag">${esc(FLOW[e.flow])}</span>` : ''}${matchChip(e)}</span>` : ''}
+          ${e.flow && FLOW[e.flow] || e.matchState || vidChip(e) ? `<span class="nig-rec">${e.flow && FLOW[e.flow] ? `<span class="tag">${esc(FLOW[e.flow])}</span>` : ''}${matchChip(e)}${vidChip(e)}</span>` : ''}
           <small>${esc(e.why || '')}</small><small class="muted">${esc(e.camName || '')}</small></span></button>`; };
     return `<section class="nig-head"><div class="day-nav"><button type="button" class="icon-btn" data-action="nig-day" data-arg="-1" aria-label="Pichla din">${icon('left')}</button>
         <b>${day === today ? 'Aaj' : esc(shortDate(day))}</b><button type="button" class="icon-btn" data-action="nig-day" data-arg="1" ${day >= today ? 'disabled' : ''} aria-label="Agla din">${icon('right')}</button></div>
@@ -831,6 +839,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         <div class="is-ok"><b>${sum('matched')}</b><small>voucher / entry mili</small></div>
         <div class="${sum('missing') ? 'is-bad' : ''}"><b>${sum('missing')}</b><small>bina voucher</small></div>
       </section>` : ''}
+      ${vidSum()}
       ${alerts.length ? `<button type="button" class="notice tone-bad nig-notice" data-action="nig-filter" data-arg="alerts">${icon('alert', 18)} <span><b>${alerts.length} bill cancel / badle</b> — POS mein bill ban ne ke baad badla gaya. Dekhein →</span></button>` : ''}
       ${sum('unchecked') ? `<p class="hint">${sum('unchecked')} dafa AI jaanch nahi hui (roz ki had poori, AI ruka, ya key nahi) — sirf ginti hui.</p>` : ''}
       <div class="chips" role="tablist">${[['all', 'Sab', evs.length], ['alerts', 'Bill badle', alerts.length], ['missing', 'Bina voucher', missing.length], ['open', 'Na dekhe shak', open.length], ['shak', 'Shak', shakList.length], ['normal', 'Normal', evs.filter(e => e.verdict === 'normal').length]].map(([k, t, n]) => `<button type="button" class="chip" role="tab" aria-selected="${f === k}" data-action="nig-filter" data-arg="${k}"><b>${n}</b> ${t}</button>`).join('')}</div>
@@ -865,6 +874,23 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     return sheet;
   }
   /* ---------- v225: VIDEO — shak par khud clip, kisi bhi waqt ki clip malik ki farmaish par ---------- */
+  /** v227: camera card par PC ki recording ki halat (video isi se banti hai). rec: 'on' | 'off' | ghalti ka matn; recFree GB. */
+  function recLine(c, on) {
+    const line = (cls, ic, txt) => `<p class="cam-rec ${cls}">${ic ? icon(ic, 14) : ''}<span>🎬 ${txt}${c.recFree != null ? ` <small>· ${esc(String(c.recFree))} GB khali</small>` : ''}</span></p>`;
+    if (!c.rec && c.recFree == null) return c.watch === 'on' ? line('is-off', '', 'Recording ki khabar abhi nahi aayi <small>(PC purana ho to ntup command chalayein)</small>') : '';
+    if (!on) return line('is-off', '', 'Recording: PC band / camera offline');
+    if (c.rec === 'on') return line('', 'check', 'Recording chalu — video ban sakti hai');
+    if (c.rec === 'off' || !c.rec) return line('is-bad', 'alert', 'Recording band — video nahi banegi');
+    return line('is-bad', 'alert', 'Recording mein ghalti: ' + esc(String(c.rec)));
+  }
+  /** v227: Nigrani card par video ki halat. */
+  function vidChip(e) {
+    const cl = clipsOf(e.id);
+    if (cl.some(c => c.status === 'ok')) return `<span class="tag t-vid">🎬 Video</span>`;
+    if (cl.some(c => c.status === 'making' || c.status === 'req')) return `<span class="tag t-off">🎬 Video ban rahi…</span>`;
+    if (cl.some(c => c.status === 'error')) return `<span class="tag t-bad">🎬 Video nahi bani</span>`;
+    return (e.verdict === 'shak' || e.matchState === 'missing') && !e.reviewed ? `<span class="tag t-off">🎬 Video ka intezar</span>` : '';
+  }
   const CLIP_ST = { req: 'PC ko farmaish gayi…', making: 'PC video bana raha hai…', error: 'Nahi bani' };
   const clipsOf = eid => (S.camClips || []).filter(c => c.eventId === eid);
   function clipBlock(e) {

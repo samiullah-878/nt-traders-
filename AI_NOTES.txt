@@ -1,8 +1,47 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v226   Tareekh: 2026-09-29  (GALLA SIRF VOUCHER PAR; ntcam.py v1.6; v225 video clips bhi isi mein)
+Version: v227   Tareekh: 2026-09-29  (Nigrani layout + video ki halat; ntcam.py v1.7 aik len-den / doosri raaye; v226 voucher bhi)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+000000000000000000000000000. v227 + ntcam.py v1.7 — NIGRANI LAYOUT, VIDEO KI HALAT, AIK LEN-DEN = AIK JAANCH, SHAK KI DOOSRI RAAYE
+------------------------------------------------------------
+29 Sep shaam: malik ke screenshots (4:06 pm): Nigrani page phone se chauda (header aadha, screen side mein khisakti), aur sawal
+"video ja rahi hai ya nahi". Khulasa: 929 galla chhua, 300 AI jaanch (= roz ki had, 12:36 pm par poori -> 582 bina jaanch, list ka
+aakhri card 12:36), 187 shak (62%!), 16 bina voucher, 23 bill badle. Aik hi bill #00119126 par 12:35-12:36 teen shak cards; AI ki
+wajah "notes ... shalwar/qameez ke PAAS". Camera ki tasveer: larka kursi par baith kar note GODE (lap) par ginta hai, paas narangi
+tokri mein note. Ye cards v1.5 ke the (update 3:30 pm ke baad hua) — v1.6 ki "Voucher:" line malik se dekhni baqi.
+- LAYOUT KI WAJAH (Playwright/Chromium 390 px par asal jaisa data laga kar pakri): .tag white-space:nowrap — card ka hara chip
+  ("Bill #.. · Rs ..", v226 mein "Cash Received · Bill #.." aur lamba) grid ke 1fr (= minmax(auto,1fr)) ko min-content tak kheenchta ->
+  poora document 450 px (phone 390). Theek: .nig-ev grid 112px/96px minmax(0,1fr) + min/max-width; .nig-rec/.nig-clip/.nig-match
+  .tag wrap (white-space normal, overflow-wrap anywhere); .view-nigrani overflow-x clip; card par AI ki wajah 3 line (line-clamp;
+  poori sheet mein). Baad: 390 = 390, 125% font par bhi. index.html styles.css?v=227 / boot.js?v=227 (CSS badli — cache).
+- VIDEO KI HALAT (app pehle kahin nahi dikhati thi, PC 'rec'/'recFree' bhejta tha): owner.js recLine(c, on) camera card (sirf
+  galla): "🎬 Recording chalu — video ban sakti hai · 38 GB khali" / "Recording band — video nahi banegi" / "Recording mein ghalti:
+  <wajah>" / PC band / "khabar abhi nahi aayi (PC purana ho to ntup)". vidChip(e) har Nigrani card: 🎬 Video (ok) / ban rahi (making,
+  req) / nahi bani (error) / "Video ka intezar" (shak ya bina voucher, na dekha, clip abhi nahi). vidSum(): "🎬 Aaj videos: N bani ·
+  M ban rahi · K nahi bani" (sirf kind shak). CSS .cam-rec, .nig-vid, .tag.t-vid. Cameras hint ki purani line ("Galla nigrani agle
+  hisse mein judegi") badli.
+- ntcam.py v1.7:
+  * merge_items(hold, now, wait): aik camera ki harkatein — agli ka t0 pichli ke t1 se <= MERGE_GAP (60 s) aur len-den <= MERGE_MAX
+    (180 s) = aik len-den; tayyar tab jab aakhri harkat ke baad max(45, 60) s koi nayi na aaye (3 min wala 45 s par). 10 tasveerein
+    (pick) sab hisson mein se. Galla.run: q se nikalte hi touches +1 (har harkat gini jati hai), item + counted=True; handle(...,
+    counted) touches dobara nahi. COOLDOWN wahi. Natija: AI jaanch ~3 guna kam, 300 ki had poore din.
+  * GALLA_PROMPT3 + : kursi par baith kar GODE (lap) par ginna / haath mein / tokri / machine = normal; haath shalwar / qameez / gode
+    ke PAAS dikhna shak NAHI; shak sirf note jeb / kapron ke ANDAR aur wapas na aaye; "paas le jana" shak nahi.
+  * ai_confirm(key, crops, ctx, gap, why) + CONFIRM_PROMPT: Haiku "shak" kahe to wahi tasveerein CONFIRM_MODELS ('claude-sonnet-5-5',
+    phir 'claude-sonnet-4-6' — 400/404 + "model" matn par agla) ko; "shak" sirf jab kam az kam do tasveeron mein note ANDAR. Normal kahe
+    -> verdict normal, why "Doosre AI ne dekha: .. (pehle: ..)". Shak kahe -> shak, why doosre ka. Na chale (credit / network) -> pehla
+    shak hi rehta hai (chhupaya nahi jata), log. event.model = "haiku+sonnet", ms dono ka. stats.shak sirf aakhri faisle par. Rules /
+    stats keys NAHI badle.
+  * ntcam_test.py 41 (+5 EkLenDen: merge (60 s, doosra camera, 3 min had, 10 tasveer, ginti), doosri raaye normal / shak / na chale,
+    model fallback + prompts).
+- Rules / functions: NAHI badle. Upload: badli files (neeche chat mein list). PC: `irm https://samiullah-878.github.io/nt-traders-/ntup.txt|iex`.
+- Kharcha: Sonnet sirf Haiku ke shak par (pehle 187/din tha; merge ke baad bohat kam). Roz ki had camera "Badlein" (aiCap) se malik
+  khud badal sakta hai.
+- Yahan test NAHI: asal Sonnet ka faisla, asal harkat ka merge (Watch ke asli waqfe), asal phone par naya layout (Chromium 390 px
+  mein dekha).
 
 ------------------------------------------------------------
 00000000000000000000000000. v226 + ntcam.py v1.6 — GALLA SIRF VOUCHER PAR (Cash Received)

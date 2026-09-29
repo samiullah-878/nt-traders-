@@ -1,4 +1,7 @@
 # ntcam.py — Noor Traders Hazri: dukaan ke CAMERAS (shop PC par chalta hai). Hissa A.
+# v1.7: AIK LEN-DEN = AIK JAANCH — galle ki harkatein 60 s ke andar dobara hon to aik hi card (3 min had); AI ko bataya ke larka
+#       kursi par baith kar gode / haath / tokri / machine mein ginta hai (shak NAHI); chhota AI "shak" kahe to bara AI (Sonnet)
+#       wahi tasveerein dobara dekhta hai — dono shak kahein tabhi shak (khabar + video). Roz ki had ab poore din chalti hai.
 # v1.6: GALLA SIRF VOUCHER PAR — POS ke "Cash Received" voucher (bill ka cash galle par receive) se 1 min pehle se 1.5 min baad
 #       tak galla khulna jaiz; bina voucher / refund / Galla screen "de diye" ke galla khula = 2 min baad 'missing' (khabar + clip).
 #       Jeb mein note = shak (voucher ho tab bhi). PC khud dhoondta hai POS voucher mein bill kis khane mein hai (pos-voucher.json).
@@ -15,7 +18,7 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '1.6'
+VERSION = '1.7'
 
 import base64, collections, getpass, ipaddress, json, os, queue, re, socket, subprocess, sys, threading, time, traceback, urllib.parse
 from concurrent.futures import ThreadPoolExecutor
@@ -27,6 +30,8 @@ BASEF = os.path.join(HOME, 'base.txt')
 DEFAULT_BASE = 'https://samiullah-878.github.io/nt-traders-/'
 BIZ = 'businesses/noor-traders'
 MODEL = 'claude-haiku-4-5-20251001'
+CONFIRM_MODELS = ('claude-sonnet-5-5', 'claude-sonnet-4-6')   # v1.7: shak ki doosri raaye (pehla na chale to doosra)
+MERGE_GAP, MERGE_MAX = 60, 180       # v1.7: 60 s ke andar agli harkat = wahi len-den; aik len-den zyada se zyada 3 minute
 SHOT_EVERY = 300          # har 5 minute aik tasveer (app ke liye)
 LIST_EVERY = 20           # cameras ki list / "nayi tasveer" ki farmaish har 20 second
 STATUS_EVERY = 120        # PC zinda hai — har 2 minute
@@ -1214,11 +1219,14 @@ def context_text(recs):
 GALLA_PROMPT3 = ('Ye {n} tasveerein aik dukaan ke GALLA (cash ki daraz / dabba) ki CCTV se hain, waqt ki tarteeb mein (taqreeban {gap} '
                  'second ka farq). Dukaan ka tareeqa: customer parchi (bill) aur paisa deta hai -> larka paisa haath mein ya note ginne '
                  'wali machine mein ginta hai -> parchi scan hoti hai (POS mein "Cash Received") -> galle se baqaya deta hai -> paisa '
-                 'galle mein rakhta hai. Ye poora silsila NORMAL hai; paisa haath / machine / counter par rehna shak NAHI. '
+                 'galle mein rakhta hai. Ye poora silsila NORMAL hai; paisa haath / machine / counter par rehna shak NAHI. Larka kursi '
+                 'par baitha hota hai: note GODE (lap) par rakh kar ginna, haath mein pakre rehna, paas ki tokri / dabbe mein rakhna — '
+                 'upar se camera mein ye haath shalwar / qameez / gode ke PAAS dikhta hai, ye shak NAHI. '
                  'Us waqt ka record: {ctx}. Batao: (1) "flow" — "aaya" (kisi se paisa le kar galla mein rakha), '
                  '"nikla" (galla se nikal kar kisi ko diya), "len_den" (paisa liya AUR baqaya wapas diya), "ginti" (sirf gine / seedhe '
                  'kiye), "kuch_nahi" (paisa nahi hila). (2) "khula" — galle ki daraz / dabba khula ya haath us ke andar gaya to true, warna '
-                 'false. (3) "verdict" — "shak" SIRF tab jab note saaf nazar aaye ke jeb, qameez, shalwar ya kisi chhupi jagah mein gaya; '
+                 'false. (3) "verdict" — "shak" SIRF tab jab note saaf nazar aaye ke jeb ke ANDAR, qameez / shalwar ke ANDAR ya kisi '
+                 'chhupi jagah mein gaya aur wahan se wapas nahi aaya; "paas le jana" shak nahi; '
                  'haath seene / jeb ke paas hona, qalam ya phone rakhna shak NAHI. Record mein bill / voucher hai aur paisa customer se '
                  'liya / baqaya diya to "normal". Galla bina record ke khula ya nahi — ye faisla program khud record se karega, tum sirf '
                  'jo dikhta hai wo batao. Saaf na dikhe to "saaf_nahi". Kisi insaan ki pehchan, naam ya chehre ki baat mat karo.{examples} '
@@ -1259,6 +1267,38 @@ def ai_judge2(key, crops_b64, ctx, gap, examples=''):
     txt = ' '.join(b.get('text', '') for b in r.json().get('content', []) if b.get('type') == 'text')
     fl, v, why = parse_flow(txt)
     return fl, v, why, int((time.time() - t0) * 1000), parse_khula(txt)
+
+
+CONFIRM_PROMPT = ('Aik chhote AI ne in {n} CCTV tasveeron (dukaan ka GALLA, waqt ki tarteeb, ~{gap} s farq) par SHAK kaha: "{why}". '
+                  'Tum doosri raaye do, bohat ehtiyat se. Dukaan ka tareeqa: larka kursi par baith kar customer ka paisa haath mein / GODE '
+                  '(lap) par / note ginne ki machine mein ginta hai, galle se baqaya deta hai, paisa galle ya paas ki tokri mein rakhta hai — '
+                  'upar se camera mein haath shalwar / qameez ke PAAS dikhna bilkul aam hai aur shak NAHI. Record: {ctx}. "shak" SIRF tab '
+                  'jab kam az kam do tasveeron mein saaf dikhe ke note jeb ke ANDAR ya kapron ke ANDAR chala gaya (ya chhupaya gaya) aur '
+                  'galle / tokri / customer tak wapas nahi gaya. Pakka na ho to "normal". Kisi insaan ki pehchan mat karo. Jawab SIRF JSON: '
+                  '{{"verdict": "shak" ya "normal", "why": "Roman Urdu (English harf) mein aik chhoti line — kis tasveer mein kya dikha"}}')
+
+
+def ai_confirm(key, crops_b64, ctx, gap, why):
+    """v1.7: shak ki doosri raaye (bara model). Wapas (verdict 'shak'|'normal', why, ms, model). Model na chale to agla."""
+    import requests
+    content = [{'type': 'text', 'text': CONFIRM_PROMPT.format(n=len(crops_b64), gap=gap, ctx=ctx, why=str(why or '')[:200])}]
+    for i, b in enumerate(crops_b64, 1):
+        content += [{'type': 'text', 'text': f'Tasveer {i}'}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': b}}]
+    last = ''
+    for model in CONFIRM_MODELS:
+        t0 = time.time()
+        r = requests.post('https://api.anthropic.com/v1/messages', timeout=120,
+                          headers={'x-api-key': clean_key(key), 'anthropic-version': '2023-06-01', 'content-type': 'application/json'},
+                          json={'model': model, 'max_tokens': 220, 'messages': [{'role': 'user', 'content': content}]})
+        if r.status_code in (400, 404) and 'model' in (r.text or '').lower():
+            last = api_error(r)
+            continue
+        if r.status_code != 200:
+            raise RuntimeError(api_error(r))
+        txt = ' '.join(b.get('text', '') for b in r.json().get('content', []) if b.get('type') == 'text')
+        v, w = parse_verdict(txt)
+        return ('shak' if v == 'shak' else 'normal'), w, int((time.time() - t0) * 1000), model
+    raise RuntimeError(last or 'doosra AI model nahi mila')
 
 
 BILL_BEFORE, BILL_AFTER = SALE_BEFORE, SALE_AFTER   # purane naam
@@ -1312,6 +1352,31 @@ def match_doc(m):
     return d
 
 
+def merge_items(hold, now, wait=45):
+    """v1.7: aik camera ki qareeb qareeb harkatein (agli ka shuru pichli ke khatam se MERGE_GAP s ke andar) = aik len-den.
+    item = (w, at, t0, t1, frames[, counted]). Len-den tab tayyar jab aakhri harkat ke baad MERGE_GAP (aur kam az kam `wait`)
+    second koi nayi harkat na aaye, ya len-den MERGE_MAX s tak pohanch jaye. Wapas (tayyar [(w, at, t0, t1, 10 frames, counted)],
+    baqi hold)."""
+    chains = []
+    for it in sorted(hold, key=lambda x: (x[0].cid, x[2])):
+        c = chains[-1] if chains else None
+        if c and c['cid'] == it[0].cid and it[2] - c['t1'] <= MERGE_GAP and it[3] - c['t0'] <= MERGE_MAX:
+            c['items'].append(it); c['t1'] = max(c['t1'], it[3])
+        else:
+            chains.append({'cid': it[0].cid, 't0': it[2], 't1': it[3], 'items': [it]})
+    ready, rest = [], []
+    for c in chains:
+        full = c['t1'] - c['t0'] >= MERGE_MAX - 5
+        if now >= c['t1'] + (wait if full else max(wait, MERGE_GAP)):
+            first = c['items'][0]
+            frames = [f for it in c['items'] for f in (it[4] or [])]
+            counted = all((it[5] if len(it) > 5 else False) for it in c['items'])
+            ready.append((first[0], first[1], c['t0'], c['t1'], pick(frames, 10), counted))
+        else:
+            rest.extend(c['items'])
+    return ready, rest
+
+
 class Galla(threading.Thread):
     """Len-den ki qataar. POS / Galla screen ka record aa sake is liye len-den khatam hone ke 45 s baad kaam. Pehle record ke
     qareeb wale bill / payment, phir Claude ko 10 tasveerein + record + malik ke pichle faisle. Faisla + milaan: cameraEvents.
@@ -1360,12 +1425,12 @@ class Galla(threading.Thread):
         while True:
             try:
                 while True:
-                    self.hold.append(self.q.get_nowait())
+                    it = self.q.get_nowait()
+                    self.bump(it[0].cid, pk_date(it[1]), touches=1)      # v1.7: har harkat ginti mein (card aik len-den ka)
+                    self.hold.append(it + (True,) if len(it) == 5 else it)
             except queue.Empty:
                 pass
-            now = time.time()
-            ready = [x for x in self.hold if now >= x[3] + self.WAIT_AFTER]
-            self.hold = [x for x in self.hold if x not in ready]
+            ready, self.hold = merge_items(self.hold, time.time(), self.WAIT_AFTER)
             for item in ready:
                 try:
                     self.handle(*item)
@@ -1392,9 +1457,9 @@ class Galla(threading.Thread):
             log('misaalein nahi:', e)
         return self.examples
 
-    def handle(self, w, at, t0, t1, frames):
+    def handle(self, w, at, t0, t1, frames, counted=False):
         date = pk_date(at)
-        st = self.bump(w.cid, date, touches=1)
+        st = self.bump(w.cid, date, touches=0 if counted else 1)
         if not frames or at - self.last_ai.get(w.cid, 0) < COOLDOWN:
             return
         key = secrets().get('claudeKey')
@@ -1407,12 +1472,24 @@ class Galla(threading.Thread):
         gap = max(0.5, round((t1 - t0) / max(1, len(frames) - 1), 1))
         khula = None
         try:
-            res = ai_judge2(key, crops, context_text(near), gap, self.load_examples())
+            ctx = context_text(near)
+            res = ai_judge2(key, crops, ctx, gap, self.load_examples())
             fl, v, why, ms = res[:4]
             khula = res[4] if len(res) > 4 else None
+            model = MODEL
+            if v == 'shak':                          # v1.7: doosri raaye — dono shak kahein tabhi shak
+                try:
+                    v2, why2, ms2, m2 = ai_confirm(key, crops, ctx, gap, why)
+                    ms, model = ms + ms2, (MODEL + '+' + m2)[:60]
+                    if v2 != 'shak':
+                        v, why = 'normal', ('Doosre AI ne dekha: ' + (why2 or 'shak wali baat saaf nahi') + ' (pehle: ' + why + ')')[:290]
+                    else:
+                        why = (why2 or why)[:290]
+                except Exception as e2:
+                    log('doosri raaye nahi:', e2)          # na chale to pehla faisla (shak) hi rahe — chhupaya nahi jata
             self.bump(w.cid, date, checks=1, shak=1 if v == 'shak' else 0)
         except Exception as e:
-            fl, v, why, ms = 'saaf_nahi', 'error', f'AI nahi chala: {e}'[:280], 0
+            fl, v, why, ms, model = 'saaf_nahi', 'error', f'AI nahi chala: {e}'[:280], 0, MODEL
             self.pause_until = time.time() + AI_PAUSE
         state, m = match(fl, t0, t1, near, self.pos_ok(), self.bk_ok(), self.vouchers(), khula)
         if v == 'error' and state == 'wait':
@@ -1422,7 +1499,7 @@ class Galla(threading.Thread):
         self.fire.patch(f'{BIZ}/cameraFrames/{eid}', {'frames': crops, 'at': t, 'cam': w.cid})
         doc = {'cam': w.cid, 'camName': w.name, 'at': t, 'date': date, 'verdict': v, 'why': why, 'flow': fl, 'matchState': state,
                'start': int(t0 * 1000), 'end': int(t1 * 1000),
-               'thumb': jpeg_b64(frames[len(frames) // 2], width=320, quality=60)[0], 'n': len(crops), 'ms': ms, 'model': MODEL, 'agent': VERSION}
+               'thumb': jpeg_b64(frames[len(frames) // 2], width=320, quality=60)[0], 'n': len(crops), 'ms': ms, 'model': model, 'agent': VERSION}
         if m:
             doc['match'] = match_doc(m)
             if m['kind'] == 'sale':

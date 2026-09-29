@@ -107,7 +107,9 @@ test('malik login → Hazri tab, qataarein, tawajju', async () => {
   const sumText = $('.nig-sum').textContent; assert.match(sumText, /7\s*galla chhua/); assert.match(sumText, /2\s*AI jaanch/); assert.match(sumText, /1\s*shak/); assert.match(sumText, /0\/1\s*shak dekhe/);
   assert.match($('main').textContent, /1 dafa AI jaanch nahi hui/);
   assert.equal($$('.nig-ev').length, 4, 'chaaron harkatein');
-  assert.match($('.nig-ev[data-id="cc33-ch1-3"]').textContent, /Cash Received · Bill #00119007 · Rs 781/);   // v226 assert.match($$('.nig-ev')[0].textContent, /Shak/); assert.match($$('.nig-ev')[0].textContent, /jeb/);
+  assert.match($('.nig-ev[data-id="cc33-ch1-3"]').textContent, /Cash Received · Bill #00119007 · Rs 781/);   // v226
+  assert.match($('.nig-ev[data-id="cc33-ch1-2"]').textContent, /🎬 Video/, 'v227: card par video ki halat'); assert.match($('.nig-vid').textContent, /Aaj videos: 1 bani/);
+  assert.match($('.nig-ev[data-id="cc33-ch1-0"]').textContent, /🎬 Video ka intezar/, 'bina voucher, abhi video nahi'); assert.match($$('.nig-ev')[0].textContent, /Shak/); assert.match($$('.nig-ev')[0].textContent, /jeb/);
   // v223 milaan: bill mila / entry nahi, khulasa, filter
   assert.match($('.nig-ev[data-id="cc33-ch1-1"]').textContent, /Liya \+ baqaya/); assert.match($('.nig-ev[data-id="cc33-ch1-1"]').textContent, /Bill #00119008 · Rs 9,000/);
   // v224: bill cancel hua — card par chip, Tawajju, notice, "Bill badle" filter ke cards

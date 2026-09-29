@@ -1,6 +1,6 @@
 {
-  "version": "v226",
+  "version": "v227",
   "variant": "Production",
   "buildDate": "2026-09-29",
-  "notes": "Galla sirf voucher par: POS ke Cash Received voucher se 1 min pehle / 1.5 min baad tak galla khulna jaiz; bina voucher = khabar + clip; jeb = shak. (ntcam.py v1.6)"
+  "notes": "Nigrani ka layout phone par theek (page side mein nahi khisakta), camera card par Recording ki halat, har card par video chip + aaj ki videos ka khulasa. ntcam.py v1.7: aik len-den = aik jaanch, gode par ginti shak nahi, shak par doosri raaye (Sonnet)."
 }

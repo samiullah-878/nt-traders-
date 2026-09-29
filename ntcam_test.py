@@ -222,6 +222,79 @@ class Milaan(unittest.TestCase):
         self.assertEqual([d for p, d in writes if 'matchAt' in d][-1]['matchState'], 'missing'); self.assertEqual(clips, ['c1-1400000'])
 
 
+class EkLenDen(unittest.TestCase):
+    """v1.7 — qareeb harkatein aik len-den (aik AI jaanch), shak ki doosri raaye (Sonnet)."""
+    W = types.SimpleNamespace(cid='c1', name='Galla', cap_day=300)
+
+    def test_merge(self):
+        W2 = types.SimpleNamespace(cid='c2')
+        it = lambda w, t0, t1: (w, t0, t0, t1, [f'{w.cid}{t0}'] * 10, True)
+        hold = [it(self.W, 100, 110), it(self.W, 140, 150), it(self.W, 200, 205), it(self.W, 400, 410), it(W2, 120, 130)]
+        ready, rest = ntcam.merge_items(hold, 230)
+        self.assertEqual([r[0].cid for r in ready], ['c2'], 'c1 ki aakhri harkat (205) ke 60 s poore nahi — len-den abhi chal raha ho sakta hai; c2 tayyar')
+        ready, rest = ntcam.merge_items(rest, 266)
+        self.assertEqual([(r[0].cid, r[2], r[3]) for r in ready], [('c1', 100, 205)], '100..205 = aik (gap 30, 50)')
+        self.assertEqual(len(ready[0][4]), 10, '30 tasveeron mein se 10'); self.assertIn('c1100', ready[0][4]); self.assertIn('c1200', ready[0][4])
+        self.assertTrue(ready[0][5], 'ginti pehle ho chuki'); self.assertEqual([r[2] for r in rest], [400])
+        long = [it(self.W, 1000 + k * 30, 1000 + k * 30 + 20) for k in range(8)]      # 1000..1230 lagatar
+        ready, rest = ntcam.merge_items(long, 1300)
+        self.assertEqual([(r[2], r[3]) for r in ready], [(1000, 1170), (1180, 1230)], '3 minute se lamba = do len-den')
+
+    def _g(self):
+        writes = []
+        class F:
+            def get(s, path): return None
+            def patch(s, path, data): writes.append((path, data)); return True
+            def query(s, *a, **k): return []
+        pos = types.SimpleNamespace(near=lambda a, b: [], ok_sql=lambda: True, ok_bk=lambda: True, vch_ok=lambda: True)
+        g = ntcam.Galla(F(), pos); clips = []
+        g.clips = types.SimpleNamespace(shak=lambda *a: clips.append(a[1]))
+        return g, writes, clips
+
+    def _run(self, confirm):
+        import numpy as np
+        g, writes, clips = self._g()
+        fr = [(np.random.rand(120, 160, 3) * 255).astype('uint8') for _ in range(4)]
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), \
+             mock.patch.object(ntcam, 'ai_judge2', lambda *a: ('nikla', 'shak', 'note shalwar ke paas', 500, True)), \
+             mock.patch.object(ntcam, 'ai_confirm', confirm):
+            g.handle(self.W, 1000.0, 995.0, 1010.0, fr, True)
+        ev = [d for p, d in writes if '/cameraEvents/' in p][0]
+        return g, ev, clips
+
+    def test_doosri_raaye_normal(self):
+        g, ev, clips = self._run(lambda *a: ('normal', 'note gode par gine, galle mein wapas', 900, 'claude-sonnet-5-5'))
+        self.assertEqual(ev['verdict'], 'normal'); self.assertIn('Doosre AI ne dekha: note gode par gine', ev['why']); self.assertIn('pehle: note shalwar', ev['why'])
+        self.assertEqual(ev['model'], 'claude-haiku-4-5-20251001+claude-sonnet-5-5'); self.assertEqual(ev['ms'], 1400); self.assertEqual(clips, [], 'shak nahi to video nahi')
+        st = g.stats[('c1', ntcam.pk_date(1000.0))]; self.assertEqual((st['shak'], st['checks'], st['touches']), (0, 1, 0), 'ginti pehle ho chuki (counted)')
+
+    def test_doosri_raaye_shak(self):
+        g, ev, clips = self._run(lambda *a: ('shak', 'tasveer 7-8: note jeb ke andar', 900, 'claude-sonnet-5-5'))
+        self.assertEqual((ev['verdict'], ev['why']), ('shak', 'tasveer 7-8: note jeb ke andar')); self.assertEqual(len(clips), 1, 'shak = video')
+        self.assertEqual(g.stats[('c1', ntcam.pk_date(1000.0))]['shak'], 1)
+
+    def test_doosri_raaye_na_chale(self):
+        def boom(*a): raise RuntimeError('credit khatam')
+        g, ev, clips = self._run(boom)
+        self.assertEqual(ev['verdict'], 'shak', 'doosra AI na chale to shak chhupaya nahi jata'); self.assertEqual(len(clips), 1)
+
+    def test_confirm_model_fallback_aur_prompt(self):
+        calls = []
+        class R:
+            def __init__(s, code, body): s.status_code, s._b, s.text = code, body, json.dumps(body)
+            def json(s): return s._b
+        def post(url, **kw):
+            calls.append(kw['json']['model'])
+            if kw['json']['model'] == 'claude-sonnet-5-5':
+                return R(404, {'type': 'error', 'error': {'type': 'not_found_error', 'message': 'model: claude-sonnet-5-5'}})
+            return R(200, {'content': [{'type': 'text', 'text': '{"verdict":"normal","why":"gode par ginti"}'}]})
+        with mock.patch.dict(sys.modules, {'requests': types.SimpleNamespace(post=post)}):
+            v, why, ms, model = ntcam.ai_confirm('sk-ant-x', ['AA', 'BB'], 'record', 1.5, 'shalwar ke paas')
+        self.assertEqual((v, why, model), ('normal', 'gode par ginti', 'claude-sonnet-4-6')); self.assertEqual(calls, ['claude-sonnet-5-5', 'claude-sonnet-4-6'])
+        for w in ('GODE', 'ANDAR', 'kam az kam do tasveeron'): self.assertIn(w, ntcam.CONFIRM_PROMPT)
+        self.assertIn('GODE (lap)', ntcam.GALLA_PROMPT3); self.assertIn('"paas le jana" shak nahi', ntcam.GALLA_PROMPT3)
+
+
 class Voucher(unittest.TestCase):
     """v1.6 — POS mein Cash Received voucher kahan hai: khud dhoondna (find_link), System Notes ka waqt, bill se jodna."""
     SALES = [{'SaleID': 5001 + i, 'SaleNo': f'{119020 + i:08d}'} for i in range(10)]
