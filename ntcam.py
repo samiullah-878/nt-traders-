@@ -1,4 +1,8 @@
 # ntcam.py — Noor Traders Hazri: dukaan ke CAMERAS (shop PC par chalta hai). Hissa A.
+# v1.5: BILL SIRF APNE WAQT KA — bill (scan shuru -30 s .. post +45 s) ke bahar 'paisa nikla' ko sirf Galla screen / refund theek
+#       keh sakta hai, warna 'Entry nahi'. AI andaza nahi, bill posting sanad.
+# v1.4: VIDEO — galla camera ki halki recording PC ki disk par (2 din), 'shak' par khud 15-30 s clip app mein, malik ki farmaish par
+#       3 minute tak ki mukammal clip (cameraClips / cameraClipParts). ffmpeg imageio-ffmpeg se (khud install).
 # v1.3: BILL BADLA / CANCEL — bill ban ne ke baad cancel (status 3), raqam kam, ya items badle -> posAlerts + card + khabar.
 # v1.2: GALLA MILAAN — har len-den POS ke sale bill / refund aur Blue Khata Galla screen ki "de diye" se milana (sirf parhna).
 # v1.1 (Hissa B): GALLA NIGRANI — 'galla' kaam wale camera ki video lagatar, malik ke mark kiye dabbe mein harkat par
@@ -8,7 +12,7 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '1.3'
+VERSION = '1.5'
 
 import base64, collections, getpass, ipaddress, json, os, queue, re, socket, subprocess, sys, threading, time, traceback, urllib.parse
 from concurrent.futures import ThreadPoolExecutor
@@ -265,7 +269,7 @@ class Fire:
         r = requests.post(self.root + f'{BIZ}:runQuery', headers=self._h(), json=body, timeout=30)
         if r.status_code != 200:
             raise RuntimeError(f'query {coll}: {r.status_code} {r.text[:160]}')
-        return [{k: dec(v) for k, v in row['document'].get('fields', {}).items()} for row in r.json() if row.get('document')]
+        return [{**{k: dec(v) for k, v in row['document'].get('fields', {}).items()}, 'id': row['document']['name'].rsplit('/', 1)[-1]} for row in r.json() if row.get('document')]
 
     def patch(self, path, data):
         """Sirf yahi fields likho (baqi — misal malik ka rakha naam — waise hi rahein). Doc na ho to ban jata hai."""
@@ -960,11 +964,21 @@ def ai_judge2(key, crops_b64, ctx, gap, examples=''):
     return fl, v, why, int((time.time() - t0) * 1000)
 
 
+BILL_BEFORE, BILL_AFTER = 30, 45
+
+
+def in_bill(r, t0, t1):
+    """v1.5: bill sirf apne waqt ka — scan shuru (BiltyDate) se 30 s pehle se post (CreatedOn) ke 45 s baad tak. Len-den [t0, t1]
+    us window se takraye to us bill ka; warna nahi (chahe 2 minute baad hi kyun na ho)."""
+    a, b = r.get('start', r['at']) - BILL_BEFORE, r['at'] + BILL_AFTER
+    return t0 <= b and t1 >= a
+
+
 def match(flow, t0, t1, recs, pos_ok=True, bk_ok=True):
     """Len-den ko record se milao. Wapas (state, rec): ok | wait (abhi na mila, 5 min dekhte raho) | none (paisa nahi hila) |
-    nopos (POS / Galla screen parh hi nahi sake — alarm NAHI)."""
+    nopos (POS / Galla screen parh hi nahi sake — alarm NAHI). Bill posting sanad hai, AI ka andaza nahi."""
     mid = (t0 + t1) / 2
-    sales = [r for r in recs if r['kind'] == 'sale' and t0 - 180 <= r['at'] <= t1 + 60]
+    sales = [r for r in recs if r['kind'] == 'sale' and in_bill(r, t0, t1)]
     outs = [r for r in recs if r['kind'] in ('pay', 'return') and t0 - 120 <= r['at'] <= t1 + 120]
     best = lambda rows: min(rows, key=lambda r: abs(r['at'] - mid)) if rows else None
     if flow in ('ginti', 'kuch_nahi'):
@@ -1002,6 +1016,7 @@ class Galla(threading.Thread):
         self.last_ai, self.pause_until, self.lock = {}, 0, threading.Lock()
         self.hold, self.waiting, self.examples, self.ex_at = [], [], '', 0
         self.by_bill = {}                                      # v1.3: bill no -> camera event id
+        self.clips = None                                      # v1.4: Clips thread (shak par clip)
 
     def stat(self, cid, date):
         k = (cid, date)
@@ -1104,6 +1119,8 @@ class Galla(threading.Thread):
         self.fire.patch(f'{BIZ}/cameraEvents/{eid}', doc)
         if state == 'wait':
             self.waiting.append({'eid': eid, 'cid': w.cid, 'date': date, 'flow': fl, 't0': t0, 't1': t1, 'made': time.time()})
+        if v == 'shak' and self.clips:
+            self.clips.shak(w.cid, eid, t0, t1, date)
         log('nigrani', w.cid, fl, v, state, why)
         when = time.strftime('%I:%M %p', time.gmtime(at + 5 * 3600)).lstrip('0').lower()
         label = {'normal': 'Normal', 'shak': 'Shak', 'saaf_nahi': 'Saaf nahi'}.get(v, '')
@@ -1138,6 +1155,212 @@ class Galla(threading.Thread):
         today = pk_date()
         for k in [k for k in self.stats if k[1] < today and k not in self.dirty]:
             self.stats.pop(k, None)
+
+
+# ---------------------------------------------------------------- v1.4 RECORDING + CLIPS
+REC_DIR = os.path.join(HOME, 'rec')
+REC_HOURS, REC_FPS, REC_W, SEG_SEC, MIN_FREE_GB = 48, 8, 640, 60, 5
+CLIP_MAX, SHAK_PAD, PART_CHARS = 180, 5, 700_000
+
+
+def ffmpeg_exe():
+    """ffmpeg: NTCAM_FFMPEG env, ya C:\\NTCam\\ffmpeg.exe (haath se rakha ho), warna imageio-ffmpeg (khud install)."""
+    if os.environ.get('NTCAM_FFMPEG'):
+        return os.environ['NTCAM_FFMPEG']
+    local = os.path.join(HOME, 'ffmpeg.exe')
+    if os.path.exists(local):
+        return local
+    return need('imageio_ffmpeg', 'imageio-ffmpeg').get_ffmpeg_exe()
+
+
+def free_gb(path):
+    try:
+        import shutil
+        return shutil.disk_usage(path).free / 1e9
+    except Exception:
+        return 999
+
+
+def seg_files(d):
+    """[(start_epoch, path)] purane se naye."""
+    out = []
+    try:
+        for n in os.listdir(d):
+            if n.endswith('.ts') and n[:-3].isdigit():
+                out.append((int(n[:-3]), os.path.join(d, n)))
+    except OSError:
+        pass
+    return sorted(out)
+
+
+def prune(d, hours=REC_HOURS, min_free=MIN_FREE_GB):
+    """48 ghante se purani, aur disk 5 GB se kam ho to sab se purani — jab tak jagah na bane."""
+    segs, cut = seg_files(d), time.time() - hours * 3600
+    gone = []
+    for st, pth in segs:
+        if st < cut or free_gb(d) < min_free:
+            try:
+                os.remove(pth)
+                gone.append(pth)
+            except OSError:
+                pass
+        else:
+            break
+    return gone
+
+
+def pick_segs(segs, t0, t1, seg=SEG_SEC):
+    return [(st, p) for st, p in segs if st <= t1 and st + seg >= t0]
+
+
+def clip_cmd(exe, segs, t0, t1, out):
+    """Concat list + ffmpeg command (chhoti clip = dobara encode, saaf shuru; 640 px, 8 fps)."""
+    lst = out + '.txt'
+    with open(lst, 'w', encoding='utf-8') as f:
+        for _, p in segs:
+            f.write("file '" + p.replace("'", "'\\''") + "'\n")
+    off = max(0.0, t0 - segs[0][0])
+    return [exe, '-loglevel', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', lst, '-ss', f'{off:.2f}', '-t', f'{max(1.0, t1 - t0):.2f}',
+            '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '29', '-pix_fmt', 'yuv420p', '-an', '-movflags', '+faststart', out]
+
+
+class Recorder(threading.Thread):
+    """Watch ke taaza frame ko har 1/8 s ffmpeg ko do -> 60 s ke .ts tukre (naam = shuru ka epoch). Sirf disk par, 2 din."""
+    def __init__(self, cid, watch):
+        super().__init__(daemon=True)
+        self.cid, self.watch, self.alive, self.dir = cid, watch, True, os.path.join(REC_DIR, cid)
+        self.err, self.last_seg = '', 0
+        os.makedirs(self.dir, exist_ok=True)
+
+    def stop(self):
+        self.alive = False
+
+    def run(self):
+        import cv2
+        try:
+            exe = ffmpeg_exe()
+        except Exception as e:
+            self.err = f'ffmpeg nahi: {e}'
+            log('recording:', self.err)
+            return
+        while self.alive:
+            f = self.watch.latest
+            if f is None or time.time() - self.watch.latest_at > 10:
+                time.sleep(1)
+                continue
+            h, w = f.shape[:2]
+            W, H = REC_W, max(2, int(h * REC_W / w) // 2 * 2)
+            start = int(time.time())
+            path = os.path.join(self.dir, f'{start}.ts')
+            cmd = [exe, '-loglevel', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'bgr24', '-s', f'{W}x{H}', '-r', str(REC_FPS), '-i', '-',
+                   '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '30', '-pix_fmt', 'yuv420p', '-g', str(REC_FPS * 2), '-f', 'mpegts', path]
+            try:
+                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=NO_WINDOW)
+            except Exception as e:
+                self.err = f'ffmpeg shuru nahi: {e}'
+                log('recording:', self.err)
+                time.sleep(30)
+                continue
+            self.last_seg, tick, n = start, start, 0
+            try:
+                while self.alive and time.time() - start < SEG_SEC:
+                    tick += 1.0 / REC_FPS
+                    d = tick - time.time()
+                    if d > 0:
+                        time.sleep(d)
+                    fr = self.watch.latest
+                    if fr is None:
+                        continue
+                    if fr.shape[1] != W or fr.shape[0] != H:
+                        fr = cv2.resize(fr, (W, H), interpolation=cv2.INTER_AREA)
+                    p.stdin.write(fr.tobytes())
+                    n += 1
+                self.err = ''
+            except Exception as e:
+                self.err = f'recording ruk gayi: {e}'
+                log('recording:', self.err)
+            finally:
+                try:
+                    p.stdin.close()
+                    p.wait(timeout=15)
+                except Exception:
+                    p.kill()
+            prune(self.dir)
+
+    def clip(self, t0, t1, out):
+        """Disk ki recording se [t0, t1] ki mp4. Wapas: path ya None."""
+        t1 = min(t1, t0 + CLIP_MAX)
+        segs = pick_segs(seg_files(self.dir), t0, t1)
+        if not segs:
+            return None
+        cmd = clip_cmd(ffmpeg_exe(), segs, t0, t1, out)
+        r = subprocess.run(cmd, capture_output=True, timeout=300, creationflags=NO_WINDOW)
+        if r.returncode != 0 or not os.path.exists(out) or os.path.getsize(out) < 1000:
+            log('clip nahi bani:', r.stderr[-200:])
+            return None
+        return out
+
+
+def upload_clip(fire, clip_id, path, meta):
+    """mp4 -> base64 tukre (700k harf) cameraClipParts/<id>_<i>, phir cameraClips/<id> status ok."""
+    with open(path, 'rb') as f:
+        b = base64.b64encode(f.read()).decode('ascii')
+    parts = [b[i:i + PART_CHARS] for i in range(0, len(b), PART_CHARS)]
+    for i, part in enumerate(parts):
+        fire.patch(f'{BIZ}/cameraClipParts/{clip_id}_{i}', {'clip': clip_id, 'i': i, 'data': part})
+    fire.patch(f'{BIZ}/cameraClips/{clip_id}', {**meta, 'status': 'ok', 'n': len(parts), 'size': os.path.getsize(path), 'at': now_ms(), 'error': ''})
+    try:
+        os.remove(path)
+    except OSError:
+        pass
+    return len(parts)
+
+
+class Clips(threading.Thread):
+    """Shak par khud clip; malik ki farmaish (cameraClips status 'req') har 20 s dekh kar clip bana kar app mein."""
+    def __init__(self, fire, recorders):
+        super().__init__(daemon=True)
+        self.fire, self.recorders, self.q = fire, recorders, queue.Queue()
+
+    def shak(self, cid, eid, t0, t1, date):
+        self.q.put({'id': eid, 'cam': cid, 'kind': 'shak', 'eventId': eid, 'from': int((t0 - SHAK_PAD) * 1000), 'to': int(min(t1 + SHAK_PAD, t0 - SHAK_PAD + 30) * 1000), 'date': date})
+
+    def run(self):
+        last = 0
+        while True:
+            try:
+                job = self.q.get(timeout=5)
+                self.make(job)
+            except queue.Empty:
+                pass
+            except Exception as e:
+                log('clip ghalti:', e)
+            if time.time() - last > 20:
+                last = time.time()
+                try:
+                    for r in self.fire.query('cameraClips', 'status', 'EQUAL', 'req', 10):
+                        self.make({'id': r['id'], 'cam': r.get('cam', ''), 'kind': 'req', 'eventId': r.get('eventId', ''), 'from': int(r.get('from') or 0),
+                                   'to': int(r.get('to') or 0), 'date': r.get('date') or pk_date()})
+                except Exception as e:
+                    log('clip farmaish:', e)
+
+    def make(self, job):
+        cid, rec = job['cam'], self.recorders.get(job['cam'])
+        base = {'cam': cid, 'kind': job['kind'], 'eventId': job.get('eventId', ''), 'from': job['from'], 'to': job['to'], 'date': job['date']}
+        if not rec:
+            self.fire.patch(f"{BIZ}/cameraClips/{job['id']}", {**base, 'status': 'error', 'error': 'Is camera ki recording nahi (galla nigrani band ya PC band tha)', 'at': now_ms()})
+            return
+        self.fire.patch(f"{BIZ}/cameraClips/{job['id']}", {**base, 'status': 'making', 'at': now_ms()})
+        t0, t1 = job['from'] / 1000, job['to'] / 1000
+        if t1 - t0 > CLIP_MAX:
+            t1 = t0 + CLIP_MAX
+        out = os.path.join(HOME, f"clip_{job['id']}.mp4")
+        path = rec.clip(t0, t1, out)
+        if not path:
+            self.fire.patch(f"{BIZ}/cameraClips/{job['id']}", {**base, 'status': 'error', 'error': 'Us waqt ki recording PC par nahi mili (PC band tha ya 2 din se purani)', 'at': now_ms()})
+            return
+        n = upload_clip(self.fire, job['id'], path, base)
+        log('clip', job['id'], n, 'parts')
 
 
 def watch_wanted(c, s):
@@ -1323,12 +1546,15 @@ def run():
             log('net nahi:', e)
             time.sleep(wait)
             wait = min(120, wait * 2)
-    cams, shot_at, asked, state, watchers = {}, {}, {}, {}, {}
+    cams, shot_at, asked, state, watchers, recorders = {}, {}, {}, {}, {}, {}
     pos = Pos(fire)                                # v1.2: POS + Galla screen (sirf parhna); v1.3: bill badla / cancel
     galla = Galla(fire, pos)
     pos.galla = galla
+    clips = Clips(fire, recorders)                 # v1.4
+    galla.clips = clips
     pos.start()
     galla.start()
+    clips.start()
     last_list = last_status = 0
     last_update = time.time() - UPDATE_EVERY + 120   # shuru ke 2 minute baad pehli jaanch
     last_scan = 0
@@ -1360,10 +1586,16 @@ def run():
                             watchers[cid] = Watch(cid, s['url'], c, galla.q)
                             watchers[cid].start()
                             log('nigrani shuru', cid)
+                        if cid not in recorders or not recorders[cid].is_alive():
+                            recorders[cid] = Recorder(cid, watchers[cid])
+                            recorders[cid].start()
+                            log('recording shuru', cid)
                         else:
                             watchers[cid].apply(c)
                 for cid in [k for k in watchers if not watch_wanted(cams.get(k, {}), sec['cams'].get(k))]:
                     watchers.pop(cid).stop()
+                    if cid in recorders:
+                        recorders.pop(cid).stop()
                     fire.patch(f'{BIZ}/cameras/{cid}', {'watch': 'off', 'seenAt': now_ms()})
                     log('nigrani band', cid)
             online = 0
@@ -1407,8 +1639,11 @@ def run():
             if t - last_status > STATUS_EVERY:
                 put_status(fire, cams=len(cams), online=online, pos=pos.status())
                 for cid, wt in watchers.items():
+                    rc = recorders.get(cid)
                     fire.patch(f'{BIZ}/cameras/{cid}', {'watch': 'on' if wt.latest_at and t - wt.latest_at < 30 else 'down', 'fps': round(wt.fps, 1),
-                                                         'stream': wt.stream, 'lastMotionAt': int(wt.last_motion * 1000), 'seenAt': now_ms()})
+                                                         'stream': wt.stream, 'lastMotionAt': int(wt.last_motion * 1000), 'seenAt': now_ms(),
+                                                         'rec': ('on' if rc and rc.is_alive() and t - rc.last_seg < 180 and not rc.err else (rc.err if rc and rc.err else 'off'))[:120],
+                                                         'recFree': round(free_gb(HOME), 1)})
                 galla.flush()
                 last_status = t
             if t - last_update > UPDATE_EVERY:

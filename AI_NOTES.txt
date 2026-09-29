@@ -1,8 +1,40 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v224   Tareekh: 2026-09-29  (bill cancel / badla; ntcam.py v1.3; v223 galla milaan bhi isi mein)
+Version: v225   Tareekh: 2026-09-29  (video clips + bill-window; ntcam.py v1.5; v223/v224 bhi isi mein)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+0000000000000000000000000. v225 + ntcam.py v1.4 / v1.5 — VIDEO CLIPS + BILL SIRF APNE WAQT KA
+------------------------------------------------------------
+29 Sep subah: cards aa gaye (rules mein frames.size() <= 8 tha, PC 10 bhejta tha -> 403; ab <= 12). Malik ka test: larke ne
+5,000 kisi aur ko diye — AI ne nahi pakra: 3 minute ke andar bill (#00119023 Rs 29,762) tha to "baqaya" ban gaya. Malik: AI ka
+andaza nahi, BILL POSTING sanad ho.
+- ntcam v1.5 in_bill(): bill sirf [scan shuru (BiltyDate) - 30 s, post (CreatedOn) + 45 s] ka. match(): sales sirf in_bill;
+  pay/return ±120 s pehle jaisa. Is se post ke 45 s baad "nikla" -> wait -> missing (Entry nahi + khabar). Test badle.
+- ntcam v1.4 VIDEO: Recorder thread per galla camera: Watch.latest ko har 1/8 s ffmpeg (rawvideo bgr24 -> libx264 ultrafast crf 30,
+  640 px, 8 fps, -g 16) -> C:\NTCam\rec\<cid>\<epoch>.ts (60 s tukre). prune(): 48 ghante se purane / disk 5 GB se kam ho to
+  sab se purane. seg_files / pick_segs / clip_cmd (concat demuxer list, -ss offset, -t, dobara encode veryfast crf 29, faststart).
+  Recorder.clip(t0, t1, out) (3 min had). ffmpeg: NTCAM_FFMPEG env > C:\NTCam\ffmpeg.exe > imageio-ffmpeg (khud pip install).
+  Clips thread: shak par Galla.handle -> clips.shak() (t0-5 .. t1+5, max 30 s) + har 20 s Fire.query cameraClips status=='req'
+  (malik ki farmaish) -> make(): cameraClips status making -> Recorder.clip -> upload_clip(): base64 700k harf ke tukre
+  cameraClipParts/<id>_<i> {clip, i, data}, phir cameraClips {..., status ok, n, size, at}; recording na ho / na mile -> error + wajah.
+  cameras par rec ('on' / ghalti / 'off') + recFree (GB). Fire.query ab 'id' bhi deta hai.
+  SANDBOX NOTE: imageio-ffmpeg ka static Linux binary yahan TS parhte hi crash (-11) hua — /usr/bin/ffmpeg se tests pass. Windows
+  par imageio-ffmpeg theek hona chahiye; na ho to C:\NTCam\ffmpeg.exe rakh dein (gyan.dev build). Recording karte waqt ffmpeg
+  chalta hi hai, is liye ghalti ho to cameras.rec mein likhi aayegi.
+- rules v225: cameraClips (PC create/update keys, status list; malik generic se 'req' banata / keep / delete), cameraClipParts
+  (PC create, data < 800000), cameras + rec/recFree, cameraFrames <= 12, manager ke liye cameraClips/Parts band. PUBLISHED (chat).
+- functions: handleClip — kind 'req' status -> 'ok' (pehli dafa) par owner push "Clip tayyar: <naam/waqt>". router.test 8.
+- App v225: data: camClips (watchEvents), loadClip (parts jod kar), requestClip (cam, from, to ms, 3 min had, aane wala waqt nahi,
+  id 'req-<base36>', kind req, status req, date = from ki PK date, by, title), deleteClip (parts + doc), keepClip, reviewEvent(id,
+  status, note, keepVideo) -> event ki clips mita deta (ya keep), cleanupCam: kal ya purani clips (keep = 30 din). ui.viewVideo(src,
+  title, fps): poori screen player — controls, 0.5x/1x, ◀ frame / frame ▶ (1/8 s), Escape/Band; b64ToBlobUrl. owner: event sheet
+  clipBlock (▶ Video dekhein / PC bana raha hai / Nahi bani + wajah / shak par clip na ho to note; "🎬 Mukammal clip mangwayein");
+  review form mein "Video 30 din rakhein" checkbox; Nigrani header "🎬 Waqt ki clip"; clipReqSheet (camera, din, shuru/khatam
+  time step 1 s, naam) -> pkMs(date, hms, +05:00); clipsList "Mangwayi hui clips" (Dekhein / Rakhein / Mitayein / halat). Ghalti par
+  sheet khuli rehti hai (busy ka return check). app.dom 78 pass (video player, faisle par clip mit gayi, 3 min ki had, farmaish).
+- Tankhwah "kaam ke hisaab se" — malik ne abhi tak a/b/c nahi bataya, nahi banaya.
 
 ------------------------------------------------------------
 000000000000000000000000. v224 + ntcam.py v1.3 — BILL CANCEL / BADLA

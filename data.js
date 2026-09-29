@@ -33,7 +33,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     return {
       role: null, phone: '', loaded: new Set(), config: { ...DEFAULT_CONFIG },
       staff: [], months: new Map(), requests: [], schedules: new Map(), payroll: [],
-      account: null, myAttendance: [], punchError: null, sync: {}, diag: [], cameras: [], camPC: null, camCfg: null, camShots: new Map(), camStats: [], camEvents: [], camDayStats: [], camDay: '', posAlerts: [], outs: [], teamOuts: [], teamAttendance: [], tickets: [], myTickets: [], teamTickets: [], errors: {}, lastSync: {}, pendingWrites: 0
+      account: null, myAttendance: [], punchError: null, sync: {}, diag: [], cameras: [], camPC: null, camCfg: null, camShots: new Map(), camStats: [], camEvents: [], camDayStats: [], camDay: '', posAlerts: [], camClips: [], outs: [], teamOuts: [], teamAttendance: [], tickets: [], myTickets: [], teamTickets: [], errors: {}, lastSync: {}, pendingWrites: 0
     };
   }
   let unsubs = [], monthSubs = new Map(), epoch = 0, legacyChecked = false, shotsSub = null, eventSubs = [];
@@ -1072,7 +1072,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   function watchEvents(date) {
     for (const u of eventSubs) { try { u(); } catch { /* ignore */ } } eventSubs = [];
     state.camDay = date || '';
-    if (!date || state.role !== 'owner') { state.camEvents = []; state.camDayStats = []; state.posAlerts = []; return; }
+    if (!date || state.role !== 'owner') { state.camEvents = []; state.camDayStats = []; state.posAlerts = []; state.camClips = []; return; }
     const token = epoch;
     eventSubs.push(sdk.onSnapshot(sdk.query(col('cameraEvents'), sdk.where('date', '==', date)), snap => {
       if (token !== epoch || state.camDay !== date) return;
@@ -1082,6 +1082,11 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       if (token !== epoch || state.camDay !== date) return;
       state.camDayStats = readList(snap); changed();
     }, error => { if (token === epoch) problem('camDayStats', error); }));
+    // v225: us din ki video clips (shak par khud, ya malik ki farmaish)
+    eventSubs.push(sdk.onSnapshot(sdk.query(col('cameraClips'), sdk.where('date', '==', date)), snap => {
+      if (token !== epoch || state.camDay !== date) return;
+      state.camClips = readList(snap).sort((a, b) => (b.at || 0) - (a.at || 0)); changed();
+    }, error => { if (token === epoch) problem('camClips', error); }));
     // v224: us din ke bill cancel / badle (PC ne POS mein dekhe)
     eventSubs.push(sdk.onSnapshot(sdk.query(col('posAlerts'), sdk.where('date', '==', date)), snap => {
       if (token !== epoch || state.camDay !== date) return;
@@ -1089,11 +1094,46 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     }, error => { if (token === epoch) problem('posAlerts', error); }));
   }
   async function loadFrames(id) { ownerOnly(); const snap = await sdk.getDoc(ref('cameraFrames', id)); return snap.exists() ? (snap.data().frames || []) : []; }
-  async function reviewEvent(id, status, note = '') {
+  async function reviewEvent(id, status, note = '', keepVideo = false) {
     ownerOnly();
     if (!['ok', 'confirmed', ''].includes(status)) throw new Error('Ghalat faisla');
     await quick(sdk.setDoc(ref('cameraEvents', id), { reviewed: status, reviewedAt: Date.now(), reviewNote: String(note || '').slice(0, 200) }, { merge: true }));
+    // v225: faisle ke baad video mit jati hai (jab tak "Video rakhein" na kaha ho)
+    for (const c of (state.camClips || []).filter(c => c.eventId === id)) {
+      if (keepVideo) await sdk.setDoc(ref('cameraClips', c.id), { keep: true }, { merge: true }).catch(() => {});
+      else await deleteClip(c.id, c.n).catch(() => {});
+    }
   }
+  /* ---------- v225: VIDEO CLIPS ---------- */
+  const CLIP_MAX_MS = 3 * 60000;
+  /** Tukre jod kar base64 mp4. */
+  async function loadClip(id) {
+    ownerOnly();
+    const snap = await sdk.getDocs(sdk.query(col('cameraClipParts'), sdk.where('clip', '==', id)));
+    const parts = []; snap.forEach(d => parts.push(d.data()));
+    return parts.sort((a, b) => (a.i || 0) - (b.i || 0)).map(p => p.data || '').join('');
+  }
+  /** Malik ki farmaish: kisi bhi waqt ki (3 minute tak) clip — PC bana kar bhejta hai. */
+  async function requestClip({ cam, from, to, eventId = '', title = '' }) {
+    ownerOnly();
+    const a = Number(from), b = Number(to);
+    if (!cam) throw new Error('Camera chunein.');
+    if (!Number.isFinite(a) || !Number.isFinite(b) || b <= a) throw new Error('Shuru aur khatam ka waqt sahi likhein.');
+    if (b - a > CLIP_MAX_MS) throw new Error('Clip zyada se zyada 3 minute ki ho sakti hai.');
+    if (a > Date.now()) throw new Error('Aane wala waqt nahi.');
+    const id = 'req-' + Date.now().toString(36);
+    await quick(sdk.setDoc(ref('cameraClips', id), { cam, kind: 'req', eventId, from: a, to: b, date: pkDate(new Date(a)), status: 'req', by: actor(), title: String(title || '').slice(0, 60), at: Date.now() }));
+    return id;
+  }
+  async function deleteClip(id, n = 0) {
+    ownerOnly();
+    const snap = await sdk.getDocs(sdk.query(col('cameraClipParts'), sdk.where('clip', '==', id)));
+    const ids = []; snap.forEach(d => ids.push(d.id));
+    for (let i = 0; i < Math.max(Number(n) || 0, 0); i++) if (!ids.includes(`${id}_${i}`)) ids.push(`${id}_${i}`);
+    for (const pid of ids) await sdk.deleteDoc(ref('cameraClipParts', pid)).catch(() => {});
+    await sdk.deleteDoc(ref('cameraClips', id)).catch(() => {});
+  }
+  async function keepClip(id, keep) { ownerOnly(); await quick(sdk.setDoc(ref('cameraClips', id), { keep: !!keep }, { merge: true })); }
   async function saveZone(id, zone) {
     ownerOnly();
     const r = v => Math.round(Math.min(1, Math.max(0, Number(v) || 0)) * 1000) / 1000;
@@ -1105,6 +1145,12 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   async function cleanupCam(days = 30) {
     if (state.role !== 'owner') return 0;
     const cutoff = addDays(pkDate(), -days - 1); let n = 0;
+    // v225: clips agle din khud (jo "rakhein" hon wo 30 din)
+    try {
+      const snap = await sdk.getDocs(sdk.query(col('cameraClips'), sdk.where('date', '<=', addDays(pkDate(), -1)), ...(sdk.limit ? [sdk.limit(40)] : [])));
+      const rows = []; snap.forEach(d => rows.push({ id: d.id, ...d.data() }));
+      for (const c of rows) { if (c.keep && c.date > cutoff) continue; await deleteClip(c.id, c.n); n++; }
+    } catch { /* ignore */ }
     for (const coll of ['cameraEvents', 'cameraStats', 'posAlerts']) {
       const snap = await sdk.getDocs(sdk.query(col(coll), sdk.where('date', '<=', cutoff), ...(sdk.limit ? [sdk.limit(40)] : [])));
       const ids = []; snap.forEach(d => ids.push(d.id));
@@ -1121,7 +1167,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
 
   return {
     app, full, actor, auth, state, watchShots, createCameraPC, saveCamera, requestShot, deleteCamera,
-    watchEvents, loadFrames, reviewEvent, saveZone, cleanupCam, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
+    watchEvents, loadFrames, reviewEvent, saveZone, cleanupCam, loadClip, requestClip, deleteClip, keepClip, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
     requestOut, cancelOut, returnOut, reviewOut, isManager, isTicketer, startBreak, endBreaks, createTicket, returnTicket, decideTicket, ticketSuggestFor,
     savePushToken, removePushToken, pushDevices, pushTestPing,
     applyDefaultShiftAll, applyDefaultSalaryAll, toggleClosed, quickPresent, closeCheckouts, getSelfie, migrateSelfies, selfiesFor, auditLog,

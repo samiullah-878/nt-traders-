@@ -113,8 +113,11 @@ class Milaan(unittest.TestCase):
     def test_match(self):
         m = ntcam.match
         self.assertEqual(m('aaya', 990, 1005, [self.S])[0], 'ok', 'bill 10 s baad save — theek')
-        self.assertEqual(m('len_den', 1050, 1060, [self.S])[1]['no'], '00119008', 'baqaya ke sath')
-        self.assertEqual(m('nikla', 995, 1004, [self.S])[0], 'ok', 'baqaya dena "nikla" lagta hai — bill ho to theek')
+        self.assertEqual(m('len_den', 1030, 1040, [self.S])[1]['no'], '00119008', 'post ke 45 s tak baqaya usi bill ka')
+        self.assertEqual(m('nikla', 995, 1004, [self.S])[0], 'ok', 'baqaya dena "nikla" lagta hai — bill ke waqt mein theek')
+        self.assertEqual(m('nikla', 1050, 1060, [self.S])[0], 'wait', 'v1.5: post ke 45 s BAAD nikla = bill nahi dhanpta (5000 kisi aur ko)')
+        self.assertEqual(m('aaya', 945, 950, [self.S])[0], 'ok', 'scan shuru (970) se 30 s pehle tak')
+        self.assertEqual(m('aaya', 900, 930, [self.S])[0], 'wait', 'scan se bohat pehle nahi')
         self.assertEqual(m('nikla', 1990, 2003, [self.S, self.P])[1]['kind'], 'pay', 'de diye pehle')
         self.assertEqual(m('aaya', 1500, 1510, [self.S])[0], 'wait', 'door ka bill nahi')
         self.assertEqual(m('ginti', 990, 1005, [])[0], 'none')
@@ -167,7 +170,7 @@ class Milaan(unittest.TestCase):
             g.handle(w, 3000.0, 2996.0, 3006.0, fr)
             g.handle(w, 4000.0, 3996.0, 4006.0, fr)
         evs = [d for p, d in writes if '/cameraEvents/' in p]; self.assertEqual([e['matchState'] for e in evs], ['wait', 'wait'])
-        recs.append({'kind': 'sale', 'no': 'late1', 'at': 3040.0, 'amount': 500.0, 'party': ''})   # bill der se bana
+        recs.append({'kind': 'sale', 'no': 'late1', 'at': 3020.0, 'start': 3000.0, 'amount': 500.0, 'party': ''})   # bill der se POS mein aaya (scan 3000, post 3020)
         g.recheck()
         upd = [(p, d) for p, d in writes if '/cameraEvents/' in p and 'matchAt' in d]
         self.assertEqual(upd[0][1]['matchState'], 'ok'); self.assertEqual(upd[0][1]['match']['no'], 'late1')
@@ -221,6 +224,58 @@ class BillBadla(unittest.TestCase):
         e = [a for a in p.alerts.values() if a['kind'] == 'edit'][0]; self.assertEqual((e['before'], e['after']), (9000.0, 100.0))
         p.watch_bills({1: row(1, 'A', 100, 2, 5, upd=8), 2: row(2, 'B', 500, 2, 6, n=2, h=78), 3: row(3, 'C', 12000, 2, 9)})
         self.assertNotIn('replacedBy', e, 'mehnga bill "iski jagah" nahi')
+
+
+class Video(unittest.TestCase):
+    """v1.4 recording (60 s ke .ts tukre) + clip + tukron mein upload. ffmpeg: NTCAM_FFMPEG ya imageio-ffmpeg."""
+    def _rec(self, secs=6.5):
+        import numpy as np
+        class W: latest = None; latest_at = 0
+        w = W(); stop = {'x': False}
+        def feed():
+            while not stop['x']:
+                f = np.zeros((360, 640, 3), np.uint8); f[:, int(time_now() * 100) % 600:, :] = 200
+                w.latest, w.latest_at = f, time_now(); import time; time.sleep(0.05)
+        import threading, time
+        threading.Thread(target=feed, daemon=True).start(); time.sleep(0.3)
+        old = ntcam.SEG_SEC; ntcam.SEG_SEC = 2
+        r = ntcam.Recorder('camtest' + str(int(time_now())), w); r.start(); time.sleep(secs); r.stop(); time.sleep(3)
+        ntcam.SEG_SEC = old; stop['x'] = True
+        return r
+
+    def test_record_clip_prune_upload(self):
+        if not os.environ.get('NTCAM_FFMPEG'):
+            self.skipTest('NTCAM_FFMPEG nahi (asal ffmpeg chahiye)')
+        r = self._rec()
+        segs = ntcam.seg_files(r.dir)
+        self.assertGreaterEqual(len(segs), 2, '2 s ke tukre bane'); self.assertEqual(r.err, '')
+        self.assertTrue(all(os.path.getsize(p) > 1000 for _, p in segs))
+        t0 = segs[0][0] + 0.5; out = os.path.join(ntcam.HOME, 'c.mp4')
+        self.assertEqual(r.clip(t0, t0 + 3, out), out, 'clip bani'); self.assertGreater(os.path.getsize(out), 2000)
+        self.assertEqual(len(ntcam.pick_segs(segs, t0, t0 + 3, 2)), 2)
+        writes = []
+        class F:
+            def patch(s, path, data): writes.append((path, data)); return True
+        ntcam.PART_CHARS = 3000
+        n = ntcam.upload_clip(F(), 'clipX', out, {'cam': 'c', 'kind': 'shak', 'eventId': 'e', 'from': 1, 'to': 2, 'date': '2026-09-29'})
+        parts = [d for p, d in writes if '/cameraClipParts/' in p]; head = [d for p, d in writes if '/cameraClips/clipX' in p][0]
+        self.assertEqual(n, len(parts)); self.assertEqual(head['status'], 'ok'); self.assertEqual(head['n'], n); self.assertFalse(os.path.exists(out), 'upload ke baad file mit gayi')
+        self.assertEqual(sorted(p['i'] for p in parts), list(range(n)))
+        rules = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'firestore.rules'), encoding='utf-8').read()
+        blk = rules[rules.index('cameraClips/{clipId}'):]; blk = blk[:blk.index('\n    }')]
+        for k in head: self.assertIn("'" + k + "'", blk, 'rules mein nahi: ' + k)
+        # prune: sab purana kar do
+        for st, p in segs: os.utime(p, None)
+        gone = ntcam.prune(r.dir, hours=0)
+        self.assertEqual(len(gone), len(segs), '48 ghante se purane mit gaye')
+
+    def test_clip_cmd_and_free(self):
+        segs = [(1000, '/x/1000.ts'), (1060, '/x/1060.ts'), (1120, '/x/1120.ts')]
+        self.assertEqual([s for s, _ in ntcam.pick_segs(segs, 1070, 1100)], [1060])
+        self.assertEqual([s for s, _ in ntcam.pick_segs(segs, 1050, 1130)], [1000, 1060, 1120])
+        out = os.path.join(ntcam.HOME, 'z.mp4'); cmd = ntcam.clip_cmd('ffmpeg', segs[1:], 1070, 1100, out)
+        self.assertIn('10.00', cmd[cmd.index('-ss') + 1]); self.assertEqual(cmd[cmd.index('-t') + 1], '30.00'); self.assertTrue(os.path.exists(out + '.txt'))
+        self.assertGreater(ntcam.free_gb(ntcam.HOME), 0)
 
 
 class Nigrani(unittest.TestCase):

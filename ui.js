@@ -115,6 +115,36 @@ export function viewImage(src, title = '') {
   return el;
 }
 
+/* ---------- v225: video poori screen par (slow + aik-aik frame) ---------- */
+export function viewVideo(src, title = '', fps = 8) {
+  document.querySelector('.viewer')?.remove();
+  const el = document.createElement('div');
+  el.className = 'viewer is-video'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', title || 'Video');
+  el.innerHTML = `<video src="${esc(src)}" controls playsinline autoplay preload="auto"></video>
+    <div class="viewer-bar"><b>${esc(title)}</b><span class="viewer-tools">
+      <button type="button" class="btn btn-ghost btn-sm" data-vid="back" aria-label="Aik frame peeche">◀ frame</button>
+      <button type="button" class="btn btn-ghost btn-sm" data-vid="slow">0.5x</button>
+      <button type="button" class="btn btn-ghost btn-sm" data-vid="fwd" aria-label="Aik frame aage">frame ▶</button>
+      <button type="button" class="btn btn-ghost btn-sm" data-vid="close">Band karein</button></span></div>`;
+  const v = el.querySelector('video');
+  const close = () => { try { v.pause(); } catch { /* ignore */ } el.remove(); if (src.startsWith('blob:')) { try { URL.revokeObjectURL(src); } catch { /* ignore */ } } };
+  el.addEventListener('click', e => {
+    const b = e.target.closest?.('[data-vid]'); if (!b) return;
+    const k = b.dataset.vid;
+    if (k === 'close') close();
+    else if (k === 'slow') { v.playbackRate = v.playbackRate === 1 ? 0.5 : 1; b.textContent = v.playbackRate === 1 ? '0.5x' : '1x'; }
+    else { v.pause(); v.currentTime = Math.max(0, v.currentTime + (k === 'fwd' ? 1 : -1) / fps); }
+  });
+  el.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  document.body.appendChild(el);
+  return el;
+}
+export function b64ToBlobUrl(b64, type = 'video/mp4') {
+  const bin = atob(b64), u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return URL.createObjectURL(new Blob([u8], { type }));
+}
+
 /* ---------- sheets (neeche se uthne wala panel) ---------- */
 const stack = [];
 export function openSheet({ title = '', render, wide = false, onClose, id = '' }) {

@@ -34,6 +34,11 @@ const records = new Map([
   [B + `cameraStats/cc33-ch1_${C.pkDate()}`, { cam: 'cc33-ch1', date: C.pkDate(), touches: 7, checks: 2, shak: 1, unchecked: 1, at: Date.now(), moneyIn: 5, moneyOut: 2, matched: 6, missing: 1 }],
   // v224: ghee ka bill 9,000 cancel -> naya 100; camera ka card usi bill se juda tha
   [B + `cameraStats/pos_${C.pkDate()}`, { cam: 'pos', date: C.pkDate(), alerts: 1, at: Date.now() }],
+  // v225: shak wali harkat ki video (PC ne banayi) — 2 tukre
+  [B + 'cameraClips/cc33-ch1-2', { cam: 'cc33-ch1', kind: 'shak', eventId: 'cc33-ch1-2', from: Date.now() - 605000, to: Date.now() - 585000, date: C.pkDate(), status: 'ok', n: 2, size: 3000, at: Date.now() - 500000 }],
+  [B + 'cameraClipParts/cc33-ch1-2_0', { clip: 'cc33-ch1-2', i: 0, data: 'AAAA' }],
+  [B + 'cameraClipParts/cc33-ch1-2_1', { clip: 'cc33-ch1-2', i: 1, data: 'BBBB' }],
+  [B + 'cameraClips/req-old', { cam: 'cc33-ch1', kind: 'req', eventId: '', from: Date.now() - 900000, to: Date.now() - 800000, date: C.pkDate(), status: 'making', at: Date.now() - 100000, title: 'Test clip' }],
   [B + 'posAlerts/00119008-1', { kind: 'cancel', no: '00119008', before: 9000, after: 0, amount: 9000, at: Date.now() - 1190000, when: Date.now() - 1000000, by: 'Ali', date: C.pkDate(), eventId: 'cc33-ch1-1', replacedBy: { no: '00119009', amount: 100, at: Date.now() - 900000 } }],
   [B + 'cameraPC/status', { at: Date.now() - 60000, v: '1.2', host: 'SHOP-PC', cams: 1, online: 1, pos: 'POS theek · Galla screen theek', found: [{ ip: '192.168.0.105', brand: 'dahua', mac: 'aa11' }, { ip: '192.168.0.110', brand: 'hik', mac: 'bb22' }] }],
   [B + `staffRequests/r1`, { phone: '03007654321', kind: 'leave', date: today, to: today, checkIn: '', checkOut: '', reason: 'Bimar', status: 'pending', createdAt: 5, by: 'x' }]
@@ -120,8 +125,24 @@ test('malik login → Hazri tab, qataarein, tawajju', async () => {
   assert.equal(ev().querySelectorAll('.nig-strip img').length, 6, '6 tasveerein'); assert.match(ev().textContent, /Us waqt duty par/); assert.match(ev().textContent, /AI: Note jeb/);
   await click('[data-sheet=nig-ev] [data-action=nig-idx][data-arg="3"]'); assert.ok(ev().querySelector('.nig-big img[src$="F4"]'), 'chauthi tasveer badi');
   await click('[data-sheet=nig-ev] [data-action=nig-full]'); assert.ok($('body > .viewer img[src$="F4"]')); await click('.viewer');
+  // v225: video — dekhein (tukre jud kar), rakhein wala checkbox, faisle ke baad mit jaye
+  assert.ok(ev().querySelector('[data-action=nig-video]'), 'Video dekhein'); assert.ok(ev().querySelector('input[name=keepVideo]'));
+  win.URL.createObjectURL = () => 'blob:test-1'; win.URL.revokeObjectURL = () => {}; globalThis.URL.createObjectURL = win.URL.createObjectURL; globalThis.URL.revokeObjectURL = win.URL.revokeObjectURL;
+  await click('[data-sheet=nig-ev] [data-action=nig-video]'); await settle(10);
+  assert.ok($('body > .viewer.is-video video'), 'video player'); assert.ok($('.viewer [data-vid=slow]') && $('.viewer [data-vid=fwd]'), 'slow + frame'); await click('.viewer [data-vid=close]'); assert.equal($('.viewer'), null);
+  assert.ok(ev().querySelector('[data-action=clip-req]'), 'mukammal clip mangwayein');
   await submit(ev().querySelector('form[data-form=nig-review]'));
   assert.equal(records.get(B + 'cameraEvents/cc33-ch1-2').reviewed, 'ok', 'malik ka faisla'); assert.equal(ev(), null, 'sheet band');
+  assert.equal(records.get(B + 'cameraClips/cc33-ch1-2'), undefined, 'v225: faisle ke baad video mit gayi'); assert.equal(records.get(B + 'cameraClipParts/cc33-ch1-2_1'), undefined);
+  // farmaish: waqt ki clip
+  assert.match($('.nig-clips').textContent, /Test clip/); assert.match($('.nig-clips').textContent, /PC video bana raha hai/);
+  await click('main [data-action=clip-req]'); const rf = $('[data-sheet=clip-req] form[data-form=clip-req]'); assert.ok(rf, 'farmaish ka form');
+  const hms = sec => { sec = ((sec % 86400) + 86400) % 86400; return [3600, 60, 1].map(d => { const v = Math.floor(sec / d); sec -= v * d; return String(v).padStart(2, '0'); }).join(':'); };
+  const fromSec = rf.elements.from.value.split(':').reduce((a, v) => a * 60 + Number(v), 0); // default = 3 min pehle (asal waqt)
+  rf.elements.to.value = hms(fromSec + 300); await submit(rf); assert.match($('#toast').textContent, /3 minute/);
+  assert.ok($('[data-sheet=clip-req]'), 'ghalti par sheet khuli rahe'); rf.elements.to.value = hms(fromSec + 150); await submit(rf); await settle(8); assert.equal($('[data-sheet=clip-req]'), null, 'kamyabi par band');
+  const req = [...records].find(([k, v]) => k.includes('cameraClips/req-') && v.status === 'req' && v.title === '');
+  assert.ok(req, 'farmaish bani'); assert.equal(req[1].to - req[1].from, 150000); assert.equal(req[1].cam, 'cc33-ch1'); assert.equal(req[1].date, C.pkDate());
   assert.equal($$('.nig-ev').length, 0, 'na dekhe shak khatam'); await click('[data-action=nig-filter][data-arg=all]'); assert.match($('.nig-sum').textContent, /1\/1\s*shak dekhe/);
   await click('[data-action=nig-day][data-arg="-1"]'); await settle(10); assert.match($('main').textContent, /koi harkat record nahi/); await click('[data-action=nig-day][data-arg="1"]'); await settle(10);
   // galla ka hissa: saaf -> save = nigrani band ka paigham; phir wapas
