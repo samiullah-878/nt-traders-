@@ -75,3 +75,10 @@ test('v224: bill cancel / badla -> sirf malik ko khabar (naye par hi)', async ()
   assert.match(e[0].data.title, /Bill badla: #5 · Rs 9,000 → Rs 100/);
   assert.equal((await write('posAlerts', 'x-2', { kind: 'edit', replacedBy: { no: '6' } }, { kind: 'edit' })).length, 0, 'update par dobara nahi');
 });
+
+test('v225: mangwayi clip tayyar (req -> ok) -> malik ko khabar; shak wali khud ki clip par nahi', async () => {
+  const a = await write('cameraClips', 'req-1', { kind: 'req', status: 'ok', from: 1, to: 2, title: '5 baje' }, { kind: 'req', status: 'making' });
+  assert.deepEqual(a.map(m => m.token), ['NEW']); assert.match(a[0].data.title, /Clip tayyar: 5 baje/);
+  assert.equal((await write('cameraClips', 'ev-1', { kind: 'shak', status: 'ok' }, { kind: 'shak', status: 'making' })).length, 0);
+  assert.equal((await write('cameraClips', 'req-1', { kind: 'req', status: 'ok', keep: true }, { kind: 'req', status: 'ok' })).length, 0, 'dobara nahi');
+});

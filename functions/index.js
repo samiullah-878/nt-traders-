@@ -113,6 +113,12 @@ async function handlePushTest(before, after) {
 
 
 /* ---------- v222: galla par SHAK — sirf malik ko (manager bhi staff hai, nigrani us ke liye band) ---------- */
+/* ---------- v225: malik ki mangwayi clip tayyar (req -> ok) ---------- */
+async function handleClip(event, before) {
+  const c = event.data?.data(); if (!c || c.kind !== 'req' || c.status !== 'ok' || (before?.status || '') === 'ok') return;
+  const t = ms => new Date(Number(ms) || Date.now()).toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit' }).toLowerCase();
+  await push({ title: `Clip tayyar: ${c.title || t(c.from) + ' – ' + t(c.to)}`, body: 'Nigrani mein "Mangwayi hui clips" ke neeche ▶ Dekhein', tag: `clip-${event.params.id}`, kinds: ['owner'] });
+}
 /* ---------- v224: bill cancel / badla — sirf malik ko ---------- */
 const money = n => 'Rs ' + Math.round(Number(n) || 0).toLocaleString('en-PK');
 async function handlePosAlert(event) {
@@ -150,6 +156,7 @@ export const onHazriWrite = onDocumentWritten({ ...FAST, document: `${BIZ}/{coll
   try {
     if (coll === 'pushTokens') return await handlePushTest(before?.exists ? before.data() : null, after.data());
     if (coll === 'cameraEvents' && !created) return await handleCamEvent(ev, before.data()); // v223: milaan badla (wait -> missing)
+    if (coll === 'cameraClips' && !created) return await handleClip(ev, before.data()); // v225: farmaish wali clip tayyar
     if (!created) return;
     if (coll === 'staffOuts') return await handleOut(ev);
     if (coll === 'staffRequests') return await handleRequest(ev);
