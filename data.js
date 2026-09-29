@@ -1134,12 +1134,13 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     await sdk.deleteDoc(ref('cameraClips', id)).catch(() => {});
   }
   async function keepClip(id, keep) { ownerOnly(); await quick(sdk.setDoc(ref('cameraClips', id), { keep: !!keep }, { merge: true })); }
-  async function saveZone(id, zone) {
+  async function saveZone(id, zone, which = 'zone') {   // v229: which = 'zone' (galla) | 'zone2' (counter / len-den)
     ownerOnly();
+    if (!['zone', 'zone2'].includes(which)) throw new Error('Ghalat hissa');
     const r = v => Math.round(Math.min(1, Math.max(0, Number(v) || 0)) * 1000) / 1000;
     const z = zone ? { x: r(zone.x), y: r(zone.y), w: r(zone.w), h: r(zone.h) } : null;
-    if (z && (z.w < 0.04 || z.h < 0.04)) throw new Error('Dabba bohat chhota hai — galla ke gird thora bara banayein.');
-    await quick(sdk.setDoc(ref('cameras', id), { zone: z }, { merge: true }));
+    if (z && (z.w < 0.04 || z.h < 0.04)) throw new Error('Dabba bohat chhota hai — thora bara banayein.');
+    await quick(sdk.setDoc(ref('cameras', id), { [which]: z }, { merge: true }));
   }
   /** 30 din se purane events + tasveerein + ginti mitao (malik ki app khulne par, thore thore). */
   async function cleanupCam(days = 30) {

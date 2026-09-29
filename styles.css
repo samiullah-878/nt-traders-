@@ -681,3 +681,21 @@ html.is-snap .live-clock,html.is-snap [data-live]{opacity:.6}
 .nig-clip-row .tag,.nig-vid .tag{white-space:normal;text-align:left;line-height:1.3;padding:3px 8px;max-width:100%;overflow-wrap:anywhere}
 .nig-vid{overflow-wrap:anywhere}
 .nig-vid .why{flex-basis:100%;color:var(--bad);font-weight:600}
+
+/* v229: counter ka hissa + len-den ki kahani */
+.zone-rect.is-counter{border-color:#2f6fdb;background:rgba(47,111,219,.14)}
+.zone-rect.is-ghost{border-style:dashed;opacity:.45;pointer-events:none}
+.nig-flags{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0}
+.nig-flags .tag{white-space:normal;text-align:left;line-height:1.3;padding:4px 9px;max-width:100%}
+.nig-story{margin:8px 0 10px;padding:12px;border:1px solid var(--rule);border-radius:14px;background:var(--paper)}
+.nig-story h3{margin:0 0 8px}
+.nig-story ol{list-style:none;margin:0;padding:0;display:grid;gap:6px;position:relative}
+.nig-story li{display:flex;gap:8px;align-items:center;min-width:0;padding-left:14px;position:relative}
+.nig-story li::before{content:'';position:absolute;left:3px;top:50%;width:7px;height:7px;border-radius:50%;background:var(--ok);transform:translateY(-50%)}
+.nig-story li.is-bad::before{background:var(--bad)}
+.nig-story li.is-bad .nig-story-line span{color:var(--bad);font-weight:600}
+.nig-story-line{flex:1;min-width:0;display:flex;gap:8px;align-items:baseline;text-align:left;background:none;border:0;padding:6px 4px;border-radius:8px;cursor:pointer;color:inherit;font:inherit}
+.nig-story-line:hover{background:rgba(0,0,0,.04)}
+.nig-story-line b{flex:none;font-variant-numeric:tabular-nums;font-size:.8125rem;color:var(--muted)}
+.nig-story-line span{min-width:0;overflow-wrap:anywhere}
+.nig-story .btn{flex:none}

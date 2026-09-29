@@ -1,4 +1,9 @@
 # ntcam.py — Noor Traders Hazri: dukaan ke CAMERAS (shop PC par chalta hai). Hissa A.
+# v1.8: LEN-DEN KI KAHANI — galla + COUNTER (zone2) ki har 0.5 s tasveer (tape, 6 min); len-den par ~20 chuni tasveerein waqt
+#       ke sath -> AI kahani likhta hai (kis ne parchi / paisa diya, baqaya kis ko, kaun khara raha, galle se kis ko diya). PC
+#       POS se milata hai: bina parchi paisa, parchi di paisa nahi, voucher ke waqt paisa kisi aur ko, baqaya banta hi nahi tha
+#       (POS CashReceived = bill), aik bill par do dafa, chhote baqaye par bada note, N log / M parchi; aur parchi scan hui magar
+#       galle par harkat hi nahi (nopay). Mushkil len-den (lal nishan / 2+ log / 2+ voucher / shak) bara AI dobara likhta hai.
 # v1.7: AIK LEN-DEN = AIK JAANCH — galle ki harkatein 60 s ke andar dobara hon to aik hi card (3 min had); AI ko bataya ke larka
 #       kursi par baith kar gode / haath / tokri / machine mein ginta hai (shak NAHI); chhota AI "shak" kahe to bara AI (Sonnet)
 #       wahi tasveerein dobara dekhta hai — dono shak kahein tabhi shak (khabar + video). Roz ki had ab poore din chalti hai.
@@ -18,7 +23,7 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '1.7'
+VERSION = '1.8'
 
 import base64, collections, getpass, ipaddress, json, os, queue, re, socket, subprocess, sys, threading, time, traceback, urllib.parse
 from concurrent.futures import ThreadPoolExecutor
@@ -32,6 +37,9 @@ BIZ = 'businesses/noor-traders'
 MODEL = 'claude-haiku-4-5-20251001'
 CONFIRM_MODELS = ('claude-sonnet-5-5', 'claude-sonnet-4-6')   # v1.7: shak ki doosri raaye (pehla na chale to doosra)
 MERGE_GAP, MERGE_MAX = 60, 180       # v1.7: 60 s ke andar agli harkat = wahi len-den; aik len-den zyada se zyada 3 minute
+TAPE_SEC, TAPE_W, TAPE_Q = 360, 416, 62   # v1.8: galla + counter ki 0.5 s tasveerein 6 minute (JPEG, ~14 MB)
+STORY_N, STORY_PRE, STORY_POST = 20, 30, 10   # kahani: ~20 tasveerein, len-den se 30 s pehle se 10 s baad
+NOPAY_WAIT = 150                     # parchi scan (Cash Received) ke 2.5 min baad dekho: galle par harkat hui ya nahi
 SHOT_EVERY = 300          # har 5 minute aik tasveer (app ke liye)
 LIST_EVERY = 20           # cameras ki list / "nayi tasveer" ki farmaish har 20 second
 STATUS_EVERY = 120        # PC zinda hai — har 2 minute
@@ -549,6 +557,17 @@ def pk_date(ts=None):
     return time.strftime('%Y-%m-%d', time.gmtime((ts if ts is not None else time.time()) + 5 * 3600))
 
 
+def tape_box(zone, zone2, w, h):
+    """v1.8: kahani ki tasveer ka dabba = galla (0.5 pad) + counter (0.15 pad) dono ko gherne wala; counter na ho to galla 0.8 pad."""
+    if not (zone2 or {}).get('w'):
+        return zone_px(zone, w, h, 0.8)
+    a = zone_px(zone, w, h, 0.5)
+    b = zone_px(zone2, w, h, 0.15)
+    if a[2] <= a[0]:
+        return b
+    return min(a[0], b[0]), min(a[1], b[1]), max(a[2], b[2]), max(a[3], b[3])
+
+
 def zone_px(zone, w, h, pad=0.0):
     """Malik ka dabba (0-1) -> pixel. pad: har taraf dabbe ke size ka itna hissa aur (AI ko haath / jeb bhi dikhe)."""
     try:
@@ -595,18 +614,71 @@ class Watch(threading.Thread):
         super().__init__(daemon=True)
         self.cid, self.url, self.jobs, self.alive = cid, url, jobs, True
         self.motion, self.ring, self.pending = Motion(), collections.deque(maxlen=90), None   # 0.5 s * 90 = 45 s
+        self.tape, self.tape_prev = collections.deque(maxlen=TAPE_SEC * 2), None             # v1.8: (t, jpeg, counter harkat)
         self.latest, self.latest_at, self.fps, self.last_motion, self.last_trigger, self.stream = None, 0, 0.0, 0, 0, 'main'
         self.apply(cam)
 
     def apply(self, cam):
         self.name = str(cam.get('name') or self.cid)[:40]
         self.zone = cam.get('zone') or {}
+        self.zone2 = cam.get('zone2') or {}            # v1.8: counter / len-den ka hissa (malik mark karta hai)
         self.sens = cam.get('sens') or 'mid'
         self.cap_day = int(cam.get('aiCap') or 300)
         self.motion.set(self.sens)
 
     def stop(self):
         self.alive = False
+
+    def tape_add(self, now, f, w, h):
+        """v1.8: galla + counter (dono dabbe mila kar) ki chhoti JPEG + counter mein harkat ka andaza (haath aage / peeche)."""
+        import cv2
+        X0, Y0, X1, Y1 = tape_box(self.zone, self.zone2, w, h)
+        if X1 - X0 < 16 or Y1 - Y0 < 16:
+            return
+        crop = f[Y0:Y1, X0:X1]
+        cm = 0.0
+        if self.zone2.get('w'):
+            a0, b0, a1, b1 = zone_px(self.zone2, w, h)
+            if a1 - a0 >= 8 and b1 - b0 >= 8:
+                g = cv2.resize(cv2.cvtColor(f[b0:b1, a0:a1], cv2.COLOR_BGR2GRAY), (32, 24), interpolation=cv2.INTER_AREA).astype('int16')
+                if self.tape_prev is not None and self.tape_prev.shape == g.shape:
+                    cm = float(abs(g - self.tape_prev).mean())
+                self.tape_prev = g
+        b64, _, _ = jpeg_b64(crop, width=TAPE_W, quality=TAPE_Q)
+        self.tape.append((now, b64, cm))
+
+    def key_frames(self, a, b, n=STORY_N, must=()):
+        """v1.8: [a, b] mein se n tasveerein: har `must` waqt (voucher) ke qareeb wali, counter mein sab se zyada harkat wali
+        (haath aage / peeche — parchi / paisa), baqi barabar faslay par. Wapas [(t, b64)] waqt ki tarteeb mein."""
+        c = [x for x in list(self.tape) if a <= x[0] <= b]
+        if len(c) <= n:
+            return [(t, j) for t, j, _ in c]
+        chosen = set()
+        def near_ok(k, gap):
+            return all(abs(c[k][0] - c[j][0]) >= gap for j in chosen)
+        for m in must:
+            k = min(range(len(c)), key=lambda j: abs(c[j][0] - m))
+            chosen.add(k)
+        for k in sorted(range(len(c)), key=lambda j: -c[j][2]):
+            if len(chosen) >= n * 2 // 3 or c[k][2] <= 0.5:
+                break
+            if near_ok(k, 1.0):
+                chosen.add(k)
+        step = (len(c) - 1) / max(1, n - 1)
+        for i in range(n):
+            if len(chosen) >= n:
+                break
+            k = round(i * step)
+            if k not in chosen and near_ok(k, 0.9):
+                chosen.add(k)
+        for k in range(len(c)):
+            if len(chosen) >= n:
+                break
+            chosen.add(k)
+        return [(c[k][0], c[k][1]) for k in sorted(chosen)[:n]]
+
+    def tape_covers(self, a, b):
+        return bool(self.tape) and self.tape[0][0] <= a and self.tape[-1][0] >= b
 
     def run(self):
         url, wait = self.url, 3
@@ -644,6 +716,10 @@ class Watch(threading.Thread):
                         last_ring = now
                         X0, Y0, X1, Y1 = zone_px(self.zone, w, h, 0.5)
                         self.ring.append((now, f[Y0:Y1, X0:X1].copy()))
+                        try:
+                            self.tape_add(now, f, w, h)
+                        except Exception as e:
+                            log('tape:', e)
                     # v1.2: poora len-den — harkat se 4 s pehle se; harkat chalti rahe to 3 s aur, zyada se zyada 20 s
                     if moved:
                         self.last_motion = now
@@ -703,6 +779,14 @@ VCH_NO_COLS = ('VoucherNo', 'VoucherNumber', 'DocNo', 'RefNo', 'No')
 VCH_TXT_COLS = ('Description', 'Narration', 'Remarks', 'Note', 'Notes', 'Particulars', 'Detail')
 LINK_HINT = re.compile(r'sale|ref|doc|inv|bill|source|link|against', re.I)
 NOTES_RE = re.compile(r'Cash\s*Received\s*By\s*:?\s*(\S+)\s+On\s*:?\s*(\d{1,2}/\d{1,2}/\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?\s*[AP]M)', re.I)
+
+
+def change_of(sale):
+    """v1.8: POS ke mutabiq baqaya = customer ki di hui raqam (CashReceived) - bill. Raqam na likhi ho (= bill) to 0."""
+    if not sale:
+        return None
+    c, a = float(sale.get('cash') or 0), float(sale.get('amount') or 0)
+    return round(c - a, 2) if c > a + 1 else 0.0
 
 
 def norm_no(v):
@@ -788,6 +872,7 @@ class Pos(threading.Thread):
         # v1.6: voucher — dhoond ka nateeja (mode voucher|salecol|notes|sale), bill ki nishani (SaleID / SaleNo -> sale rec)
         self.vch, self.vch_at, self.vch_err, self.last_vch = None, 0, '', 0
         self.sale_by_id, self.sale_by_no = {}, {}
+        self.tender_seen = False                               # v1.8: kabhi CashReceived > bill dekha (baqaya POS se maloom)
 
     def ok_sql(self):
         return time.time() - self.sql_at < 120
@@ -798,7 +883,8 @@ class Pos(threading.Thread):
     def status(self):
         a = 'POS ' + ('theek' if self.ok_sql() else ('nahi: ' + self.sql_err[:60] if self.sql_err else 'shuru ho raha'))
         b = 'Galla screen ' + ('theek' if self.ok_bk() else ('nahi: ' + self.bk_err[:60] if self.bk_err else 'shuru ho raha'))
-        return a + ' · ' + self.vch_text() + ' · ' + b
+        c = ('Baqaya: POS se ✅' if self.tender_seen else 'Baqaya: POS di hui raqam nahi likhta (sirf bill)') if self.recs else 'Baqaya: dekh raha'
+        return a + ' · ' + self.vch_text() + ' · ' + c + ' · ' + b
 
     def vch_ok(self):
         """Voucher ka khana mil chuka hai -> galla sirf voucher par (warna bill ke waqt se, purana tareeqa)."""
@@ -871,7 +957,10 @@ class Pos(threading.Thread):
                 at = pk_epoch(r['CreatedOn'])
                 start = pk_epoch(r['BiltyDate']) if r.get('BiltyDate') and abs(pk_epoch(r['BiltyDate']) - at) < 1800 else at
                 rec = {'kind': 'sale', 'no': str(r['SaleNo'] or r['SaleID']).strip(), 'at': at, 'start': start, 'sid': int(r['SaleID']),
-                       'amount': float(r.get('TotalSale') or 0), 'credit': bool(r.get('IsCreditSale')), 'party': str(r.get('PartyName') or '')[:60]}
+                       'amount': float(r.get('TotalSale') or 0), 'credit': bool(r.get('IsCreditSale')), 'party': str(r.get('PartyName') or '')[:60],
+                       'cash': float(r.get('CashReceived') or 0)}
+                if rec['cash'] > rec['amount'] + 1:
+                    self.tender_seen = True                        # v1.8: POS customer ki di hui raqam likhta hai
                 self.add(rec)
                 self.sale_by_id[rec['sid']] = rec
                 if norm_no(rec['no']):
@@ -1006,7 +1095,7 @@ class Pos(threading.Thread):
         vid = r.get('VoucherID')
         if sale:
             return {'kind': 'crv', 'no': str(vno)[:40], 'vid': vid, 'bill': sale['no'], 'at': at, 'amount': amt if amt > 0 else sale['amount'],
-                    'party': sale.get('party', ''), 'who': who, 'billAt': sale['at']}
+                    'party': sale.get('party', ''), 'who': who, 'billAt': sale['at'], 'change': change_of(sale)}
         txt = str(r.get(i.get('txt')) or '')[:60] if i.get('txt') else ''
         return {'kind': 'voucher', 'no': str(vno)[:40], 'vid': vid, 'at': at, 'amount': amt, 'party': txt or (str(vt)[:12] if vt not in (None, '') else ''), 'who': who}
 
@@ -1060,7 +1149,7 @@ class Pos(threading.Thread):
                 no = str(r.get('SaleNo') or r['SaleID']).strip()
                 for k, (who, at) in enumerate(notes_times(r.get('t'))):
                     self.add({'kind': 'crv', 'no': f'{no}#{k + 1}', 'bill': no, 'at': at, 'amount': float(r.get('TotalSale') or 0),
-                              'party': (sale or {}).get('party', ''), 'who': who, 'billAt': (sale or {}).get('at', at)})
+                              'party': (sale or {}).get('party', ''), 'who': who, 'billAt': (sale or {}).get('at', at), 'change': change_of(sale)})
 
     def user_name(self, uid):
         """POS ka user naam (best-effort) — table na mile to 'user 8'."""
@@ -1206,7 +1295,9 @@ def context_text(recs):
             out.append(f"Bill #{r['no']} {rs(r['amount'])} counter par bana {clock(r['at'])}" + (' (udhaar)' if r.get('credit') else '')
                        + ('' if r['no'] in paid or r.get('credit') else ' — galle par abhi Cash Received nahi'))
         elif r['kind'] == 'crv':
-            out.append(f"CASH RECEIVED voucher: Bill #{r.get('bill')} {rs(r['amount'])} galle par {clock(r['at'])} (galla khulna JAIZ)")
+            ch = r.get('change')
+            chx = (f' — POS: baqaya {rs(ch)} banta hai' if ch else (' — POS: di hui raqam = bill (baqaya 0)' if ch == 0 else ''))
+            out.append(f"CASH RECEIVED voucher: Bill #{r.get('bill')} {rs(r['amount'])} galle par {clock(r['at'])} (galla khulna JAIZ){chx}")
         elif r['kind'] == 'voucher':
             out.append(f"POS voucher #{r['no']} {rs(r['amount'])} {clock(r['at'])}" + (f" ({r['party']})" if r.get('party') else '') + ' (galla khulna jaiz)')
         elif r['kind'] == 'return':
@@ -1301,6 +1392,133 @@ def ai_confirm(key, crops_b64, ctx, gap, why):
     raise RuntimeError(last or 'doosra AI model nahi mila')
 
 
+STORY_KYA = ('parchi_paisa', 'paisa', 'parchi', 'rakha', 'baqaya', 'diya', 'jeb', 'khara', 'gaya', 'ginti')
+KAHANI_PROMPT = ('Ye {n} tasveerein aik dukaan ke GALLA (cash ki daraz / tokri) aur COUNTER (jahan customer haath aage karta hai) ki CCTV '
+                 'se hain, waqt ki tarteeb mein; har tasveer ke sath us ka waqt likha hai. Dukaan ka tareeqa: customer parchi (safed chhota '
+                 'kaghaz) aur paisa deta hai -> galle wala larka (aksar kursi par baitha) paisa haath / gode / note ginne ki machine mein ginta '
+                 'hai -> parchi scan (POS "Cash Received") -> galle se baqaya USI customer ko -> paisa galle ya paas ki tokri mein. Ye NORMAL '
+                 'hai; haath gode / shalwar / qameez ke PAAS dikhna shak NAHI. Us waqt ka POS record: {ctx}. Poori KAHANI likho — har ahem lamha '
+                 'aik line: "i" = tasveer ka number; "kaun" = jagah aur kapron ka rang (jaise "daayen customer, neela kurta" ya "galle wala") — '
+                 'naam ya chehre ki pehchan HARGIZ nahi; "kya" in mein se aik: parchi_paisa (customer ne parchi + paisa diya), paisa (customer ne '
+                 'sirf paisa diya, parchi nahi), parchi (customer ne sirf parchi di, paisa NAHI diya), rakha (galle wale ne paisa galle / tokri '
+                 'mein rakha), baqaya (galle se nikal kar paisa usi ko diya jis ne paisa diya tha), diya (galle se nikal kar paisa kisi AUR ko '
+                 'diya — jis ne paisa nahi diya tha), jeb (note jeb / kapron ke ANDAR gaya), khara (koi aaya aur khara raha), gaya (chala gaya), '
+                 'ginti (sirf gina); "kis" (baqaya / diya kis ko): "wahi" | "aur" | "mulazim"; "note": "bada" (1000 neela / 5000 peela-bhoora '
+                 'jaisa bara note), "chhota" ya "?". Phir: "log" = kitne ALAG customers ne paisa diya; "flow" = aaya | nikla | len_den | ginti | '
+                 'kuch_nahi; "khula" = galla khula / haath andar (true/false); "verdict" = "shak" SIRF jab note saaf jeb / kapron ke ANDAR gaya, '
+                 'warna "normal", saaf na dikhe to "saaf_nahi"; "why" = Roman Urdu (English harf) mein aik chhoti line. Jo saaf na dikhe wo mat '
+                 'gharo — us lamhe ko chhor do.{examples} Jawab SIRF JSON: {{"story": [{{"i": 3, "kaun": "...", "kya": "...", "kis": "", "note": ""}}], '
+                 '"log": 1, "flow": "...", "khula": true, "verdict": "...", "why": "..."}}')
+
+
+def claude_call(key, content, models, max_tokens=700):
+    """Claude ko aik sawal; model na chale (400 / 404 + "model") to agla. Wapas (matn, ms, model)."""
+    import requests
+    last = ''
+    for model in models:
+        t0 = time.time()
+        r = requests.post('https://api.anthropic.com/v1/messages', timeout=150,
+                          headers={'x-api-key': clean_key(key), 'anthropic-version': '2023-06-01', 'content-type': 'application/json'},
+                          json={'model': model, 'max_tokens': max_tokens, 'messages': [{'role': 'user', 'content': content}]})
+        if r.status_code in (400, 404) and 'model' in (r.text or '').lower() and model != models[-1]:
+            last = api_error(r)
+            continue
+        if r.status_code != 200:
+            raise RuntimeError(api_error(r))
+        txt = ' '.join(b.get('text', '') for b in r.json().get('content', []) if b.get('type') == 'text')
+        return txt, int((time.time() - t0) * 1000), model
+    raise RuntimeError(last or 'model nahi mila')
+
+
+def parse_story(text, n):
+    """AI ki kahani (JSON) -> saaf dict. Ghalat / anjaan cheezein chhor di jati hain."""
+    m = re.search(r'\{.*\}', text or '', re.S)
+    try:
+        j = json.loads(m.group(0)) if m else {}
+    except ValueError:
+        j = {}
+    story = []
+    for e in (j.get('story') or [])[:16]:
+        if not isinstance(e, dict):
+            continue
+        kya = str(e.get('kya') or '').strip().lower()
+        try:
+            i = int(e.get('i'))
+        except (TypeError, ValueError):
+            continue
+        if kya not in STORY_KYA or not 1 <= i <= n:
+            continue
+        kis = str(e.get('kis') or '').strip().lower()
+        note = str(e.get('note') or '').strip().lower()
+        story.append({'i': i, 'kaun': str(e.get('kaun') or '')[:40], 'kya': kya, 'kis': kis if kis in ('wahi', 'aur', 'mulazim') else '',
+                      'note': note if note in ('bada', 'chhota') else ''})
+    story.sort(key=lambda e: e['i'])
+    fl = str(j.get('flow', '')).strip().lower().replace(' ', '_').replace('-', '_')
+    v, why = parse_verdict(text)
+    try:
+        lg = max(0, min(9, int(j.get('log') or 0)))
+    except (TypeError, ValueError):
+        lg = 0
+    return {'story': story, 'log': lg, 'flow': fl if fl in FLOWS else 'saaf_nahi', 'khula': parse_khula(text), 'verdict': v, 'why': why}
+
+
+def ai_story(key, frames, ctx, examples='', models=(MODEL,)):
+    """frames = [(t, b64)]. Wapas (parse_story dict, ms, model)."""
+    content = [{'type': 'text', 'text': KAHANI_PROMPT.format(n=len(frames), ctx=ctx, examples=examples)}]
+    for i, (t, b) in enumerate(frames, 1):
+        content += [{'type': 'text', 'text': f'Tasveer {i} ({clock(t)})'}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': b}}]
+    txt, ms, model = claude_call(key, content, models)
+    return parse_story(txt, len(frames)), ms, model
+
+
+FLAG_TEXT = {'jeb': 'Paisa jeb / kapron mein', 'noparchi': 'Bina parchi paisa liya', 'parchi': 'Parchi di, paisa nahi diya',
+             'aurko': 'Voucher ke waqt paisa kisi aur ko', 'nochange': 'Baqaya banta hi nahi tha', 'double': 'Aik bill par do dafa paisa nikla',
+             'badanote': 'Chhote baqaye par bada note', 'nopay': 'Parchi scan · paisa nazar nahi aaya'}
+
+
+def judge_story(res, t0, t1, near, vouchers=True, tender=False):
+    """v1.8: AI ki kahani ko POS se milao. Wapas (flags, wajah ki lines). Bill posting / voucher sanad; AI sirf 'kya dikha'."""
+    st = res.get('story') or []
+    crvs = [r for r in near if r['kind'] == 'crv' and in_bill(r, t0, t1)]
+    okrecs = [r for r in near if r['kind'] in ('pay', 'return', 'voucher') and in_bill(r, t0, t1)]
+    pays = [e for e in st if e['kya'] in ('parchi_paisa', 'paisa')]
+    to_payer = [e for e in st if e['kya'] == 'baqaya' and e['kis'] in ('wahi', '')]
+    to_other = [e for e in st if e['kya'] == 'diya' or (e['kya'] == 'baqaya' and e['kis'] in ('aur', 'mulazim'))]
+    flags, why = [], []
+    def add(f, w):
+        if f not in flags:
+            flags.append(f); why.append(w)
+    if res.get('verdict') == 'shak' or any(e['kya'] == 'jeb' for e in st):
+        add('jeb', FLAG_TEXT['jeb'])
+    if vouchers and crvs:
+        n_pay = max(len({e['kaun'] or str(e['i']) for e in pays}), int(res.get('log') or 0))
+        if n_pay > len(crvs):
+            add('noparchi', f'{n_pay} logon ne paisa diya, {len(crvs)} parchi scan — {n_pay - len(crvs)} bina parchi')
+        np = [e for e in st if e['kya'] == 'parchi']
+        if np:
+            add('parchi', f"Parchi di, paisa nahi diya ({np[0]['kaun'] or 'customer'})")
+        if to_other and not okrecs:
+            add('aurko', f"Voucher ke waqt paisa kisi aur ko ({to_other[0]['kaun'] or 'banda'})")
+        known = [r for r in crvs if r.get('change') is not None]
+        if to_payer and tender and len(known) == len(crvs):
+            n_ch = sum(1 for r in crvs if r['change'] > 0)
+            if n_ch == 0:
+                add('nochange', 'Baqaya banta hi nahi tha (POS: di hui raqam = bill) — phir bhi galle se paisa diya')
+            elif len(to_payer) > n_ch:
+                add('double', f'Aik bill par do dafa paisa nikla ({len(to_payer)} dafa, baqaya {n_ch} bill ka)')
+            mx = max(r['change'] for r in crvs)
+            if 0 < mx < 1000 and any(e['note'] == 'bada' for e in to_payer):
+                add('badanote', f'Baqaya {rs(mx)} banta tha, galle se bada note nikla')
+        elif to_payer and len(to_payer) > len(crvs):
+            add('double', f'Aik bill par do dafa paisa nikla ({len(to_payer)} dafa, {len(crvs)} parchi)')
+    return flags, why
+
+
+def story_doc(res, frames):
+    return [{'i': e['i'], 't': int(frames[e['i'] - 1][0] * 1000), 'kaun': e['kaun'], 'kya': e['kya'], 'kis': e['kis'], 'note': e['note']}
+            for e in res.get('story') or [] if 1 <= e['i'] <= len(frames)][:16]
+
+
 BILL_BEFORE, BILL_AFTER = SALE_BEFORE, SALE_AFTER   # purane naam
 
 
@@ -1392,6 +1610,7 @@ class Galla(threading.Thread):
         self.hold, self.waiting, self.examples, self.ex_at = [], [], '', 0
         self.by_bill = {}                                      # v1.3: bill no -> camera event id
         self.clips = None                                      # v1.4: Clips thread (shak par clip)
+        self.moves, self.watch_of, self.crv_seen, self.nopay_at = collections.deque(maxlen=4000), {}, set(), 0   # v1.8
 
     def stat(self, cid, date):
         k = (cid, date)
@@ -1427,6 +1646,7 @@ class Galla(threading.Thread):
                 while True:
                     it = self.q.get_nowait()
                     self.bump(it[0].cid, pk_date(it[1]), touches=1)      # v1.7: har harkat ginti mein (card aik len-den ka)
+                    self.moves.append((it[0].cid, it[2], it[3])); self.watch_of[it[0].cid] = it[0]   # v1.8
                     self.hold.append(it + (True,) if len(it) == 5 else it)
             except queue.Empty:
                 pass
@@ -1440,7 +1660,48 @@ class Galla(threading.Thread):
                 self.recheck()
             except Exception as e:
                 log('milaan ghalti:', e)
+            try:
+                self.nopay_check()
+            except Exception as e:
+                log('nopay ghalti:', e)
             time.sleep(2)
+
+    def nopay_check(self, now=None):
+        """v1.8: parchi scan hui (Cash Received) lekin us ki window mein galle par koi harkat hi nahi -> 'Parchi scan · paisa nazar
+        nahi aaya' (shak + khabar + clip). Sirf jab camera us poore waqt chal raha tha (tape) — PC / camera band ho to kuch nahi."""
+        now = now or time.time()
+        if now - self.nopay_at < 10 or not self.pos or not self.watch_of:
+            return
+        self.nopay_at = now
+        for r in self.recs(now - 900, now - NOPAY_WAIT):
+            if r['kind'] != 'crv':
+                continue
+            k = (r.get('vid') or r['no'], r['at'])
+            if k in self.crv_seen:
+                continue
+            self.crv_seen.add(k)
+            a, b = r['at'] - VCH_BEFORE, r['at'] + VCH_AFTER
+            watches = [w for w in self.watch_of.values() if getattr(w, 'tape_covers', lambda *x: False)(a, b)]
+            if not watches or any(t0 <= b and t1 >= a for _, t0, t1 in list(self.moves)):
+                continue
+            w = watches[0]
+            kf = w.key_frames(r['at'] - 20, r['at'] + 40, 8, [r['at']])
+            if not kf:
+                continue
+            date = pk_date(r['at'])
+            eid, t = f"{w.cid}-np-{int(r['at'] * 1000)}", int(r['at'] * 1000)
+            why = f"{FLAG_TEXT['nopay']}: Bill #{r.get('bill')} {rs(r['amount'])} ki parchi {clock(r['at'])} par scan hui, lekin galle par koi harkat nahi — paisa liya hi nahi ya kahin aur gaya?"
+            self.fire.patch(f'{BIZ}/cameraFrames/{eid}', {'frames': [b for _, b in kf], 'times': [int(x * 1000) for x, _ in kf], 'at': t, 'cam': w.cid})
+            doc = {'cam': w.cid, 'camName': w.name, 'at': t, 'date': date, 'verdict': 'shak', 'why': why[:290], 'flow': 'kuch_nahi', 'matchState': 'ok',
+                   'match': match_doc(r), 'start': int(a * 1000), 'end': int(b * 1000), 'thumb': kf[len(kf) // 2][1], 'n': len(kf), 'ms': 0,
+                   'model': 'pos', 'agent': VERSION, 'flags': ['nopay'], 'story': []}
+            self.fire.patch(f'{BIZ}/cameraEvents/{eid}', doc)
+            self.bump(w.cid, date, shak=1)
+            if self.clips:
+                self.clips.shak(w.cid, eid, r['at'] - 20, r['at'] + 10, date)
+            log('nopay', w.cid, r.get('bill'))
+        if len(self.crv_seen) > 3000:
+            self.crv_seen = set(list(self.crv_seen)[-1500:])
 
     def load_examples(self):
         """Malik ke pichle faisle (Theek hai / Shak pakka) — AI ko misaal ke taur par, taake wahi ghalti dobara na ho."""
@@ -1460,7 +1721,7 @@ class Galla(threading.Thread):
     def handle(self, w, at, t0, t1, frames, counted=False):
         date = pk_date(at)
         st = self.bump(w.cid, date, touches=0 if counted else 1)
-        if not frames or at - self.last_ai.get(w.cid, 0) < COOLDOWN:
+        if (not frames and not hasattr(w, 'key_frames')) or at - self.last_ai.get(w.cid, 0) < COOLDOWN:
             return
         key = secrets().get('claudeKey')
         if not key or st['checks'] >= w.cap_day or time.time() < self.pause_until:
@@ -1468,6 +1729,13 @@ class Galla(threading.Thread):
             return
         self.last_ai[w.cid] = at
         near = self.recs(t0 - 180, t1 + 180)
+        if hasattr(w, 'key_frames'):                                  # v1.8: kahani (galla + counter, waqt ke sath)
+            must = [r['at'] for r in near if r['kind'] == 'crv' and t0 - VCH_AFTER <= r['at'] <= t1 + VCH_BEFORE]
+            kf = w.key_frames(t0 - STORY_PRE, t1 + STORY_POST, STORY_N, must)
+            if len(kf) >= 6:
+                return self.handle_story(w, at, t0, t1, kf, near, date, key)
+        if not frames:
+            return
         crops = [jpeg_b64(c, width=512, quality=70)[0] for c in frames]
         gap = max(0.5, round((t1 - t0) / max(1, len(frames) - 1), 1))
         khula = None
@@ -1515,6 +1783,56 @@ class Galla(threading.Thread):
         when = time.strftime('%I:%M %p', time.gmtime(at + 5 * 3600)).lstrip('0').lower()
         label = {'normal': 'Normal', 'shak': 'Shak', 'saaf_nahi': 'Saaf nahi'}.get(v, '')
         self.fire.patch(f'{BIZ}/cameras/{w.cid}', {'aiTest': (f'AI chal raha hai — aakhri jaanch {when} ({label})' if v != 'error' else why)[:200], 'aiTestAt': t})
+
+    def tender(self):
+        return bool(self.pos and getattr(self.pos, 'tender_seen', False))
+
+    def handle_story(self, w, at, t0, t1, kf, near, date, key):
+        """v1.8: kahani -> POS se milaan -> lal nishan (flags). Mushkil len-den bara AI dobara likhta hai (aakhri wahi)."""
+        ctx, ex, vch, tnd = context_text(near), self.load_examples(), self.vouchers(), self.tender()
+        crvs = [r for r in near if r['kind'] == 'crv' and in_bill(r, t0, t1)]
+        try:
+            res, ms, model = ai_story(key, kf, ctx, ex, (MODEL,))
+            flags, lines = judge_story(res, t0, t1, near, vch, tnd)
+            if flags or res['verdict'] == 'shak' or res['log'] >= 2 or len(crvs) >= 2:
+                try:
+                    res2, ms2, m2 = ai_story(key, kf, ctx, ex, CONFIRM_MODELS)
+                    res, ms, model = res2, ms + ms2, (MODEL + '+' + m2)[:60]
+                    flags, lines = judge_story(res, t0, t1, near, vch, tnd)
+                except Exception as e2:
+                    log('bara AI (kahani) nahi:', e2)          # pehli kahani hi rahe — lal nishan chhupaye nahi jate
+            v = 'shak' if flags else (res['verdict'] if res['verdict'] in ('normal', 'saaf_nahi') else 'normal')
+            why = (' · '.join(lines) + ' — ' + res['why']) if flags else res['why']
+            fl, khula = res['flow'], res['khula']
+            self.bump(w.cid, date, checks=1, shak=1 if v == 'shak' else 0)
+        except Exception as e:
+            res, flags, v, why, fl, khula, ms, model = {'story': []}, [], 'error', f'AI nahi chala: {e}'[:280], 'saaf_nahi', None, 0, MODEL
+            self.pause_until = time.time() + AI_PAUSE
+        state, m = match(fl, t0, t1, near, self.pos_ok(), self.bk_ok(), vch, khula)
+        if v == 'error' and state == 'wait':
+            state = 'nopos'
+        self.bump(w.cid, date, moneyIn=1 if fl in ('aaya', 'len_den') else 0, moneyOut=1 if fl == 'nikla' else 0, matched=1 if state == 'ok' else 0)
+        eid, t = f'{w.cid}-{int(at * 1000)}', int(at * 1000)
+        self.fire.patch(f'{BIZ}/cameraFrames/{eid}', {'frames': [b for _, b in kf], 'times': [int(x * 1000) for x, _ in kf], 'at': t, 'cam': w.cid})
+        doc = {'cam': w.cid, 'camName': w.name, 'at': t, 'date': date, 'verdict': v, 'why': str(why)[:290], 'flow': fl, 'matchState': state,
+               'start': int(t0 * 1000), 'end': int(t1 * 1000), 'thumb': kf[len(kf) // 2][1], 'n': len(kf), 'ms': ms, 'model': model,
+               'agent': VERSION, 'story': story_doc(res, kf), 'flags': flags[:8]}
+        if m:
+            doc['match'] = match_doc(m)
+            bill = m.get('bill') if m['kind'] == 'crv' else (m['no'] if m['kind'] == 'sale' else None)
+            if bill:
+                self.by_bill[str(bill)] = eid
+                if len(self.by_bill) > 500:
+                    self.by_bill = dict(list(self.by_bill.items())[-300:])
+        self.fire.patch(f'{BIZ}/cameraEvents/{eid}', doc)
+        if state == 'wait':
+            self.waiting.append({'eid': eid, 'cid': w.cid, 'date': date, 'flow': fl, 't0': t0, 't1': t1, 'made': time.time(), 'khula': khula, 'v': v})
+        if v == 'shak' and self.clips:
+            self.clips.shak(w.cid, eid, t0, t1, date)
+        log('kahani', w.cid, fl, v, state, flags, why)
+        when = time.strftime('%I:%M %p', time.gmtime(at + 5 * 3600)).lstrip('0').lower()
+        label = {'normal': 'Normal', 'shak': 'Shak', 'saaf_nahi': 'Saaf nahi'}.get(v, '')
+        self.fire.patch(f'{BIZ}/cameras/{w.cid}', {'aiTest': (f'AI chal raha hai — aakhri kahani {when} ({label})' if v != 'error' else why)[:200], 'aiTestAt': t})
 
     def vouchers(self):
         """v1.6: POS mein voucher ka khana mil gaya -> galla sirf voucher par; warna bill ke waqt se (purana tareeqa)."""

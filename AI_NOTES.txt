@@ -1,8 +1,58 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v228   Tareekh: 2026-09-29  (layout ki ASAL wajah .view grid column; videos ki wajah khulase mein; ntcam.py v1.7 wahi)
+Version: v229   Tareekh: 2026-09-29  (LEN-DEN KI KAHANI + counter ka hissa + voucher ke waqt nikle paise ki 4 jaanch; ntcam.py v1.8; RULES)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+00000000000000000000000000000. v229 + ntcam.py v1.8 — LEN-DEN KI KAHANI (parchi / paisa / baqaya / kis ko) + RULES
+------------------------------------------------------------
+Malik (29 Sep shaam, OK): bina parchi paisa bhi track ho; parchi scan ho magar paisa na liya jaye wo bhi; rush mein kai customer;
+"kis ne parchi di, kis ne parchi de kar paisa nahi diya"; galle se paisa nikal kar kisi ko diya; "straight forward mukammal moment:
+aik ne paisa diya, baqaya liya, doosra aaya khara raha, galle wale ne usay paisa diya — paison ka mukammal record"; aur ASAL
+MASLA: "voucher ho tab galle se nikle paise" (v1.6 mein voucher ki window = har nikla baqaya maana jata tha).
+- ntcam.py v1.8:
+  * Watch.zone2 (malik ka "Counter ka hissa", cameras doc) + tape: har 0.5 s galla (0.5 pad) + counter (0.15 pad) ko gherne wala
+    dabba (tape_box; counter na ho to galla 0.8 pad) -> JPEG 416 px q62 b64 + counter mein harkat (32x24 gray diff) — TAPE_SEC 360 s
+    (deque 720). key_frames(a, b, n=20, must=voucher waqt): voucher ke qareeb wali zaroor, phir counter harkat sab se zyada (>= 1 s
+    fasla, 2/3 tak), baqi barabar. tape_covers(a, b).
+  * Galla.handle: w.key_frames ho aur >= 6 tasveer (t0-30 .. t1+10) -> handle_story; warna purana raasta (tests / purana PC).
+    ai_story (KAHANI_PROMPT, "Tasveer i (waqt)", max_tokens 700, claude_call model fallback) -> parse_story: story [{i, kaun (jagah +
+    kapre, naam / chehra NAHI), kya: parchi_paisa|paisa|parchi|rakha|baqaya|diya|jeb|khara|gaya|ginti, kis: wahi|aur|mulazim, note:
+    bada|chhota}] (<=16, ghalat i / kya chhor), log, flow, khula, verdict, why.
+  * judge_story(res, t0, t1, near, vouchers, tender) — POS sanad, AI sirf "kya dikha". Flags (FLAG_TEXT): jeb (AI shak ya kya jeb);
+    voucher (crv) ho to: noparchi (alag paisa dene wale / log > crv ginti: "3 logon ne paisa diya, 2 parchi scan — 1 bina parchi"),
+    parchi (parchi di paisa nahi), aurko (diya / baqaya aur-mulazim ko, aur pay/return/voucher(kharch) record nahi), tender (POS
+    CashReceived > bill kabhi dekha) aur sab crv ka change maloom: nochange (sab ka baqaya 0 — phir bhi baqaya), double (baqaya lines
+    > change wale bill), badanote (baqaya < Rs 1000 aur note "bada"); tender na ho to double = baqaya > crv ginti. Voucher hi na ho ->
+    purana wait -> missing (bina parchi / bina voucher). Flags -> verdict shak (khabar + clip), why = flag lines + " — " + AI why.
+  * Bara AI (CONFIRM_MODELS Sonnet) kahani DOBARA likhta hai jab flags / shak / log >= 2 / 2+ crv — aakhri wahi (na chale to pehli).
+    Seedha aik customer + baqaya usi ko = sirf Haiku (kharcha kam).
+  * Doc: cameraEvents + story (story_doc: i, t ms, kaun, kya, kis, note) + flags; cameraFrames + times (ms). thumb = beech wali tape
+    JPEG. by_bill crv ka bill bhi.
+  * Pos: sale rec 'cash' (CashReceived); tender_seen; change_of(sale) = cash - bill (> 1) warna 0; crv rec 'change'. status: "Baqaya:
+    POS se ✅" / "Baqaya: POS di hui raqam nahi likhta (sirf bill)" / "Baqaya: dekh raha". context_text crv: "POS: baqaya Rs 140 banta
+    hai" / "di hui raqam = bill (baqaya 0)".
+  * nopay_check (har 10 s): crv jis ko NOPAY_WAIT (150 s) guzar gaye, aik dafa (crv_seen): window [at-60, at+90] mein kisi galla camera
+    ki koi harkat (Galla.moves — har q item) nahi aur camera us poore waqt chal raha tha (tape_covers) -> cameraEvents
+    '<cid>-np-<ms>' verdict shak, flow kuch_nahi, flags ['nopay'], match crv, model 'pos', 8 tape tasveerein, clip [at-30, at+30],
+    stats shak +1 (checks nahi — AI nahi laga).
+  * ntcam_test.py 48 (+7 Kahani: tape_box / key_frames / covers, parse_story, judge_story (normal, aurko, Galla screen jaiz, nochange,
+    tender nahi, double, badanote + bara baqaya, noparchi 3/2, parchi, jeb, voucher nahi), handle_story (lal nishan -> Sonnet dobara,
+    doc + frames times + rules keys), seedha len-den = aik AI, nopay (aik dafa, harkat ho to nahi, camera na ho to nahi), tender status).
+- RULES (publish ZAROORI): cameraEvents create keys + 'story', 'flags' (list <= 16 / <= 8); cameraFrames keys + 'times', frames <= 24.
+  cameras zone2 malik likhta hai (isOwner — pehle se).
+- App v229: data.saveZone(id, zone, which='zone'|'zone2'). zoneSheet(camId, which): counter ka hint, neela dabba (is-counter), doosra
+  dabba halka (is-ghost), sirf is-main khainchta. Camera card: "Counter ka hissa" button (galla mark ho to) + line "Counter ka hissa
+  mark hai — kahani ..." / "mark nahi — kahani adhoori". Card: flagChips (🔴 FLAG), "📖 Kahani · N", flow chip kuch_nahi par nahi.
+  missText(e): aaya/len_den -> "Bina parchi paisa liya", nikla -> "Bina voucher paisa nikla", warna "Bina voucher galla khula" (chip +
+  sheet). Filter chip "Parchi / baqaya" (flags). Sheet: nig-flags + storyBlock: har line waqt (secOf, second tak) + kaun + KYA; lal
+  (storyBad: jeb / parchi / diya / baqaya aur-ko); tap = nig-idx (wo tasveer); clip ho to "▶ Ns" -> nig-video data-arg = second
+  (blob '#t=' + loadedmetadata par currentTime). CSS v229. core/sw v229, index ?v=229. app.dom 1-3 pass (labels, filter).
+- SAAF BAAT (malik ko bataya): AI naam / chehra nahi — jagah + kapre; notes gin kar amount nahi (POS se); 4-5 log / haath ek doosre par
+  = saaf nahi; "wahi banda" sirf aik len-den mein; kharcha barhega (20 tasveer + mushkil par Sonnet); card 1-2 min baad. Baqaya ki
+  jaanch tab hi jab larke POS mein di hui raqam likhein ("exact" nahi).
+- Yahan test NAHI: asal Claude ki kahani, asal counter harkat, asal POS CashReceived ka matlab (PC "Baqaya:" line batayegi).
 
 ------------------------------------------------------------
 0000000000000000000000000000. v228 — LAYOUT KI ASAL WAJAH (.view grid) + VIDEO NA BANNE KI WAJAH KHULASE MEIN

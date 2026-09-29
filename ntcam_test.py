@@ -295,6 +295,128 @@ class EkLenDen(unittest.TestCase):
         self.assertIn('GODE (lap)', ntcam.GALLA_PROMPT3); self.assertIn('"paas le jana" shak nahi', ntcam.GALLA_PROMPT3)
 
 
+class Kahani(unittest.TestCase):
+    """v1.8 — len-den ki kahani: tape, chuni tasveerein, AI kahani ka parse, POS se lal nishan, nopay."""
+    CRV = {'kind': 'crv', 'no': 'CRV-1', 'vid': 1, 'bill': '00119126', 'at': 1054.0, 'amount': 1860.0, 'party': 'Cash', 'who': 'waqar', 'billAt': 1000.0, 'change': 140.0}
+
+    def st(self, *lines, log=1, verdict='normal', flow='len_den'):
+        return {'story': [dict(i=i + 1, kaun=k, kya=a, kis=b, note=n) for i, (k, a, b, n) in enumerate(lines)], 'log': log, 'flow': flow, 'khula': True, 'verdict': verdict, 'why': 'x'}
+
+    def test_tape_box_aur_key_frames(self):
+        self.assertEqual(ntcam.tape_box({'x': .4, 'y': .4, 'w': .2, 'h': .2}, {}, 100, 100), ntcam.zone_px({'x': .4, 'y': .4, 'w': .2, 'h': .2}, 100, 100, .8))
+        self.assertEqual(ntcam.tape_box({'x': .1, 'y': .1, 'w': .2, 'h': .2}, {'x': .6, 'y': .5, 'w': .2, 'h': .2}, 100, 100), (0, 0, 83, 73), 'dono ko gherne wala dabba')
+        w = ntcam.Watch.__new__(ntcam.Watch); import collections
+        w.tape = collections.deque([(1000 + k * 0.5, f'j{k}', 5.0 if k in (40, 41, 80) else 0.0) for k in range(200)], maxlen=720)
+        kf = w.key_frames(1000, 1099.5, 20, [1070.2])
+        ts = [t for t, _ in kf]
+        self.assertEqual(len(kf), 20); self.assertEqual(ts, sorted(ts)); self.assertIn(1070.0, ts, 'voucher ke waqt ki tasveer zaroor')
+        self.assertIn(1020.0, ts, 'counter mein harkat'); self.assertIn(1040.0, ts)
+        self.assertTrue(all(b - a >= 0.5 for a, b in zip(ts, ts[1:])))
+        self.assertEqual(len(w.key_frames(1000, 1004, 20)), 9, 'kam hon to sab')
+        self.assertTrue(w.tape_covers(1001, 1090)); self.assertFalse(w.tape_covers(990, 1090))
+
+    def test_parse_story(self):
+        r = ntcam.parse_story('bla {"story":[{"i":2,"kaun":"daayen customer, neela kurta","kya":"parchi_paisa"},{"i":9,"kya":"baqaya","kis":"wahi","note":"chhota"},'
+                              '{"i":30,"kya":"diya"},{"i":4,"kya":"udta"}],"log":"1","flow":"len_den","khula":true,"verdict":"normal","why":"theek"}', 20)
+        self.assertEqual([(e['i'], e['kya']) for e in r['story']], [(2, 'parchi_paisa'), (9, 'baqaya')], 'ghalat number / anjaan kya chhor diye')
+        self.assertEqual((r['log'], r['flow'], r['khula'], r['verdict']), (1, 'len_den', True, 'normal'))
+        self.assertEqual(ntcam.parse_story('kuch nahi', 5)['story'], [])
+
+    def test_judge(self):
+        J = lambda res, recs, **k: ntcam.judge_story(res, 1040.0, 1080.0, recs, True, k.get('tender', True))[0]
+        ok = self.st(('daayen', 'parchi_paisa', '', ''), ('galle wala', 'rakha', '', ''), ('daayen', 'baqaya', 'wahi', 'chhota'))
+        self.assertEqual(J(ok, [self.CRV]), [], 'normal: parchi + paisa, baqaya usi ko, baqaya banta tha')
+        self.assertEqual(J(self.st(('daayen', 'parchi_paisa', '', ''), ('baayen', 'khara', '', ''), ('baayen', 'diya', 'aur', '')), [self.CRV]), ['aurko'], 'voucher ke waqt kisi aur ko')
+        pay = {'kind': 'pay', 'no': 'p1', 'at': 1060.0, 'amount': 500.0, 'party': 'Supplier'}
+        self.assertEqual(J(self.st(('daayen', 'parchi_paisa', '', ''), ('baayen', 'diya', 'aur', '')), [self.CRV, pay]), [], 'Galla screen "de diye" ho to jaiz')
+        self.assertEqual(J(ok, [dict(self.CRV, change=0.0)]), ['nochange'], 'di hui raqam = bill, phir bhi baqaya')
+        self.assertEqual(J(ok, [dict(self.CRV, change=0.0)], tender=False), [], 'POS raqam nahi likhta to ye jaanch nahi')
+        two = self.st(('daayen', 'parchi_paisa', '', ''), ('daayen', 'baqaya', 'wahi', ''), ('daayen', 'baqaya', 'wahi', ''))
+        self.assertEqual(J(two, [self.CRV]), ['double'])
+        big = self.st(('daayen', 'parchi_paisa', '', ''), ('daayen', 'baqaya', 'wahi', 'bada'))
+        self.assertEqual(J(big, [self.CRV]), ['badanote']); self.assertEqual(J(big, [dict(self.CRV, change=3140.0)]), [], 'baqaya 3140 = bada note theek')
+        rush = self.st(('daayen', 'parchi_paisa', '', ''), ('beech', 'paisa', '', ''), ('baayen', 'parchi_paisa', '', ''), log=3)
+        f, why = ntcam.judge_story(rush, 1040.0, 1080.0, [self.CRV, dict(self.CRV, no='CRV-2', vid=2, bill='00119127', at=1062.0)], True, True)
+        self.assertEqual(f, ['noparchi']); self.assertIn('3 logon ne paisa diya, 2 parchi scan — 1 bina parchi', why[0])
+        self.assertEqual(J(self.st(('daayen', 'parchi', '', '')), [self.CRV]), ['parchi'], 'parchi di, paisa nahi')
+        self.assertEqual(J(self.st(('galle wala', 'jeb', '', '')), [self.CRV]), ['jeb'])
+        self.assertEqual(J(self.st(('daayen', 'paisa', '', '')), []), [], 'koi voucher hi nahi -> purana wait / missing (bina parchi) raasta')
+        ctx = ntcam.context_text([self.CRV]); self.assertIn('POS: baqaya Rs 140 banta hai', ctx)
+        self.assertIn('baqaya 0', ntcam.context_text([dict(self.CRV, change=0.0)]))
+        self.assertEqual(ntcam.change_of({'cash': 2000, 'amount': 1860}), 140.0); self.assertEqual(ntcam.change_of({'cash': 1860, 'amount': 1860}), 0.0); self.assertIsNone(ntcam.change_of(None))
+
+    def _g(self, recs):
+        writes = []
+        class F:
+            def get(s, path): return None
+            def patch(s, path, data): writes.append((path, data)); return True
+            def query(s, *a, **k): return []
+        pos = types.SimpleNamespace(near=lambda a, b: [r for r in recs if a <= r['at'] <= b], ok_sql=lambda: True, ok_bk=lambda: True, vch_ok=lambda: True, tender_seen=True)
+        g = ntcam.Galla(F(), pos); clips = []
+        g.clips = types.SimpleNamespace(shak=lambda *a: clips.append(a[1]))
+        return g, writes, clips
+
+    def _w(self):
+        import collections
+        import threading
+        w = ntcam.Watch.__new__(ntcam.Watch); threading.Thread.__init__(w, daemon=True); w.cid, w.name, w.cap_day = 'c1', 'Galla', 300
+        w.tape = collections.deque([(900 + k * 0.5, f'J{k}', 0.0) for k in range(600)], maxlen=720)
+        return w
+
+    def test_handle_story(self):
+        g, writes, clips = self._g([dict(self.CRV)])
+        calls = []
+        def story(key, frames, ctx, ex, models):
+            calls.append(models)
+            if models == (ntcam.MODEL,):
+                return self.st(('daayen', 'parchi_paisa', '', ''), ('baayen', 'diya', 'aur', '')), 700, ntcam.MODEL
+            return self.st(('daayen, neela', 'parchi_paisa', '', ''), ('baayen, safed', 'khara', '', ''), ('baayen, safed', 'diya', 'aur', '')), 1500, 'claude-sonnet-5-5'
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_story', story):
+            g.handle(self._w(), 1045.0, 1040.0, 1070.0, [], True)
+        self.assertEqual(calls, [(ntcam.MODEL,), ntcam.CONFIRM_MODELS], 'lal nishan -> bara AI dobara')
+        ev = [d for p, d in writes if '/cameraEvents/' in p][0]; fr = [d for p, d in writes if '/cameraFrames/' in p][0]
+        self.assertEqual((ev['verdict'], ev['flags'], ev['matchState'], ev['match']['kind']), ('shak', ['aurko'], 'ok', 'crv'))
+        self.assertIn('Voucher ke waqt paisa kisi aur ko (baayen, safed)', ev['why']); self.assertEqual(ev['model'], 'claude-haiku-4-5-20251001+claude-sonnet-5-5')
+        self.assertEqual(len(ev['story']), 3); self.assertEqual(ev['story'][2]['kya'], 'diya'); self.assertEqual(ev['story'][0]['t'], fr['times'][0])
+        self.assertEqual(len(fr['frames']), 20); self.assertEqual(len(fr['times']), 20); self.assertTrue(1054000 in fr['times'], 'voucher wali tasveer')
+        self.assertEqual(clips, ['c1-1045000']); self.assertEqual(g.by_bill['00119126'], 'c1-1045000')
+        rules = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'firestore.rules'), encoding='utf-8').read()
+        for k in ("'story', 'flags'", "'frames', 'at', 'cam', 'times'", 'frames.size() <= 24', 'story.size() <= 16'):
+            self.assertIn(k, rules)
+        self.assertLessEqual(set(ev), {'cam', 'camName', 'at', 'date', 'verdict', 'why', 'thumb', 'n', 'ms', 'model', 'agent', 'flow', 'matchState', 'match', 'start', 'end', 'story', 'flags'})
+
+    def test_handle_story_normal_ek_hi_AI(self):
+        g, writes, clips = self._g([dict(self.CRV)])
+        calls = []
+        def story(key, frames, ctx, ex, models):
+            calls.append(models); return self.st(('daayen', 'parchi_paisa', '', ''), ('daayen', 'baqaya', 'wahi', 'chhota')), 700, ntcam.MODEL
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_story', story):
+            g.handle(self._w(), 1045.0, 1040.0, 1070.0, [], True)
+        ev = [d for p, d in writes if '/cameraEvents/' in p][0]
+        self.assertEqual((ev['verdict'], ev['flags'], len(calls)), ('normal', [], 1), 'seedha len-den = sirf chhota AI'); self.assertEqual(clips, [])
+
+    def test_nopay(self):
+        crv = dict(self.CRV, at=1100.0)
+        g, writes, clips = self._g([crv])
+        w = self._w(); g.watch_of['c1'] = w
+        g.moves.append(('c1', 950.0, 960.0))                     # harkat pehle thi, voucher ki window (1040..1190) mein nahi
+        g.nopay_check(now=1260.0)
+        ev = [d for p, d in writes if '/cameraEvents/' in p]
+        self.assertEqual(len(ev), 1); self.assertEqual((ev[0]['verdict'], ev[0]['flags'], ev[0]['match']['bill']), ('shak', ['nopay'], '00119126'))
+        self.assertIn('Parchi scan · paisa nazar nahi aaya: Bill #00119126', ev[0]['why']); self.assertEqual(clips, ['c1-np-1100000'])
+        g.nopay_at = 0; g.nopay_check(now=1300.0); self.assertEqual(len([1 for p, d in writes if '/cameraEvents/' in p]), 1, 'aik voucher aik dafa')
+        g2, w2, c2 = self._g([dict(crv)]); g2.watch_of['c1'] = self._w(); g2.moves.append(('c1', 1090.0, 1110.0))
+        g2.nopay_check(now=1260.0); self.assertEqual([p for p, d in w2 if '/cameraEvents/' in p], [], 'harkat hui = theek')
+        g3, w3, c3 = self._g([dict(crv, at=1300.0)]); g3.watch_of['c1'] = self._w()     # tape 900..1199.5 — voucher window poori nahi
+        g3.nopay_check(now=1460.0); self.assertEqual([p for p, d in w3 if '/cameraEvents/' in p], [], 'camera us waqt nahi dekh raha tha')
+
+    def test_pos_tender_status(self):
+        p = ntcam.Pos(None)
+        self.assertIn('Baqaya: dekh raha', p.status())
+        p.add({'kind': 'sale', 'no': '1', 'at': 1.0, 'amount': 5.0, 'party': ''}); self.assertIn('Baqaya: POS di hui raqam nahi likhta', p.status())
+        p.tender_seen = True; self.assertIn('Baqaya: POS se ✅', p.status())
+
+
 class Voucher(unittest.TestCase):
     """v1.6 — POS mein Cash Received voucher kahan hai: khud dhoondna (find_link), System Notes ka waqt, bill se jodna."""
     SALES = [{'SaleID': 5001 + i, 'SaleNo': f'{119020 + i:08d}'} for i in range(10)]
