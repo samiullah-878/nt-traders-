@@ -1,8 +1,67 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v225   Tareekh: 2026-09-29  (video clips + bill-window; ntcam.py v1.5; v223/v224 bhi isi mein)
+Version: v226   Tareekh: 2026-09-29  (GALLA SIRF VOUCHER PAR; ntcam.py v1.6; v225 video clips bhi isi mein)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+00000000000000000000000000. v226 + ntcam.py v1.6 — GALLA SIRF VOUCHER PAR (Cash Received)
+------------------------------------------------------------
+29 Sep dopahar: malik ne galle ki photos bhejin — POS "System Notes": bill "Created & Printed 12:32:54 PM at PC:DESKTOP-KEIME1D"
+(counter PC), phir "Cash Received By:waqar 12:33:48 PM" aur "12:33:54 PM at PC:DESKTOP-032A3V6" (galla PC). Yaani galle par paisa
+bill banne ke ~1 minute BAAD aata hai (customer parchi le kar galle par aata hai; rush mein minute). v1.5 ki window (BiltyDate -30 ..
+CreatedOn +45 s) counter ke waqt par band ho jati thi -> roz ka normal len-den "Entry nahi / shak". Malik ka routine: paisa haath /
+counting machine mein -> parchi scan -> baqaya galle se -> paisa galle mein.
+MALIK KA NAYA QANOON (OK): "bill ka cash receive voucher usi number ka bana, usi waqt galla khula / baqaya = normal; koi voucher nahi
+aur galla khula = shak; jeb mein paisa = shak; shak par video / tasveerein". Galla khulne ki ijazat sirf voucher se; AI ka andaza nahi.
+PEHLE SE THA (malik ko bataya, dobara NAHI banaya): aik-command installer ntcam.txt (Python, Startup auto-run, desktop icon "NT Camera
+jodein", password sirf PC par C:\NTCam\secrets.json, GitHub se khud update) = malik ki "camera BAT file" ki farmaish poori thi.
+AI ko bill ka record + malik ke faislon ki misaalein bhi v1.2 se hain. Cameras .88 / .110 ka password ghalat (401) tha — jodne hon to
+desktop icon se sahi (DMSS wala) password.
+- ntcam.py v1.6 (PC khud le lega — 6 ghante mein / restart par; PC par koi command nahi):
+  * Pos.vch_discover(): aik dafa POS mein dhoondta hai ke Cash Received ka waqt kahan hai -> C:\NTCam\pos-voucher.json (7 din; na mile
+    to har 6 ghante dobara). Tarteeb: dbo.Voucher (VoucherID + waqt ka khana VCH_TIME_COLS: CreatedOn..) ki aakhri 72 ghante ki
+    qataarein -> find_link(): kaunsa khana bill rakhta hai — 'no' (SaleNo barabar, matn ho to naam ki shart nahi: "voucher usi number
+    ka"), 'id' (SaleID barabar — sirf khane ke naam mein sale/ref/doc/inv/bill/source/link/against, warna VoucherID bhi SaleID se
+    ittefaq se takrata), 'text' (lambe matn mein SaleNo). >= 3 hits aur >= 30%. Na mile -> VoucherDetail (join) -> Sale ka koi
+    'voucher' khana (salecol) -> Sale ke matn khane mein "Cash Received By .. On .." (notes, NOTES_RE, notes_times()) -> kuch nahi
+    (mode 'sale' = bill ke waqt se, thora khula: scan -30 .. post +120). Amount / type / no / by / txt khane best-effort (VCH_*_COLS).
+  * poll_vouchers() har 20 s (poll_sql ke andar, apni try): VoucherID > aakhri (shuru mein 4 ghante) -> recs 'crv' {no: VoucherNo,
+    vid, bill: SaleNo, at, amount (voucher ya bill ki), party, who, billAt} jab bill se juda, warna 'voucher' (kharch waghaira —
+    galla khulna phir bhi jaiz, bill nahi). sale_by_id / sale_by_no maps (sale poll mein). add(): key (kind, vid|no) — aik bill par do
+    voucher (6 s baad) alag. notes mode: Sale (4 ghante, UpdatedOn bhi) ke notes se har "Cash Received" = crv '<SaleNo>#<k>'.
+  * window(): crv/voucher [at-60, at+90] (VCH_BEFORE/AFTER), pay/return ±120 (OUT_PAD), sale [start-30, at+120] (SALE_*). in_bill()
+    ab window() par. match(flow, t0, t1, recs, pos_ok, bk_ok, vouchers=True, khula=None): kuch_nahi -> none; khula False + ginti/
+    saaf_nahi -> none (galla khula hi nahi); vouchers=True (Pos.vch_ok(): mode voucher/salecol/notes) -> sirf crv/voucher/pay/return
+    (BILL KA BANNA KAFI NAHI); vouchers=False -> sale/pay/return. nikla par pay/return pehle, warna crv/sale pehle; phir qareeb tar.
+    Na mile -> nopos (POS band) ya wait. Galla.MISSING_AFTER 300 -> 120 s. recheck(): missing par clips.shak() bhi (shak par pehle
+    ban chuki ho to nahi). Clips.shak: t0-10 .. t1+20, 40 s had (SHAK_BEFORE/AFTER/MAX).
+  * GALLA_PROMPT3 (GALLA_PROMPT2 = wahi): dukaan ka tareeqa AI ko likha (haath / machine / counter par paisa shak NAHI), record mein
+    bill ke DONO waqt (context_text: "Bill #.. counter par bana 12:32:54 pm — galle par abhi Cash Received nahi" / "CASH RECEIVED
+    voucher: Bill #.. galle par 12:33:48 pm (galla khulna JAIZ)" / "POS voucher #.. (galla khulna jaiz)"), naya "khula" true/false
+    (parse_khula). "Galla bina record ke khula ya nahi — program khud record se" (AI se nahi). ai_judge2 -> (flow, verdict, why, ms,
+    khula) — purana 4-tuple bhi chalta hai (handle res[:4]). match_doc: + bill, billAt (match map rules mein khula hai — rules nahi badle).
+  * Pos.status(): "POS theek · Voucher: mil rahe (Voucher.VoucherNo, aaj 42) · Galla screen theek" | "Voucher: dhoond raha" |
+    "Voucher ka khana nahi mila — bill ke waqt se milaan (wajah)" (app ka PC card 'nahi' par surkh). cameraPC/status.pos wahi key.
+  * ntcam_test.py 36 (+9: match v1.6 (voucher zaroori, 60/90, khula, fallback), context/prompt/khula/match_doc, voucher mode wait->ok
+    (crv der se)->missing+clip, norm_no/notes_times (12:33:48 PM PK = 07:33:48 UTC), find_link (VoucherNo=SaleNo / RefSaleID sirf naam
+    ke sath / matn / kuch nahi), sale_of + vch_rec + vch_text, notes mode poll, poora dhoond+poll naqli SQL par, clip padding).
+- RULES: NAHI BADLE (v225 wale hi) — matchState list wahi (ok/wait/missing/none/nopos), match ke andar ki keys rules check nahi kartin,
+  cameraClips create pehle se. Functions bhi wahi (missing par "Galla: entry nahi" push pehle se; shak par create push).
+- App v226: owner.js — 'missing' = "Bina voucher galla khula" (chip, sheet text, filter chip "Bina voucher", khulasa "voucher / entry
+  mili" / "bina voucher"), 'wait' = "Voucher dhoond rahe… (2 minute)", "Na dekhe shak" filter mein shak + bina voucher (na dekhe) dono,
+  Tawajju: "Aaj N dafa galla par shak · M dafa bina voucher galla khula", recText crv = "Cash Received · Bill #.. · Rs .." (sheet mein
+  "(bill counter par 12:32 bana)"), voucher = "POS voucher #..". Nigrani ka hint naya (chhutta / ginti / malik ka apna kaam bhi bina
+  voucher mein aayega -> "Theek hai"). core.js/sw.js/version.json v226. app.dom (crv event cc33-ch1-3, labels, na dekhe 2;
+  "shak dekhe" = shakList - shakOpen, kyunke open mein ab bina voucher bhi). Tests: Python 36 pass, sync 10 pass, app.dom pehle 22
+  (Nigrani wala test 3 samet) pass — is sandbox mein poori 78 ki daud 5 minute ki had par kat gayi aur test 15 (Excel) yahan
+  xlsx.mini.min.js zip mein na hone se chalta nahi (repo mein hai); baqi tests mein v226 ka koi code nahi badla.
+- SAAF BAAT (malik ko): voucher ki window ke andar larka paisa customer ki jagah kisi aur ko de de to camera par baqaya jaisa lagta hai —
+  AI farq nahi kar sakta (window ab 2.5 min, exact waqt par). Notes gin kar amount nahi. Rush mein 1.5 min baad galle mein dalna,
+  chhutta, shaam ki ginti, malik ka khud nikalna = "bina voucher" -> "Theek hai" dabana.
+- Yahan test NAHI: asal POS ke Voucher table ke khane (dhoond khud hoti hai — Cameras card par "Voucher: ..." dekhein; 'nahi mila'
+  aaye to posdekho jaisi jaanch chahiye), asal Claude ka "khula".
+- Upload: sab files (ntcam.py + ntcam_test.py + AI_NOTES.txt + app). Rules publish ZAROORI NAHI.
 
 ------------------------------------------------------------
 0000000000000000000000000. v225 + ntcam.py v1.4 / v1.5 — VIDEO CLIPS + BILL SIRF APNE WAQT KA

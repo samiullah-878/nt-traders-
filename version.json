@@ -1,6 +1,6 @@
 {
-  "version": "v225",
+  "version": "v226",
   "variant": "Production",
   "buildDate": "2026-09-29",
-  "notes": "Video: shak par khud clip, kisi bhi waqt ki 3 minute tak clip malik ki farmaish par; faisle ke baad / agle din khud mit jati hai."
+  "notes": "Galla sirf voucher par: POS ke Cash Received voucher se 1 min pehle / 1.5 min baad tak galla khulna jaiz; bina voucher = khabar + clip; jeb = shak. (ntcam.py v1.6)"
 }

@@ -1,4 +1,7 @@
 # ntcam.py — Noor Traders Hazri: dukaan ke CAMERAS (shop PC par chalta hai). Hissa A.
+# v1.6: GALLA SIRF VOUCHER PAR — POS ke "Cash Received" voucher (bill ka cash galle par receive) se 1 min pehle se 1.5 min baad
+#       tak galla khulna jaiz; bina voucher / refund / Galla screen "de diye" ke galla khula = 2 min baad 'missing' (khabar + clip).
+#       Jeb mein note = shak (voucher ho tab bhi). PC khud dhoondta hai POS voucher mein bill kis khane mein hai (pos-voucher.json).
 # v1.5: BILL SIRF APNE WAQT KA — bill (scan shuru -30 s .. post +45 s) ke bahar 'paisa nikla' ko sirf Galla screen / refund theek
 #       keh sakta hai, warna 'Entry nahi'. AI andaza nahi, bill posting sanad.
 # v1.4: VIDEO — galla camera ki halki recording PC ki disk par (2 din), 'shak' par khud 15-30 s clip app mein, malik ki farmaish par
@@ -12,7 +15,7 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '1.5'
+VERSION = '1.6'
 
 import base64, collections, getpass, ipaddress, json, os, queue, re, socket, subprocess, sys, threading, time, traceback, urllib.parse
 from concurrent.futures import ThreadPoolExecutor
@@ -29,6 +32,10 @@ LIST_EVERY = 20           # cameras ki list / "nayi tasveer" ki farmaish har 20 
 STATUS_EVERY = 120        # PC zinda hai — har 2 minute
 UPDATE_EVERY = 6 * 3600   # naya program (GitHub se) har 6 ghante
 LOCK_PORT = 47391
+VCH_BEFORE, VCH_AFTER = 60, 90       # v1.6: Cash Received voucher ki window — 1 min pehle se 1.5 min baad tak galla khulna jaiz
+OUT_PAD = 120                        # Galla screen "de diye" / POS refund: ±2 min
+SALE_BEFORE, SALE_AFTER = 30, 120    # SIRF jab POS mein voucher ka khana na mile: bill (scan shuru .. post) ke waqt se
+VCH_FILE = os.path.join(HOME, 'pos-voucher.json')
 os.environ.setdefault('OPENCV_FFMPEG_CAPTURE_OPTIONS', 'rtsp_transport;tcp|timeout;7000000')  # WiFi par tcp zyada pakka
 
 
@@ -683,6 +690,84 @@ def clock(ts):
     return time.strftime('%I:%M:%S %p', time.gmtime(ts + 5 * 3600)).lstrip('0').lower()
 
 
+# ---------- v1.6: POS ka "Cash Received" VOUCHER — kahan likha hai, PC khud dhoondta hai ----------
+VCH_TIME_COLS = ('CreatedOn', 'CreatedDate', 'CreatedAt', 'EntryDate', 'EntryTime', 'VoucherDate', 'TransDate', 'Date')
+VCH_AMT_COLS = ('Amount', 'TotalAmount', 'Total', 'NetAmount', 'CashAmount', 'GrandTotal', 'Debit', 'Credit', 'Dr', 'Cr')
+VCH_TYPE_COLS = ('VoucherType', 'VoucherTypeID', 'VType', 'Type', 'DocType', 'DocTypeID', 'VoucherTypeName')
+VCH_NO_COLS = ('VoucherNo', 'VoucherNumber', 'DocNo', 'RefNo', 'No')
+VCH_TXT_COLS = ('Description', 'Narration', 'Remarks', 'Note', 'Notes', 'Particulars', 'Detail')
+LINK_HINT = re.compile(r'sale|ref|doc|inv|bill|source|link|against', re.I)
+NOTES_RE = re.compile(r'Cash\s*Received\s*By\s*:?\s*(\S+)\s+On\s*:?\s*(\d{1,2}/\d{1,2}/\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?\s*[AP]M)', re.I)
+
+
+def norm_no(v):
+    """'00119023' / 'CRV-00119023' / 119023 -> '119023' (sirf hindse, aage ke sifar hata kar)."""
+    return re.sub(r'\D', '', str(v if v is not None else '')).lstrip('0')
+
+
+def notes_times(text):
+    """Sale ke System Notes ("Cash Received By:waqar On:9/29/2026 12:33:48 PM at PC:..") se (user, epoch) ki list."""
+    out = []
+    for who, ts in NOTES_RE.findall(str(text or '')):
+        import datetime
+        for fmt in ('%m/%d/%Y %I:%M:%S %p', '%m/%d/%Y %I:%M %p'):
+            try:
+                out.append((who[:40], pk_epoch(datetime.datetime.strptime(ts.strip(), fmt))))
+                break
+            except ValueError:
+                pass
+    return out
+
+
+def find_link(rows, sale_ids, sale_nos, sale_raw, skip=()):
+    """Voucher (ya VoucherDetail) ki qataaron mein wo khana jis mein BILL likha hai. Wapas (col, mode, hits) ya None.
+    mode 'id' = SaleID barabar (khane ke naam mein sale/ref/doc.. zaroori — warna VoucherID bhi SaleID se takra sakta hai),
+    'no' = SaleNo barabar (matn ho to naam ki shart nahi: malik ke mutabiq voucher "usi number ka" banta hai),
+    'text' = lambay matn ke andar SaleNo (\"against Sale # 00119023\")."""
+    if not rows:
+        return None
+    best = None
+    raw = [x for x in sale_raw if len(x) >= 5]
+    for col in rows[0].keys():
+        if col in skip or col.startswith('_'):
+            continue
+        hint = bool(LINK_HINT.search(col))
+        hits = {'id': 0, 'no': 0, 'text': 0}
+        for r in rows:
+            v = r.get(col)
+            if v is None or isinstance(v, (bytes, bytearray, bool)):
+                continue
+            if isinstance(v, (int, float)) or type(v).__name__ == 'Decimal':
+                try:
+                    iv = int(v)
+                except (TypeError, ValueError, OverflowError):
+                    continue
+                if hint and iv in sale_ids:
+                    hits['id'] += 1
+                if hint and norm_no(iv) in sale_nos:
+                    hits['no'] += 1
+            elif isinstance(v, str):
+                t = v.strip()
+                if not t or len(t) > 400:
+                    continue
+                if len(t) <= 24 and norm_no(t) and norm_no(t) in sale_nos:
+                    hits['no'] += 1
+                elif len(t) > 6 and any(x in t for x in raw):
+                    hits['text'] += 1
+        for mode in ('no', 'id', 'text'):
+            h = hits[mode]
+            if h >= 3 and h * 10 >= len(rows) * 3 and (not best or h > best[2]):
+                best = (col, mode, h)
+    return best
+
+
+def first_col(cols, names, kinds=None):
+    for n in names:
+        if n in cols and (not kinds or any(cols[n].startswith(k) for k in kinds)):
+            return n
+    return None
+
+
 class Pos(threading.Thread):
     """Har 20 s: POS se naye sale bill + refund (SQL Server, khata-sync ki setting), aur Blue Khata ki Galla screen se
     "de diye" payments (firebase-key.json). Sirf PARHTA hai — POS / Blue Khata mein kuch nahi likhta. Aakhri 4 ghante yaad."""
@@ -695,6 +780,9 @@ class Pos(threading.Thread):
         self.sql_at = self.bk_at = 0
         self.sql_err = self.bk_err = ''
         self.bk_creds = None
+        # v1.6: voucher — dhoond ka nateeja (mode voucher|salecol|notes|sale), bill ki nishani (SaleID / SaleNo -> sale rec)
+        self.vch, self.vch_at, self.vch_err, self.last_vch = None, 0, '', 0
+        self.sale_by_id, self.sale_by_no = {}, {}
 
     def ok_sql(self):
         return time.time() - self.sql_at < 120
@@ -705,14 +793,30 @@ class Pos(threading.Thread):
     def status(self):
         a = 'POS ' + ('theek' if self.ok_sql() else ('nahi: ' + self.sql_err[:60] if self.sql_err else 'shuru ho raha'))
         b = 'Galla screen ' + ('theek' if self.ok_bk() else ('nahi: ' + self.bk_err[:60] if self.bk_err else 'shuru ho raha'))
-        return a + ' · ' + b
+        return a + ' · ' + self.vch_text() + ' · ' + b
+
+    def vch_ok(self):
+        """Voucher ka khana mil chuka hai -> galla sirf voucher par (warna bill ke waqt se, purana tareeqa)."""
+        return bool(self.vch and self.vch.get('mode') in ('voucher', 'salecol', 'notes'))
+
+    def vch_text(self):
+        i = self.vch
+        if not i:
+            return 'Voucher: dhoond raha' + (' (' + self.vch_err[:50] + ')' if self.vch_err else '')
+        if i.get('mode') not in ('voucher', 'salecol', 'notes'):
+            return 'Voucher ka khana nahi mila — bill ke waqt se milaan' + (' (' + str(i.get('why') or '')[:50] + ')' if i.get('why') else '')
+        today = pk_date()
+        with self.lock:
+            n = sum(1 for r in self.recs if r['kind'] == 'crv' and pk_date(r['at']) == today)
+        where = {'voucher': f"{i.get('table', 'Voucher')}.{i.get('link')}", 'salecol': f"Sale.{i.get('link')}", 'notes': f"Sale.{i.get('link')} notes"}[i['mode']]
+        return f'Voucher: mil rahe ({where}, aaj {n})'
 
     def near(self, a, b):
         with self.lock:
             return [r for r in self.recs if a <= r['at'] <= b]
 
     def add(self, r):
-        k = (r['kind'], r['no'])
+        k = (r['kind'], r.get('vid') or r['no'])      # v1.6: aik bill par do voucher (6 s baad) — VoucherID se alag
         if k in self.seen:
             return
         self.seen.add(k)
@@ -761,8 +865,16 @@ class Pos(threading.Thread):
                     continue
                 at = pk_epoch(r['CreatedOn'])
                 start = pk_epoch(r['BiltyDate']) if r.get('BiltyDate') and abs(pk_epoch(r['BiltyDate']) - at) < 1800 else at
-                self.add({'kind': 'sale', 'no': str(r['SaleNo'] or r['SaleID']).strip(), 'at': at, 'start': start,
-                          'amount': float(r.get('TotalSale') or 0), 'credit': bool(r.get('IsCreditSale')), 'party': str(r.get('PartyName') or '')[:60]})
+                rec = {'kind': 'sale', 'no': str(r['SaleNo'] or r['SaleID']).strip(), 'at': at, 'start': start, 'sid': int(r['SaleID']),
+                       'amount': float(r.get('TotalSale') or 0), 'credit': bool(r.get('IsCreditSale')), 'party': str(r.get('PartyName') or '')[:60]}
+                self.add(rec)
+                self.sale_by_id[rec['sid']] = rec
+                if norm_no(rec['no']):
+                    self.sale_by_no[norm_no(rec['no'])] = rec
+                if len(self.sale_by_id) > 3000:
+                    for k in list(self.sale_by_id)[:1000]:
+                        self.sale_by_id.pop(k, None)
+                    self.sale_by_no = {norm_no(x['no']): x for x in self.sale_by_id.values()}
             # v1.3: pichle 4 ghante ke SAB bill (cancel wale bhi) — badla / cancel pakarne ke liye
             cur.execute("SELECT s.SaleID, s.SaleNo, s.CreatedOn, s.UpdatedOn, s.CreatedBy, s.UpdatedBy, s.TotalSale, s.DocStatusID, "
                         "(SELECT COUNT(*) FROM dbo.SaleDetail d WHERE d.SaleID = s.SaleID) AS n, "
@@ -777,8 +889,173 @@ class Pos(threading.Thread):
                 if r.get('CreatedOn'):
                     self.add({'kind': 'return', 'no': str(r['SaleReturnNo'] or r['SaleReturnID']).strip(), 'at': pk_epoch(r['CreatedOn']),
                               'amount': float(r.get('TotalSaleReturn') or 0), 'party': ''})
+            # v1.6: Cash Received voucher (galle par paisa aane ka asal waqt)
+            try:
+                self.poll_vouchers(cur)
+                self.vch_err = ''
+            except Exception as e:
+                self.vch_err = str(e)[:120]
+                log('voucher:', e)
         finally:
             con.close()
+
+    # ---------- v1.6: VOUCHER ----------
+    def vch_discover(self, cur):
+        """POS mein bill ka cash galle par receive hone ka waqt kahan likha hai — aik dafa khud dhoondo, phir pos-voucher.json mein yaad.
+        Tarteeb: dbo.Voucher ka koi khana bill (SaleNo/SaleID) rakhta hai? -> VoucherDetail? -> Sale mein voucher ka khana? ->
+        Sale ke System Notes mein "Cash Received By .. On .."? -> kuch nahi (mode 'sale' = bill ke waqt se, purana tareeqa)."""
+        info = {'mode': 'sale', 'why': '', 'at': now_ms()}
+        cols = lambda t: (cur.execute("SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = %s", (t,)),
+                          {r['COLUMN_NAME']: str(r['DATA_TYPE']).lower() for r in cur.fetchall()})[1]
+        vcols, scols = cols('Voucher'), cols('Sale')
+        cur.execute("SELECT SaleID, SaleNo FROM dbo.Sale WHERE CreatedOn >= DATEADD(HOUR, -72, GETDATE())")
+        srows = cur.fetchall()
+        ids = {int(r['SaleID']) for r in srows}
+        nos = {norm_no(r['SaleNo']) for r in srows if norm_no(r['SaleNo'])}
+        raw = {str(r['SaleNo']).strip() for r in srows if r.get('SaleNo')}
+        tcol = first_col(vcols, VCH_TIME_COLS, ('datetime', 'smalldatetime', 'date')) if 'VoucherID' in vcols else None
+        vrows = []
+        if tcol:
+            cur.execute(f"SELECT TOP 300 * FROM dbo.Voucher WHERE [{tcol}] >= DATEADD(HOUR, -72, GETDATE()) ORDER BY VoucherID DESC")
+            vrows = cur.fetchall()
+            base = {'time': tcol, 'amount': first_col(vcols, VCH_AMT_COLS), 'type': first_col(vcols, VCH_TYPE_COLS),
+                    'no': first_col(vcols, VCH_NO_COLS) or 'VoucherID', 'by': first_col(vcols, ('CreatedBy', 'UserID', 'EnteredBy')),
+                    'txt': first_col(vcols, VCH_TXT_COLS), 'n': len(vrows)}
+            link = find_link(vrows, ids, nos, raw, skip={'VoucherID', tcol})
+            if link:
+                info.update(base, mode='voucher', table='Voucher', link=link[0], link_mode=link[1], hits=link[2])
+            else:
+                try:
+                    cur.execute(f"SELECT TOP 900 d.*, v.VoucherID AS _vid FROM dbo.VoucherDetail d JOIN dbo.Voucher v ON v.VoucherID = d.VoucherID "
+                                f"WHERE v.[{tcol}] >= DATEADD(HOUR, -72, GETDATE()) ORDER BY v.VoucherID DESC")
+                    drows = cur.fetchall()
+                    link = find_link(drows, ids, nos, raw, skip={'VoucherID', 'VoucherDetailID', 'ID'})
+                    if link:
+                        info.update(base, mode='voucher', table='VoucherDetail', link=link[0], link_mode=link[1], hits=link[2])
+                except Exception as e:
+                    info['why'] = ('VoucherDetail: ' + str(e))[:80]
+            if info['mode'] == 'sale' and vrows:
+                vids = {int(r['VoucherID']) for r in vrows if r.get('VoucherID') is not None}
+                for c in [c for c in scols if 'voucher' in c.lower() or c.lower() in ('crvid', 'receiptid', 'cashreceiptid')]:
+                    try:
+                        cur.execute(f"SELECT [{c}] AS v FROM dbo.Sale WHERE CreatedOn >= DATEADD(HOUR, -72, GETDATE()) AND [{c}] IS NOT NULL")
+                        vals = [r['v'] for r in cur.fetchall()]
+                        h = sum(1 for v in vals if isinstance(v, (int, float)) and int(v) in vids)
+                        if h >= 3 and h * 10 >= max(1, len(vals)) * 3:
+                            info.update(base, mode='salecol', table='Sale', link=c, link_mode='id', hits=h)
+                            break
+                    except Exception as e:
+                        info['why'] = (c + ': ' + str(e))[:80]
+        if info['mode'] == 'sale':
+            txt = [c for c, t in scols.items() if t in ('nvarchar', 'varchar', 'ntext', 'text', 'nchar', 'char')]
+            if txt:
+                cur.execute("SELECT TOP 80 " + ', '.join(f'[{c}]' for c in txt) + " FROM dbo.Sale ORDER BY SaleID DESC")
+                rows = cur.fetchall()
+                for c in txt:
+                    if any(NOTES_RE.search(str(r.get(c) or '')) for r in rows):
+                        info.update(mode='notes', table='Sale', link=c, link_mode='text', hits=sum(1 for r in rows if NOTES_RE.search(str(r.get(c) or ''))))
+                        break
+            if info['mode'] == 'sale' and not info['why']:
+                info['why'] = ('Voucher mein bill ka khana nahi' if vrows else ('aakhri 3 din mein koi voucher nahi' if tcol else 'dbo.Voucher / waqt ka khana nahi'))
+        return info
+
+    def vch_load(self, cur):
+        i = self.vch
+        if i and (now_ms() - int(i.get('at') or 0) < (7 if i.get('mode') != 'sale' else 0.25) * 86400000):
+            return i
+        i = load_json(VCH_FILE, None)
+        if not (i and now_ms() - int(i.get('at') or 0) < (7 if i.get('mode') != 'sale' else 0.25) * 86400000):
+            i = self.vch_discover(cur)
+            save_json(VCH_FILE, i)
+            log('voucher dhoond:', i.get('mode'), i.get('table'), i.get('link'), i.get('link_mode'), i.get('hits'), i.get('why'))
+        self.vch, self.last_vch = i, 0
+        return i
+
+    def sale_of(self, i, r, col=None):
+        """Voucher ki qataar se bill (sale rec) — link khane ke mutabiq."""
+        v = r.get(col or i.get('link'))
+        if v is None:
+            return None
+        if i.get('link_mode') == 'id':
+            try:
+                return self.sale_by_id.get(int(v))
+            except (TypeError, ValueError):
+                return None
+        if i.get('link_mode') == 'no':
+            return self.sale_by_no.get(norm_no(v))
+        t = str(v)
+        for no, rec in self.sale_by_no.items():
+            if len(rec['no']) >= 5 and rec['no'] in t:
+                return rec
+        return None
+
+    def vch_rec(self, i, r, sale, at, vno):
+        """crv (bill ka cash galle par) ya voucher (koi aur POS voucher — kharch waghaira; galla khulna phir bhi jaiz)."""
+        amt = r.get(i.get('amount')) if i.get('amount') else None
+        try:
+            amt = float(amt or 0)
+        except (TypeError, ValueError):
+            amt = 0.0
+        vt = r.get(i.get('type')) if i.get('type') else None
+        who = self.user_name(r.get(i.get('by'))) if i.get('by') and r.get(i.get('by')) not in (None, '') else ''
+        vid = r.get('VoucherID')
+        if sale:
+            return {'kind': 'crv', 'no': str(vno)[:40], 'vid': vid, 'bill': sale['no'], 'at': at, 'amount': amt if amt > 0 else sale['amount'],
+                    'party': sale.get('party', ''), 'who': who, 'billAt': sale['at']}
+        txt = str(r.get(i.get('txt')) or '')[:60] if i.get('txt') else ''
+        return {'kind': 'voucher', 'no': str(vno)[:40], 'vid': vid, 'at': at, 'amount': amt, 'party': txt or (str(vt)[:12] if vt not in (None, '') else ''), 'who': who}
+
+    def poll_vouchers(self, cur):
+        i = self.vch_load(cur)
+        mode = i.get('mode')
+        if mode == 'voucher':
+            tcol = i['time']
+            if not self.last_vch:
+                cur.execute(f"SELECT ISNULL(MIN(VoucherID), 0) - 1 AS a FROM dbo.Voucher WHERE [{tcol}] >= DATEADD(HOUR, -4, GETDATE())")
+                self.last_vch = int(cur.fetchone()['a'] or 0)
+                if self.last_vch < 0:
+                    cur.execute("SELECT ISNULL(MAX(VoucherID), 0) AS a FROM dbo.Voucher"); self.last_vch = int(cur.fetchone()['a'] or 0)
+            cur.execute(f"SELECT TOP 500 * FROM dbo.Voucher WHERE VoucherID > %d ORDER BY VoucherID", (self.last_vch,))
+            vrows = cur.fetchall()
+            details = {}
+            if i.get('table') == 'VoucherDetail' and vrows:
+                vids = ','.join(str(int(r['VoucherID'])) for r in vrows)
+                cur.execute(f"SELECT * FROM dbo.VoucherDetail WHERE VoucherID IN ({vids})")
+                for d in cur.fetchall():
+                    details.setdefault(int(d['VoucherID']), []).append(d)
+            for r in vrows:
+                vid = int(r['VoucherID'])
+                self.last_vch = max(self.last_vch, vid)
+                if not r.get(tcol):
+                    continue
+                at = pk_epoch(r[tcol])
+                sale = None
+                if i.get('table') == 'VoucherDetail':
+                    sale = next((s for s in (self.sale_of(i, d) for d in details.get(vid, [])) if s), None)
+                else:
+                    sale = self.sale_of(i, r)
+                self.add(self.vch_rec(i, r, sale, at, r.get(i.get('no')) or vid))
+        elif mode == 'salecol':
+            c, tcol = i['link'], i['time']
+            if not self.last_vch:
+                cur.execute(f"SELECT ISNULL(MIN(VoucherID), 0) - 1 AS a FROM dbo.Voucher WHERE [{tcol}] >= DATEADD(HOUR, -4, GETDATE())")
+                self.last_vch = int(cur.fetchone()['a'] or 0)
+            cur.execute(f"SELECT TOP 500 v.*, s.SaleID AS _sid FROM dbo.Voucher v JOIN dbo.Sale s ON s.[{c}] = v.VoucherID WHERE v.VoucherID > %d ORDER BY v.VoucherID", (self.last_vch,))
+            for r in cur.fetchall():
+                vid = int(r['VoucherID'])
+                self.last_vch = max(self.last_vch, vid)
+                if r.get(tcol):
+                    self.add(self.vch_rec(i, r, self.sale_by_id.get(int(r['_sid'])), pk_epoch(r[tcol]), r.get(i.get('no')) or vid))
+        elif mode == 'notes':
+            c = i['link']
+            cur.execute(f"SELECT TOP 400 SaleID, SaleNo, TotalSale, [{c}] AS t FROM dbo.Sale WHERE CreatedOn >= DATEADD(HOUR, -4, GETDATE()) "
+                        f"OR UpdatedOn >= DATEADD(HOUR, -4, GETDATE())")
+            for r in cur.fetchall():
+                sale = self.sale_by_id.get(int(r['SaleID']))
+                no = str(r.get('SaleNo') or r['SaleID']).strip()
+                for k, (who, at) in enumerate(notes_times(r.get('t'))):
+                    self.add({'kind': 'crv', 'no': f'{no}#{k + 1}', 'bill': no, 'at': at, 'amount': float(r.get('TotalSale') or 0),
+                              'party': (sale or {}).get('party', ''), 'who': who, 'billAt': (sale or {}).get('at', at)})
 
     def user_name(self, uid):
         """POS ka user naam (best-effort) — table na mile to 'user 8'."""
@@ -914,12 +1191,19 @@ FLOW_TEXT = {'aaya': 'paisa aaya', 'nikla': 'paisa nikla', 'len_den': 'paisa liy
 
 
 def context_text(recs):
+    """AI ke liye us waqt ka record (Roman Urdu). v1.6: bill ke DONO waqt — counter par bana, galle par Cash Received voucher."""
     if not recs:
-        return 'is waqt POS par koi bill, refund ya Galla screen payment record NAHI hai'
+        return 'is waqt POS par koi bill, Cash Received voucher, refund ya Galla screen payment record NAHI hai'
+    paid = {r.get('bill') for r in recs if r['kind'] == 'crv'}
     out = []
-    for r in sorted(recs, key=lambda x: x['at'])[:6]:
+    for r in sorted(recs, key=lambda x: x['at'])[:8]:
         if r['kind'] == 'sale':
-            out.append(f"POS sale Bill #{r['no']} {rs(r['amount'])} save {clock(r['at'])}" + (' (udhaar)' if r.get('credit') else ''))
+            out.append(f"Bill #{r['no']} {rs(r['amount'])} counter par bana {clock(r['at'])}" + (' (udhaar)' if r.get('credit') else '')
+                       + ('' if r['no'] in paid or r.get('credit') else ' — galle par abhi Cash Received nahi'))
+        elif r['kind'] == 'crv':
+            out.append(f"CASH RECEIVED voucher: Bill #{r.get('bill')} {rs(r['amount'])} galle par {clock(r['at'])} (galla khulna JAIZ)")
+        elif r['kind'] == 'voucher':
+            out.append(f"POS voucher #{r['no']} {rs(r['amount'])} {clock(r['at'])}" + (f" ({r['party']})" if r.get('party') else '') + ' (galla khulna jaiz)')
         elif r['kind'] == 'return':
             out.append(f"POS refund #{r['no']} {rs(r['amount'])} {clock(r['at'])}")
         else:
@@ -927,14 +1211,19 @@ def context_text(recs):
     return '; '.join(out)
 
 
-GALLA_PROMPT2 = ('Ye {n} tasveerein aik dukaan ke GALLA (cash rakhne ki jagah) ki CCTV se hain, waqt ki tarteeb mein (taqreeban {gap} '
-                 'second ka farq). Us waqt ka record: {ctx}. Batao: (1) "flow" — "aaya" (kisi se paisa le kar galla mein rakha), '
+GALLA_PROMPT3 = ('Ye {n} tasveerein aik dukaan ke GALLA (cash ki daraz / dabba) ki CCTV se hain, waqt ki tarteeb mein (taqreeban {gap} '
+                 'second ka farq). Dukaan ka tareeqa: customer parchi (bill) aur paisa deta hai -> larka paisa haath mein ya note ginne '
+                 'wali machine mein ginta hai -> parchi scan hoti hai (POS mein "Cash Received") -> galle se baqaya deta hai -> paisa '
+                 'galle mein rakhta hai. Ye poora silsila NORMAL hai; paisa haath / machine / counter par rehna shak NAHI. '
+                 'Us waqt ka record: {ctx}. Batao: (1) "flow" — "aaya" (kisi se paisa le kar galla mein rakha), '
                  '"nikla" (galla se nikal kar kisi ko diya), "len_den" (paisa liya AUR baqaya wapas diya), "ginti" (sirf gine / seedhe '
-                 'kiye), "kuch_nahi" (paisa nahi hila). (2) "verdict" — "shak" SIRF tab jab note saaf nazar aaye ke jeb, qameez, shalwar '
-                 'ya kisi chhupi jagah mein gaya; haath seene / jeb ke paas hona, qalam ya phone rakhna shak NAHI. Record mein bill hai '
-                 'aur paisa customer se liya / baqaya diya to "normal". Saaf na dikhe to "saaf_nahi". Kisi insaan ki pehchan, naam ya '
-                 'chehre ki baat mat karo.{examples} Jawab SIRF JSON: {{"flow": "...", "verdict": "...", "why": "Roman Urdu (English '
-                 'harf) mein aik chhoti line"}}')
+                 'kiye), "kuch_nahi" (paisa nahi hila). (2) "khula" — galle ki daraz / dabba khula ya haath us ke andar gaya to true, warna '
+                 'false. (3) "verdict" — "shak" SIRF tab jab note saaf nazar aaye ke jeb, qameez, shalwar ya kisi chhupi jagah mein gaya; '
+                 'haath seene / jeb ke paas hona, qalam ya phone rakhna shak NAHI. Record mein bill / voucher hai aur paisa customer se '
+                 'liya / baqaya diya to "normal". Galla bina record ke khula ya nahi — ye faisla program khud record se karega, tum sirf '
+                 'jo dikhta hai wo batao. Saaf na dikhe to "saaf_nahi". Kisi insaan ki pehchan, naam ya chehre ki baat mat karo.{examples} '
+                 'Jawab SIRF JSON: {{"flow": "...", "khula": true, "verdict": "...", "why": "Roman Urdu (English harf) mein aik chhoti line"}}')
+GALLA_PROMPT2 = GALLA_PROMPT3   # purana naam (tests)
 
 
 def parse_flow(text):
@@ -948,9 +1237,17 @@ def parse_flow(text):
     return (fl if fl in FLOWS else 'saaf_nahi'), v, why
 
 
+def parse_khula(text):
+    """v1.6: AI ne "khula" (galle ki daraz khuli / haath andar) bataya? True / False / None (nahi bataya)."""
+    m = re.search(r'"khula"\s*:\s*(true|false|"?(haan|han|yes|nahi|no)"?)', text or '', re.I)
+    if not m:
+        return None
+    return m.group(1).strip('"').lower() in ('true', 'haan', 'han', 'yes')
+
+
 def ai_judge2(key, crops_b64, ctx, gap, examples=''):
     import requests
-    content = [{'type': 'text', 'text': GALLA_PROMPT2.format(n=len(crops_b64), gap=gap, ctx=ctx, examples=examples)}]
+    content = [{'type': 'text', 'text': GALLA_PROMPT3.format(n=len(crops_b64), gap=gap, ctx=ctx, examples=examples)}]
     for i, b in enumerate(crops_b64, 1):
         content += [{'type': 'text', 'text': f'Tasveer {i}'}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': b}}]
     t0 = time.time()
@@ -961,36 +1258,43 @@ def ai_judge2(key, crops_b64, ctx, gap, examples=''):
         raise RuntimeError(api_error(r))
     txt = ' '.join(b.get('text', '') for b in r.json().get('content', []) if b.get('type') == 'text')
     fl, v, why = parse_flow(txt)
-    return fl, v, why, int((time.time() - t0) * 1000)
+    return fl, v, why, int((time.time() - t0) * 1000), parse_khula(txt)
 
 
-BILL_BEFORE, BILL_AFTER = 30, 45
+BILL_BEFORE, BILL_AFTER = SALE_BEFORE, SALE_AFTER   # purane naam
+
+
+def window(r):
+    """Kis record par galla khulna kab tak jaiz hai: [shuru, khatam] epoch s."""
+    k = r['kind']
+    if k in ('crv', 'voucher'):
+        return r['at'] - VCH_BEFORE, r['at'] + VCH_AFTER
+    if k in ('pay', 'return'):
+        return r['at'] - OUT_PAD, r['at'] + OUT_PAD
+    if k == 'sale':
+        return r.get('start', r['at']) - SALE_BEFORE, r['at'] + SALE_AFTER
+    return None
 
 
 def in_bill(r, t0, t1):
-    """v1.5: bill sirf apne waqt ka — scan shuru (BiltyDate) se 30 s pehle se post (CreatedOn) ke 45 s baad tak. Len-den [t0, t1]
-    us window se takraye to us bill ka; warna nahi (chahe 2 minute baad hi kyun na ho)."""
-    a, b = r.get('start', r['at']) - BILL_BEFORE, r['at'] + BILL_AFTER
-    return t0 <= b and t1 >= a
+    """Len-den [t0, t1] is record ki window se takraye?"""
+    w = window(r)
+    return bool(w) and t0 <= w[1] and t1 >= w[0]
 
 
-def match(flow, t0, t1, recs, pos_ok=True, bk_ok=True):
-    """Len-den ko record se milao. Wapas (state, rec): ok | wait (abhi na mila, 5 min dekhte raho) | none (paisa nahi hila) |
-    nopos (POS / Galla screen parh hi nahi sake — alarm NAHI). Bill posting sanad hai, AI ka andaza nahi."""
-    mid = (t0 + t1) / 2
-    sales = [r for r in recs if r['kind'] == 'sale' and in_bill(r, t0, t1)]
-    outs = [r for r in recs if r['kind'] in ('pay', 'return') and t0 - 120 <= r['at'] <= t1 + 120]
-    best = lambda rows: min(rows, key=lambda r: abs(r['at'] - mid)) if rows else None
-    if flow in ('ginti', 'kuch_nahi'):
+def match(flow, t0, t1, recs, pos_ok=True, bk_ok=True, vouchers=True, khula=None):
+    """v1.6: GALLA SIRF VOUCHER PAR. Wapas (state, rec): ok | wait (abhi koi voucher nahi — 2 min dekhte raho, phir 'missing' = bina
+    voucher galla khula) | none (galla khula hi nahi / paisa nahi hila) | nopos (POS / Galla screen parh nahi sake — alarm NAHI).
+    vouchers=True: Cash Received voucher / POS voucher / refund / Galla screen "de diye" hi jaiz; bill ka banna kafi nahi.
+    vouchers=False (POS mein voucher ka khana na mile): bill ke waqt se (purana tareeqa, thora khula)."""
+    if flow == 'kuch_nahi' or (khula is False and flow in ('ginti', 'saaf_nahi')):
         return 'none', None
-    if flow in ('aaya', 'len_den'):
-        m = best(sales)
-    elif flow == 'nikla':
-        m = best(outs) or best(sales)          # baqaya bhi "nikla" lagta hai — us waqt ka bill ho to theek
-    else:
-        m = best(sales) or best(outs)
-    if m:
-        return 'ok', m
+    mid = (t0 + t1) / 2
+    kinds = ('crv', 'voucher', 'pay', 'return') if vouchers else ('sale', 'pay', 'return')
+    pri = {'pay': 0, 'return': 0, 'crv': 1, 'sale': 1, 'voucher': 2} if flow == 'nikla' else {'crv': 0, 'sale': 0, 'pay': 1, 'return': 1, 'voucher': 2}
+    cands = [r for r in recs if r['kind'] in kinds and in_bill(r, t0, t1)]
+    if cands:
+        return 'ok', min(cands, key=lambda r: (pri.get(r['kind'], 3), abs(r['at'] - mid)))
     if not pos_ok or (flow == 'nikla' and not bk_ok):
         return 'nopos', None
     return 'wait', None
@@ -999,16 +1303,22 @@ def match(flow, t0, t1, recs, pos_ok=True, bk_ok=True):
 def match_doc(m):
     if not m:
         return {}
-    return {'kind': m['kind'], 'no': str(m['no'])[:40], 'amount': round(float(m.get('amount') or 0), 2), 'at': int(m['at'] * 1000),
-            'party': str(m.get('party') or '')[:60], 'who': str(m.get('who') or '')[:40]}
+    d = {'kind': m['kind'], 'no': str(m['no'])[:40], 'amount': round(float(m.get('amount') or 0), 2), 'at': int(m['at'] * 1000),
+         'party': str(m.get('party') or '')[:60], 'who': str(m.get('who') or '')[:40]}
+    if m.get('bill'):
+        d['bill'] = str(m['bill'])[:40]
+    if m.get('billAt'):
+        d['billAt'] = int(m['billAt'] * 1000)
+    return d
 
 
 class Galla(threading.Thread):
     """Len-den ki qataar. POS / Galla screen ka record aa sake is liye len-den khatam hone ke 45 s baad kaam. Pehle record ke
     qareeb wale bill / payment, phir Claude ko 10 tasveerein + record + malik ke pichle faisle. Faisla + milaan: cameraEvents.
-    Na mila = 'wait' (5 min tak har 30 s dobara) -> 'ok' ya 'missing' (function malik ko khabar deta hai)."""
+    Na mila = 'wait' (2 min tak har 2 s dobara) -> 'ok' ya 'missing' = BINA VOUCHER GALLA KHULA (function malik ko khabar deta
+    hai, PC clip banata hai). v1.6: bill ka banna kafi nahi — Cash Received voucher / refund / Galla screen chahiye."""
     WAIT_AFTER = 45
-    MISSING_AFTER = 300
+    MISSING_AFTER = 120
 
     def __init__(self, fire, pos=None):
         super().__init__(daemon=True)
@@ -1092,16 +1402,19 @@ class Galla(threading.Thread):
             self.bump(w.cid, date, unchecked=1)
             return
         self.last_ai[w.cid] = at
-        near = self.recs(t0 - 180, t1 + 120)
+        near = self.recs(t0 - 180, t1 + 180)
         crops = [jpeg_b64(c, width=512, quality=70)[0] for c in frames]
         gap = max(0.5, round((t1 - t0) / max(1, len(frames) - 1), 1))
+        khula = None
         try:
-            fl, v, why, ms = ai_judge2(key, crops, context_text(near), gap, self.load_examples())
+            res = ai_judge2(key, crops, context_text(near), gap, self.load_examples())
+            fl, v, why, ms = res[:4]
+            khula = res[4] if len(res) > 4 else None
             self.bump(w.cid, date, checks=1, shak=1 if v == 'shak' else 0)
         except Exception as e:
             fl, v, why, ms = 'saaf_nahi', 'error', f'AI nahi chala: {e}'[:280], 0
             self.pause_until = time.time() + AI_PAUSE
-        state, m = match(fl, t0, t1, near, self.pos_ok(), self.bk_ok())
+        state, m = match(fl, t0, t1, near, self.pos_ok(), self.bk_ok(), self.vouchers(), khula)
         if v == 'error' and state == 'wait':
             state = 'nopos'                      # AI hi na chala ho to "entry nahi" ka alarm nahi
         self.bump(w.cid, date, moneyIn=1 if fl in ('aaya', 'len_den') else 0, moneyOut=1 if fl == 'nikla' else 0, matched=1 if state == 'ok' else 0)
@@ -1118,7 +1431,7 @@ class Galla(threading.Thread):
                     self.by_bill = dict(list(self.by_bill.items())[-300:])
         self.fire.patch(f'{BIZ}/cameraEvents/{eid}', doc)
         if state == 'wait':
-            self.waiting.append({'eid': eid, 'cid': w.cid, 'date': date, 'flow': fl, 't0': t0, 't1': t1, 'made': time.time()})
+            self.waiting.append({'eid': eid, 'cid': w.cid, 'date': date, 'flow': fl, 't0': t0, 't1': t1, 'made': time.time(), 'khula': khula, 'v': v})
         if v == 'shak' and self.clips:
             self.clips.shak(w.cid, eid, t0, t1, date)
         log('nigrani', w.cid, fl, v, state, why)
@@ -1126,11 +1439,16 @@ class Galla(threading.Thread):
         label = {'normal': 'Normal', 'shak': 'Shak', 'saaf_nahi': 'Saaf nahi'}.get(v, '')
         self.fire.patch(f'{BIZ}/cameras/{w.cid}', {'aiTest': (f'AI chal raha hai — aakhri jaanch {when} ({label})' if v != 'error' else why)[:200], 'aiTestAt': t})
 
+    def vouchers(self):
+        """v1.6: POS mein voucher ka khana mil gaya -> galla sirf voucher par; warna bill ke waqt se (purana tareeqa)."""
+        return bool(self.pos and getattr(self.pos, 'vch_ok', lambda: False)())
+
     def recheck(self):
-        """'wait' wale: bill / entry der se bani ho to 'ok'; 5 minute baad bhi na mile to 'missing'."""
+        """'wait' wale: voucher / entry der se aaye to 'ok'; 2 minute baad bhi na aaye to 'missing' = bina voucher galla khula
+        (function khabar deta hai) + clip."""
         keep = []
         for e in self.waiting:
-            state, m = match(e['flow'], e['t0'], e['t1'], self.recs(e['t0'] - 180, e['t1'] + 400), self.pos_ok(), self.bk_ok())
+            state, m = match(e['flow'], e['t0'], e['t1'], self.recs(e['t0'] - 180, e['t1'] + 400), self.pos_ok(), self.bk_ok(), self.vouchers(), e.get('khula'))
             if state == 'ok':
                 self.fire.patch(f"{BIZ}/cameraEvents/{e['eid']}", {'matchState': 'ok', 'match': match_doc(m), 'matchAt': now_ms()})
                 if m['kind'] == 'sale':
@@ -1141,6 +1459,8 @@ class Galla(threading.Thread):
             elif time.time() - e['made'] > self.MISSING_AFTER:
                 self.fire.patch(f"{BIZ}/cameraEvents/{e['eid']}", {'matchState': 'missing', 'matchAt': now_ms()})
                 self.bump(e['cid'], e['date'], missing=1)
+                if self.clips and e.get('v') != 'shak':          # v1.6: bina voucher galla khula -> clip bhi (shak par pehle ban chuki)
+                    self.clips.shak(e['cid'], e['eid'], e['t0'], e['t1'], e['date'])
             else:
                 keep.append(e)
         self.waiting = keep
@@ -1161,6 +1481,7 @@ class Galla(threading.Thread):
 REC_DIR = os.path.join(HOME, 'rec')
 REC_HOURS, REC_FPS, REC_W, SEG_SEC, MIN_FREE_GB = 48, 8, 640, 60, 5
 CLIP_MAX, SHAK_PAD, PART_CHARS = 180, 5, 700_000
+SHAK_BEFORE, SHAK_AFTER, SHAK_MAX = 10, 20, 40    # v1.6: shak / bina voucher par clip — 10 s pehle se 20 s baad tak (40 s had)
 
 
 def ffmpeg_exe():
@@ -1323,7 +1644,7 @@ class Clips(threading.Thread):
         self.fire, self.recorders, self.q = fire, recorders, queue.Queue()
 
     def shak(self, cid, eid, t0, t1, date):
-        self.q.put({'id': eid, 'cam': cid, 'kind': 'shak', 'eventId': eid, 'from': int((t0 - SHAK_PAD) * 1000), 'to': int(min(t1 + SHAK_PAD, t0 - SHAK_PAD + 30) * 1000), 'date': date})
+        self.q.put({'id': eid, 'cam': cid, 'kind': 'shak', 'eventId': eid, 'from': int((t0 - SHAK_BEFORE) * 1000), 'to': int(min(t1 + SHAK_AFTER, t0 - SHAK_BEFORE + SHAK_MAX) * 1000), 'date': date})
 
     def run(self):
         last = 0

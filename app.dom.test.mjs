@@ -28,7 +28,9 @@ const records = new Map([
   [B + 'cameras/cc33-ch1', { name: 'Tokri', ip: '192.168.0.143', mac: 'cc33', brand: 'dahua', channel: 1, role: 'galla', enabled: true, createdAt: 9, status: 'online', watch: 'on', fps: 12.5, stream: 'main', zone: { x: 0.2, y: 0.3, w: 0.4, h: 0.35 } }],
   [B + 'cameraEvents/cc33-ch1-2', { cam: 'cc33-ch1', camName: 'Tokri', at: Date.now() - 600000, date: C.pkDate(), verdict: 'shak', why: 'Note jeb ki taraf gaya', thumb: '/9j/AA', n: 6, ms: 900, model: 'm', agent: '1.1' }],
   [B + 'cameraEvents/cc33-ch1-1', { cam: 'cc33-ch1', camName: 'Tokri', at: Date.now() - 1200000, date: C.pkDate(), verdict: 'normal', why: 'Customer ko baqaya diya', thumb: '/9j/BB', n: 6, ms: 800, model: 'm', agent: '1.2', flow: 'len_den', matchState: 'ok', match: { kind: 'sale', no: '00119008', amount: 9000, at: Date.now() - 1190000, party: 'Cash', who: '', changed: 'cancel', after: 0, alertId: '00119008-1' } }],
-  // v223: paisa nikla, 5 minute tak koi entry nahi
+  // v226: Cash Received voucher se mila (bill counter par pehle bana tha)
+  [B + 'cameraEvents/cc33-ch1-3', { cam: 'cc33-ch1', camName: 'Tokri', at: Date.now() - 2400000, date: C.pkDate(), verdict: 'normal', why: 'Paisa liya, baqaya diya', thumb: '/9j/DD', n: 10, ms: 800, model: 'm', agent: '1.6', flow: 'len_den', matchState: 'ok', match: { kind: 'crv', no: 'CRV-00119007', bill: '00119007', amount: 781, at: Date.now() - 2400000 + 5000, billAt: Date.now() - 2400000 - 54000, party: 'Cash', who: 'waqar' } }],
+  // v223: paisa nikla, 2 minute tak koi voucher nahi (v226: "Bina voucher galla khula")
   [B + 'cameraEvents/cc33-ch1-0', { cam: 'cc33-ch1', camName: 'Tokri', at: Date.now() - 1800000, date: C.pkDate(), verdict: 'normal', why: 'Galla se note nikal kar diye', thumb: '/9j/CC', n: 10, ms: 800, model: 'm', agent: '1.2', flow: 'nikla', matchState: 'missing' }],
   [B + 'cameraFrames/cc33-ch1-2', { frames: ['/9j/F1', '/9j/F2', '/9j/F3', '/9j/F4', '/9j/F5', '/9j/F6'], at: Date.now() - 600000, cam: 'cc33-ch1' }],
   [B + `cameraStats/cc33-ch1_${C.pkDate()}`, { cam: 'cc33-ch1', date: C.pkDate(), touches: 7, checks: 2, shak: 1, unchecked: 1, at: Date.now(), moneyIn: 5, moneyOut: 2, matched: 6, missing: 1 }],
@@ -99,12 +101,13 @@ test('malik login → Hazri tab, qataarein, tawajju', async () => {
   await click('[data-sheet=cameras] [data-sheet-close]');
   // v222: NIGRANI — Tawajju se tab, khulasa, filter, event + 6 tasveerein, duty, malik ka faisla, galla ka hissa
   await click('[data-action=tab][data-arg=hazri]');
-  assert.match($('.attention').textContent, /Aaj 1 dafa galla par shak/); assert.match($('.attention').textContent, /Aaj 1 bill cancel \/ badle/);
+  assert.match($('.attention').textContent, /Aaj 1 dafa galla par shak · 1 dafa bina voucher galla khula/); assert.match($('.attention').textContent, /Aaj 1 bill cancel \/ badle/);   // v226
   await click('.attention [data-action=tab][data-arg=nigrani]'); await settle(12);
   assert.ok($('main.view-nigrani'), 'Nigrani tab'); assert.match($('.nig-cams').textContent, /Tokri · nigrani chalu/);
   const sumText = $('.nig-sum').textContent; assert.match(sumText, /7\s*galla chhua/); assert.match(sumText, /2\s*AI jaanch/); assert.match(sumText, /1\s*shak/); assert.match(sumText, /0\/1\s*shak dekhe/);
   assert.match($('main').textContent, /1 dafa AI jaanch nahi hui/);
-  assert.equal($$('.nig-ev').length, 3, 'teeno harkatein'); assert.match($$('.nig-ev')[0].textContent, /Shak/); assert.match($$('.nig-ev')[0].textContent, /jeb/);
+  assert.equal($$('.nig-ev').length, 4, 'chaaron harkatein');
+  assert.match($('.nig-ev[data-id="cc33-ch1-3"]').textContent, /Cash Received · Bill #00119007 · Rs 781/);   // v226 assert.match($$('.nig-ev')[0].textContent, /Shak/); assert.match($$('.nig-ev')[0].textContent, /jeb/);
   // v223 milaan: bill mila / entry nahi, khulasa, filter
   assert.match($('.nig-ev[data-id="cc33-ch1-1"]').textContent, /Liya \+ baqaya/); assert.match($('.nig-ev[data-id="cc33-ch1-1"]').textContent, /Bill #00119008 · Rs 9,000/);
   // v224: bill cancel hua — card par chip, Tawajju, notice, "Bill badle" filter ke cards
@@ -114,12 +117,15 @@ test('malik login → Hazri tab, qataarein, tawajju', async () => {
   assert.match($('.nig-alert').textContent, /Bill cancel hua: #00119008 · Rs 9,000/); assert.match($('.nig-alert').textContent, /naya bill: #00119009 · Rs 100/); assert.match($('.nig-alert').textContent, /Ali/);
   await click('.nig-alert [data-action=nig-open]'); await settle(8); assert.match($('[data-sheet=nig-ev] .nig-match').textContent, /Bill cancel hua → Rs 0/); await click('[data-sheet=nig-ev] [data-sheet-close]');
   await click('[data-action=nig-filter][data-arg=all]');
-  assert.match($('.nig-ev[data-id="cc33-ch1-0"]').textContent, /Paisa nikla/); assert.match($('.nig-ev[data-id="cc33-ch1-0"]').textContent, /Entry nahi/);
-  const milaan = $('.nig-milaan').textContent; assert.match(milaan, /5\s*paisa aaya/); assert.match(milaan, /6\s*bill \/ entry mili/); assert.match(milaan, /1\s*entry nahi/);
-  await click('[data-action=nig-filter][data-arg=missing]'); assert.equal($$('.nig-ev').length, 1, 'sirf Entry nahi');
-  await click('.nig-ev[data-id="cc33-ch1-0"]'); await settle(10); assert.match($('[data-sheet=nig-ev] .nig-match').textContent, /Entry nahi: Paisa nikla/); await click('[data-sheet=nig-ev] [data-sheet-close]');
+  // v226: "Entry nahi" ab "Bina voucher galla khula"; na-dekhe mein shak + bina voucher dono
+  assert.match($('.nig-ev[data-id="cc33-ch1-0"]').textContent, /Paisa nikla/); assert.match($('.nig-ev[data-id="cc33-ch1-0"]').textContent, /Bina voucher galla khula/);
+  const milaan = $('.nig-milaan').textContent; assert.match(milaan, /5\s*paisa aaya/); assert.match(milaan, /6\s*voucher \/ entry mili/); assert.match(milaan, /1\s*bina voucher/);
+  await click('[data-action=nig-filter][data-arg=missing]'); assert.equal($$('.nig-ev').length, 1, 'sirf bina voucher');
+  await click('.nig-ev[data-id="cc33-ch1-0"]'); await settle(10); assert.match($('[data-sheet=nig-ev] .nig-match').textContent, /Bina voucher galla khula: Paisa nikla/); assert.match($('[data-sheet=nig-ev] .nig-match').textContent, /Cash Received voucher/); await click('[data-sheet=nig-ev] [data-sheet-close]');
   await click('[data-action=nig-filter][data-arg=all]');
-  await click('[data-action=nig-filter][data-arg=open]'); assert.equal($$('.nig-ev').length, 1, 'na dekhe shak');
+  assert.match($('main').textContent, /Galla sirf POS ke Cash Received voucher par/);
+  await click('.nig-ev[data-id="cc33-ch1-3"]'); await settle(10); assert.match($('[data-sheet=nig-ev] .nig-match').textContent, /Record mila: Cash Received · Bill #00119007 · Rs 781/); assert.match($('[data-sheet=nig-ev] .nig-match').textContent, /bill counter par .* bana/); await click('[data-sheet=nig-ev] [data-sheet-close]');
+  await click('[data-action=nig-filter][data-arg=open]'); assert.equal($$('.nig-ev').length, 2, 'na dekhe: shak + bina voucher');
   await click('.nig-ev[data-id="cc33-ch1-2"]'); await settle(12);
   const ev = () => $('[data-sheet=nig-ev]'); assert.ok(ev(), 'event sheet');
   assert.equal(ev().querySelectorAll('.nig-strip img').length, 6, '6 tasveerein'); assert.match(ev().textContent, /Us waqt duty par/); assert.match(ev().textContent, /AI: Note jeb/);
@@ -143,7 +149,7 @@ test('malik login → Hazri tab, qataarein, tawajju', async () => {
   assert.ok($('[data-sheet=clip-req]'), 'ghalti par sheet khuli rahe'); rf.elements.to.value = hms(fromSec + 150); await submit(rf); await settle(8); assert.equal($('[data-sheet=clip-req]'), null, 'kamyabi par band');
   const req = [...records].find(([k, v]) => k.includes('cameraClips/req-') && v.status === 'req' && v.title === '');
   assert.ok(req, 'farmaish bani'); assert.equal(req[1].to - req[1].from, 150000); assert.equal(req[1].cam, 'cc33-ch1'); assert.equal(req[1].date, C.pkDate());
-  assert.equal($$('.nig-ev').length, 0, 'na dekhe shak khatam'); await click('[data-action=nig-filter][data-arg=all]'); assert.match($('.nig-sum').textContent, /1\/1\s*shak dekhe/);
+  assert.equal($$('.nig-ev').length, 1, 'na dekhe shak khatam — bina voucher wala (cc33-ch1-0) abhi na dekha');   // v226 await click('[data-action=nig-filter][data-arg=all]'); assert.match($('.nig-sum').textContent, /1\/1\s*shak dekhe/);
   await click('[data-action=nig-day][data-arg="-1"]'); await settle(10); assert.match($('main').textContent, /koi harkat record nahi/); await click('[data-action=nig-day][data-arg="1"]'); await settle(10);
   // galla ka hissa: saaf -> save = nigrani band ka paigham; phir wapas
   await app.data.saveZone('cc33-ch1', null); await settle(8); assert.match($('main').textContent, /galla ka hissa mark nahi/);

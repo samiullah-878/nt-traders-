@@ -110,19 +110,28 @@ class Milaan(unittest.TestCase):
         utc = datetime.datetime(2026, 9, 28, 13, 43, 2, tzinfo=datetime.timezone.utc).timestamp()
         self.assertEqual(ntcam.pk_epoch(datetime.datetime(2026, 9, 28, 18, 43, 2)), utc, '6:43:02 pm PK = 13:43:02 UTC')
 
+    CRV = {'kind': 'crv', 'no': 'v9', 'bill': '00119008', 'at': 1054.0, 'amount': 1215.0, 'party': 'Cash', 'who': 'waqar', 'billAt': 1000.0}
+
     def test_match(self):
+        """v1.6: galla SIRF voucher par — bill ka banna kafi nahi; Cash Received voucher se 60 s pehle .. 90 s baad tak jaiz."""
         m = ntcam.match
-        self.assertEqual(m('aaya', 990, 1005, [self.S])[0], 'ok', 'bill 10 s baad save — theek')
-        self.assertEqual(m('len_den', 1030, 1040, [self.S])[1]['no'], '00119008', 'post ke 45 s tak baqaya usi bill ka')
-        self.assertEqual(m('nikla', 995, 1004, [self.S])[0], 'ok', 'baqaya dena "nikla" lagta hai — bill ke waqt mein theek')
-        self.assertEqual(m('nikla', 1050, 1060, [self.S])[0], 'wait', 'v1.5: post ke 45 s BAAD nikla = bill nahi dhanpta (5000 kisi aur ko)')
-        self.assertEqual(m('aaya', 945, 950, [self.S])[0], 'ok', 'scan shuru (970) se 30 s pehle tak')
-        self.assertEqual(m('aaya', 900, 930, [self.S])[0], 'wait', 'scan se bohat pehle nahi')
-        self.assertEqual(m('nikla', 1990, 2003, [self.S, self.P])[1]['kind'], 'pay', 'de diye pehle')
-        self.assertEqual(m('aaya', 1500, 1510, [self.S])[0], 'wait', 'door ka bill nahi')
-        self.assertEqual(m('ginti', 990, 1005, [])[0], 'none')
+        self.assertEqual(m('aaya', 990, 1005, [self.S])[0], 'wait', 'sirf bill bana, voucher nahi -> intezar (phir missing)')
+        self.assertEqual(m('len_den', 1030, 1040, [self.S, self.CRV])[1]['kind'], 'crv', 'voucher (1054) se 60 s pehle tak len-den usi ka')
+        self.assertEqual(m('nikla', 1140, 1150, [self.S, self.CRV])[0], 'ok', 'voucher ke 90 s baad tak baqaya')
+        self.assertEqual(m('nikla', 1150, 1160, [self.S, self.CRV])[0], 'wait', 'voucher ke 90 s BAAD nikla = bina voucher (5000 kisi aur ko)')
+        self.assertEqual(m('aaya', 900, 990, [self.S, self.CRV])[0], 'wait', 'voucher se 60 s se zyada pehle nahi')
+        self.assertEqual(m('nikla', 1990, 2003, [self.S, self.P])[1]['kind'], 'pay', 'Galla screen de diye pehle')
+        self.assertEqual(m('ginti', 990, 1005, [], khula=False)[0], 'none', 'galla khula hi nahi, sirf haath mein gine')
+        self.assertEqual(m('ginti', 990, 1005, [], khula=True)[0], 'wait', 'galla khol kar ginti, voucher nahi -> shak ki taraf')
+        self.assertEqual(m('kuch_nahi', 990, 1005, [self.CRV])[0], 'none')
         self.assertEqual(m('aaya', 1500, 1510, [], pos_ok=False)[0], 'nopos', 'POS parh na sake to alarm nahi')
         self.assertEqual(m('nikla', 1500, 1510, [], True, False)[0], 'nopos')
+        # POS mein voucher ka khana na mile (vouchers=False): bill ke waqt se, thora khula (scan -30 .. post +120)
+        self.assertEqual(m('aaya', 990, 1005, [self.S], vouchers=False)[0], 'ok')
+        self.assertEqual(m('nikla', 1100, 1110, [self.S], vouchers=False)[1]['no'], '00119008', 'post ke 120 s tak')
+        self.assertEqual(m('nikla', 1130, 1140, [self.S], vouchers=False)[0], 'wait')
+        w = ntcam.window(self.CRV); self.assertEqual(w, (994.0, 1144.0))
+        self.assertEqual(ntcam.window({'kind': 'pay', 'at': 2000.0}), (1880.0, 2120.0))
 
     def test_context_and_flow(self):
         c = ntcam.context_text([self.S, self.P])
@@ -131,6 +140,13 @@ class Milaan(unittest.TestCase):
         self.assertEqual(ntcam.parse_flow('{"flow":"len_den","verdict":"normal","why":"baqaya diya"}'), ('len_den', 'normal', 'baqaya diya'))
         self.assertEqual(ntcam.parse_flow('{"flow":"udaa","verdict":"x"}')[:2], ('saaf_nahi', 'saaf_nahi'))
         self.assertIn('haath seene', ntcam.GALLA_PROMPT2, 'seene par haath shak nahi')
+        self.assertIn('note ginne wali machine', ntcam.GALLA_PROMPT3, 'v1.6: dukaan ka tareeqa AI ko bataya')
+        self.assertEqual(ntcam.parse_khula('{"flow":"ginti","khula": false,"verdict":"normal"}'), False)
+        self.assertEqual(ntcam.parse_khula('{"khula":true}'), True); self.assertIsNone(ntcam.parse_khula('{"flow":"aaya"}'))
+        c2 = ntcam.context_text([self.S, self.CRV])
+        self.assertIn('CASH RECEIVED voucher: Bill #00119008', c2); self.assertNotIn('abhi Cash Received nahi', c2, 'voucher aa gaya to bill "pending" nahi')
+        self.assertIn('galle par abhi Cash Received nahi', ntcam.context_text([self.S]), 'bill bana, cash abhi nahi')
+        self.assertEqual(ntcam.match_doc(self.CRV)['bill'], '00119008'); self.assertEqual(ntcam.match_doc(self.CRV)['billAt'], 1000000)
 
     def _g(self, recs, ok=True):
         writes = []
@@ -146,14 +162,14 @@ class Milaan(unittest.TestCase):
         g, writes = self._g([self.S])
         seen = {}
         def judge(key, crops, ctx, gap, ex=''):
-            seen.update(ctx=ctx, ex=ex, n=len(crops)); return 'len_den', 'normal', 'paisa liya, baqaya diya', 700
+            seen.update(ctx=ctx, ex=ex, n=len(crops)); return 'len_den', 'normal', 'paisa liya, baqaya diya', 700, True
         w = types.SimpleNamespace(cid='c1', name='Galla', cap_day=300)
         fr = [(np.random.rand(120, 160, 3) * 255).astype('uint8') for _ in range(10)]
         with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_judge2', judge):
             g.handle(w, 995.0, 991.0, 1008.0, fr)
         self.assertIn('Bill #00119008', seen['ctx'], 'AI ko bill bataya'); self.assertIn('qalam rakha', seen['ex'], 'malik ki misaal'); self.assertEqual(seen['n'], 10)
         ev = [d for p, d in writes if '/cameraEvents/' in p][0]
-        self.assertEqual((ev['flow'], ev['matchState'], ev['match']['no'], ev['match']['amount']), ('len_den', 'ok', '00119008', 1215.0))
+        self.assertEqual((ev['flow'], ev['matchState'], ev['match']['no'], ev['match']['amount']), ('len_den', 'ok', '00119008', 1215.0), 'voucher ka khana na ho (fake pos) to bill ke waqt se')
         rules = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'firestore.rules'), encoding='utf-8').read()
         blk = rules[rules.index('cameraEvents/{eventId}'):]; blk = blk[:blk.index('\n    }')]
         for k in ev: self.assertIn("'" + k + "'", blk, 'rules mein nahi: ' + k)
@@ -163,22 +179,159 @@ class Milaan(unittest.TestCase):
         import numpy as np
         recs = []
         g, writes = self._g(recs)
+        clips = []
+        g.clips = types.SimpleNamespace(shak=lambda cid, eid, t0, t1, date: clips.append((eid, t0, t1)))
         w = types.SimpleNamespace(cid='c1', name='Galla', cap_day=300)
         fr = [(np.random.rand(120, 160, 3) * 255).astype('uint8') for _ in range(4)]
         with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), \
-             mock.patch.object(ntcam, 'ai_judge2', lambda *a: ('aaya', 'normal', 'paisa galla mein rakha', 500)):
+             mock.patch.object(ntcam, 'ai_judge2', lambda *a: ('aaya', 'normal', 'paisa galla mein rakha', 500)):   # purana 4-tuple bhi chale
             g.handle(w, 3000.0, 2996.0, 3006.0, fr)
             g.handle(w, 4000.0, 3996.0, 4006.0, fr)
         evs = [d for p, d in writes if '/cameraEvents/' in p]; self.assertEqual([e['matchState'] for e in evs], ['wait', 'wait'])
-        recs.append({'kind': 'sale', 'no': 'late1', 'at': 3020.0, 'start': 3000.0, 'amount': 500.0, 'party': ''})   # bill der se POS mein aaya (scan 3000, post 3020)
+        recs.append({'kind': 'sale', 'no': 'late1', 'at': 3020.0, 'start': 3000.0, 'amount': 500.0, 'party': ''})   # bill der se POS mein aaya (voucher ka khana nahi -> bill se)
         g.recheck()
         upd = [(p, d) for p, d in writes if '/cameraEvents/' in p and 'matchAt' in d]
         self.assertEqual(upd[0][1]['matchState'], 'ok'); self.assertEqual(upd[0][1]['match']['no'], 'late1')
         self.assertEqual(len(g.waiting), 1, 'doosra ab bhi intezar mein')
-        g.waiting[0]['made'] -= 400; g.recheck()
-        self.assertEqual([d for p, d in writes if 'matchAt' in d][-1]['matchState'], 'missing'); self.assertEqual(g.waiting, [])
+        g.waiting[0]['made'] -= 130; g.recheck()
+        self.assertEqual([d for p, d in writes if 'matchAt' in d][-1]['matchState'], 'missing', '2 minute baad missing'); self.assertEqual(g.waiting, [])
+        self.assertEqual(clips, [('c1-4000000', 3996.0, 4006.0)], 'v1.6: bina voucher galla khula -> clip bhi')
         rules = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'firestore.rules'), encoding='utf-8').read()
         self.assertIn("affectedKeys().hasOnly(['matchState', 'match', 'matchAt'])", rules)
+
+    def test_voucher_mode_bill_kafi_nahi(self):
+        """v1.6: voucher ka khana mil gaya -> bill bana hona kafi nahi; Cash Received voucher der se aaye to ok, na aaye to missing."""
+        import numpy as np
+        recs = [dict(self.S)]
+        g, writes = self._g(recs)
+        g.pos.vch_ok = lambda: True
+        clips = []
+        g.clips = types.SimpleNamespace(shak=lambda cid, eid, t0, t1, date: clips.append(eid))
+        w = types.SimpleNamespace(cid='c1', name='Galla', cap_day=300)
+        fr = [(np.random.rand(120, 160, 3) * 255).astype('uint8') for _ in range(4)]
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), \
+             mock.patch.object(ntcam, 'ai_judge2', lambda *a: ('len_den', 'normal', 'liya, baqaya diya', 500, True)):
+            g.handle(w, 1010.0, 1005.0, 1020.0, fr)        # bill 1000 par bana, voucher abhi nahi
+            g.handle(w, 1400.0, 1395.0, 1410.0, fr)        # koi record nahi
+        evs = [d for p, d in writes if '/cameraEvents/' in p]; self.assertEqual([e['matchState'] for e in evs], ['wait', 'wait'], 'bill bana hona kafi nahi')
+        recs.append(dict(self.CRV))                        # Cash Received voucher 1054 par aaya (POS 20 s mein likhta hai)
+        g.recheck()
+        upd = [d for p, d in writes if '/cameraEvents/' in p and 'matchAt' in d]
+        self.assertEqual((upd[0]['matchState'], upd[0]['match']['kind'], upd[0]['match']['bill']), ('ok', 'crv', '00119008'))
+        g.waiting[0]['made'] -= 130; g.recheck()
+        self.assertEqual([d for p, d in writes if 'matchAt' in d][-1]['matchState'], 'missing'); self.assertEqual(clips, ['c1-1400000'])
+
+
+class Voucher(unittest.TestCase):
+    """v1.6 — POS mein Cash Received voucher kahan hai: khud dhoondna (find_link), System Notes ka waqt, bill se jodna."""
+    SALES = [{'SaleID': 5001 + i, 'SaleNo': f'{119020 + i:08d}'} for i in range(10)]
+
+    def _sets(self):
+        ids = {r['SaleID'] for r in self.SALES}; nos = {ntcam.norm_no(r['SaleNo']) for r in self.SALES}; raw = {r['SaleNo'] for r in self.SALES}
+        return ids, nos, raw
+
+    def test_norm_aur_notes(self):
+        self.assertEqual(ntcam.norm_no('00119023'), '119023'); self.assertEqual(ntcam.norm_no('CRV-00119023'), '119023'); self.assertEqual(ntcam.norm_no(119023), '119023')
+        t = ntcam.notes_times('Created & Printed By:waqar On:9/29/2026 12:32:54 PM at PC:DESKTOP-KEIME1D\nCash Received By:waqar On:9/29/2026 12:33:48 PM at PC:DESKTOP-032A3V6\nCash Received By:waqar On:9/29/2026 12:33:54 PM at PC:DESKTOP-032A3V6')
+        import datetime
+        utc = datetime.datetime(2026, 9, 29, 7, 33, 48, tzinfo=datetime.timezone.utc).timestamp()
+        self.assertEqual([(w, a) for w, a in t], [('waqar', utc), ('waqar', utc + 6)], '12:33:48 pm PK = 07:33:48 UTC; "Created" nahi gina')
+
+    def test_find_link_voucherno_barabar(self):
+        ids, nos, raw = self._sets()
+        rows = [{'VoucherID': 900 + i, 'VoucherNo': f'CRV-{119020 + i:08d}', 'CreatedOn': None, 'Amount': 100 + i} for i in range(6)]
+        self.assertEqual(ntcam.find_link(rows, ids, nos, raw, skip={'VoucherID', 'CreatedOn'})[:2], ('VoucherNo', 'no'), 'voucher "usi number ka"')
+
+    def test_find_link_saleid_sirf_naam_ke_sath(self):
+        ids, nos, raw = self._sets()
+        rows = [{'VoucherID': 5001 + i, 'RefSaleID': 5001 + i, 'Amount': 5} for i in range(6)]   # VoucherID bhi SaleID jaisa (ittefaq)
+        self.assertEqual(ntcam.find_link(rows, ids, nos, raw)[:2], ('RefSaleID', 'id'), 'naam mein sale/ref -> id; VoucherID skip')
+        rows2 = [{'VoucherID': 5001 + i, 'Amount': 5} for i in range(6)]
+        self.assertIsNone(ntcam.find_link(rows2, ids, nos, raw), 'bina naam ke barabar ID = ittefaq, nahi mana')
+
+    def test_find_link_matn(self):
+        ids, nos, raw = self._sets()
+        rows = [{'VoucherID': i, 'Description': f'Cash received against Sale # {119020 + i:08d} from counter'} for i in range(6)]
+        self.assertEqual(ntcam.find_link(rows, ids, nos, raw)[:2], ('Description', 'text'))
+        self.assertIsNone(ntcam.find_link([{'VoucherID': 1, 'Description': 'kharcha'}] * 5, ids, nos, raw), 'kuch na mile to None')
+
+    def test_pos_sale_of_aur_rec(self):
+        p = ntcam.Pos(None)
+        for r in self.SALES:
+            rec = {'kind': 'sale', 'no': r['SaleNo'], 'at': 1000.0, 'start': 990.0, 'sid': r['SaleID'], 'amount': 700.0, 'party': 'Cash'}
+            p.sale_by_id[r['SaleID']] = rec; p.sale_by_no[ntcam.norm_no(r['SaleNo'])] = rec
+        i = {'mode': 'voucher', 'link': 'VoucherNo', 'link_mode': 'no', 'amount': 'Amount', 'type': 'VType', 'no': 'VoucherNo', 'by': None, 'txt': 'Description'}
+        row = {'VoucherID': 77, 'VoucherNo': 'CRV-00119023', 'Amount': 700, 'VType': 'CRV', 'Description': 'x'}
+        sale = p.sale_of(i, row); self.assertEqual(sale['sid'], 5004)
+        rec = p.vch_rec(i, row, sale, 1054.0, 'CRV-00119023')
+        self.assertEqual((rec['kind'], rec['bill'], rec['amount'], rec['billAt']), ('crv', '00119023', 700.0, 1000.0))
+        other = p.vch_rec(i, {'VoucherID': 78, 'VoucherNo': 'CPV-5', 'Amount': 300, 'VType': 'CPV', 'Description': 'bijli ka bill'}, None, 1100.0, 'CPV-5')
+        self.assertEqual((other['kind'], other['party']), ('voucher', 'bijli ka bill'), 'kharch ka voucher — galla khulna jaiz')
+        i2 = dict(i, link='RefSaleID', link_mode='id'); self.assertEqual(p.sale_of(i2, {'RefSaleID': 5009})['no'], '00119028')
+        i3 = dict(i, link='Description', link_mode='text'); self.assertEqual(p.sale_of(i3, {'Description': 'against 00119021 ok'})['sid'], 5002)
+        self.assertFalse(p.vch_ok()); p.vch = {'mode': 'sale'}; self.assertFalse(p.vch_ok()); self.assertIn('nahi mila', p.vch_text())
+        p.vch = i; self.assertTrue(p.vch_ok()); p.add(rec); self.assertIn('Voucher: mil rahe (Voucher.VoucherNo', p.vch_text())
+
+    def test_poll_notes_mode(self):
+        """Sale ke System Notes wale khane se (koi voucher table na ho)."""
+        import datetime
+        p = ntcam.Pos(None); p.vch = {'mode': 'notes', 'link': 'SystemNotes', 'at': ntcam.now_ms()}
+        p.sale_by_id[5001] = {'kind': 'sale', 'no': '00119023', 'at': 1000.0, 'start': 990.0, 'sid': 5001, 'amount': 781.0, 'party': 'Cash'}
+        class Cur:
+            def execute(s, q, *a): s.q = q
+            def fetchall(s): return [{'SaleID': 5001, 'SaleNo': '00119023', 'TotalSale': 781, 't': 'Created & Printed By:waqar On:9/29/2026 12:32:54 PM\nCash Received By:waqar On:9/29/2026 12:33:48 PM at PC:X'}]
+        p.poll_vouchers(Cur())
+        r = [x for x in p.recs if x['kind'] == 'crv']; self.assertEqual(len(r), 1); self.assertEqual((r[0]['bill'], r[0]['who'], r[0]['amount']), ('00119023', 'waqar', 781.0))
+        self.assertEqual(ntcam.clock(r[0]['at']), '12:33:48 pm')
+
+    def test_discover_fake_sql(self):
+        """Poora dhoond + poll naqli SQL par: Voucher.VoucherNo == SaleNo -> mode voucher; phir naya voucher -> crv rec; file mein yaad."""
+        import datetime, tempfile
+        pk = lambda h, m, sec: datetime.datetime(2026, 9, 29, h, m, sec)
+        sales = [{'SaleID': 5001, 'SaleNo': '00119023'}, {'SaleID': 5002, 'SaleNo': '00119024'}, {'SaleID': 5003, 'SaleNo': '00119025'}]
+        vch = [{'VoucherID': 900, 'VoucherNo': 'CRV-00119023', 'CreatedOn': pk(12, 33, 48), 'Amount': 781, 'VoucherTypeID': 1, 'CreatedBy': 8},
+               {'VoucherID': 901, 'VoucherNo': 'CRV-00119024', 'CreatedOn': pk(12, 40, 0), 'Amount': 2060, 'VoucherTypeID': 1, 'CreatedBy': 8},
+               {'VoucherID': 902, 'VoucherNo': 'CRV-00119025', 'CreatedOn': pk(12, 45, 0), 'Amount': 100, 'VoucherTypeID': 1, 'CreatedBy': 8},
+               {'VoucherID': 903, 'VoucherNo': 'CPV-000012', 'CreatedOn': pk(12, 50, 0), 'Amount': 300, 'VoucherTypeID': 2, 'CreatedBy': 8}]
+        class Cur:
+            def execute(s, q, a=None):
+                s.q, s.a = q, a
+            def fetchall(s):
+                q = s.q
+                if 'INFORMATION_SCHEMA.COLUMNS' in q:
+                    t = s.a[0]
+                    if t == 'Voucher': return [{'COLUMN_NAME': c, 'DATA_TYPE': 'datetime' if c == 'CreatedOn' else ('nvarchar' if c == 'VoucherNo' else 'int')} for c in vch[0]]
+                    return [{'COLUMN_NAME': c, 'DATA_TYPE': 'int' if c == 'SaleID' else 'nvarchar'} for c in ('SaleID', 'SaleNo', 'Description')]
+                if q.startswith('SELECT SaleID, SaleNo FROM dbo.Sale'): return sales
+                if 'FROM dbo.Voucher WHERE [CreatedOn] >= DATEADD(HOUR, -72' in q: return list(reversed(vch))
+                if 'FROM dbo.Voucher WHERE VoucherID >' in q: return [v for v in vch if v['VoucherID'] > s.a[0]]
+                raise AssertionError('anjaan query: ' + q)
+            def fetchone(s):
+                if 'MIN(VoucherID)' in s.q: return {'a': 899}
+                raise AssertionError(s.q)
+        p = ntcam.Pos(None)
+        for r in sales:
+            rec = {'kind': 'sale', 'no': r['SaleNo'], 'at': 1000.0, 'start': 990.0, 'sid': r['SaleID'], 'amount': 50.0, 'party': 'Cash'}
+            p.sale_by_id[r['SaleID']] = rec; p.sale_by_no[ntcam.norm_no(r['SaleNo'])] = rec
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(ntcam, 'VCH_FILE', os.path.join(d, 'pos-voucher.json')):
+            p.poll_vouchers(Cur())
+            self.assertEqual((p.vch['mode'], p.vch['table'], p.vch['link'], p.vch['link_mode'], p.vch['hits']), ('voucher', 'Voucher', 'VoucherNo', 'no', 3))
+            self.assertEqual((p.vch['time'], p.vch['amount'], p.vch['type'], p.vch['no'], p.vch['by']), ('CreatedOn', 'Amount', 'VoucherTypeID', 'VoucherNo', 'CreatedBy'))
+            crv = [r for r in p.recs if r['kind'] == 'crv']; oth = [r for r in p.recs if r['kind'] == 'voucher']
+            self.assertEqual([r['bill'] for r in crv], ['00119023', '00119024', '00119025']); self.assertEqual(ntcam.clock(crv[0]['at']), '12:33:48 pm')
+            self.assertEqual((oth[0]['no'], oth[0]['amount']), ('CPV-000012', 300.0), 'kharch ka voucher = jaiz, lekin bill nahi')
+            self.assertEqual(p.last_vch, 903)
+            self.assertTrue(os.path.exists(os.path.join(d, 'pos-voucher.json')), 'agli dafa dobara nahi dhoondna')
+            self.assertIn('Voucher: mil rahe (Voucher.VoucherNo, aaj', p.vch_text()); self.assertTrue(p.vch_ok())
+            vch.append({'VoucherID': 904, 'VoucherNo': 'CRV-00119023', 'CreatedOn': pk(12, 33, 54), 'Amount': 781, 'VoucherTypeID': 1, 'CreatedBy': 8})
+            p.poll_vouchers(Cur()); self.assertEqual(len([r for r in p.recs if r['kind'] == 'crv']), 4, 'doosra voucher (6 s baad) alag rec, bill wahi')
+
+    def test_clip_padding(self):
+        q = []
+        c = ntcam.Clips(None, {}); c.q = types.SimpleNamespace(put=q.append)
+        c.shak('c1', 'e1', 100.0, 110.0, '2026-09-29')
+        self.assertEqual((q[0]['from'], q[0]['to']), (90000, 130000), '10 s pehle, 20 s baad')
+        c.shak('c1', 'e2', 100.0, 200.0, '2026-09-29'); self.assertEqual(q[1]['to'], 130000, '40 s ki had')
 
 
 class BillBadla(unittest.TestCase):
