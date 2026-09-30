@@ -28,7 +28,7 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '1.9'
+VERSION = '1.9.1'
 
 import base64, collections, getpass, ipaddress, json, os, queue, re, socket, subprocess, sys, threading, time, traceback, urllib.parse
 from concurrent.futures import ThreadPoolExecutor
@@ -54,6 +54,8 @@ LIST_EVERY = 20           # cameras ki list / "nayi tasveer" ki farmaish har 20 
 STATUS_EVERY = 120        # PC zinda hai — har 2 minute
 UPDATE_EVERY = 6 * 3600   # naya program (GitHub se) har 6 ghante
 LOCK_PORT = 47391
+HB_FILE = os.path.join(HOME, 'heartbeat.txt')      # v1.9.1: har 5 s "zinda hoon" — ntwatch.ps1 (har 5 min) 6 min purana dekhe to dobara shuru
+CRASH_FILE = os.path.join(HOME, 'crash.log')       # v1.9.1: native crash (OpenCV / ffmpeg) ka nishan (faulthandler)
 VCH_BEFORE, VCH_AFTER = 60, 90       # v1.6: Cash Received voucher ki window — 1 min pehle se 1.5 min baad tak galla khulna jaiz
 OUT_PAD = 120                        # Galla screen "de diye" / POS refund: ±2 min
 SALE_BEFORE, SALE_AFTER = 30, 120    # SIRF jab POS mein voucher ka khana na mile: bill (scan shuru .. post) ke waqt se
@@ -2415,11 +2417,38 @@ def self_update(lock):
     sys.exit(0)
 
 
+def heartbeat():
+    try:
+        with open(HB_FILE, 'w') as f:
+            f.write(str(int(time.time())))
+    except OSError:
+        pass
+
+
+def guard():
+    """v1.9.1: chup-chaap band hone ke khilaf — native crash crash.log mein, thread ki ghalti ntcam.log mein."""
+    try:
+        import faulthandler
+        fh = open(CRASH_FILE, 'a', buffering=1)
+        fh.write(f'\n== {time.strftime("%Y-%m-%d %H:%M:%S")} shuru v{VERSION} pid {os.getpid()}\n')
+        faulthandler.enable(fh, all_threads=True)
+    except Exception as e:
+        log('faulthandler nahi:', e)
+    try:
+        def hook(args):
+            log('thread ghalti:', getattr(args.thread, 'name', '?'), args.exc_value, ''.join(traceback.format_tb(args.exc_traceback))[-400:])
+        threading.excepthook = hook
+    except Exception:
+        pass
+
+
 def run():
     lock = take_lock()
     if not lock:
         log('pehle se chal raha hai — band')
         return
+    guard()
+    heartbeat()
     log(f'shuru v{VERSION}')
     sec, fire, wait = secrets(), None, 5
     while fire is None:                         # PC on hua, net der se aaye — intezar
@@ -2446,6 +2475,7 @@ def run():
     last_scan = 0
     key_note = False                               # v1.1.2: shuru mein aik dafa AI ki halat cards par
     while True:
+        heartbeat()
         try:
             t = time.time()
             if t - last_list > LIST_EVERY:
@@ -2545,6 +2575,7 @@ def run():
         except Exception as e:
             log('ghalti:', e, traceback.format_exc()[-400:])
             time.sleep(15)
+        heartbeat()
         time.sleep(5)
 
 

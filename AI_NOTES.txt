@@ -1,8 +1,21 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v230   Tareekh: 2026-09-30  (SASTA MODE "galle se paisa bahar kis ko" + budget + aaj ki 5 videos; ntcam.py v1.9; ntfix.txt; RULES)
+Version: v230   Tareekh: 2026-09-30  (SASTA MODE + budget + aaj ki 5 videos; ntcam.py v1.9.1 chowkidar/heartbeat/crash.log; ntfix.txt; RULES)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+0000000000000000000000000000000. ntcam.py v1.9.1 + ntup.txt — CHOWKIDAR (watchdog), heartbeat, crash.log
+------------------------------------------------------------
+30 Sep 6:59 pm: ntcam.log mein aakhri line "sasta .. True jeb normal []" (bara AI ne jeb ko normal kaha), phir 40 min kuch nahi;
+app: camera "Offline 41 min", "Recording: PC band / camera offline". Camera nahi gaya — program chup-chaap band / jama hua (native
+crash ya hang ka log mein nishan nahi). Startup shortcut sirf boot par chalta hai, is liye agle din tak band rehta.
+- ntcam.py v1.9.1: run() -> guard(): faulthandler -> C:\NTCam\crash.log (native crash ka traceback), threading.excepthook -> ntcam.log
+  "thread ghalti". heartbeat(): C:\NTCam\heartbeat.txt har main-loop (5 s) — main loop jama ho (Firestore / SQL hang) to file purani.
+- ntup.txt: ntcam.py mein 'HB_FILE' ho to C:\NTCam\ntwatch.ps1 likhta hai + schtasks "NT Camera chowkidar" har 5 minute: process nahi
+  ya heartbeat 6 min purana -> kill + Startup shortcut se dobara (lock port double nahi chalne deta). ntcam.log mein "chowkidar: NT
+  Camera band tha / jama hua - dobara shuru". Purane ntcam.py (bina heartbeat) par task nahi lagta (warna har 5 min restart).
+- Malik ko: crash ki asal wajah crash.log se milegi — dobara ho to `gc C:\NTCam\crash.log -Tail 30` ka screenshot.
 
 ------------------------------------------------------------
 000000000000000000000000000000. v230 + ntcam.py v1.9 + ntfix.txt — SASTA MODE, BUDGET, AAJ KI 5 VIDEOS, RECORDING FIX
