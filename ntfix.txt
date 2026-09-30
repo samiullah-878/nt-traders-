@@ -1,0 +1,45 @@
+# ntfix.txt — NT Camera ki RECORDING theek karna (ffmpeg seedha utaar kar C:\NTCam\ffmpeg.exe). PC par PowerShell mein AIK command:
+#   irm https://samiullah-878.github.io/nt-traders-/ntfix.txt|iex
+# Kya karta hai: ffmpeg (video banane wala program) GitHub se utarta hai, C:\NTCam\ffmpeg.exe rakhta hai (program is jagah ko sab se
+# pehle dekhta hai), phir NT Camera dobara shuru. 2-3 minute baad app ke Cameras card par "🎬 Recording chalu" aana chahiye.
+$ErrorActionPreference = 'Continue'
+try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch {}
+$d = 'C:\NTCam'
+if (-not (Test-Path "$d\ntcam.py")) { Write-Host '  [!!] C:\NTCam mein program nahi — pehle installer: irm https://samiullah-878.github.io/nt-traders-/ntcam.txt|iex' -ForegroundColor Red; return }
+Write-Host ''
+Write-Host '  NT CAMERA — recording ka fix (ffmpeg)' -ForegroundColor Cyan
+$ok = $false
+if (Test-Path "$d\ffmpeg.exe") {
+  try { $v = (& "$d\ffmpeg.exe" -version 2>&1 | Select-Object -First 1); if ("$v" -match 'ffmpeg version') { $ok = $true; Write-Host "  ffmpeg pehle se hai: $v" } } catch {}
+}
+if (-not $ok) {
+  $zip = "$env:TEMP\ntcam-ffmpeg.zip"; $dir = "$env:TEMP\ntcam-ffmpeg"
+  $urls = @('https://github.com/BtbN/FFmpeg-Builds/releases/latest/download/ffmpeg-master-latest-win64-gpl.zip',
+            'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip')
+  foreach ($u in $urls) {
+    try {
+      Write-Host "  Utaar raha hoon (80-150 MB, 1-3 minute): $u"
+      Remove-Item $zip -ErrorAction SilentlyContinue
+      Invoke-WebRequest $u -OutFile $zip -UseBasicParsing -ErrorAction Stop
+      Remove-Item $dir -Recurse -Force -ErrorAction SilentlyContinue
+      Expand-Archive $zip -DestinationPath $dir -Force
+      $exe = Get-ChildItem $dir -Recurse -Filter 'ffmpeg.exe' | Select-Object -First 1
+      if (-not $exe) { throw 'zip mein ffmpeg.exe nahi' }
+      Copy-Item $exe.FullName "$d\ffmpeg.exe" -Force
+      $v = (& "$d\ffmpeg.exe" -version 2>&1 | Select-Object -First 1)
+      if ("$v" -notmatch 'ffmpeg version') { throw "chal nahi raha: $v" }
+      $ok = $true; Write-Host "  [OK] $v" -ForegroundColor Green
+      Remove-Item $zip, $dir -Recurse -Force -ErrorAction SilentlyContinue
+      break
+    } catch { Write-Host "  [..] Nahi mila / nahi chala: $($_.Exception.Message)" -ForegroundColor Yellow }
+  }
+}
+if (-not $ok) { Write-Host '  [!!] ffmpeg nahi utar saka — internet / antivirus dekhein, phir yahi command dobara.' -ForegroundColor Red; return }
+try { Get-Item "$d\ffmpeg.exe" | Unblock-File -ErrorAction SilentlyContinue } catch {}
+Write-Host '  NT Camera dobara shuru...'
+Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*ntcam.py*' } | ForEach-Object { try { Stop-Process -Id $_.ProcessId -Force -ErrorAction Stop } catch {} }
+Start-Sleep -Seconds 2
+$lnk = Join-Path ([Environment]::GetFolderPath('Startup')) 'NT Camera.lnk'
+if (Test-Path $lnk) { Start-Process $lnk } else { Start-Process 'pythonw' -ArgumentList "`"$d\ntcam.py`" run" -WorkingDirectory $d -WindowStyle Hidden }
+Write-Host "  [OK] Ho gaya. 2-3 minute baad app > Settings > Cameras > Galla card par '🎬 Recording chalu' dekhein." -ForegroundColor Green
+Write-Host "       Agar wahan ab bhi ghalti likhi ho to us ka screenshot bhej dein." -ForegroundColor Green

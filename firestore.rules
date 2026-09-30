@@ -296,7 +296,7 @@ service cloud.firestore {
     match /businesses/noor-traders/cameraStats/{statId} {
       allow read: if isCameraPC();
       allow create, update: if isCameraPC()
-        && request.resource.data.keys().hasOnly(['cam', 'date', 'touches', 'checks', 'shak', 'unchecked', 'at', 'moneyIn', 'moneyOut', 'matched', 'missing', 'alerts']);
+        && request.resource.data.keys().hasOnly(['cam', 'date', 'touches', 'checks', 'shak', 'unchecked', 'at', 'moneyIn', 'moneyOut', 'matched', 'missing', 'alerts', 'cost']);
     }
     // v224: BILL BADLA / CANCEL — PC ne POS mein dekha ke bill cancel hua (kind cancel), raqam kam hui (edit) ya items badle (items).
     // replacedBy = 10 minute ke andar naya sasta bill. Malik parhta / note likhta (generic match). Manager ke liye band.

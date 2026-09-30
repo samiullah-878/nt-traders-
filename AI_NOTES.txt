@@ -1,8 +1,49 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v229   Tareekh: 2026-09-29  (LEN-DEN KI KAHANI + counter ka hissa + voucher ke waqt nikle paise ki 4 jaanch; ntcam.py v1.8; RULES)
+Version: v230   Tareekh: 2026-09-30  (SASTA MODE "galle se paisa bahar kis ko" + budget + aaj ki 5 videos; ntcam.py v1.9; ntfix.txt; RULES)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+000000000000000000000000000000. v230 + ntcam.py v1.9 + ntfix.txt — SASTA MODE, BUDGET, AAJ KI 5 VIDEOS, RECORDING FIX
+------------------------------------------------------------
+Malik (29-30 Sep): API kharcha (Console: key par US$1.03 / 2 din ≈ Rs 0.85 fi jaanch) — v1.8 kahani ~Rs 20,000 mahina "afford
+mushkil". Free (Gemini: tasveerein Google ke paas, had 20-500/din) aur lagatar video (Rs 35-70k) rad. Malik ke saaf lafz: galla KHULA
+rehta hai; asal masla sirf "galle se paisa nikal kar kis ko diya — customer ka baqaya tha ya waise diya"; doosre vouchers (Galla
+screen / kharch) NAHI milane, video se khud dekhega; hisaab alag se aata hai (galla hisaab / aaj ke bills rad). Mashware: baqaya
+tray, POS cash drawer, saamne wala camera, sirf bare baqaye par AI, aaj ki 5 random videos — OK: sasta Claude + budget + (3) + (4).
+Videos 0/26 "recording PC par nahi mili" = PC recording hi nahi kar raha (ffmpeg pip se nahi aaya / antivirus).
+- ntfix.txt (Pages par): `irm https://samiullah-878.github.io/nt-traders-/ntfix.txt|iex` — ffmpeg.exe seedha (BtbN GitHub latest, phir
+  gyan.dev) -> C:\NTCam\ffmpeg.exe (ffmpeg_exe() is ko pehle dekhta hai), -version jaanch, Unblock-File, NT Camera dobara. Pehle
+  se ho to sirf restart.
+- ntcam.py v1.9 (v1.8 ka kahani-for-all HATA — sirf 🔴 par):
+  * Watch settings (cameras doc): budget (Rs/din, 200), second (doosri raaye, True), minChange (Rs, 0). aiCap wahi.
+  * handle -> hasattr key_frames -> kf = key_frames(t0-5, t1+8, CHEAP_N 8, crv waqt) -> handle_cheap. Budget: handle mein
+    st['cost'] >= w.budget = cap ki tarah (unchecked +1, AI nahi). minChange: sab crv ka change maloom aur 0 < change < minChange ->
+    AI nahi (moneyIn/matched +1).
+  * ai_cheap (CHEAP_PROMPT, tasveerein small_b64 288 px q60, max_tokens 160, MODEL) -> parse_cheap {nikla, kis: wahi|aur|jeb|haath|?,
+    note, why}. judge_cheap(res, crvs, tender): nikla nahi / haath -> []; jeb -> jeb; crv nahi -> novoucher; aur -> aurko; ? -> unsure;
+    tender + sab change maloom: mx <= 0 -> nochange, note bada & mx < 1000 -> badanote. SIRF crv (Galla screen / kharch / refund nahi).
+  * nikla nahi -> koi doc nahi (checks+1, moneyIn+1, cost). ✅ (nikla wahi, crv) -> cameraEvents verdict normal, flow nikla, matchState
+    ok, match crv, why "Baqaya usi customer ko — ..", frames 8 + times. 🔴 candidate (flags) + second on -> ai_story (20 tasveerein,
+    CONFIRM_MODELS) -> judge_story; bara AI mein sirf baqaya wahi aur koi flag nahi -> ✅ normal ("Doosre AI ne dekha: .."); warna flags
+    jama, story + 20 frames, verdict shak, clip, khabar (create shak). second off -> 🔴 seedha (story []). novoucher -> matchState
+    'missing'. cameras.aiTest "AI chal raha hai — aakhri .. (Baqaya|Shak)".
+  * Kharcha: claude_call usage -> COST['last'] = cost_rs(model, in, out) (PRICE $/M: haiku 1/5, sonnet-5-5 2/10, sonnet-4-6 3/15;
+    FX_PKR 280 — andaza) -> stats 'cost' (round 3; stat() old se load). RULES: cameraStats + 'cost'.
+  * daily_video(): har len-den par ehtimaal DAILY_VIDEOS/220, roz max 5 -> cameraClips kind 'daily' '<cid>-d-<ms>' title "Aaj ki video
+    N", [t0-5, t1+10] (SHAK_MAX had), eventId ''.
+  * nopay_check, bill badla, missing (wait 2 min) wahi. FLAG_TEXT + novoucher, unsure.
+  * ntcam_test.py 53 (Kahani tests v1.9 par: cheap -> 🔴 -> kahani -> shak/story/frames 20/rules keys; ✅ sirf chhota AI (8 frames);
+    nikla nahi = koi card nahi; second off + novoucher missing; doosri raaye ne bachaya; budget / minChange / cost_rs / daily 5;
+    parse_cheap + judge_cheap har raasta).
+- App v230: camera form (galla): budget, minChange, second (checkbox; save sirf jab galla form — v.budget != null). data.saveCamera
+  extra keys. Camera card costLine: "💸 Aaj AI kharcha: Rs 143 / 200 · doosri raaye on · sirf baqaya > Rs 500" (S.camStats ya
+  camDayStats). Nigrani: outLine "💸 Galle se paisa bahar N — M ✅ · K 🔴 (x na dekhe) | AI kharcha: Rs .. / .." (agent >= '1.9',
+  flow nikla); dailyVideos() "🎲 Aaj ki N videos" (kind daily, ▶). FLAG + novoucher / unsure. CSS .nig-out/.nig-cost. v230.
+- Malik ko: kharcha ~Rs 130 roz (Rs 4,000 mahina); minChange 500 par ~Rs 1,500. Doosri raaye off = zyada 🔴 khud dekhne. Console
+  par asal bill. Tray / drawer / saamne camera — dukaan ke faisle.
+- Yahan test NAHI: asal chhote AI ka "kis" (aur / wahi) — galat ho to 🔴 zyada ya kam; ntfix asal PC par.
 
 ------------------------------------------------------------
 00000000000000000000000000000. v229 + ntcam.py v1.8 — LEN-DEN KI KAHANI (parchi / paisa / baqaya / kis ko) + RULES

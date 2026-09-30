@@ -1,6 +1,6 @@
 {
-  "version": "v229",
+  "version": "v230",
   "variant": "Production",
-  "buildDate": "2026-09-29",
-  "notes": "Len-den ki kahani (kis ne parchi / paisa diya, baqaya kis ko, galle se kis ko) + Counter ka hissa + voucher ke waqt nikle paise ki jaanch. ntcam.py v1.8. RULES publish zaroori."
+  "buildDate": "2026-09-30",
+  "notes": "Sasta mode: galle se paisa bahar kis ko (chhota AI), 🔴 par hi kahani; roz ka AI budget rupay mein; sirf bare baqaye par AI; aaj ki 5 videos. ntcam.py v1.9, ntfix.txt (recording). RULES publish zaroori."
 }

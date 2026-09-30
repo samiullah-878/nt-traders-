@@ -360,40 +360,103 @@ class Kahani(unittest.TestCase):
         import collections
         import threading
         w = ntcam.Watch.__new__(ntcam.Watch); threading.Thread.__init__(w, daemon=True); w.cid, w.name, w.cap_day = 'c1', 'Galla', 300
+        w.budget, w.second, w.min_change = 200.0, True, 0
         w.tape = collections.deque([(900 + k * 0.5, f'J{k}', 0.0) for k in range(600)], maxlen=720)
         return w
 
     def test_handle_story(self):
+        """v1.9: sasta sawal -> 🔴 candidate (kisi aur ko) -> doosri raaye (bara AI kahani) -> pakka shak + clip + story."""
         g, writes, clips = self._g([dict(self.CRV)])
         calls = []
+        def cheap(key, frames, ctx, gap):
+            calls.append(('cheap', len(frames))); return {'nikla': True, 'kis': 'aur', 'note': 'bada', 'why': 'baayen wale ko note diye'}, 400, ntcam.MODEL
         def story(key, frames, ctx, ex, models):
-            calls.append(models)
-            if models == (ntcam.MODEL,):
-                return self.st(('daayen', 'parchi_paisa', '', ''), ('baayen', 'diya', 'aur', '')), 700, ntcam.MODEL
-            return self.st(('daayen, neela', 'parchi_paisa', '', ''), ('baayen, safed', 'khara', '', ''), ('baayen, safed', 'diya', 'aur', '')), 1500, 'claude-sonnet-5-5'
-        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_story', story):
+            calls.append(('story', models))
+            return self.st(('daayen, neela', 'parchi_paisa', '', ''), ('baayen, safed', 'khara', '', ''), ('baayen, safed', 'diya', 'aur', 'bada')), 1500, 'claude-sonnet-5-5'
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_cheap', cheap), mock.patch.object(ntcam, 'ai_story', story):
             g.handle(self._w(), 1045.0, 1040.0, 1070.0, [], True)
-        self.assertEqual(calls, [(ntcam.MODEL,), ntcam.CONFIRM_MODELS], 'lal nishan -> bara AI dobara')
+        self.assertEqual(calls, [('cheap', 8), ('story', ntcam.CONFIRM_MODELS)], 'pehle 8 chhoti tasveerein, 🔴 par bara AI')
         ev = [d for p, d in writes if '/cameraEvents/' in p][0]; fr = [d for p, d in writes if '/cameraFrames/' in p][0]
-        self.assertEqual((ev['verdict'], ev['flags'], ev['matchState'], ev['match']['kind']), ('shak', ['aurko'], 'ok', 'crv'))
-        self.assertIn('Voucher ke waqt paisa kisi aur ko (baayen, safed)', ev['why']); self.assertEqual(ev['model'], 'claude-haiku-4-5-20251001+claude-sonnet-5-5')
-        self.assertEqual(len(ev['story']), 3); self.assertEqual(ev['story'][2]['kya'], 'diya'); self.assertEqual(ev['story'][0]['t'], fr['times'][0])
-        self.assertEqual(len(fr['frames']), 20); self.assertEqual(len(fr['times']), 20); self.assertTrue(1054000 in fr['times'], 'voucher wali tasveer')
+        self.assertEqual((ev['verdict'], ev['flow'], ev['matchState'], ev['match']['kind']), ('shak', 'nikla', 'ok', 'crv'))
+        self.assertIn('aurko', ev['flags']); self.assertIn('badanote', ev['flags'], 'baqaya 140, bada note')
+        self.assertIn('Voucher ke waqt paisa kisi aur ko', ev['why']); self.assertEqual(ev['model'], 'claude-haiku-4-5-20251001+claude-sonnet-5-5')
+        self.assertEqual(len(ev['story']), 3); self.assertEqual(len(fr['frames']), 20, '🔴 par kahani ki 20 tasveerein'); self.assertIn(1054000, fr['times'])
         self.assertEqual(clips, ['c1-1045000']); self.assertEqual(g.by_bill['00119126'], 'c1-1045000')
         rules = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'firestore.rules'), encoding='utf-8').read()
-        for k in ("'story', 'flags'", "'frames', 'at', 'cam', 'times'", 'frames.size() <= 24', 'story.size() <= 16'):
+        for k in ("'story', 'flags'", "'frames', 'at', 'cam', 'times'", 'frames.size() <= 24', 'story.size() <= 16', "'alerts', 'cost'"):
             self.assertIn(k, rules)
         self.assertLessEqual(set(ev), {'cam', 'camName', 'at', 'date', 'verdict', 'why', 'thumb', 'n', 'ms', 'model', 'agent', 'flow', 'matchState', 'match', 'start', 'end', 'story', 'flags'})
+        st = g.stats[('c1', ntcam.pk_date(1045.0))]; self.assertEqual((st['checks'], st['moneyOut'], st['shak']), (1, 1, 1))
 
     def test_handle_story_normal_ek_hi_AI(self):
+        """✅ baqaya usi customer ko = sirf chhota AI, halka card, koi clip nahi."""
         g, writes, clips = self._g([dict(self.CRV)])
         calls = []
-        def story(key, frames, ctx, ex, models):
-            calls.append(models); return self.st(('daayen', 'parchi_paisa', '', ''), ('daayen', 'baqaya', 'wahi', 'chhota')), 700, ntcam.MODEL
-        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_story', story):
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), \
+             mock.patch.object(ntcam, 'ai_cheap', lambda *a: (calls.append(1) or {'nikla': True, 'kis': 'wahi', 'note': 'chhota', 'why': 'baqaya diya'}, 400, ntcam.MODEL)), \
+             mock.patch.object(ntcam, 'ai_story', lambda *a: self.fail('bara AI nahi lagna chahiye')):
             g.handle(self._w(), 1045.0, 1040.0, 1070.0, [], True)
         ev = [d for p, d in writes if '/cameraEvents/' in p][0]
-        self.assertEqual((ev['verdict'], ev['flags'], len(calls)), ('normal', [], 1), 'seedha len-den = sirf chhota AI'); self.assertEqual(clips, [])
+        self.assertEqual((ev['verdict'], ev['flags'], ev['matchState'], len(calls)), ('normal', [], 'ok', 1)); self.assertIn('Baqaya usi customer ko', ev['why']); self.assertEqual(clips, [])
+        self.assertEqual(len([d for p, d in writes if '/cameraFrames/' in p][0]['frames']), 8)
+
+    def test_cheap_nikla_nahi_koi_card_nahi(self):
+        g, writes, clips = self._g([dict(self.CRV)])
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), \
+             mock.patch.object(ntcam, 'ai_cheap', lambda *a: ({'nikla': False, 'kis': '', 'note': '', 'why': 'paisa rakha'}, 300, ntcam.MODEL)):
+            g.handle(self._w(), 1045.0, 1040.0, 1070.0, [], True)
+        self.assertEqual([p for p, d in writes if '/cameraEvents/' in p or '/cameraFrames/' in p], [], 'nikla nahi = na card na tasveerein')
+        st = g.stats[('c1', ntcam.pk_date(1045.0))]; self.assertEqual((st['checks'], st['moneyIn'], st['moneyOut']), (1, 1, 0))
+
+    def test_cheap_second_off_aur_bina_voucher(self):
+        """doosri raaye off: 🔴 seedha; voucher hi nahi: 'novoucher' + matchState missing."""
+        g, writes, clips = self._g([])
+        w = self._w(); w.second = False
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), \
+             mock.patch.object(ntcam, 'ai_cheap', lambda *a: ({'nikla': True, 'kis': 'aur', 'note': '', 'why': 'kisi ko diya'}, 300, ntcam.MODEL)), \
+             mock.patch.object(ntcam, 'ai_story', lambda *a: self.fail('second off')):
+            g.handle(w, 1045.0, 1040.0, 1070.0, [], True)
+        ev = [d for p, d in writes if '/cameraEvents/' in p][0]
+        self.assertEqual((ev['verdict'], ev['flags'], ev['matchState'], ev['story']), ('shak', ['novoucher'], 'missing', [])); self.assertEqual(clips, ['c1-1045000'])
+
+    def test_cheap_doosri_raaye_ne_bachaya(self):
+        """chhota AI 'aur' kahe lekin bara AI kahani mein sirf baqaya wahi -> ✅ normal."""
+        g, writes, clips = self._g([dict(self.CRV)])
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), \
+             mock.patch.object(ntcam, 'ai_cheap', lambda *a: ({'nikla': True, 'kis': 'aur', 'note': '', 'why': 'shayad kisi aur ko'}, 300, ntcam.MODEL)), \
+             mock.patch.object(ntcam, 'ai_story', lambda *a: (self.st(('daayen', 'parchi_paisa', '', ''), ('daayen', 'baqaya', 'wahi', 'chhota')), 1200, 'claude-sonnet-5-5')):
+            g.handle(self._w(), 1045.0, 1040.0, 1070.0, [], True)
+        ev = [d for p, d in writes if '/cameraEvents/' in p][0]
+        self.assertEqual((ev['verdict'], ev['flags']), ('normal', [])); self.assertIn('Doosre AI ne dekha', ev['why']); self.assertEqual(clips, [])
+
+    def test_budget_min_change_daily(self):
+        w = self._w(); w.budget = 1.0; w.min_change = 500
+        g, writes, clips = self._g([dict(self.CRV, change=140.0)])
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_cheap', lambda *a: self.fail('chhota baqaya = AI nahi')):
+            g.handle(w, 1045.0, 1040.0, 1070.0, [], True)
+        self.assertEqual([p for p, d in writes if '/cameraEvents/' in p], []); self.assertEqual(g.stats[('c1', ntcam.pk_date(1045.0))]['matched'], 1)
+        w.min_change = 0; g.last_ai = {}
+        g.stats[('c1', ntcam.pk_date(1045.0))]['cost'] = 1.2
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_cheap', lambda *a: self.fail('budget poora')):
+            g.handle(w, 1145.0, 1140.0, 1170.0, [], True)
+        self.assertEqual(g.stats[('c1', ntcam.pk_date(1045.0))]['unchecked'], 1, 'budget poora = bina jaanch ginti')
+        self.assertEqual(ntcam.cost_rs('claude-haiku-4-5-20251001', 4000, 100), round((4000 * 1 + 100 * 5) / 1e6 * 280, 3))
+        q = []; g.clips = types.SimpleNamespace(q=types.SimpleNamespace(put=q.append), shak=lambda *a: None)
+        with mock.patch('random.random', lambda: 0.0):
+            for k in range(8):
+                g.daily_video(w, 2000.0 + k * 100, 2010.0 + k * 100, '2026-09-30')
+        self.assertEqual(len(q), 5, 'roz 5 se zyada nahi'); self.assertEqual((q[0]['kind'], q[0]['title'], q[0]['from'], q[0]['to']), ('daily', 'Aaj ki video 1', 1995000, 2020000))
+
+    def test_parse_judge_cheap(self):
+        r = ntcam.parse_cheap('{"nikla": "true", "kis": "AUR", "note": "bada", "why": "x"}'); self.assertEqual((r['nikla'], r['kis'], r['note']), (True, 'aur', 'bada'))
+        self.assertEqual(ntcam.parse_cheap('kuch nahi')['nikla'], False); self.assertEqual(ntcam.parse_cheap('{"nikla":true,"kis":"udta"}')['kis'], '?')
+        J = lambda kis, crvs, note='', tender=True: ntcam.judge_cheap({'nikla': True, 'kis': kis, 'note': note, 'why': ''}, crvs, tender)[0]
+        crv = dict(self.CRV)
+        self.assertEqual(J('wahi', [crv]), []); self.assertEqual(J('haath', []), []); self.assertEqual(ntcam.judge_cheap({'nikla': False}, [], True), ([], []))
+        self.assertEqual(J('jeb', [crv]), ['jeb']); self.assertEqual(J('wahi', []), ['novoucher']); self.assertEqual(J('aur', [crv]), ['aurko']); self.assertEqual(J('?', [crv]), ['unsure'])
+        self.assertEqual(J('wahi', [dict(crv, change=0.0)]), ['nochange']); self.assertEqual(J('wahi', [dict(crv, change=0.0)], tender=False), [])
+        self.assertEqual(J('wahi', [crv], note='bada'), ['badanote']); self.assertEqual(J('wahi', [dict(crv, change=3140.0)], note='bada'), [])
+        for k in ('nikla', 'kis', 'wahi', 'jeb', 'haath'): self.assertIn(k, ntcam.CHEAP_PROMPT)
 
     def test_nopay(self):
         crv = dict(self.CRV, at=1100.0)

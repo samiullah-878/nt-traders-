@@ -1058,13 +1058,17 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     await fast(async tx => { tx.set(ref('cameraPC', 'config'), { uid, email, at: Date.now(), by: actor() }); audit(tx, 'camera pc', 'config', null, { email }, 'Naya camera PC code'); });
     return `${id}-${secret}`;
   }
-  async function saveCamera(id, { name, role, enabled, aiCap, sens }) {
+  async function saveCamera(id, { name, role, enabled, aiCap, sens, budget, minChange, second }) {   // v230: budget / minChange / second (PC v1.9)
     ownerOnly();
     const n = String(name || '').trim().slice(0, 40);
     if (!n) throw new Error('Camera ka naam likhein.');
     const cap = Math.round(Number(aiCap));
+    const extra = {};
+    if (budget != null && budget !== '') { const b = Math.round(Number(budget)); extra.budget = Number.isFinite(b) && b >= 10 ? Math.min(5000, b) : 200; }
+    if (minChange != null && minChange !== '') { const m = Math.round(Number(minChange)); extra.minChange = Number.isFinite(m) && m > 0 ? Math.min(100000, m) : 0; }
+    if (second != null) extra.second = !!second;
     await quick(sdk.setDoc(ref('cameras', id), { name: n, role: CAM_ROLES.includes(role) ? role : 'view', enabled: enabled !== false,
-      aiCap: Number.isFinite(cap) && cap > 0 ? Math.min(2000, cap) : 300, sens: CAM_SENS.includes(sens) ? sens : 'mid' }, { merge: true }));
+      aiCap: Number.isFinite(cap) && cap > 0 ? Math.min(2000, cap) : 300, sens: CAM_SENS.includes(sens) ? sens : 'mid', ...extra }, { merge: true }));
   }
   /* ---------- v222: GALLA NIGRANI (malik) ---------- */
   const CAM_SENS = ['low', 'mid', 'high'];
