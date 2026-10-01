@@ -1,4 +1,7 @@
 # ntcam.py — Noor Traders Hazri: dukaan ke CAMERAS (shop PC par chalta hai). Hissa A.
+# v2.0: FREE AI — Gemini (free) pehle, had poori / band ho to DeepSeek (sasta), Claude sirf jab malik chune (cameras.ai: free|claude|off).
+#       NT DOCTOR — app ka button cameraPC/cmd likhta hai, PC khud check + theek kar ke cameraPC/doctor mein report. NVR (8 channel)
+#       aur AI keys bhi app se (cmd.secret — PC parh kar secrets.json mein, cmd doc mita deta hai). POS server ki ghari ka farq.
 # v1.9: SASTA MODE — "galle se paisa bahar kis ko?" Har len-den par 6-8 CHHOTI tasveerein chhote AI ko (≈ Rs 0.3): nikla nahi -> na card
 #       na kharcha; usi customer ko jis ka Cash Received voucher -> ✅ baqaya (halka card); warna 🔴 (kisi aur ko / jeb / bina voucher /
 #       baqaya banta nahi tha / bada note) -> (doosri raaye on ho to) bara AI poori kahani -> pakka 🔴 = khabar + video. Roz ka BUDGET
@@ -28,7 +31,7 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '1.9.1'
+VERSION = '2.0'
 
 import base64, collections, getpass, ipaddress, json, os, queue, re, socket, subprocess, sys, threading, time, traceback, urllib.parse
 from concurrent.futures import ThreadPoolExecutor
@@ -49,6 +52,11 @@ CHEAP_N, CHEAP_W, CHEAP_Q = 8, 288, 60   # v1.9: sasta sawal — 8 tasveerein 28
 FX_PKR = 280.0                       # v1.9: kharcha rupay mein dikhane ke liye (andaza)
 PRICE = {'claude-haiku-4-5-20251001': (1.0, 5.0), 'claude-sonnet-5-5': (2.0, 10.0), 'claude-sonnet-4-6': (3.0, 15.0)}   # $/M tokens (in, out)
 DAILY_VIDEOS = 5                     # v1.9: roz itni len-den ki video bila tarteeb (bina AI)
+GEM_CHEAP = ('gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite')   # v2.0: free (~500/din)
+GEM_BIG = ('gemini-3.5-flash', 'gemini-2.5-flash')                                         # free (~20/din)
+DS_MODELS = ('deepseek-flash', 'deepseek-v4-flash-vision-exp')                             # sasta (paisa)
+DS_PRICE = (0.22, 0.66)              # $/M (andaza)
+QUOTA = {'day': '', 'out': set()}    # aaj kaunse model ki free had poori (429)
 SHOT_EVERY = 300          # har 5 minute aik tasveer (app ke liye)
 LIST_EVERY = 20           # cameras ki list / "nayi tasveer" ki farmaish har 20 second
 STATUS_EVERY = 120        # PC zinda hai — har 2 minute
@@ -301,6 +309,13 @@ class Fire:
         if r.status_code != 200:
             raise RuntimeError(f'query {coll}: {r.status_code} {r.text[:160]}')
         return [{**{k: dec(v) for k, v in row['document'].get('fields', {}).items()}, 'id': row['document']['name'].rsplit('/', 1)[-1]} for row in r.json() if row.get('document')]
+
+    def delete(self, path):
+        import requests
+        r = requests.delete(self.root + path, headers=self._h(), timeout=25)
+        if r.status_code not in (200, 404):
+            raise RuntimeError(f'delete {path}: {r.status_code} {r.text[:200]}')
+        return True
 
     def patch(self, path, data):
         """Sirf yahi fields likho (baqi — misal malik ka rakha naam — waise hi rahein). Doc na ho to ban jata hai."""
@@ -638,6 +653,7 @@ class Watch(threading.Thread):
         self.budget = float(cam.get('budget') or 200)          # v1.9: roz ka AI kharcha (Rs)
         self.second = cam.get('second', True) is not False      # v1.9: 🔴 se pehle bara AI (doosri raaye)
         self.min_change = float(cam.get('minChange') or 0)     # v1.9: AI sirf jab POS ka baqaya is se zyada (0 = sab)
+        AI_SET['mode'] = cam.get('ai') if cam.get('ai') in ('free', 'claude', 'off') else 'free'   # v2.0
         self.motion.set(self.sens)
 
     def stop(self):
@@ -887,6 +903,7 @@ class Pos(threading.Thread):
         self.vch, self.vch_at, self.vch_err, self.last_vch = None, 0, '', 0
         self.sale_by_id, self.sale_by_no = {}, {}
         self.tender_seen = False                               # v1.8: kabhi CashReceived > bill dekha (baqaya POS se maloom)
+        self.skew = None                                       # v2.0: POS server ghari - PC ghari (second)
 
     def ok_sql(self):
         return time.time() - self.sql_at < 120
@@ -953,6 +970,11 @@ class Pos(threading.Thread):
                               login_timeout=10, timeout=20, as_dict=True)
         try:
             cur = con.cursor()
+            try:                                           # v2.0: POS server ki ghari ka farq (36 min wala masla)
+                cur.execute('SELECT GETDATE() AS d')
+                self.skew = round(pk_epoch(cur.fetchone()['d']) - time.time())
+            except Exception:
+                pass
             if not self.last_sale:
                 cur.execute("SELECT ISNULL(MIN(SaleID), 0) - 1 AS a FROM dbo.Sale WHERE CreatedOn >= DATEADD(HOUR, -4, GETDATE())")
                 self.last_sale = int(cur.fetchone()['a'] or 0)
@@ -1447,7 +1469,91 @@ def claude_call(key, content, models, max_tokens=700):
     raise RuntimeError(last or 'model nahi mila')
 
 
-COST = {'last': 0.0}
+COST = {'last': 0.0, 'gem': 0}
+
+
+def _gem_parts(content):
+    out = []
+    for c in content:
+        if c.get('type') == 'text':
+            out.append({'text': c['text']})
+        elif c.get('type') == 'image':
+            out.append({'inline_data': {'mime_type': c['source'].get('media_type', 'image/jpeg'), 'data': c['source']['data']}})
+    return out
+
+
+def _ds_parts(content):
+    out = []
+    for c in content:
+        if c.get('type') == 'text':
+            out.append({'type': 'text', 'text': c['text']})
+        elif c.get('type') == 'image':
+            out.append({'type': 'image_url', 'image_url': {'url': f"data:{c['source'].get('media_type', 'image/jpeg')};base64,{c['source']['data']}", 'detail': 'low'}})
+    return out
+
+
+def ai_mode():
+    return str(AI_SET.get('mode') or 'free')
+
+
+AI_SET = {'mode': 'free'}              # Galla Watch se (cameras.ai)
+
+
+def ai_call(content, big=False, max_tokens=700, claude_models=None):
+    """v2.0: mode 'free' -> Gemini (cheap / big) -> DeepSeek (key ho to) ; 'claude' -> Claude ; 'off' -> AI nahi.
+    Wapas (matn, ms, model). COST['last'] = rupay (Gemini 0). Kuch na chale to RuntimeError (AI_PAUSE lagta hai)."""
+    import requests
+    mode, sec = ai_mode(), secrets()
+    today = pk_date()
+    if QUOTA['day'] != today:
+        QUOTA['day'], QUOTA['out'] = today, set()
+    if mode == 'off':
+        raise RuntimeError('AI band (malik ki setting)')
+    if mode == 'claude':
+        return claude_call(sec.get('claudeKey'), content, claude_models or ((CONFIRM_MODELS if big else (MODEL,))), max_tokens)
+    errs = []
+    gk = clean_key(sec.get('geminiKey'))
+    if gk:
+        for model in (GEM_BIG if big else GEM_CHEAP):
+            if model in QUOTA['out']:
+                continue
+            t0 = time.time()
+            try:
+                r = requests.post(f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent', timeout=120,
+                                  headers={'x-goog-api-key': gk, 'content-type': 'application/json'},
+                                  json={'contents': [{'role': 'user', 'parts': _gem_parts(content)}],
+                                        'generationConfig': {'maxOutputTokens': max_tokens, 'temperature': 0.2}})
+            except Exception as e:
+                errs.append(f'{model}: {e}'); continue
+            if r.status_code == 429:
+                QUOTA['out'].add(model); errs.append(f'{model}: free had poori'); continue
+            if r.status_code in (400, 404) and ('not found' in r.text.lower() or 'model' in r.text.lower()) and 'API key' not in r.text:
+                QUOTA['out'].add(model); errs.append(f'{model}: model nahi'); continue
+            if r.status_code != 200:
+                errs.append(f'{model}: {r.status_code} {r.text[:120]}'); break
+            j = r.json()
+            txt = ' '.join(p.get('text', '') for c in j.get('candidates', [])[:1] for p in (c.get('content') or {}).get('parts', []))
+            COST['last'], COST['gem'] = 0.0, COST['gem'] + 1
+            return txt, int((time.time() - t0) * 1000), model
+    dk = clean_key(sec.get('deepseekKey'))
+    if dk:
+        for model in DS_MODELS:
+            if model in QUOTA['out']:
+                continue
+            t0 = time.time()
+            r = requests.post('https://api.deepseek.com/chat/completions', timeout=120,
+                              headers={'Authorization': f'Bearer {dk}', 'content-type': 'application/json'},
+                              json={'model': model, 'max_tokens': max_tokens, 'temperature': 0.2, 'messages': [{'role': 'user', 'content': _ds_parts(content)}]})
+            if r.status_code in (400, 404) and 'model' in r.text.lower():
+                QUOTA['out'].add(model); errs.append(f'{model}: model nahi'); continue
+            if r.status_code != 200:
+                errs.append(f'{model}: {r.status_code} {r.text[:120]}'); break
+            j = r.json()
+            txt = ((j.get('choices') or [{}])[0].get('message') or {}).get('content') or ''
+            u = j.get('usage') or {}
+            COST['last'] = round(((u.get('prompt_tokens') or 0) * DS_PRICE[0] + (u.get('completion_tokens') or 0) * DS_PRICE[1]) / 1e6 * FX_PKR, 3)
+            return txt, int((time.time() - t0) * 1000), model
+    raise RuntimeError('AI nahi chala — ' + ('; '.join(errs)[:200] if errs else 'Gemini / DeepSeek key nahi (app > Cameras > AI keys)'))
 
 
 def cost_rs(model, tin, tout):
@@ -1493,7 +1599,7 @@ def ai_story(key, frames, ctx, examples='', models=(MODEL,)):
     content = [{'type': 'text', 'text': KAHANI_PROMPT.format(n=len(frames), ctx=ctx, examples=examples)}]
     for i, (t, b) in enumerate(frames, 1):
         content += [{'type': 'text', 'text': f'Tasveer {i} ({clock(t)})'}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': b}}]
-    txt, ms, model = claude_call(key, content, models)
+    txt, ms, model = ai_call(content, models != (MODEL,), 900, models)
     return parse_story(txt, len(frames)), ms, model
 
 
@@ -1535,7 +1641,7 @@ def ai_cheap(key, frames, ctx, gap):
     content = [{'type': 'text', 'text': CHEAP_PROMPT.format(n=len(frames), gap=gap, ctx=ctx)}]
     for i, (t, b) in enumerate(frames, 1):
         content += [{'type': 'text', 'text': f'Tasveer {i} ({clock(t)})'}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': small_b64(b)}}]
-    txt, ms, model = claude_call(key, content, (MODEL,), max_tokens=160)
+    txt, ms, model = ai_call(content, False, 200)
     return parse_cheap(txt), ms, model
 
 
@@ -1718,7 +1824,7 @@ class Galla(threading.Thread):
                 old = {}
             self.stats[k] = {'cam': cid, 'date': date, **{n: int(old.get(n) or 0) for n in
                              ('touches', 'checks', 'shak', 'unchecked', 'moneyIn', 'moneyOut', 'matched', 'missing', 'alerts')},
-                             'cost': round(float(old.get('cost') or 0), 3)}      # v1.9: aaj ka AI kharcha (Rs)
+                             'cost': round(float(old.get('cost') or 0), 3), 'gem': int(old.get('gem') or 0)}      # v1.9 kharcha (Rs), v2.0 Gemini free ginti
         return self.stats[k]
 
     def bump(self, cid, date, **kv):
@@ -1822,7 +1928,10 @@ class Galla(threading.Thread):
         if (not frames and not hasattr(w, 'key_frames')) or at - self.last_ai.get(w.cid, 0) < COOLDOWN:
             return
         key = secrets().get('claudeKey')
-        if not key or st['checks'] >= w.cap_day or float(st.get('cost') or 0) >= getattr(w, 'budget', 1e9) or time.time() < self.pause_until:
+        if ai_mode() == 'free':
+            sk = secrets()
+            key = sk.get('geminiKey') or sk.get('deepseekKey')     # free mode: Claude ka paisa nahi
+        if not key or ai_mode() == 'off' or st['checks'] >= w.cap_day or float(st.get('cost') or 0) >= getattr(w, 'budget', 1e9) or time.time() < self.pause_until:
             self.bump(w.cid, date, unchecked=1)
             return
         self.last_ai[w.cid] = at
@@ -1911,7 +2020,7 @@ class Galla(threading.Thread):
         gap = max(0.5, round((kf[-1][0] - kf[0][0]) / max(1, len(kf) - 1), 1))
         try:
             res, ms, model = ai_cheap(key, kf, ctx, gap)
-            self.bump(w.cid, date, checks=1, cost=COST['last'])
+            self.bump(w.cid, date, checks=1, cost=COST['last'], gem=1 if str(model).startswith('gemini') else 0)
         except Exception as e:
             self.pause_until = time.time() + AI_PAUSE
             log('sasta sawal nahi chala:', e)
@@ -2417,6 +2526,127 @@ def self_update(lock):
     sys.exit(0)
 
 
+# ---------- v2.0: NT DOCTOR + app se hukam (cameraPC/cmd) ----------
+def doctor(fire, pos, watchers, recorders, galla):
+    """Sab check + jo khud ho sake theek. Wapas [(ok, matn)]."""
+    import subprocess
+    out = []
+    add = lambda ok, t: out.append({'ok': bool(ok), 't': str(t)[:160]})
+    add(True, f'Program v{VERSION} chal raha hai')
+    try:
+        import requests
+        src = requests.get(base_url() + 'ntcam.py', params={'t': now_ms()}, timeout=20).text
+        m = re.search(r"^VERSION = '([^']+)'", src, re.M)
+        nv = m.group(1) if m else '?'
+        add(not newer(nv, VERSION), 'Naya program: ' + (f'v{nv} GitHub par — khud lag raha hai (2 min)' if newer(nv, VERSION) else 'yahi sab se naya hai'))
+    except Exception as e:
+        add(False, f'GitHub se check nahi: {e}')
+    task = False
+    if os.name == 'nt':
+        try:
+            task = subprocess.run(['schtasks', '/Query', '/TN', 'NT Camera chowkidar'], capture_output=True, timeout=20, creationflags=0x08000000).returncode == 0
+        except Exception:
+            pass
+    add(task or os.name != 'nt', 'Chowkidar ' + ('laga hai' if task else 'NAHI laga — PC par ntup command ek dafa chalayein'))
+    try:
+        exe = ffmpeg_exe()
+        add(bool(exe and os.path.exists(exe)), 'ffmpeg (video) theek')
+    except Exception as e:
+        add(False, f'ffmpeg nahi ({e}) — ntfix command chalayein')
+    for cid, w in list(watchers.items()):
+        live = w.latest_at and time.time() - w.latest_at < 30
+        rc = recorders.get(cid)
+        rec = bool(rc and rc.is_alive() and time.time() - rc.last_seg < 180 and not rc.err)
+        add(live, f'{w.name}: video ' + (f'aa rahi ({round(w.fps, 1)} fps)' if live else 'NAHI aa rahi'))
+        add(rec, f'{w.name}: recording ' + ('chalu' if rec else ('ghalti: ' + str(rc.err)[:60] if rc and rc.err else 'band')))
+    sk = getattr(pos, 'skew', None) if pos else None
+    if sk is None:
+        add(False, 'POS ghari: abhi parh nahi saka')
+    else:
+        add(abs(sk) < 120, 'POS server ki ghari ' + ('PC ke barabar' if abs(sk) < 120 else f'{abs(sk) // 60} minute {"aage" if sk > 0 else "peeche"} — server par ntwaqt command chalayein'))
+    sec = secrets()
+    add(bool(sec.get('geminiKey')), 'Gemini key ' + ('hai' if sec.get('geminiKey') else 'NAHI — app > Cameras > AI keys'))
+    add(True, 'DeepSeek key ' + ('hai (backup)' if sec.get('deepseekKey') else 'nahi (backup band)'))
+    add(True, f"AI: {ai_mode()} · aaj Gemini {COST['gem']} jaanch" + (' · free had poori: ' + ', '.join(sorted(QUOTA['out'])) if QUOTA['out'] else ''))
+    if galla and pos:
+        add(pos.ok_sql(), pos.status()[:150])
+    return out
+
+
+def nvr_add(fire, sec, user, pws, existing):
+    """App se: network par Dahua NVR / camera dhoondo, diye gaye passwords aazmao, har chalne wala channel (1-16) jodo."""
+    out, added = [], 0
+    found = scan()
+    for dev in found:
+        if dev.get('brand') not in ('dahua', None, ''):
+            continue
+        for pw in pws:
+            u1 = next((u for u in rtsp_urls(dev['brand'] or 'dahua', dev['ip'], user, pw, 1) if grab(u) is not None), None)
+            if not u1:
+                continue
+            n_ok = 0
+            for ch in range(1, 17):
+                heartbeat()                                  # lamba kaam — chowkidar ko zinda dikhe
+                cid = (dev['mac'] or dev['ip'].replace('.', '-')) + f'-ch{ch}'
+                url, frame = None, None
+                for u in rtsp_urls(dev['brand'] or 'dahua', dev['ip'], user, pw, ch):
+                    frame = grab(u)
+                    if frame is not None:
+                        url = u
+                        break
+                if frame is None:
+                    if ch > 1:
+                        break
+                    continue
+                n_ok += 1
+                sec['cams'][cid] = {'url': url, 'user': user, 'pw': pw, 'ip': dev['ip'], 'brand': dev['brand'] or 'dahua', 'ch': ch, 'mac': dev['mac']}
+                save_json(SECRETS, sec)
+                if cid not in existing:
+                    fire.patch(f'{BIZ}/cameras/{cid}', {'name': f"{dev['ip'].split('.')[-1]}-{ch}", 'ip': dev['ip'], 'mac': dev['mac'], 'brand': dev['brand'] or 'dahua',
+                                                         'channel': ch, 'role': 'view', 'enabled': True, 'createdAt': now_ms(), 'status': 'online', 'agent': VERSION})
+                    added += 1
+                put_shot(fire, cid, frame)
+            out.append({'ok': True, 't': f"{dev['ip']}: {n_ok} camera jude (naam baad mein app se badlein)"})
+            break
+        else:
+            out.append({'ok': False, 't': f"{dev['ip']}: password nahi chala"})
+    if not found:
+        out.append({'ok': False, 't': 'Network par koi camera / NVR nahi mila'})
+    out.insert(0, {'ok': added > 0 or any(x['ok'] for x in out), 't': f'{added} naye camera jude'})
+    return out
+
+
+def handle_cmd(fire, pos, watchers, recorders, galla, cams, state):
+    """cameraPC/cmd: {kind: doctor|nvr|keys, at, secret?}. Report cameraPC/doctor mein; cmd mita do (secret Firebase par na rahe)."""
+    c = fire.get(f'{BIZ}/cameraPC/cmd')
+    if not c or not c.get('at') or c.get('at') == state.get('cmd_at'):
+        return
+    state['cmd_at'] = c['at']
+    kind, secret = c.get('kind'), c.get('secret') or {}
+    try:
+        fire.delete(f'{BIZ}/cameraPC/cmd')
+    except Exception as e:
+        log('cmd mita nahi:', e)
+    log('app ka hukam:', kind)
+    try:
+        if kind == 'keys':
+            sec = secrets()
+            for k, name in (('gemini', 'geminiKey'), ('deepseek', 'deepseekKey'), ('claude', 'claudeKey')):
+                v = clean_key(secret.get(k))
+                if v:
+                    sec[name] = v
+            save_json(SECRETS, sec)
+            lines = [{'ok': True, 't': 'AI keys PC par save'}] + doctor(fire, pos, watchers, recorders, galla)
+        elif kind == 'nvr':
+            pws = [p for p in (secret.get('pw'), secret.get('pw2')) if p]
+            lines = nvr_add(fire, secrets(), (secret.get('user') or 'admin').strip(), pws, set(cams))
+        else:
+            lines = doctor(fire, pos, watchers, recorders, galla)
+    except Exception as e:
+        lines = [{'ok': False, 't': f'Doctor ghalti: {e}'[:160]}]
+    fire.patch(f'{BIZ}/cameraPC/doctor', {'at': now_ms(), 'v': VERSION, 'kind': str(kind or 'doctor')[:10], 'lines': lines[:30], 'cmdAt': c['at']})
+
+
 def heartbeat():
     try:
         with open(HB_FILE, 'w') as f:
@@ -2474,10 +2704,17 @@ def run():
     last_update = time.time() - UPDATE_EVERY + 120   # shuru ke 2 minute baad pehli jaanch
     last_scan = 0
     key_note = False                               # v1.1.2: shuru mein aik dafa AI ki halat cards par
+    last_cmd = 0
     while True:
         heartbeat()
         try:
             t = time.time()
+            if t - last_cmd > 15:                      # v2.0: app ka hukam (Doctor / NVR / keys)
+                last_cmd = t
+                try:
+                    handle_cmd(fire, pos, watchers, recorders, galla, cams, state)
+                except Exception as e:
+                    log('hukam ghalti:', e)
             if t - last_list > LIST_EVERY:
                 cams = dict(fire.list('cameras'))
                 last_list = t

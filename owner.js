@@ -757,7 +757,8 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
                 <label>Roz AI jaanch ki had (kharcha qaabu)<input type="number" name="aiCap" min="1" max="2000" value="${esc(String(c.aiCap || 300))}" inputmode="numeric"></label>
                 ${c.role === 'galla' ? `<label>Roz ka AI budget (Rs) — poora hote hi AI ruk jaye<input type="number" name="budget" min="10" max="5000" value="${esc(String(c.budget || 200))}" inputmode="numeric"></label>
                 <label>AI sirf jab POS ka baqaya is se zyada ho (Rs) — 0 = har len-den<input type="number" name="minChange" min="0" max="100000" value="${esc(String(c.minChange || 0))}" inputmode="numeric"></label>
-                <label class="check"><input type="checkbox" name="second" ${c.second === false ? '' : 'checked'}> 🔴 se pehle bara AI doosri raaye de (jhooti 🔴 kam, ~Rs 3 fi)</label>` : ''}
+                <label class="check"><input type="checkbox" name="second" ${c.second === false ? '' : 'checked'}> 🔴 se pehle bara AI doosri raaye de</label>
+                <label>Kaunsa AI<select name="ai">${[['free', 'Gemini free (had poori ho to DeepSeek)'], ['claude', 'Claude (paisa)'], ['off', 'Band — bina AI muft mode']].map(([k, t]) => `<option value="${k}" ${(c.ai || 'free') === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>` : ''}
                 <div class="cam-roles" role="radiogroup" aria-label="Harkat ki hissasiyat">${[['low', 'Kam'], ['mid', 'Aam'], ['high', 'Zyada']].map(([k, t]) => `<label class="cam-pick"><input type="radio" name="sens" value="${k}" ${(c.sens || 'mid') === k ? 'checked' : ''}><span>Harkat: ${t}</span></label>`).join('')}</div>
                 <div class="btn-row"><button class="btn btn-primary">Save</button><button type="button" class="btn btn-ghost" data-action="cam-edit" data-id="">Rehne dein</button><button type="button" class="btn btn-ghost txt-bad" data-action="cam-del" data-id="${esc(c.id)}">Hatayein</button></div></form>`
               : `${c.role === 'galla' ? `<p class="cam-watch ${c.zone?.w ? '' : 'is-need'}">${c.zone?.w ? `${icon('check', 14)} Galla ka hissa mark hai${c.watch === 'on' && on ? ` · nigrani chalu${c.fps ? ' (' + esc(String(c.fps)) + ' fps' + (c.stream === 'sub' ? ', halki video' : '') + ')' : ''}` : ' · PC par nigrani shuru hone ka intezar'}` : `${icon('alert', 14)} Galla ka hissa abhi mark nahi — nigrani band`}</p>${c.zone?.w ? `<p class="cam-watch ${c.zone2?.w ? '' : 'is-need'}">${icon(c.zone2?.w ? 'check' : 'alert', 14)} <span>${c.zone2?.w ? 'Counter ka hissa mark hai — kahani: parchi / paisa / baqaya' : 'Counter ka hissa mark nahi — kahani adhoori (parchi aur baqaya ka haath nazar nahi aayega)'}</span></p>` : ''}${recLine(c, on)}${costLine(c)}` : ''}
@@ -766,6 +767,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       };
       return `${pcCard}${connect}${foundHtml}
         ${cams.length ? `<div class="cam-grid">${cams.map(card).join('')}</div>` : cfg ? '<p class="empty-line">Abhi koi camera nahi juda. PC par command (ya desktop icon "NT Camera jodein") chalayein.</p>' : ''}
+        ${cfg ? doctorPanel() : ''}
         ${cfg && !ui.camCode ? `<p class="hint">PC badal raha hai ya code kho gaya? <button type="button" class="link" data-action="cam-code">Naya PC code banayein</button> (purana PC band ho jayega).</p>` : ''}
         <p class="hint">Tasveer har 5 minute mein khud taza hoti hai jab PC chalu ho. Galla camera par PC 2 din ki recording rakhta hai — shak aur "bina voucher" par video khud banti hai (Nigrani tab).</p>`;
     } });
@@ -906,11 +908,22 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     return sheet;
   }
   /* ---------- v225: VIDEO — shak par khud clip, kisi bhi waqt ki clip malik ki farmaish par ---------- */
+  /** v231: NT Doctor — phone se PC ki jaanch / NVR / AI keys; report cameraPC/doctor se. */
+  function doctorPanel() {
+    const d = S.camDoctor, wait = ui.docAt && (!d || Number(d.cmdAt || 0) < ui.docAt);
+    const title = { doctor: 'Doctor report', nvr: 'NVR jodne ki report', keys: 'AI keys' }[d?.kind] || 'Doctor report';
+    return `<section class="doc-panel"><div class="doc-head"><h3 class="sub">🩺 NT Doctor</h3>
+      <span class="btn-row"><button type="button" class="btn btn-primary btn-sm" data-action="pc-doctor">${wait ? 'PC dekh raha hai…' : 'PC Doctor chalao'}</button>
+      <button type="button" class="btn btn-ghost btn-sm" data-action="pc-nvr">➕ NVR jodein</button><button type="button" class="btn btn-ghost btn-sm" data-action="pc-keys">🔑 AI keys</button></span></div>
+      ${wait ? `<p class="hint">PC 15-60 second mein hukam uthayega (PC chalu hona chahiye). NVR mein 2-3 minute.</p>` : ''}
+      ${d?.lines?.length ? `<p class="muted doc-at">${esc(title)} · ${esc(clockOf(d.at))} · v${esc(d.v || '')}</p><ul class="doc-lines">${d.lines.map(x => `<li class="${x.ok ? 'is-ok' : 'is-bad'}">${x.ok ? '✅' : '❌'} <span>${esc(x.t)}</span></li>`).join('')}</ul>` : '<p class="hint">Abhi koi report nahi — "PC Doctor chalao" dabayein.</p>'}</section>`;
+  }
   /** v230: camera card par aaj ka AI kharcha (cameraStats.cost) / budget. */
   function costLine(c) {
     const st = [...(S.camStats || []), ...(S.camDayStats || [])].find(x => x.cam === c.id && x.date === pkDate()), cost = Number(st?.cost || 0), b = Number(c.budget || 200);
     if (!st) return '';
-    return `<p class="cam-rec ${cost >= b ? 'is-bad' : 'is-off'}"><span>💸 Aaj AI kharcha: <b>Rs ${Math.round(cost)}</b> / ${b}${cost >= b ? ' — budget poora, AI ruka' : ''} <small>· doosri raaye ${c.second === false ? 'band' : 'on'}${c.minChange ? ` · sirf baqaya > Rs ${esc(String(c.minChange))}` : ''}</small></span></p>`;
+    const ai = { free: '🤖 Gemini free', claude: '🤖 Claude', off: '🤖 AI band' }[c.ai || 'free'];
+    return `<p class="cam-rec ${cost >= b ? 'is-bad' : 'is-off'}"><span>${ai}${(c.ai || 'free') === 'free' ? ` · aaj <b>${Number(st.gem || 0)}</b> jaanch` : ''} · 💸 kharcha <b>Rs ${Math.round(cost)}</b> / ${b}${cost >= b ? ' — budget poora, AI ruka' : ''} <small>· doosri raaye ${c.second === false ? 'band' : 'on'}${c.minChange ? ` · sirf baqaya > Rs ${esc(String(c.minChange))}` : ''}</small></span></p>`;
   }
   /** v227: camera card par PC ki recording ki halat (video isi se banti hai). rec: 'on' | 'off' | ghalti ka matn; recFree GB. */
   function recLine(c, on) {
@@ -1160,6 +1173,13 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       const c = (S.cameras || []).find(x => x.id === el.dataset.id); if (!c || !confirm(`"${c.name}" camera hatayein? PC par dobara jodna pare ga.`)) return;
       await busy(el, () => data.deleteCamera(c.id), 'Camera hata diya'); ui.camEdit = ''; sheets.cameras?.refresh(true);
     },
+    async 'pc-doctor'(el) { ui.docAt = await busy(el, () => data.pcCommand('doctor'), 'PC ko hukam gaya — report yahin aayegi'); rerender(); },
+    'pc-nvr'() { open('pc-nvr', () => openSheet({ id: 'pc-nvr', title: '➕ NVR / camera jodein', render: () => `<form data-form="pc-nvr" class="form"><p class="hint">PC network par NVR khud dhoondega aur har chalne wala channel jodega. Password PC par jayega aur Firebase se foran mit jayega.</p>
+      <label>Username<input name="user" value="admin" autocomplete="off"></label><label>Password<input name="pw" type="text" autocomplete="off" required></label><label>Doosra password (agar pakka na ho)<input name="pw2" type="text" autocomplete="off"></label>
+      <button class="btn btn-primary" type="submit">PC ko bhejo</button></form>` })); },
+    'pc-keys'() { open('pc-keys', () => openSheet({ id: 'pc-keys', title: '🔑 AI keys (PC par)', render: () => `<form data-form="pc-keys" class="form"><p class="hint">Keys sirf PC par save hongi — Firebase se foran mit jayengi. Jo khana khali chhorein wo purani hi rahegi.</p>
+      <label>Gemini key (aistudio.google.com → Get API key)<input name="gemini" autocomplete="off"></label><label>DeepSeek key (platform.deepseek.com) — backup<input name="deepseek" autocomplete="off"></label>
+      <button class="btn btn-primary" type="submit">PC ko bhejo</button></form>` })); },
     'cam-zone'(el) { open('cam-zone', () => zoneSheet(el.dataset.id, el.dataset.arg === 'zone2' ? 'zone2' : 'zone')); },
     async 'nig-video'(el) {
       const c = (S.camClips || []).find(x => x.id === el.dataset.id); if (!c) return;
@@ -1338,8 +1358,10 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       await busy(button, () => data.reviewEvent(form.dataset.id, status, v.note, !!v.keepVideo), status === 'confirmed' ? 'Shak pakka likh diya' : 'Theek hai likh diya');
       sheets['nig-ev']?.close();
     },
+    async 'pc-nvr'(form, v, button) { ui.docAt = await busy(button, () => data.pcCommand('nvr', { user: v.user || 'admin', pw: v.pw, pw2: v.pw2 }), 'PC NVR dhoond raha hai — 2-3 minute'); sheets['pc-nvr']?.close(); rerender(); },
+    async 'pc-keys'(form, v, button) { const at = await busy(button, async () => { if (!v.gemini && !v.deepseek) throw new Error('Kam az kam aik key likhein'); return data.pcCommand('keys', { gemini: v.gemini, deepseek: v.deepseek }); }, 'Keys PC ko gayin'); if (!at) return; ui.docAt = at; sheets['pc-keys']?.close(); rerender(); },
     async cam(form, v, button) { // v220: camera ka naam / kaam / on-off; v222: AI ki had + harkat ki hissasiyat
-      await busy(button, () => data.saveCamera(form.dataset.id, { name: v.name, role: v.role, enabled: !!v.enabled, aiCap: v.aiCap, sens: v.sens, budget: v.budget, minChange: v.minChange, second: v.budget != null ? !!v.second : undefined }), 'Camera save ho gaya');   // v230: galla form mein hi ye khane hain
+      await busy(button, () => data.saveCamera(form.dataset.id, { name: v.name, role: v.role, enabled: !!v.enabled, aiCap: v.aiCap, sens: v.sens, budget: v.budget, minChange: v.minChange, second: v.budget != null ? !!v.second : undefined, ai: v.ai }), 'Camera save ho gaya');   // v230: galla form mein hi ye khane hain
       ui.camEdit = ''; sheets.cameras?.refresh(true);
     },
     async vapid(form, v, button) { await busy(button, async () => { await data.saveConfig({ push: { ...(S.config.push || {}), vapidKey: String(v.vapidKey || '').trim().replace(/\s+/g, ''), on: true }, appUrl: appLink() }); ui.pushMsg = { text: 'Key lag gayi. Ab "Is phone par notification chalu karein" dabayein.' }; sheets.notify?.refresh(true); }, 'Key save ho gayi'); },

@@ -33,7 +33,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     return {
       role: null, phone: '', loaded: new Set(), config: { ...DEFAULT_CONFIG },
       staff: [], months: new Map(), requests: [], schedules: new Map(), payroll: [],
-      account: null, myAttendance: [], punchError: null, sync: {}, diag: [], cameras: [], camPC: null, camCfg: null, camShots: new Map(), camStats: [], camEvents: [], camDayStats: [], camDay: '', posAlerts: [], camClips: [], outs: [], teamOuts: [], teamAttendance: [], tickets: [], myTickets: [], teamTickets: [], errors: {}, lastSync: {}, pendingWrites: 0
+      account: null, myAttendance: [], punchError: null, sync: {}, diag: [], cameras: [], camPC: null, camDoctor: null, camCfg: null, camShots: new Map(), camStats: [], camEvents: [], camDayStats: [], camDay: '', posAlerts: [], camClips: [], outs: [], teamOuts: [], teamAttendance: [], tickets: [], myTickets: [], teamTickets: [], errors: {}, lastSync: {}, pendingWrites: 0
     };
   }
   let unsubs = [], monthSubs = new Map(), epoch = 0, legacyChecked = false, shotsSub = null, eventSubs = [];
@@ -80,6 +80,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     if (state.role === 'owner') {
       live(col('cameras'), 'cameras', snap => { state.cameras = readList(snap).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)); });
       live(ref('cameraPC', 'status'), 'camPC', snap => { state.camPC = snap.exists() ? clean(snap.data()) : null; });
+      live(ref('cameraPC', 'doctor'), 'camDoctor', snap => { state.camDoctor = snap.exists() ? clean(snap.data()) : null; });   // v231
       live(ref('cameraPC', 'config'), 'camCfg', snap => { state.camCfg = snap.exists() ? clean(snap.data()) : null; });
       // v222: aaj ki galla ginti (chhote docs) — Tawajju card ke liye
       live(sdk.query(col('cameraStats'), sdk.where('date', '==', pkDate())), 'camStats', snap => { state.camStats = readList(snap); });
@@ -1058,7 +1059,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     await fast(async tx => { tx.set(ref('cameraPC', 'config'), { uid, email, at: Date.now(), by: actor() }); audit(tx, 'camera pc', 'config', null, { email }, 'Naya camera PC code'); });
     return `${id}-${secret}`;
   }
-  async function saveCamera(id, { name, role, enabled, aiCap, sens, budget, minChange, second }) {   // v230: budget / minChange / second (PC v1.9)
+  async function saveCamera(id, { name, role, enabled, aiCap, sens, budget, minChange, second, ai }) {   // v230: budget / minChange / second; v231: ai
     ownerOnly();
     const n = String(name || '').trim().slice(0, 40);
     if (!n) throw new Error('Camera ka naam likhein.');
@@ -1067,6 +1068,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     if (budget != null && budget !== '') { const b = Math.round(Number(budget)); extra.budget = Number.isFinite(b) && b >= 10 ? Math.min(5000, b) : 200; }
     if (minChange != null && minChange !== '') { const m = Math.round(Number(minChange)); extra.minChange = Number.isFinite(m) && m > 0 ? Math.min(100000, m) : 0; }
     if (second != null) extra.second = !!second;
+    if (['free', 'claude', 'off'].includes(ai)) extra.ai = ai;
     await quick(sdk.setDoc(ref('cameras', id), { name: n, role: CAM_ROLES.includes(role) ? role : 'view', enabled: enabled !== false,
       aiCap: Number.isFinite(cap) && cap > 0 ? Math.min(2000, cap) : 300, sens: CAM_SENS.includes(sens) ? sens : 'mid', ...extra }, { merge: true }));
   }
@@ -1138,6 +1140,15 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     await sdk.deleteDoc(ref('cameraClips', id)).catch(() => {});
   }
   async function keepClip(id, keep) { ownerOnly(); await quick(sdk.setDoc(ref('cameraClips', id), { keep: !!keep }, { merge: true })); }
+  /** v231: PC ko hukam (NT Doctor / NVR jodna / AI keys). secret sirf PC parhta hai aur foran mita deta hai. */
+  async function pcCommand(kind, secret) {
+    ownerOnly();
+    if (!['doctor', 'nvr', 'keys'].includes(kind)) throw new Error('Ghalat hukam');
+    const doc = { kind, at: Date.now(), by: 'owner' };
+    if (secret) doc.secret = Object.fromEntries(Object.entries(secret).map(([k, v]) => [k, String(v || '').trim().slice(0, 200)]).filter(([, v]) => v));
+    await quick(sdk.setDoc(ref('cameraPC', 'cmd'), doc));
+    return doc.at;
+  }
   async function saveZone(id, zone, which = 'zone') {   // v229: which = 'zone' (galla) | 'zone2' (counter / len-den)
     ownerOnly();
     if (!['zone', 'zone2'].includes(which)) throw new Error('Ghalat hissa');
@@ -1172,7 +1183,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
 
   return {
     app, full, actor, auth, state, watchShots, createCameraPC, saveCamera, requestShot, deleteCamera,
-    watchEvents, loadFrames, reviewEvent, saveZone, cleanupCam, loadClip, requestClip, deleteClip, keepClip, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
+    watchEvents, loadFrames, reviewEvent, saveZone, pcCommand, cleanupCam, loadClip, requestClip, deleteClip, keepClip, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
     requestOut, cancelOut, returnOut, reviewOut, isManager, isTicketer, startBreak, endBreaks, createTicket, returnTicket, decideTicket, ticketSuggestFor,
     savePushToken, removePushToken, pushDevices, pushTestPing,
     applyDefaultShiftAll, applyDefaultSalaryAll, toggleClosed, quickPresent, closeCheckouts, getSelfie, migrateSelfies, selfiesFor, auditLog,

@@ -1,6 +1,6 @@
 {
-  "version": "v230",
+  "version": "v231",
   "variant": "Production",
-  "buildDate": "2026-09-30",
-  "notes": "Sasta mode: galle se paisa bahar kis ko (chhota AI), 🔴 par hi kahani; roz ka AI budget rupay mein; sirf bare baqaye par AI; aaj ki 5 videos. ntcam.py v1.9, ntfix.txt (recording). RULES publish zaroori."
+  "buildDate": "2026-10-01",
+  "notes": "Free AI (Gemini, backup DeepSeek), NT Doctor app se, NVR aur AI keys app se, POS ghari ki jaanch. ntcam.py v2.0, ntwaqt.txt. RULES publish zaroori."
 }

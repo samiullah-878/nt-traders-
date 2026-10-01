@@ -1,5 +1,5 @@
 # ntcam_test.py — PC ke camera program ki jaanch (bina asal camera / Firebase ke).  Chalana:  python ntcam_test.py
-import os, sys, json, base64, tempfile, types, unittest
+import os, sys, json, time, base64, tempfile, types, unittest
 from unittest import mock
 os.environ['NTCAM_HOME'] = tempfile.mkdtemp()
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -165,7 +165,7 @@ class Milaan(unittest.TestCase):
             seen.update(ctx=ctx, ex=ex, n=len(crops)); return 'len_den', 'normal', 'paisa liya, baqaya diya', 700, True
         w = types.SimpleNamespace(cid='c1', name='Galla', cap_day=300)
         fr = [(np.random.rand(120, 160, 3) * 255).astype('uint8') for _ in range(10)]
-        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_judge2', judge):
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'geminiKey': 'g-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_judge2', judge):
             g.handle(w, 995.0, 991.0, 1008.0, fr)
         self.assertIn('Bill #00119008', seen['ctx'], 'AI ko bill bataya'); self.assertIn('qalam rakha', seen['ex'], 'malik ki misaal'); self.assertEqual(seen['n'], 10)
         ev = [d for p, d in writes if '/cameraEvents/' in p][0]
@@ -183,7 +183,7 @@ class Milaan(unittest.TestCase):
         g.clips = types.SimpleNamespace(shak=lambda cid, eid, t0, t1, date: clips.append((eid, t0, t1)))
         w = types.SimpleNamespace(cid='c1', name='Galla', cap_day=300)
         fr = [(np.random.rand(120, 160, 3) * 255).astype('uint8') for _ in range(4)]
-        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), \
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'geminiKey': 'g-x', 'cams': {}}), \
              mock.patch.object(ntcam, 'ai_judge2', lambda *a: ('aaya', 'normal', 'paisa galla mein rakha', 500)):   # purana 4-tuple bhi chale
             g.handle(w, 3000.0, 2996.0, 3006.0, fr)
             g.handle(w, 4000.0, 3996.0, 4006.0, fr)
@@ -209,7 +209,7 @@ class Milaan(unittest.TestCase):
         g.clips = types.SimpleNamespace(shak=lambda cid, eid, t0, t1, date: clips.append(eid))
         w = types.SimpleNamespace(cid='c1', name='Galla', cap_day=300)
         fr = [(np.random.rand(120, 160, 3) * 255).astype('uint8') for _ in range(4)]
-        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), \
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'geminiKey': 'g-x', 'cams': {}}), \
              mock.patch.object(ntcam, 'ai_judge2', lambda *a: ('len_den', 'normal', 'liya, baqaya diya', 500, True)):
             g.handle(w, 1010.0, 1005.0, 1020.0, fr)        # bill 1000 par bana, voucher abhi nahi
             g.handle(w, 1400.0, 1395.0, 1410.0, fr)        # koi record nahi
@@ -255,7 +255,7 @@ class EkLenDen(unittest.TestCase):
         import numpy as np
         g, writes, clips = self._g()
         fr = [(np.random.rand(120, 160, 3) * 255).astype('uint8') for _ in range(4)]
-        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), \
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'geminiKey': 'g-x', 'cams': {}}), \
              mock.patch.object(ntcam, 'ai_judge2', lambda *a: ('nikla', 'shak', 'note shalwar ke paas', 500, True)), \
              mock.patch.object(ntcam, 'ai_confirm', confirm):
             g.handle(self.W, 1000.0, 995.0, 1010.0, fr, True)
@@ -373,7 +373,7 @@ class Kahani(unittest.TestCase):
         def story(key, frames, ctx, ex, models):
             calls.append(('story', models))
             return self.st(('daayen, neela', 'parchi_paisa', '', ''), ('baayen, safed', 'khara', '', ''), ('baayen, safed', 'diya', 'aur', 'bada')), 1500, 'claude-sonnet-5-5'
-        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_cheap', cheap), mock.patch.object(ntcam, 'ai_story', story):
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'geminiKey': 'g-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_cheap', cheap), mock.patch.object(ntcam, 'ai_story', story):
             g.handle(self._w(), 1045.0, 1040.0, 1070.0, [], True)
         self.assertEqual(calls, [('cheap', 8), ('story', ntcam.CONFIRM_MODELS)], 'pehle 8 chhoti tasveerein, 🔴 par bara AI')
         ev = [d for p, d in writes if '/cameraEvents/' in p][0]; fr = [d for p, d in writes if '/cameraFrames/' in p][0]
@@ -392,7 +392,7 @@ class Kahani(unittest.TestCase):
         """✅ baqaya usi customer ko = sirf chhota AI, halka card, koi clip nahi."""
         g, writes, clips = self._g([dict(self.CRV)])
         calls = []
-        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), \
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'geminiKey': 'g-x', 'cams': {}}), \
              mock.patch.object(ntcam, 'ai_cheap', lambda *a: (calls.append(1) or {'nikla': True, 'kis': 'wahi', 'note': 'chhota', 'why': 'baqaya diya'}, 400, ntcam.MODEL)), \
              mock.patch.object(ntcam, 'ai_story', lambda *a: self.fail('bara AI nahi lagna chahiye')):
             g.handle(self._w(), 1045.0, 1040.0, 1070.0, [], True)
@@ -402,7 +402,7 @@ class Kahani(unittest.TestCase):
 
     def test_cheap_nikla_nahi_koi_card_nahi(self):
         g, writes, clips = self._g([dict(self.CRV)])
-        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), \
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'geminiKey': 'g-x', 'cams': {}}), \
              mock.patch.object(ntcam, 'ai_cheap', lambda *a: ({'nikla': False, 'kis': '', 'note': '', 'why': 'paisa rakha'}, 300, ntcam.MODEL)):
             g.handle(self._w(), 1045.0, 1040.0, 1070.0, [], True)
         self.assertEqual([p for p, d in writes if '/cameraEvents/' in p or '/cameraFrames/' in p], [], 'nikla nahi = na card na tasveerein')
@@ -412,7 +412,7 @@ class Kahani(unittest.TestCase):
         """doosri raaye off: 🔴 seedha; voucher hi nahi: 'novoucher' + matchState missing."""
         g, writes, clips = self._g([])
         w = self._w(); w.second = False
-        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), \
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'geminiKey': 'g-x', 'cams': {}}), \
              mock.patch.object(ntcam, 'ai_cheap', lambda *a: ({'nikla': True, 'kis': 'aur', 'note': '', 'why': 'kisi ko diya'}, 300, ntcam.MODEL)), \
              mock.patch.object(ntcam, 'ai_story', lambda *a: self.fail('second off')):
             g.handle(w, 1045.0, 1040.0, 1070.0, [], True)
@@ -422,7 +422,7 @@ class Kahani(unittest.TestCase):
     def test_cheap_doosri_raaye_ne_bachaya(self):
         """chhota AI 'aur' kahe lekin bara AI kahani mein sirf baqaya wahi -> ✅ normal."""
         g, writes, clips = self._g([dict(self.CRV)])
-        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), \
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'geminiKey': 'g-x', 'cams': {}}), \
              mock.patch.object(ntcam, 'ai_cheap', lambda *a: ({'nikla': True, 'kis': 'aur', 'note': '', 'why': 'shayad kisi aur ko'}, 300, ntcam.MODEL)), \
              mock.patch.object(ntcam, 'ai_story', lambda *a: (self.st(('daayen', 'parchi_paisa', '', ''), ('daayen', 'baqaya', 'wahi', 'chhota')), 1200, 'claude-sonnet-5-5')):
             g.handle(self._w(), 1045.0, 1040.0, 1070.0, [], True)
@@ -432,12 +432,12 @@ class Kahani(unittest.TestCase):
     def test_budget_min_change_daily(self):
         w = self._w(); w.budget = 1.0; w.min_change = 500
         g, writes, clips = self._g([dict(self.CRV, change=140.0)])
-        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_cheap', lambda *a: self.fail('chhota baqaya = AI nahi')):
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'geminiKey': 'g-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_cheap', lambda *a: self.fail('chhota baqaya = AI nahi')):
             g.handle(w, 1045.0, 1040.0, 1070.0, [], True)
         self.assertEqual([p for p, d in writes if '/cameraEvents/' in p], []); self.assertEqual(g.stats[('c1', ntcam.pk_date(1045.0))]['matched'], 1)
         w.min_change = 0; g.last_ai = {}
         g.stats[('c1', ntcam.pk_date(1045.0))]['cost'] = 1.2
-        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_cheap', lambda *a: self.fail('budget poora')):
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'geminiKey': 'g-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_cheap', lambda *a: self.fail('budget poora')):
             g.handle(w, 1145.0, 1140.0, 1170.0, [], True)
         self.assertEqual(g.stats[('c1', ntcam.pk_date(1045.0))]['unchecked'], 1, 'budget poora = bina jaanch ginti')
         self.assertEqual(ntcam.cost_rs('claude-haiku-4-5-20251001', 4000, 100), round((4000 * 1 + 100 * 5) / 1e6 * 280, 3))
@@ -478,6 +478,91 @@ class Kahani(unittest.TestCase):
         self.assertIn('Baqaya: dekh raha', p.status())
         p.add({'kind': 'sale', 'no': '1', 'at': 1.0, 'amount': 5.0, 'party': ''}); self.assertIn('Baqaya: POS di hui raqam nahi likhta', p.status())
         p.tender_seen = True; self.assertIn('Baqaya: POS se ✅', p.status())
+
+
+class FreeAI(unittest.TestCase):
+    """v2.0 — Gemini free -> DeepSeek -> (Claude sirf jab chuna); Doctor / NVR / keys hukam."""
+    class R:
+        def __init__(s, code, body): s.status_code, s._b, s.text = code, body, json.dumps(body)
+        def json(s): return s._b
+
+    def _call(self, post, sec, mode='free', big=False):
+        ntcam.AI_SET['mode'] = mode; ntcam.QUOTA['day'] = ''
+        with mock.patch.dict(sys.modules, {'requests': types.SimpleNamespace(post=post)}), mock.patch.object(ntcam, 'secrets', lambda: sec):
+            try:
+                return ntcam.ai_call([{'type': 'text', 'text': 'x'}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': 'AA'}}], big, 100)
+            finally:
+                ntcam.AI_SET['mode'] = 'free'
+
+    def test_gemini_pehle_phir_had_phir_deepseek(self):
+        calls = []
+        def post(url, **kw):
+            calls.append(url.split('/models/')[-1].split(':')[0] if 'googleapis' in url else kw['json']['model'])
+            if 'googleapis' in url:
+                parts = kw['json']['contents'][0]['parts']; assert parts[1]['inline_data']['data'] == 'AA' and kw['headers']['x-goog-api-key'] == 'g1'
+                if 'gemini-3.5-flash-lite' in url: return self.R(429, {'error': {'message': 'quota'}})
+                return self.R(200, {'candidates': [{'content': {'parts': [{'text': '{"nikla": false}'}]}}]})
+            return self.R(200, {'choices': [{'message': {'content': 'ds'}}], 'usage': {'prompt_tokens': 3000, 'completion_tokens': 100}})
+        txt, ms, model = self._call(post, {'geminiKey': 'g1', 'deepseekKey': 'd1', 'cams': {}})
+        self.assertEqual((txt, model), ('{"nikla": false}', 'gemini-3.1-flash-lite')); self.assertEqual(calls, ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'], '429 -> agla free model')
+        self.assertEqual(ntcam.COST['last'], 0.0)
+        def post2(url, **kw):
+            if 'googleapis' in url: return self.R(429, {'error': {'message': 'quota'}})
+            assert kw['json']['messages'][0]['content'][1]['image_url']['url'].startswith('data:image/jpeg;base64,AA'); return self.R(200, {'choices': [{'message': {'content': 'ds'}}], 'usage': {'prompt_tokens': 3000, 'completion_tokens': 100}})
+        txt, ms, model = self._call(post2, {'geminiKey': 'g1', 'deepseekKey': 'd1', 'cams': {}})
+        self.assertEqual((txt, model), ('ds', 'deepseek-flash'), 'Gemini ki had poori -> DeepSeek'); self.assertGreater(ntcam.COST['last'], 0)
+        with self.assertRaises(RuntimeError):
+            self._call(post2, {'geminiKey': 'g1', 'cams': {}})          # DeepSeek key nahi -> AI nahi (muft mode)
+        with self.assertRaises(RuntimeError):
+            self._call(post, {'geminiKey': 'g1', 'cams': {}}, mode='off')
+
+    def test_claude_mode(self):
+        seen = []
+        with mock.patch.object(ntcam, 'claude_call', lambda key, c, models, mt: (seen.append((key, models)) or ('c', 5, models[0]))):
+            ntcam.AI_SET['mode'] = 'claude'
+            with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk', 'cams': {}}):
+                self.assertEqual(ntcam.ai_call([{'type': 'text', 'text': 'x'}], False, 50)[2], ntcam.MODEL)
+            ntcam.AI_SET['mode'] = 'free'
+        self.assertEqual(seen, [('sk', (ntcam.MODEL,))])
+
+    def test_free_mode_bina_key_muft(self):
+        g = types.SimpleNamespace()
+        w = types.SimpleNamespace(cid='c1', name='Galla', cap_day=300, budget=200)
+        gl = ntcam.Galla(types.SimpleNamespace(get=lambda p: None, patch=lambda p, d: True, query=lambda *a, **k: []), None)
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}):
+            gl.handle(w, 1000.0, 990.0, 1005.0, [1], True)
+        self.assertEqual(gl.stats[('c1', ntcam.pk_date(1000.0))]['unchecked'], 1, 'free mode: Claude key se paisa nahi — bina Gemini key ke AI nahi')
+
+    def test_cmd_keys_doctor(self):
+        import tempfile
+        writes, deleted = [], []
+        cmd = {'kind': 'keys', 'at': 123, 'secret': {'gemini': ' AIza-xy z ', 'deepseek': 'sk-ds1'}}
+        fire = types.SimpleNamespace(get=lambda p: cmd if p.endswith('cameraPC/cmd') else None, patch=lambda p, d: writes.append((p, d)), delete=lambda p: deleted.append(p))
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(ntcam, 'SECRETS', os.path.join(d, 's.json')), \
+             mock.patch.object(ntcam, 'doctor', lambda *a: [{'ok': True, 't': 'theek'}]):
+            st = {}
+            ntcam.handle_cmd(fire, None, {}, {}, None, {}, st)
+            sec = ntcam.load_json(ntcam.SECRETS, {})
+            self.assertEqual((sec['geminiKey'], sec['deepseekKey']), ('AIza-xyz', 'sk-ds1'), 'key saaf')
+            ntcam.handle_cmd(fire, None, {}, {}, None, {}, st)            # wahi at -> dobara nahi
+        self.assertEqual(deleted, ['businesses/noor-traders/cameraPC/cmd'] if deleted and deleted[0].startswith('businesses') else deleted[:1]); self.assertEqual(len(deleted), 1, 'secret Firebase se mitaya, aik dafa')
+        rep = [d for p, d in writes if p.endswith('cameraPC/doctor')][0]
+        self.assertEqual((rep['kind'], rep['cmdAt'], rep['lines'][0]['t']), ('keys', 123, 'AI keys PC par save'))
+        rules = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'firestore.rules'), encoding='utf-8').read()
+        for k in ("docId == 'cmd'", "docId == 'doctor'", "'at', 'v', 'kind', 'lines', 'cmdAt'", "'cost', 'gem'"):
+            self.assertIn(k, rules)
+
+    def test_doctor_lines(self):
+        w = types.SimpleNamespace(name='Galla', latest_at=time.time(), fps=15.2)
+        rc = types.SimpleNamespace(is_alive=lambda: True, last_seg=time.time(), err='')
+        pos = types.SimpleNamespace(skew=2160, ok_sql=lambda: True, status=lambda: 'POS theek')
+        with mock.patch.object(ntcam, 'secrets', lambda: {'geminiKey': 'g', 'cams': {}}), mock.patch.object(ntcam, 'ffmpeg_exe', lambda: __file__), \
+             mock.patch.dict(sys.modules, {'requests': types.SimpleNamespace(get=lambda *a, **k: types.SimpleNamespace(text="VERSION = '9.9'"))}):
+            lines = ntcam.doctor(None, pos, {'c1': w}, {'c1': rc}, object())
+        t = ' | '.join(x['t'] for x in lines)
+        self.assertIn('Galla: video aa rahi (15.2 fps)', t); self.assertIn('Galla: recording chalu', t); self.assertIn('v9.9 GitHub par', t)
+        bad = [x['t'] for x in lines if not x['ok']]; self.assertTrue(any('36 minute aage' in b for b in bad), 'POS ghari 36 min aage = ❌')
+        self.assertIn('Gemini key hai', t)
 
 
 class Voucher(unittest.TestCase):
@@ -728,7 +813,7 @@ class Nigrani(unittest.TestCase):
 
     def test_galla_flow(self):
         g, w, frames, writes = self._galla()
-        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), \
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'geminiKey': 'g-x', 'cams': {}}), \
              mock.patch.object(ntcam, 'ai_judge2', lambda key, crops, ctx, gap, ex='': ('kuch_nahi', 'shak', 'Note jeb ki taraf', 900)):
             g.handle(w, 1000.0, 996.0, 1005.0, frames)  # jaanch
             g.handle(w, 1010.0, 1006.0, 1012.0, frames) # 20 s ke andar: sirf ginti
@@ -756,7 +841,7 @@ class Nigrani(unittest.TestCase):
     def test_ai_error_pause(self):
         g, w, frames, writes = self._galla()
         def boom(*a): raise RuntimeError('credit nahi')
-        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_judge2', boom):
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'geminiKey': 'g-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_judge2', boom):
             g.handle(w, 2000.0, 1996.0, 2005.0, frames)
         ev = [d for p, d in writes if '/cameraEvents/' in p][0]
         self.assertEqual(ev['verdict'], 'error'); self.assertIn('credit', ev['why'])

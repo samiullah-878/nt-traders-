@@ -250,6 +250,11 @@ service cloud.firestore {
       allow read: if isCameraPC();
       allow write: if isCameraPC() && docId == 'status'
         && request.resource.data.keys().hasOnly(['at', 'v', 'host', 'cams', 'online', 'error', 'python', 'found', 'foundAt', 'pos']);
+      // v231: NT Doctor — malik cmd likhta hai (generic match), PC parh kar mitata hai (secret Firebase par na rahe) aur doctor mein report.
+      allow delete: if isCameraPC() && docId == 'cmd';
+      allow write: if isCameraPC() && docId == 'doctor'
+        && request.resource.data.keys().hasOnly(['at', 'v', 'kind', 'lines', 'cmdAt'])
+        && request.resource.data.lines is list && request.resource.data.lines.size() <= 30;
     }
     // v220: cameras — PC banata hai aur apni halat likhta hai; naam / kaam / on-off malik (upar wala generic match).
     match /businesses/noor-traders/cameras/{camId} {
@@ -296,7 +301,7 @@ service cloud.firestore {
     match /businesses/noor-traders/cameraStats/{statId} {
       allow read: if isCameraPC();
       allow create, update: if isCameraPC()
-        && request.resource.data.keys().hasOnly(['cam', 'date', 'touches', 'checks', 'shak', 'unchecked', 'at', 'moneyIn', 'moneyOut', 'matched', 'missing', 'alerts', 'cost']);
+        && request.resource.data.keys().hasOnly(['cam', 'date', 'touches', 'checks', 'shak', 'unchecked', 'at', 'moneyIn', 'moneyOut', 'matched', 'missing', 'alerts', 'cost', 'gem']);
     }
     // v224: BILL BADLA / CANCEL — PC ne POS mein dekha ke bill cancel hua (kind cancel), raqam kam hui (edit) ya items badle (items).
     // replacedBy = 10 minute ke andar naya sasta bill. Malik parhta / note likhta (generic match). Manager ke liye band.

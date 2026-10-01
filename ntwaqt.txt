@@ -1,0 +1,25 @@
+# ntwaqt.txt — PC ki ghari internet se (har 5 minute khud). Server / counter / galla PC par PowerShell mein AIK line:
+#   irm https://samiullah-878.github.io/nt-traders-/ntwaqt.txt|iex
+# Admin na ho to khud Admin maang leta hai (Yes dabayein). Internet na ho to server DESKTOP-Q1SLV77 se milata hai.
+$me = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
+if (-not $me.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+  Start-Process powershell -Verb RunAs -ArgumentList '-NoProfile -ExecutionPolicy Bypass -Command "irm https://samiullah-878.github.io/nt-traders-/ntwaqt.txt|iex; Read-Host ''Enter dabayein''"'
+  return
+}
+Write-Host ''
+Write-Host '  NT WAQT SYNC — ghari theek kar raha hoon' -ForegroundColor Cyan
+Write-Host ("  Pehle: {0}" -f (Get-Date))
+tzutil /s "Pakistan Standard Time"
+Set-Service w32time -StartupType Automatic -ErrorAction SilentlyContinue
+Start-Service w32time -ErrorAction SilentlyContinue
+w32tm /config /manualpeerlist:"time.windows.com,0x9 pool.ntp.org,0x9 time.google.com,0x9 DESKTOP-Q1SLV77,0x9" /syncfromflags:manual /reliable:no /update | Out-Null
+$k = 'HKLM:\SYSTEM\CurrentControlSet\Services\W32Time'
+Set-ItemProperty "$k\TimeProviders\NtpClient" SpecialPollInterval 300 -ErrorAction SilentlyContinue
+Set-ItemProperty "$k\Config" MaxPosPhaseCorrection 0xFFFFFFFF -Type DWord -ErrorAction SilentlyContinue
+Set-ItemProperty "$k\Config" MaxNegPhaseCorrection 0xFFFFFFFF -Type DWord -ErrorAction SilentlyContinue
+Restart-Service w32time -Force -ErrorAction SilentlyContinue
+$ok = $false
+foreach ($i in 1..3) { w32tm /resync /force | Out-Null; if ($LASTEXITCODE -eq 0) { $ok = $true; break }; Start-Sleep 5 }
+Write-Host ("  Ab:    {0}" -f (Get-Date))
+if ($ok) { Write-Host '  [OK] Ghari theek. Ab har 5 minute khud milayegi.' -ForegroundColor Green }
+else { Write-Host '  [..] Abhi nahi mila — internet check karein, phir dobara. Har on par ghari ghalat ho to CMOS battery badlein.' -ForegroundColor Yellow }

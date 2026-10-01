@@ -1,8 +1,45 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v230   Tareekh: 2026-09-30  (SASTA MODE + budget + aaj ki 5 videos; ntcam.py v1.9.1 chowkidar/heartbeat/crash.log; ntfix.txt; RULES)
+Version: v231   Tareekh: 2026-10-01  (FREE AI Gemini -> DeepSeek; NT DOCTOR app se; NVR + AI keys app se; ntwaqt.txt; ntcam.py v2.0; RULES)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+00000000000000000000000000000000. v231 + ntcam.py v2.0 + ntwaqt.txt — FREE AI, NT DOCTOR, NVR / KEYS APP SE, POS GHARI
+------------------------------------------------------------
+Malik (30 Sep - 1 Oct): galla AI "paisa bilkul na lage", tasveerein Google jana manzoor; backup DeepSeek (thora paisa). Shop NVR
+DHI-NVR2108-I2 (8 ch) sab jodne hain; AnyDesk copy-paste / BAT files tang karti hain. POS bill-cancel cards mein "6:29 pm ka bill, 5:53 pm
+par cancel" = counter PC ki ghari ~36 min aage -> voucher milaan bigarta tha (NT-Waqt-Sync.bat di, 5 min poll). 30 Sep 6:59 pm program
+chup-chaap band -> v1.9.1 chowkidar (pichla section). "barcode" wala sawal doosri chat ka tha.
+- ntcam.py v2.0:
+  * ai_call(content, big, max_tokens, claude_models): AI_SET['mode'] (cameras.ai: free | claude | off; Watch.apply). free: Gemini REST
+    generateContent (x-goog-api-key, inline_data) GEM_CHEAP (3.5-flash-lite, 3.1-flash-lite, 2.5-flash-lite) / GEM_BIG (3.5-flash,
+    2.5-flash); 429 ya model nahi -> QUOTA['out'] (din bhar) -> agla; phir DeepSeek chat/completions (Bearer, image_url data: detail low)
+    DS_MODELS (deepseek-flash, deepseek-v4-flash-vision-exp), kharcha DS_PRICE andaza; dono na -> RuntimeError (AI_PAUSE, unchecked).
+    claude: purana claude_call. ai_cheap / ai_story ab ai_call se. Galla.handle free mode: key = geminiKey ya deepseekKey (Claude ki
+    key se paisa NAHI); off -> unchecked. stats 'gem' (Gemini jaanch ginti) — RULES cameraStats + 'gem'.
+  * Pos.skew = SQL GETDATE() - PC (poll_sql ke shuru mein).
+  * doctor(): program / GitHub naya, chowkidar task, ffmpeg, har galla camera video + recording, POS ghari (>= 120 s = ❌ "N minute
+    aage/peeche"), Gemini / DeepSeek key, AI mode + aaj Gemini + kaunsi free had poori, POS status. [{ok, t}]
+  * nvr_add(): scan() -> Dahua device par diye passwords (pw, pw2) aazma kar ch 1..16 (pehla na chale to agla device; ch>1 par pehli
+    nakami par ruko) -> secrets.cams + cameras doc (naam "<ip aakhri>-<ch>", role view) + put_shot; heartbeat har channel.
+  * handle_cmd() main loop har 15 s: cameraPC/cmd {kind doctor|nvr|keys, at, secret} -> at naya ho to: Fire.delete(cmd) PEHLE (secret
+    Firebase par na rahe) -> kaam -> cameraPC/doctor {at, v, kind, lines<=30, cmdAt}. keys: gemini/deepseek/claude clean_key ->
+    secrets.json, phir doctor. Fire.delete() naya.
+  * ntcam_test.py 58 (+5 FreeAI: Gemini 429 -> agla model -> DeepSeek, bina DeepSeek key -> error, off; claude mode; free mode Claude
+    key se paisa nahi; cmd keys (saaf, aik dafa, mitaya, report) + rules; doctor lines (video/recording/naya version/POS 36 min/key)).
+- ntwaqt.txt (Pages): `irm https://samiullah-878.github.io/nt-traders-/ntwaqt.txt|iex` — khud Admin (RunAs), PK time zone, w32time auto,
+  peers time.windows.com / pool.ntp.org / time.google.com / DESKTOP-Q1SLV77, SpecialPollInterval 300, Max*PhaseCorrection bara farq ek
+  jhatke mein, resync 3 dafa, pehle / ab ka waqt. (NT-Waqt-Sync.bat jaisa, file ke baghair.)
+- RULES: cameraPC — PC delete docId 'cmd'; PC write docId 'doctor' keys [at, v, kind, lines, cmdAt], lines <= 30. cameraStats + 'gem'.
+  Malik cmd likhta hai (generic isOwner).
+- App v231: data.pcCommand(kind, secret) -> cameraPC/cmd (secret trim/200). live cameraPC/doctor -> S.camDoctor. Cameras sheet
+  doctorPanel(): "🩺 NT Doctor" — PC Doctor chalao / ➕ NVR jodein (user admin, pw, pw2) / 🔑 AI keys (Gemini, DeepSeek); ui.docAt intezar;
+  report ✅/❌ lines + waqt + v. Camera form (galla): "Kaunsa AI" select (free / claude / off) -> cameras.ai (saveCamera ai). costLine:
+  "🤖 Gemini free · aaj N jaanch · 💸 kharcha Rs .. / ..". CSS .doc-*. v231.
+- Malik ko: keys app se (aistudio.google.com key; DeepSeek platform.deepseek.com + thora balance). NVR app se password. Model naam Google /
+  DeepSeek badlein to 404 -> agla model; sab na chale to Doctor mein dikhega.
+- Yahan test NAHI: asal Gemini / DeepSeek jawab ka maiyaar, asal NVR scan (channel ginti), POS GETDATE.
 
 ------------------------------------------------------------
 0000000000000000000000000000000. ntcam.py v1.9.1 + ntup.txt — CHOWKIDAR (watchdog), heartbeat, crash.log

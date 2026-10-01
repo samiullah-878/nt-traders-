@@ -705,3 +705,10 @@ html.is-snap .live-clock,html.is-snap [data-live]{opacity:.6}
 .nig-out b{color:var(--text)}
 .nig-cost{color:var(--muted);font-weight:500}.nig-cost.is-bad{color:var(--bad);font-weight:600}
 .nig-daily h3 small{font-weight:500}
+
+/* v231: NT Doctor */
+.doc-panel{margin:12px 0;padding:14px;border:1px solid var(--rule);border-radius:16px;background:var(--paper);display:grid;gap:8px}
+.doc-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}.doc-head h3{margin:0}
+.doc-lines{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:.875rem}
+.doc-lines li{display:flex;gap:6px;align-items:flex-start}.doc-lines li span{min-width:0;overflow-wrap:anywhere}
+.doc-lines li.is-bad span{color:var(--bad);font-weight:600}.doc-at{margin:0;font-size:.8125rem}
