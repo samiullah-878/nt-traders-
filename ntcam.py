@@ -31,7 +31,7 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '2.0'
+VERSION = '2.0.1'
 
 import base64, collections, getpass, ipaddress, json, os, queue, re, socket, subprocess, sys, threading, time, traceback, urllib.parse
 from concurrent.futures import ThreadPoolExecutor
@@ -2573,45 +2573,93 @@ def doctor(fire, pos, watchers, recorders, galla):
     return out
 
 
-def nvr_add(fire, sec, user, pws, existing):
-    """App se: network par Dahua NVR / camera dhoondo, diye gaye passwords aazmao, har chalne wala channel (1-16) jodo."""
+def dahua_http(ip, user, pw, path, timeout=6):
+    """v2.0.1: Dahua web (digest) — (status, matn). 200 = password theek, 401 = ghalat / lock. Kuch na mile -> (0, ghalti)."""
+    import requests
+    from requests.auth import HTTPDigestAuth
+    for scheme in ('http', 'https'):
+        try:
+            r = requests.get(f'{scheme}://{ip}/cgi-bin/{path}', auth=HTTPDigestAuth(user, pw), timeout=timeout, verify=False)
+            return r.status_code, r.text or ''
+        except Exception as e:
+            err = str(e)
+    return 0, err[:80]
+
+
+def dahua_info(ip, user, pw):
+    """Wapas {'ok': True|False|None, 'locked', 'model', 'names': {ch: naam}, 'why'}. None = web se pata nahi chala (RTSP aazmao)."""
+    code, txt = dahua_http(ip, user, pw, 'magicBox.cgi?action=getDeviceType')
+    if code == 401:
+        low = txt.lower()
+        return {'ok': False, 'locked': 'lock' in low, 'why': 'account lock (thori der baad / NVR restart)' if 'lock' in low else 'password ghalat'}
+    if code != 200:
+        return {'ok': None, 'why': f'web jawab {code or txt}'}
+    model = (re.search(r'type=(.+)', txt) or [None, ''])[1].strip()[:40]
+    names = {}
+    c2, t2 = dahua_http(ip, user, pw, 'configManager.cgi?action=getConfig&name=ChannelTitle')
+    if c2 == 200:
+        for m in re.finditer(r'ChannelTitle\[(\d+)\]\.Name=(.*)', t2):
+            nm = m.group(2).strip()
+            if nm:
+                names[int(m.group(1)) + 1] = nm[:40]
+    return {'ok': True, 'locked': False, 'model': model, 'names': names}
+
+
+def nvr_add(fire, sec, user, pws, existing, max_ch=16):
+    """App se: network par Dahua NVR / camera dhoondo. Pehle web se password / lock pakka (ghalat koshish kam — lock na ho),
+    phir har channel 1..max alag (khali chhoro), main stream na mile to sub stream. Channel ke naam NVR se."""
     out, added = [], 0
     found = scan()
     for dev in found:
-        if dev.get('brand') not in ('dahua', None, ''):
+        brand = dev.get('brand') or 'dahua'
+        if brand not in ('dahua',):
             continue
+        heartbeat()
+        info, pw_ok = None, None
         for pw in pws:
-            u1 = next((u for u in rtsp_urls(dev['brand'] or 'dahua', dev['ip'], user, pw, 1) if grab(u) is not None), None)
-            if not u1:
+            info = dahua_info(dev['ip'], user, pw)
+            if info['ok'] is True or info['ok'] is None:
+                pw_ok = pw
+                break
+            if info.get('locked'):
+                break
+        if not pw_ok:
+            out.append({'ok': False, 't': f"{dev['ip']}: {(info or {}).get('why') or 'password ghalat'}"})
+            continue
+        mdl = info.get('model') or ''
+        mm = re.search(r'[NX]VR\d{2}(\d{2})', mdl)
+        n = int(mm.group(1)) if mm else (1 if 'IPC' in mdl.upper() else max_ch)       # DHI-NVR2108 = 8, IPC = 1
+        got, empty = [], []
+        for ch in range(1, n + 1):
+            heartbeat()
+            cid = (dev['mac'] or dev['ip'].replace('.', '-')) + f'-ch{ch}'
+            url, frame = None, None
+            for u in rtsp_urls(brand, dev['ip'], user, pw_ok, ch) + [rtsp_urls(brand, dev['ip'], user, pw_ok, ch)[0].replace('subtype=0', 'subtype=1')]:
+                frame = grab(u)
+                if frame is not None:
+                    url = u
+                    break
+            if frame is None:
+                empty.append(ch)
+                if info['ok'] is None and ch == 1 and n == max_ch:
+                    n = 8                                   # web nahi, RTSP se — 8 tak aazmao
                 continue
-            n_ok = 0
-            for ch in range(1, 17):
-                heartbeat()                                  # lamba kaam — chowkidar ko zinda dikhe
-                cid = (dev['mac'] or dev['ip'].replace('.', '-')) + f'-ch{ch}'
-                url, frame = None, None
-                for u in rtsp_urls(dev['brand'] or 'dahua', dev['ip'], user, pw, ch):
-                    frame = grab(u)
-                    if frame is not None:
-                        url = u
-                        break
-                if frame is None:
-                    if ch > 1:
-                        break
-                    continue
-                n_ok += 1
-                sec['cams'][cid] = {'url': url, 'user': user, 'pw': pw, 'ip': dev['ip'], 'brand': dev['brand'] or 'dahua', 'ch': ch, 'mac': dev['mac']}
-                save_json(SECRETS, sec)
-                if cid not in existing:
-                    fire.patch(f'{BIZ}/cameras/{cid}', {'name': f"{dev['ip'].split('.')[-1]}-{ch}", 'ip': dev['ip'], 'mac': dev['mac'], 'brand': dev['brand'] or 'dahua',
-                                                         'channel': ch, 'role': 'view', 'enabled': True, 'createdAt': now_ms(), 'status': 'online', 'agent': VERSION})
-                    added += 1
-                put_shot(fire, cid, frame)
-            out.append({'ok': True, 't': f"{dev['ip']}: {n_ok} camera jude (naam baad mein app se badlein)"})
-            break
-        else:
-            out.append({'ok': False, 't': f"{dev['ip']}: password nahi chala"})
+            got.append(ch)
+            sec['cams'][cid] = {'url': url, 'user': user, 'pw': pw_ok, 'ip': dev['ip'], 'brand': brand, 'ch': ch, 'mac': dev['mac']}
+            save_json(SECRETS, sec)
+            name = (info.get('names') or {}).get(ch) or f"{dev['ip'].split('.')[-1]}-{ch}"
+            if cid not in existing:
+                fire.patch(f'{BIZ}/cameras/{cid}', {'name': name, 'ip': dev['ip'], 'mac': dev['mac'], 'brand': brand, 'channel': ch,
+                                                     'role': 'view', 'enabled': True, 'createdAt': now_ms(), 'status': 'online', 'agent': VERSION})
+                added += 1
+            put_shot(fire, cid, frame)
+        if not got and info['ok'] is None:
+            out.append({'ok': False, 't': f"{dev['ip']}: video nahi mili (password ya RTSP band) — {info.get('why')}"})
+            continue
+        label = f"{dev['ip']}" + (f" · {info['model']}" if info.get('model') else '') + (' · password theek' if info['ok'] else '')
+        out.append({'ok': bool(got), 't': f"{label} · {len(got)}/{len(got) + len(empty)} jude" + (f" (ch {', '.join(map(str, empty[:10]))} khali)" if empty else '')})
     if not found:
-        out.append({'ok': False, 't': 'Network par koi camera / NVR nahi mila'})
+        out.append({'ok': False, 't': 'Network par koi camera / NVR nahi mila (PC sirf apne network 192.168.x mein dhoondta hai)'})
     out.insert(0, {'ok': added > 0 or any(x['ok'] for x in out), 't': f'{added} naye camera jude'})
     return out
 

@@ -1,8 +1,24 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v231   Tareekh: 2026-10-01  (FREE AI Gemini -> DeepSeek; NT DOCTOR app se; NVR + AI keys app se; ntwaqt.txt; ntcam.py v2.0; RULES)
+Version: v231   Tareekh: 2026-10-02  (FREE AI + NT DOCTOR + NVR/keys app se; ntcam.py v2.0.1 NVR fix; ntwaqt.txt; RULES v231)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+000000000000000000000000000000000. ntcam.py v2.0.1 — NVR JODNA THEEK (web se password / lock, har channel alag)
+------------------------------------------------------------
+Malik: Doctor ki NVR report "password nahi chala" — lekin admin123 DMSS aur NVR ki login screen par sahi. Wajah (code): nvr_add sirf
+channel 1 ki RTSP tasveer se password maanta tha (ch 1 khali / H.265 der = "password nahi chala"); do password (Samkhan786 + admin123)
+aur pichle hafte ki 401 koshishon se Dahua account lock (5 ghalat = ~30 min).
+- dahua_http(ip, user, pw, path): requests + HTTPDigestAuth, http phir https (verify False) -> (status, matn). dahua_info(): getDeviceType
+  -> 200 = password theek + model; 401 -> 'password ghalat' / 'lock' matn ho to locked (agla password NAHI aazmata — aur lock na ho);
+  web na chale -> ok None (RTSP se aazmao). ChannelTitle -> {ch: naam} (khali naam chhor).
+- nvr_add(): har Dahua device par pehle dahua_info; channel ginti model se ([NX]VR\d\d(\d\d) -> DHI-NVR2108 = 8, IPC = 1, warna 16);
+  1..n HAR channel alag (khali = empty list, ruke nahi); har channel main (subtype=0) phir hik phir sub (subtype=1); naam NVR ka ya
+  "<ip aakhri>-<ch>". Report: "192.168.0.88 · DHI-NVR2108-I2 · password theek · 6/8 jude (ch 3, 7 khali)" / "<ip>: password ghalat" /
+  "account lock (thori der baad / NVR restart)".
+- ntcam_test.py 60 (+2 Nvr: info parse / lock; add — galla cam ka alag password chhora, 6/8, naam, sub stream, sirf 8 channel).
+- Malik ko: NVR restart (lock khule), sirf aik password admin123 likhein, phir NVR jodein. App / rules nahi badle.
 
 ------------------------------------------------------------
 00000000000000000000000000000000. v231 + ntcam.py v2.0 + ntwaqt.txt — FREE AI, NT DOCTOR, NVR / KEYS APP SE, POS GHARI

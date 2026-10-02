@@ -565,6 +565,51 @@ class FreeAI(unittest.TestCase):
         self.assertIn('Gemini key hai', t)
 
 
+class Nvr(unittest.TestCase):
+    """v2.0.1 — NVR: web se password / lock, har channel alag, khali chhoro, sub stream, naam NVR se."""
+    def test_info(self):
+        def http(ip, u, pw, path, timeout=6):
+            if pw == 'bad': return 401, 'Unauthorized'
+            if pw == 'lock': return 401, 'User is locked'
+            if 'getDeviceType' in path: return 200, 'type=DHI-NVR2108-I2\r\n'
+            return 200, 'table.ChannelTitle[0].Name=Galla\r\ntable.ChannelTitle[2].Name=Godam darwaza\r\ntable.ChannelTitle[3].Name=\r\n'
+        with mock.patch.object(ntcam, 'dahua_http', http):
+            i = ntcam.dahua_info('1.2.3.4', 'admin', 'admin123')
+            self.assertEqual((i['ok'], i['model'], i['names']), (True, 'DHI-NVR2108-I2', {1: 'Galla', 3: 'Godam darwaza'}))
+            self.assertEqual(ntcam.dahua_info('x', 'admin', 'bad')['why'], 'password ghalat')
+            self.assertTrue(ntcam.dahua_info('x', 'admin', 'lock')['locked'])
+
+    def test_add(self):
+        import tempfile
+        writes, shots, tried = [], [], []
+        def http(ip, u, pw, path, timeout=6):
+            if ip == '192.168.0.32': return 401, 'Unauthorized'
+            if pw != 'admin123': return 401, 'Unauthorized'
+            return (200, 'type=DHI-NVR2108-I2') if 'getDeviceType' in path else (200, 'table.ChannelTitle[1].Name=Godam darwaza')
+        def grab(u):
+            tried.append(u)
+            ch = int(re.search(r'channel=(\d+)', u).group(1)) if 'channel=' in u else 0
+            if ch in (3, 7): return None                              # khali channel
+            if ch == 5 and 'subtype=0' in u: return None              # sirf sub stream
+            return 'F' if 'channel=' in u else None
+        import re
+        fire = types.SimpleNamespace(patch=lambda p, d: writes.append((p, d)))
+        with tempfile.TemporaryDirectory() as d, mock.patch.object(ntcam, 'SECRETS', os.path.join(d, 's.json')), \
+             mock.patch.object(ntcam, 'scan', lambda: [{'ip': '192.168.0.32', 'brand': 'dahua', 'mac': 'cc33'}, {'ip': '192.168.0.88', 'brand': 'dahua', 'mac': 'aa88'}]), \
+             mock.patch.object(ntcam, 'dahua_http', http), mock.patch.object(ntcam, 'grab', grab), mock.patch.object(ntcam, 'put_shot', lambda f, c, fr: shots.append(c)), \
+             mock.patch.object(ntcam, 'heartbeat', lambda: None):
+            sec = {'cams': {}}
+            out = ntcam.nvr_add(fire, sec, 'admin', ['Samkhan786', 'admin123'], {'cc33-ch1'})
+        t = ' | '.join(x['t'] for x in out)
+        self.assertIn('192.168.0.32: password ghalat', t, 'galla camera ka alag password — chhor diya, lock nahi')
+        self.assertIn('192.168.0.88 · DHI-NVR2108-I2 · password theek · 6/8 jude (ch 3, 7 khali)', t)
+        self.assertEqual(out[0]['t'], '6 naye camera jude')
+        cams = [p.split('/')[-1] for p, dd in writes]; self.assertEqual(cams, [f'aa88-ch{c}' for c in (1, 2, 4, 5, 6, 8)])
+        self.assertEqual([dd['name'] for p, dd in writes][1], 'Godam darwaza', 'naam NVR se'); self.assertEqual(writes[0][1]['name'], '88-1')
+        self.assertIn('subtype=1', sec['cams']['aa88-ch5']['url'], 'main na mile to sub stream'); self.assertEqual(sec['cams']['aa88-ch1']['pw'], 'admin123')
+        self.assertFalse(any('channel=9' in u for u in tried), 'NVR2108 = sirf 8 channel')
+
+
 class Voucher(unittest.TestCase):
     """v1.6 — POS mein Cash Received voucher kahan hai: khud dhoondna (find_link), System Notes ka waqt, bill se jodna."""
     SALES = [{'SaleID': 5001 + i, 'SaleNo': f'{119020 + i:08d}'} for i in range(10)]
