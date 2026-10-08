@@ -82,10 +82,13 @@ test('malik login → Hazri tab, qataarein, tawajju', async () => {
   await click('[data-sheet=phones] [data-sheet-close]');
   // v220: Cameras (sirf malik) — PC code, tasveer, naam/kaam, nayi tasveer, poori screen
   await click('[data-action=tab][data-arg=settings]');
-  assert.ok($('[data-action=cameras]'), 'Cameras tool'); await click('[data-action=cameras]'); await settle(8);
-  const cs = () => $('[data-sheet=cameras]');
-  assert.ok(cs(), 'Cameras sheet'); assert.match(cs().textContent, /Camera PC abhi juda nahi/); assert.equal(cs().querySelector('.cmd').textContent, `$b='https://example.test/app/';irm "$` + `{b}ntcam.txt"|iex`, 'repo ke hisab se sahi command');
-  await click('[data-sheet=cameras] [data-action=cam-code]'); await settle(10);
+  assert.ok(!$('.tools [data-action=cameras]'), 'v234: Settings mein Cameras nahi — Nigrani mein');
+  await click('[data-action=tab][data-arg=nigrani]'); await settle(8);
+  assert.deepEqual($$('.nig-nav [data-action=nig-sec]').map(b => b.dataset.arg), ['lenden', 'cams', 'doctor', 'keys', 'khabar'], 'camera ki poori screen');
+  await click('.nig-nav [data-action=nig-sec][data-arg=cams]'); await settle(8);
+  const cs = () => $('.cam-screen');
+  assert.ok(cs(), 'Cameras screen'); assert.match(cs().textContent, /Camera PC abhi juda nahi/); assert.equal(cs().querySelector('.cmd').textContent, `$b='https://example.test/app/';irm "$` + `{b}ntcam.txt"|iex`, 'repo ke hisab se sahi command');
+  await click('.cam-screen [data-action=cam-code]'); await settle(10);
   const camCfg = records.get(B + 'cameraPC/config'); assert.ok(camCfg?.uid, 'PC ka login bana'); assert.match(camCfg.email, /^cam-[a-z0-9]{6}@nttraders\.local$/);
   assert.match(cs().querySelector('.cam-code').textContent, /^[a-z0-9]{6}-[a-z0-9]{10}$/, 'PC code dikha');
   assert.equal(fake.sdk.created.length, 1); assert.equal($('#app').dataset.screen, 'owner', 'malik ka login nahi hila');
@@ -93,12 +96,12 @@ test('malik login → Hazri tab, qataarein, tawajju', async () => {
   assert.match(cs().textContent, /Galla milaan: POS theek · Galla screen theek/, 'v223: POS ki halat');
   assert.ok(cs().querySelector('.cam-shot img[src^="data:image/jpeg;base64,"]'), 'tasveer'); assert.match(cs().textContent, /AI test: Counter par do log/);
   assert.match(cs().textContent, /192\.168\.0\.110/, 'PC ne jo naya device dekha'); assert.doesNotMatch(cs().querySelector('.notice')?.textContent || '', /192\.168\.0\.105/, 'juda hua dobara nahi');
-  await click('[data-sheet=cameras] [data-action=cam-snap]'); await settle(6); assert.ok(records.get(B + 'cameras/aa11-ch1').snapReq, 'nayi tasveer ki farmaish');
-  await click('[data-sheet=cameras] .cam-card [data-action=cam-edit]'); const camForm = $('[data-sheet=cameras] form[data-form=cam]'); assert.ok(camForm, 'badlne ka form');
+  await click('.cam-screen [data-action=cam-snap]'); await settle(6); assert.ok(records.get(B + 'cameras/aa11-ch1').snapReq, 'nayi tasveer ki farmaish');
+  await click('.cam-screen .cam-card [data-action=cam-edit]'); const camForm = $('.cam-screen form[data-form=cam]'); assert.ok(camForm, 'badlne ka form');
   camForm.elements.name.value = 'Galla wala'; camForm.querySelector('input[value=counter]').checked = true; await submit(camForm);
   assert.equal(records.get(B + 'cameras/aa11-ch1').name, 'Galla wala'); assert.equal(records.get(B + 'cameras/aa11-ch1').role, 'counter'); assert.equal(records.get(B + 'cameras/aa11-ch1').status, 'online', 'PC wali fields nahi badlin');
-  await click('[data-sheet=cameras] [data-action=cam-photo]'); assert.ok($('body > .viewer img'), 'poori screen tasveer'); await click('.viewer'); assert.equal($('.viewer'), null);
-  await click('[data-sheet=cameras] [data-sheet-close]');
+  await click('.cam-screen [data-action=cam-photo]'); assert.ok($('body > .viewer img'), 'poori screen tasveer'); await click('.viewer'); assert.equal($('.viewer'), null);
+  await click('.nig-nav [data-action=nig-sec][data-arg=lenden]');
   // v222: NIGRANI — Tawajju se tab, khulasa, filter, event + 6 tasveerein, duty, malik ka faisla, galla ka hissa
   await click('[data-action=tab][data-arg=hazri]');
   assert.match($('.attention').textContent, /Aaj 1 dafa galla par shak · 1 dafa bina voucher galla khula/); assert.match($('.attention').textContent, /Aaj 1 bill cancel \/ badle/);   // v226
@@ -242,6 +245,37 @@ test('v233: bina POS — parchi ka rule: default "Bina parchi", labels, do video
   await click('[data-sheet=nig-ev] [data-sheet-close]');
   await fake.sdk.setDoc(ref('cameraPC/status'), st0); await settle(8);
   await click('[data-action=tab][data-arg=hazri]');
+});
+
+test('v234: Nigrani = camera ki poori screen — keys / password / model / khabar app se', async () => {
+  await click('[data-action=tab][data-arg=nigrani]'); await settle(8);
+  await click('.nig-nav [data-action=nig-sec][data-arg=keys]'); await settle(6);
+  let f = $('form[data-form=cam-vault]'); assert.ok(f, 'keys ka form');
+  assert.equal($$('form[data-form=cam-vault] input[name^=key_]').length, 9, '9 providers');
+  f.elements.key_gemini.value = '  AIza-test-1234 '; f.elements.key_openrouter.value = 'sk-or-5678'; f.elements.pw.value = 'admin123'; f.elements.pw2.value = 'Galla99';
+  await submit(f); await settle(8);
+  let v = records.get(B + 'cameraPC/vault');
+  assert.equal(v.keys.gemini, 'AIza-test-1234'); assert.equal(v.keys.openrouter, 'sk-or-5678'); assert.deepEqual(v.cam, { user: 'admin', pw: 'admin123', pw2: 'Galla99' }); assert.ok(v.camAt, 'naya password = PC dobara jodega');
+  assert.match($('.cam-keys').textContent, /✅ save · …1234/); assert.equal($('form[data-form=cam-vault]').elements.key_gemini.value, '', 'key dobara nazar nahi aati');
+  const camAt = v.camAt; f = $('form[data-form=cam-vault]'); f.elements.key_claude.value = 'sk-ant-9999'; await submit(f); await settle(8);
+  v = records.get(B + 'cameraPC/vault'); assert.equal(v.keys.gemini, 'AIza-test-1234', 'khali = wahi'); assert.equal(v.keys.claude, 'sk-ant-9999'); assert.equal(v.camAt, camAt, 'password na badla to camAt wahi');
+  await click('[data-action=vault-del][data-arg=claude]'); await settle(8); assert.equal(records.get(B + 'cameraPC/vault').keys.claude, '', 'mitayi');
+  // model
+  const mf = $('form[data-form=cam-models]'); mf.elements.cheap.value = 'openrouter:qwen/qwen3.8-omni-flash'; mf.elements.bigOwn.value = 'openai:gpt-6-astra';
+  await submit(mf); await settle(8);
+  assert.deepEqual(records.get(B + 'cameraPC/settings').models, { cheap: 'openrouter:qwen/qwen3.8-omni-flash', big: 'openai:gpt-6-astra' });
+  assert.match($('.cam-models').textContent, /Qwen 3\.8 Omni Flash/); assert.match($('.cam-models').textContent, /openai ki key nahi/, 'key na ho to batao');
+  // khabar
+  await click('.nig-nav [data-action=nig-sec][data-arg=khabar]'); await settle(6);
+  const kf = $('form[data-form=cam-notify]'); assert.equal(kf.elements.n_saaf.checked, false, 'saaf nahi default band'); assert.equal(kf.elements.n_shak.checked, true);
+  kf.elements.n_shak.checked = false; kf.elements.n_saaf.checked = true; await submit(kf); await settle(8);
+  assert.deepEqual(records.get(B + 'cameraPC/settings').notify, { shak: false, saaf: true, clip: true, pcband: true, bill: true });
+  assert.ok(records.get(B + 'cameraPC/settings').models, 'khabar save par model na mite');
+  // doctor: save password se seedha jodna
+  await click('.nig-nav [data-action=nig-sec][data-arg=doctor]'); await settle(6);
+  await click('.doc-panel [data-action=pc-nvr]'); await settle(8);
+  assert.equal(records.get(B + 'cameraPC/cmd')?.kind, 'nvr'); assert.equal(records.get(B + 'cameraPC/cmd')?.secret, undefined, 'password Firebase cmd mein nahi');
+  await click('.nig-nav [data-action=nig-sec][data-arg=lenden]'); await click('[data-action=tab][data-arg=hazri]');
 });
 
 test('filter, din badalna, mahine ka jaal', async () => {

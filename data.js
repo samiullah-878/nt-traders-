@@ -33,7 +33,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     return {
       role: null, phone: '', loaded: new Set(), config: { ...DEFAULT_CONFIG },
       staff: [], months: new Map(), requests: [], schedules: new Map(), payroll: [],
-      account: null, myAttendance: [], punchError: null, sync: {}, diag: [], cameras: [], camPC: null, camDoctor: null, camCfg: null, camShots: new Map(), camStats: [], camEvents: [], camDayStats: [], camDay: '', posAlerts: [], camClips: [], outs: [], teamOuts: [], teamAttendance: [], tickets: [], myTickets: [], teamTickets: [], errors: {}, lastSync: {}, pendingWrites: 0
+      account: null, myAttendance: [], punchError: null, sync: {}, diag: [], cameras: [], camPC: null, camDoctor: null, camCfg: null, camVault: null, camSettings: null, camShots: new Map(), camStats: [], camEvents: [], camDayStats: [], camDay: '', posAlerts: [], camClips: [], outs: [], teamOuts: [], teamAttendance: [], tickets: [], myTickets: [], teamTickets: [], errors: {}, lastSync: {}, pendingWrites: 0
     };
   }
   let unsubs = [], monthSubs = new Map(), epoch = 0, legacyChecked = false, shotsSub = null, eventSubs = [];
@@ -82,6 +82,8 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       live(ref('cameraPC', 'status'), 'camPC', snap => { state.camPC = snap.exists() ? clean(snap.data()) : null; });
       live(ref('cameraPC', 'doctor'), 'camDoctor', snap => { state.camDoctor = snap.exists() ? clean(snap.data()) : null; });   // v231
       live(ref('cameraPC', 'config'), 'camCfg', snap => { state.camCfg = snap.exists() ? clean(snap.data()) : null; });
+      live(ref('cameraPC', 'vault'), 'camVault', snap => { state.camVault = snap.exists() ? clean(snap.data()) : null; });         // v234: keys / password (sirf malik + PC)
+      live(ref('cameraPC', 'settings'), 'camSettings', snap => { state.camSettings = snap.exists() ? clean(snap.data()) : null; }); // v234: AI model + khabar
       // v222: aaj ki galla ginti (chhote docs) — Tawajju card ke liye
       live(sdk.query(col('cameraStats'), sdk.where('date', '==', pkDate())), 'camStats', snap => { state.camStats = readList(snap); });
     }
@@ -1211,6 +1213,37 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     await quick(sdk.setDoc(ref('cameraPC', 'cmd'), doc));
     return doc.at;
   }
+  /* ---------- v234: KEYS / PASSWORD / MODEL app mein — PC (ntcam v2.3) har minute khud uthata hai ---------- */
+  const AI_PROVIDERS = ['gemini', 'claude', 'openai', 'deepseek', 'openrouter', 'groq', 'qwen', 'mistral', 'xai'];
+  /** keys: {provider: naya matn | null (mitao)}; khali / undefined = wahi rahe. cam: {user, pw, pw2} (khali = wahi). */
+  async function saveVault({ keys = {}, cam = null } = {}) {
+    ownerOnly();
+    const cur = state.camVault || {}, nk = { ...(cur.keys || {}) };
+    for (const [k, v] of Object.entries(keys)) {
+      if (!AI_PROVIDERS.includes(k)) continue;
+      if (v === null) nk[k] = '';
+      else if (String(v || '').trim()) nk[k] = String(v).trim().slice(0, 300);
+    }
+    const doc = { keys: nk, at: Date.now(), by: actor() };
+    if (cam) {
+      const c = { ...(cur.cam || {}) }; let changed = false;
+      for (const f of ['user', 'pw', 'pw2']) { const v = String(cam[f] ?? '').trim(); if (v && v !== c[f]) { c[f] = v.slice(0, 100); changed = true; } else if (cam[f] === null && c[f]) { delete c[f]; changed = true; } }
+      if (changed) { doc.cam = c; doc.camAt = Date.now(); }
+    }
+    await quick(sdk.setDoc(ref('cameraPC', 'vault'), doc, { merge: true }));
+    return doc;
+  }
+  const CAM_NOTIFY = ['shak', 'saaf', 'clip', 'pcband', 'bill'];
+  async function saveCamSettings({ models, notify } = {}) {
+    ownerOnly();
+    const doc = { at: Date.now(), by: actor() };
+    if (models) {
+      const ok = v => { const t = String(v || '').trim(); return t && t.includes(':') && AI_PROVIDERS.includes(t.split(':')[0]) ? t.slice(0, 120) : ''; };
+      doc.models = { cheap: ok(models.cheap), big: ok(models.big) };
+    }
+    if (notify) doc.notify = Object.fromEntries(CAM_NOTIFY.filter(k => k in notify).map(k => [k, !!notify[k]]));
+    await quick(sdk.setDoc(ref('cameraPC', 'settings'), doc, { merge: true }));
+  }
   async function saveZone(id, zone, which = 'zone') {   // v229: which = 'zone' (galla) | 'zone2' (counter / len-den)
     ownerOnly();
     if (!['zone', 'zone2'].includes(which)) throw new Error('Ghalat hissa');
@@ -1245,7 +1278,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
 
   return {
     app, full, actor, auth, state, watchShots, createCameraPC, saveCamera, requestShot, deleteCamera,
-    watchEvents, loadFrames, reviewEvent, saveZone, pcCommand, cleanupCam, loadClip, requestClip, deleteClip, keepClip, requestTest, deleteTest, testPack, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
+    watchEvents, loadFrames, reviewEvent, saveZone, pcCommand, cleanupCam, loadClip, requestClip, deleteClip, keepClip, requestTest, deleteTest, testPack, saveVault, saveCamSettings, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
     requestOut, cancelOut, returnOut, reviewOut, isManager, isTicketer, startBreak, endBreaks, createTicket, returnTicket, decideTicket, ticketSuggestFor,
     savePushToken, removePushToken, pushDevices, pushTestPing,
     applyDefaultShiftAll, applyDefaultSalaryAll, toggleClosed, quickPresent, closeCheckouts, getSelfie, migrateSelfies, selfiesFor, auditLog,

@@ -31,7 +31,10 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '2.2'
+VERSION = '2.3'
+# v2.3: APP SE KEYS / PASSWORD / MODEL — PC har minute cameraPC/vault (AI keys, camera / NVR password) aur cameraPC/settings (chhota +
+#       bara AI model) parhta hai; naya password ho to cameras khud jodta hai. Sab providers: Gemini, Claude, OpenAI, DeepSeek,
+#       OpenRouter (bohat se models aik key), Groq, Qwen, Mistral, xAI.
 # v2.2: SEEDHA CAMERA + AI (bina POS) — PC par POS ki files na hon (laptop) to 'parchi' ka rule: paisa hila -> parchi di? chhota AI ->
 #       na dikhi to bara AI -> dono kahein bina parchi = shak + photos + video (galla + counter). Counter camera ki tasveerein bhi AI ko.
 #       Naya PC code lagte hi (403) purana PC khud camera band kar deta hai.
@@ -1527,7 +1530,91 @@ def ai_mode():
     return str(AI_SET.get('mode') or 'free')
 
 
-AI_SET = {'mode': 'free'}              # Galla Watch se (cameras.ai)
+AI_SET = {'mode': 'free', 'cheap': '', 'big': ''}   # Galla Watch se (cameras.ai); v2.3: app se chuna model 'provider:model'
+
+# ---------- v2.3: sab AI providers (OpenAI jaisa raasta) — app ke "Keys / AI" se ----------
+KEY_NAMES = {'gemini': 'geminiKey', 'claude': 'claudeKey', 'openai': 'openaiKey', 'deepseek': 'deepseekKey', 'openrouter': 'openrouterKey',
+             'groq': 'groqKey', 'qwen': 'qwenKey', 'mistral': 'mistralKey', 'xai': 'xaiKey'}
+OPENAI_LIKE = {   # url, tasveeron ki had (None = koi nahi), tokens ka naam
+    'openai': ('https://api.openai.com/v1/chat/completions', None, 'max_completion_tokens'),
+    'deepseek': ('https://api.deepseek.com/chat/completions', None, 'max_tokens'),
+    'openrouter': ('https://openrouter.ai/api/v1/chat/completions', None, 'max_tokens'),
+    'groq': ('https://api.groq.com/openai/v1/chat/completions', 3, 'max_tokens'),
+    'qwen': ('https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions', None, 'max_tokens'),
+    'mistral': ('https://api.mistral.ai/v1/chat/completions', 8, 'max_tokens'),
+    'xai': ('https://api.x.ai/v1/chat/completions', None, 'max_tokens'),
+}
+
+
+def cap_images(content, cap):
+    """Had se zyada tasveerein hon to barabar faslay se `cap` rakho (har tasveer ke sath us ka label bhi)."""
+    idx = [i for i, c in enumerate(content) if c.get('type') == 'image']
+    if not cap or len(idx) <= cap:
+        return content
+    keep = {idx[round(k * (len(idx) - 1) / max(1, cap - 1))] for k in range(cap)}
+    out = []
+    for i, c in enumerate(content):
+        if c.get('type') == 'image' and i not in keep:
+            if out and out[-1].get('type') == 'text' and out[-1].get('text', '').startswith(('Tasveer', 'Galla camera', 'Counter camera')):
+                out.pop()
+            continue
+        out.append(c)
+    return out
+
+
+def provider_call(prov, model, content, max_tokens=700):
+    """v2.3: aik chuna hua model. Wapas (matn, ms, 'prov:model'). Key na ho / na chale -> RuntimeError."""
+    import requests
+    sec = secrets()
+    key = clean_key(sec.get(KEY_NAMES.get(prov, ''), ''))
+    if not key:
+        raise RuntimeError(f'{prov} ki key nahi (app > Nigrani > Keys / AI)')
+    t0 = time.time()
+    if prov == 'claude':
+        txt, ms, m = claude_call(key, content, (model,), max_tokens)
+        return txt, ms, 'claude:' + m
+    if prov == 'gemini':
+        r = requests.post(f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent', timeout=120,
+                          headers={'x-goog-api-key': key, 'content-type': 'application/json'},
+                          json={'contents': [{'role': 'user', 'parts': _gem_parts(content)}], 'generationConfig': {'maxOutputTokens': max_tokens, 'temperature': 0.2}})
+        if r.status_code != 200:
+            raise RuntimeError(f'gemini {model}: {r.status_code} {r.text[:120]}')
+        j = r.json()
+        txt = ' '.join(p.get('text', '') for c in j.get('candidates', [])[:1] for p in (c.get('content') or {}).get('parts', []))
+        COST['last'], COST['gem'] = 0.0, COST['gem'] + 1
+        return txt, int((time.time() - t0) * 1000), 'gemini:' + model
+    if prov not in OPENAI_LIKE:
+        raise RuntimeError(f'anjaan provider: {prov}')
+    url, cap, tok = OPENAI_LIKE[prov]
+    parts = _ds_parts(cap_images(content, cap))
+    if prov == 'mistral':
+        parts = [({'type': 'image_url', 'image_url': p['image_url']['url']} if p['type'] == 'image_url' else p) for p in parts]
+    body = {'model': model, tok: max_tokens, 'messages': [{'role': 'user', 'content': parts}]}
+    if prov != 'openai':
+        body['temperature'] = 0.2
+    hdr = {'Authorization': f'Bearer {key}', 'content-type': 'application/json'}
+    if prov == 'openrouter':
+        hdr.update({'HTTP-Referer': 'https://samiullah-878.github.io/nt-traders-/', 'X-Title': 'NT Camera'})
+    r = requests.post(url, timeout=120, headers=hdr, json=body)
+    if r.status_code != 200:
+        raise RuntimeError(f'{prov} {model}: {r.status_code} {r.text[:120]}')
+    j = r.json()
+    msg = ((j.get('choices') or [{}])[0].get('message') or {}).get('content') or ''
+    txt = ' '.join(x.get('text', '') for x in msg if isinstance(x, dict)) if isinstance(msg, list) else str(msg)
+    u = j.get('usage') or {}
+    COST['last'] = round(((u.get('prompt_tokens') or 0) * DS_PRICE[0] + (u.get('completion_tokens') or 0) * DS_PRICE[1]) / 1e6 * FX_PKR, 3) if prov == 'deepseek' else 0.0
+    return txt, int((time.time() - t0) * 1000), f'{prov}:{model}'
+
+
+def ai_key():
+    """v2.3: AI chal sakta hai? (chuna hua model ki key, ya purana raasta)."""
+    sec = secrets()
+    pick = AI_SET.get('cheap') or ''
+    if ':' in pick and sec.get(KEY_NAMES.get(pick.split(':', 1)[0], '')):
+        return sec.get(KEY_NAMES[pick.split(':', 1)[0]])
+    if ai_mode() == 'claude':
+        return sec.get('claudeKey')
+    return sec.get('geminiKey') or sec.get('deepseekKey')
 
 
 def ai_call(content, big=False, max_tokens=700, claude_models=None):
@@ -1540,6 +1627,14 @@ def ai_call(content, big=False, max_tokens=700, claude_models=None):
         QUOTA['day'], QUOTA['out'] = today, set()
     if mode == 'off':
         raise RuntimeError('AI band (malik ki setting)')
+    pick = AI_SET.get('big' if big else 'cheap') or ''
+    pre = []
+    if ':' in pick:                                    # v2.3: app se chuna model pehle; na chale to purana raasta
+        try:
+            return provider_call(*pick.split(':', 1), content, max_tokens)
+        except Exception as e:
+            pre.append(f'{pick}: {e}'[:160])
+            log('chuna hua AI nahi chala:', pre[-1])
     if mode == 'claude':
         return claude_call(sec.get('claudeKey'), content, claude_models or ((CONFIRM_MODELS if big else (MODEL,))), max_tokens)
     errs = []
@@ -1584,7 +1679,8 @@ def ai_call(content, big=False, max_tokens=700, claude_models=None):
             u = j.get('usage') or {}
             COST['last'] = round(((u.get('prompt_tokens') or 0) * DS_PRICE[0] + (u.get('completion_tokens') or 0) * DS_PRICE[1]) / 1e6 * FX_PKR, 3)
             return txt, int((time.time() - t0) * 1000), model
-    raise RuntimeError('AI nahi chala — ' + ('; '.join(errs)[:200] if errs else 'Gemini / DeepSeek key nahi (app > Cameras > AI keys)'))
+    errs = pre + errs
+    raise RuntimeError('AI nahi chala — ' + ('; '.join(errs)[:200] if errs else 'Gemini / DeepSeek key nahi (app > Nigrani > Keys / AI)'))
 
 
 def cost_rs(model, tin, tout):
@@ -2015,10 +2111,7 @@ class Galla(threading.Thread):
         st = self.bump(w.cid, date, touches=0 if counted else 1)
         if (not frames and not hasattr(w, 'key_frames')) or at - self.last_ai.get(w.cid, 0) < COOLDOWN:
             return
-        key = secrets().get('claudeKey')
-        if ai_mode() == 'free':
-            sk = secrets()
-            key = sk.get('geminiKey') or sk.get('deepseekKey')     # free mode: Claude ka paisa nahi
+        key = ai_key()                                            # v2.3: chuna hua model / free / claude
         if not key or ai_mode() == 'off' or st['checks'] >= w.cap_day or float(st.get('cost') or 0) >= getattr(w, 'budget', 1e9) or time.time() < self.pause_until:
             self.bump(w.cid, date, unchecked=1)
             return
@@ -2859,6 +2952,50 @@ def nvr_add(fire, sec, user, pws, existing, max_ch=16):
     return out
 
 
+VAULT_EVERY = 60          # v2.3: app ki keys / password / model har minute
+
+
+def apply_vault(fire, vault, settings, cams):
+    """v2.3: cameraPC/vault {keys: {gemini, claude, ...}, cam: {user, pw, pw2}, camAt} aur cameraPC/settings {models: {cheap, big}}.
+    Keys secrets.json mein ('' = mitao). Naya camera password (camAt) ya is PC par kisi camera ka password na ho -> cameras jodo
+    (nvr_add) aur report cameraPC/doctor. Wapas kya badla (log ke liye)."""
+    sec, changed = secrets(), []
+    for k, v in ((vault or {}).get('keys') or {}).items():
+        name = KEY_NAMES.get(k)
+        if not name or v is None:
+            continue
+        v = clean_key(v)
+        if v and sec.get(name) != v:
+            sec[name] = v; changed.append(k)
+        elif not v and sec.get(name):
+            sec.pop(name, None); changed.append(k + ' (mitayi)')
+    if changed:
+        save_json(SECRETS, sec)
+    m = ((settings or {}).get('models') or {})
+    for which in ('cheap', 'big'):
+        val = str(m.get(which) or '').strip()
+        AI_SET[which] = val if (':' in val and val.split(':', 1)[0] in KEY_NAMES) else ''
+    cam = (vault or {}).get('cam') or {}
+    pws = [p for p in (cam.get('pw'), cam.get('pw2')) if p]
+    at = int((vault or {}).get('camAt') or 0)
+    if pws:
+        first, newer = not VAULT_TRIED.get('done'), at > int(sec.get('vaultCamAt') or 0)
+        VAULT_TRIED['done'] = True
+        if newer or first:
+            cams = dict(fire.list('cameras'))          # taaza list — maujooda camera (galla ka kaam / dabba) na badle
+            need = [cid for cid in cams if cid not in sec.get('cams', {})]
+            if newer or need:
+                sec['vaultCamAt'] = at
+                save_json(SECRETS, sec)
+                lines = nvr_add(fire, secrets(), (cam.get('user') or 'admin').strip(), pws, set(cams))
+                fire.patch(f'{BIZ}/cameraPC/doctor', {'at': now_ms(), 'v': VERSION, 'kind': 'nvr', 'lines': lines[:30], 'cmdAt': at or now_ms()})
+                changed.append('cameras')
+    return changed
+
+
+VAULT_TRIED = {'done': False}
+
+
 def handle_cmd(fire, pos, watchers, recorders, galla, cams, state):
     """cameraPC/cmd: {kind: doctor|nvr|keys, at, secret?}. Report cameraPC/doctor mein; cmd mita do (secret Firebase par na rahe)."""
     c = fire.get(f'{BIZ}/cameraPC/cmd')
@@ -2882,6 +3019,13 @@ def handle_cmd(fire, pos, watchers, recorders, galla, cams, state):
             lines = [{'ok': True, 't': 'AI keys PC par save'}] + doctor(fire, pos, watchers, recorders, galla)
         elif kind == 'nvr':
             pws = [p for p in (secret.get('pw'), secret.get('pw2')) if p]
+            if not pws:                                # v2.3: app mein save password
+                v = fire.get(f'{BIZ}/cameraPC/vault') or {}
+                cam = v.get('cam') or {}
+                pws = [p for p in (cam.get('pw'), cam.get('pw2')) if p]
+                secret = {**secret, 'user': secret.get('user') or cam.get('user')}
+            if not pws:
+                raise RuntimeError('Camera / NVR ka password nahi — app > Nigrani > Keys / AI mein likhein')
             lines = nvr_add(fire, secrets(), (secret.get('user') or 'admin').strip(), pws, set(cams))
         else:
             lines = doctor(fire, pos, watchers, recorders, galla)
@@ -2964,6 +3108,7 @@ def run():
     last_scan = 0
     key_note = False                               # v1.1.2: shuru mein aik dafa AI ki halat cards par
     last_cmd = 0
+    last_vault = 0
     while True:
         heartbeat()
         if RETIRED['on']:                              # v2.2: is PC par camera band — har 10 min dekho shayad wapas yahi PC
@@ -2979,6 +3124,17 @@ def run():
             continue
         try:
             t = time.time()
+            if t - last_vault > VAULT_EVERY:           # v2.3: app ki keys / password / model
+                last_vault = t
+                try:
+                    ch = apply_vault(fire, fire.get(f'{BIZ}/cameraPC/vault'), fire.get(f'{BIZ}/cameraPC/settings'), cams)
+                    if ch:
+                        log('app se badla:', ', '.join(ch))
+                        last_list = 0                  # naye camera foran list mein
+                except Exception as e:
+                    if denied_error(e):
+                        raise
+                    log('vault nahi:', e)
             if t - last_cmd > 15:                      # v2.0: app ka hukam (Doctor / NVR / keys)
                 last_cmd = t
                 try:

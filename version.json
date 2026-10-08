@@ -1,6 +1,6 @@
 {
-  "version": "v233",
+  "version": "v234",
   "variant": "Production",
-  "buildDate": "2026-10-08",
-  "notes": "Seedha camera + AI (bina POS): parchi ka rule, counter camera ki tasveerein + video, purana PC khud band. ntcam.py v2.2. Rules NAHI badle."
+  "buildDate": "2026-10-09",
+  "notes": "Nigrani = camera ki poori screen (Len-den \u00b7 Cameras \u00b7 Doctor \u00b7 Keys/AI \u00b7 Khabar). Keys / password / AI model app se \u2014 PC khud uthata hai. Sab AI providers. ntcam.py v2.3. Rules NAHI badle."
 }

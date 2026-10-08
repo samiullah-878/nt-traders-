@@ -24,6 +24,7 @@ store.set(`${BIZ}/pushTokens/t1`, { token: 'OLD', role: 'owner', device: 'd:abc1
 store.set(`${BIZ}/pushTokens/t2`, { token: 'NEW', role: 'owner', device: 'd:abc123 · Android 10', at: 5 });
 store.set(`${BIZ}/pushTokens/t3`, { token: 'MGR', role: 'manager', device: 'd:mmm999 · Android 12', at: 3 });
 store.set(`${BIZ}/pushTokens/t4`, { token: 'STAFF', role: 'staff', device: 'x', at: 3 });
+process.env.NT_CAM_TTL = '0';   // v234: test mein camera khabar ki setting har dafa taza
 await import('./index.js');
 const write = async (coll, id, after, before) => { sent.length = 0; await handler({ params: { coll, docId: id }, data: { before: snap('b', before), after: snap('a', after) } }); return [...sent]; };
 
@@ -81,4 +82,18 @@ test('v225: mangwayi clip tayyar (req -> ok) -> malik ko khabar; shak wali khud 
   assert.deepEqual(a.map(m => m.token), ['NEW']); assert.match(a[0].data.title, /Clip tayyar: 5 baje/);
   assert.equal((await write('cameraClips', 'ev-1', { kind: 'shak', status: 'ok' }, { kind: 'shak', status: 'making' })).length, 0);
   assert.equal((await write('cameraClips', 'req-1', { kind: 'req', status: 'ok', keep: true }, { kind: 'req', status: 'ok' })).length, 0, 'dobara nahi');
+});
+
+test('v234: camera khabar app se — shak band / saaf nahi chalu / clip band / bill band', async () => {
+  const S = `${BIZ}/cameraPC/settings`;
+  const ev = { cam: 'c1', camName: 'Galla', at: Date.now(), date: '2026-10-09', verdict: 'shak', why: 'Bina parchi paisa liya', flags: ['noparchi'] };
+  const saaf = { ...ev, verdict: 'saaf_nahi', flags: ['parchi_saaf'], why: 'Parchi saaf nazar nahi aayi' };
+  assert.equal((await write('cameraEvents', 'p1', ev)).length, 1, 'setting na ho = chalu');
+  assert.equal((await write('cameraEvents', 's1', saaf)).length, 0, 'saaf nahi default band');
+  store.set(S, { notify: { shak: false, saaf: true, clip: false, bill: false } });
+  assert.equal((await write('cameraEvents', 'p2', ev)).length, 0, 'shak band');
+  const s2 = await write('cameraEvents', 's2', saaf); assert.equal(s2.length, 1); assert.match(s2[0].data.title, /parchi saaf nahi/);
+  assert.equal((await write('cameraClips', 'req-x', { kind: 'req', status: 'ok', from: 1, to: 2 }, { kind: 'req', status: 'making' })).length, 0, 'clip band');
+  assert.equal((await write('posAlerts', 'b1', { kind: 'cancel', no: '1', before: 100, after: 0, at: 1, when: 2 })).length, 0, 'bill band');
+  store.delete(S);
 });

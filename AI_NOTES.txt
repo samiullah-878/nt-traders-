@@ -1,8 +1,48 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v233   Tareekh: 2026-10-08  (SEEDHA CAMERA + AI bina POS — parchi ka rule; laptop; ntcam.py v2.2; RULES NAHI badle)
+Version: v234   Tareekh: 2026-10-09  (NIGRANI = CAMERA KI POORI SCREEN; keys / password / model app se; sab AI providers; ntcam.py v2.3; RULES NAHI badle)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+000000000000000000000000000000000000. v234 + ntcam.py v2.3 — NIGRANI = CAMERA KI POORI SCREEN · KEYS / PASSWORD / MODEL APP SE · SAB AI
+------------------------------------------------------------
+Malik (9 Oct raat): "keys aur password app mein hi bane, PC wahan se khud utha le aur jode — jaise app se camera / PC Doctor; is tarah
+mukhtalif API / AI models try kar sakte hain. Sab models add karo. Camera ki poori screen app mein — camera settings, doctor,
+notification usi screen mein, main Settings mein nahi." Bataya: keys ab Firebase mein (sirf malik + camera PC parhte, manager nahi),
+mitane ka button. Malik ne main ko keys bhejne ka nahi kaha — woh khud app mein likhega.
+- Firestore (RULES NAHI badle — cameraPC/* PC parh sakta hai, malik generic likhta hai, manager ke liye cameraPC band):
+  cameraPC/vault {keys: {gemini, claude, openai, openrouter, deepseek, groq, qwen, mistral, xai}, cam: {user, pw, pw2}, camAt, at, by};
+  cameraPC/settings {models: {cheap, big} = 'provider:model' ya '', notify: {shak, saaf, clip, pcband, bill}, at, by}.
+- ntcam.py v2.3:
+  * KEY_NAMES provider -> secrets naam. OPENAI_LIKE (url, tasveer had, tokens naam): openai (max_completion_tokens, temperature nahi),
+    deepseek, openrouter (HTTP-Referer / X-Title), groq (had 3 — ab sirf qwen/qwen3.8-27b vision, docs 9 Oct), qwen (dashscope-intl),
+    mistral (had 8, image_url = seedha data: matn), xai. cap_images(content, cap) barabar faslay se, label bhi hata. provider_call(prov,
+    model, content, max_tokens) -> (matn, ms, 'prov:model'); claude -> claude_call; gemini -> generateContent. Kharcha sirf deepseek /
+    claude ka; baqi 0 (budget unhein nahi rokta).
+  * ai_call: AI_SET['cheap' | 'big'] ('prov:model') pehle; na chale -> log + purana raasta (claude mode ya free Gemini -> DeepSeek), ghalti
+    ki line mein shamil. big khali = purana big raasta. ai_key(): chune model ki key / claude / gemini|deepseek — Galla.handle ka darwaza.
+  * apply_vault(fire, vault, settings, cams) har VAULT_EVERY 60 s main loop mein: keys secrets mein ('' = mitao, None = chhoro), models
+    AI_SET (anjaan provider = ''), cam password: pehli dafa ya camAt > secrets.vaultCamAt -> TAAZA fire.list('cameras') (maujooda galla
+    camera ka kaam / dabba na badle) -> camAt naya ya kisi camera ka password is PC par nahi -> nvr_add + cameraPC/doctor (kind nvr,
+    cmdAt camAt). handle_cmd nvr: secret na ho to vault ke password. 403 par retire wahi (denied_error raise).
+  * ntcam_test 76 (+5 AppKeys: cap_images, provider_call (openai / mistral / groq / openrouter / gemini / claude / key nahi / 401),
+    chuna model phir Gemini, apply_vault (keys / mitao / models / taaza list + join aik dafa + naya password), cmd nvr vault se).
+- functions: camNotify() (cameraPC/settings.notify, cache 60 s; test NT_CAM_TTL=0), camOn(k, dflt): shak (+ missing), clip, bill; NAYA:
+  saaf_nahi + flags parchi_saaf par khabar sirf jab notify.saaf (default band); watchDay (15 min) — cameraPC/status.at 20 min purana +
+  9 am-10 pm + pcband chalu -> "Camera PC band hai" aik dafa (pushState camDown; PC wapas aaye to reset). router.test 9.
+  GitHub Actions push par functions khud deploy (deploy-functions.yml).
+- App v234: Settings se Cameras tool HATA. 'cameras' action -> Nigrani > Cameras. Nigrani ke upar nav (chips, sticky): 📋 Len-den ·
+  📷 Cameras (camerasBody — pehle wala sheet, inline; tasveerein sirf is section par watchShots) · 🩺 Doctor (doctorPanel; "➕ Cameras /
+  NVR jodein" save password ho to pcCommand('nvr') bina secret, warna Keys section) · 🔐 Keys / AI (keysScreen: 9 keys password
+  khane + "✅ save · …last4" + Mitayein (vault-del = null -> ''), camera user / pw / pw2; "Kaunsa AI": chhota / bara select AI_PRESETS
+  (Gemini 3.5/3.1 Flash-Lite, 3.8 / 3.5 Flash, 3.1 Pro; Claude Haiku / Sonnet / Opus 5.5; OpenAI gpt-6-luna / 6.1-sol / 6-astra;
+  DeepSeek; OpenRouter qwen3.8-omni-flash, grok-4.7, mistral-large-4-0, deepseek-v4.1-flash, glm-5.3-flashx, mimo-v2.6-flash; Groq) +
+  "Ya apna model likhein" (provider:model); key na ho to peela notice) · 🔔 Khabar (CAM_KHABAR checkboxes -> settings.notify; link
+  Phone notification). data.saveVault / saveCamSettings (merge), live camVault / camSettings. Camera ki tabdeeli par rerender (sheet
+  nahi). app.dom 25 pass (+1 v234; Cameras test ab Nigrani > Cameras se).
+- Model naam Oct 2026 ke docs se (Gemini models page, OpenAI models page, OpenRouter /models, Groq vision) — badlein to "Ya apna likhein".
+- Yahan test NAHI: asal providers ke jawab, asal laptop par vault se camera jodna.
 
 ------------------------------------------------------------
 00000000000000000000000000000000000. v233 + ntcam.py v2.2 — SEEDHA CAMERA + AI (BINA POS): PARCHI KA RULE, LAPTOP, PURANA PC KHUD BAND

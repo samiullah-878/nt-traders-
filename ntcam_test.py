@@ -948,6 +948,106 @@ class Parchi(unittest.TestCase):
         with mock.patch.object(ntcam, 'KHATA_DIR', '/nahi/hai'): self.assertFalse(ntcam.pos_files())
 
 
+class AppKeys(unittest.TestCase):
+    """v2.3 — app se keys / camera password / model (cameraPC/vault + settings); sab providers."""
+    def setUp(self):
+        self.old = dict(ntcam.AI_SET); ntcam.VAULT_TRIED['done'] = False
+    def tearDown(self):
+        ntcam.AI_SET.clear(); ntcam.AI_SET.update(self.old)
+
+    def content(self, n=10):
+        c = [{'type': 'text', 'text': 'sawal'}]
+        for i in range(n):
+            c += [{'type': 'text', 'text': f'Tasveer {i + 1}'}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': f'IMG{i}'}}]
+        return c
+
+    def test_cap_images(self):
+        c = ntcam.cap_images(self.content(10), 3)
+        imgs = [x['source']['data'] for x in c if x['type'] == 'image']
+        self.assertEqual(imgs, ['IMG0', 'IMG4', 'IMG9']); self.assertEqual(sum(1 for x in c if x.get('text', '').startswith('Tasveer')), 3, 'label sirf bachi tasveeron ke')
+        self.assertEqual(ntcam.cap_images(self.content(2), 3), self.content(2))
+
+    def post(self, status=200, body=None):
+        calls = []
+        class R:
+            def __init__(s, st, j): s.status_code, s._j, s.text = st, j, json.dumps(j)
+            def json(s): return s._j
+        def fake(url, timeout=0, headers=None, json=None, **k):
+            calls.append({'url': url, 'headers': headers, 'json': json}); return R(status, body or {'choices': [{'message': {'content': '{"paisa":"aaya","parchi":true}'}}]})
+        return fake, calls
+
+    def test_provider_call(self):
+        import requests
+        keys = {'openaiKey': 'sk-o', 'mistralKey': 'm-k', 'groqKey': 'g-k', 'openrouterKey': 'or-k', 'geminiKey': 'gm', 'cams': {}}
+        with mock.patch.object(ntcam, 'secrets', lambda: keys):
+            fake, calls = self.post()
+            with mock.patch.object(requests, 'post', fake):
+                txt, ms, m = ntcam.provider_call('openai', 'gpt-6-luna', self.content(4), 200)
+                self.assertEqual(m, 'openai:gpt-6-luna'); self.assertIn('parchi', txt)
+                b = calls[-1]['json']; self.assertEqual(calls[-1]['url'], 'https://api.openai.com/v1/chat/completions'); self.assertEqual(b['max_completion_tokens'], 200); self.assertNotIn('temperature', b)
+                self.assertEqual(calls[-1]['headers']['Authorization'], 'Bearer sk-o'); self.assertEqual(sum(1 for p in b['messages'][0]['content'] if p['type'] == 'image_url'), 4)
+                ntcam.provider_call('mistral', 'mistral-large-4-0', self.content(10), 200)
+                ps = [p for p in calls[-1]['json']['messages'][0]['content'] if p['type'] == 'image_url']
+                self.assertEqual(len(ps), 8, 'mistral had 8'); self.assertTrue(ps[0]['image_url'].startswith('data:image/jpeg;base64,'), 'mistral ko seedha matn')
+                ntcam.provider_call('groq', 'qwen/qwen3.8-27b', self.content(10), 200)
+                self.assertEqual(sum(1 for p in calls[-1]['json']['messages'][0]['content'] if p['type'] == 'image_url'), 3, 'groq had 3')
+                ntcam.provider_call('openrouter', 'x-ai/grok-4.7', self.content(2), 200); self.assertIn('X-Title', calls[-1]['headers']); self.assertEqual(calls[-1]['json']['max_tokens'], 200)
+            fake, calls = self.post(body={'candidates': [{'content': {'parts': [{'text': 'ok'}]}}]})
+            with mock.patch.object(requests, 'post', fake):
+                self.assertEqual(ntcam.provider_call('gemini', 'gemini-3.8-flash', self.content(2))[2], 'gemini:gemini-3.8-flash'); self.assertIn('gemini-3.8-flash:generateContent', calls[-1]['url'])
+            with self.assertRaises(RuntimeError): ntcam.provider_call('xai', 'grok', self.content(1))
+            fake, calls = self.post(status=401, body={'error': 'bad key'})
+            with mock.patch.object(requests, 'post', fake), self.assertRaises(RuntimeError): ntcam.provider_call('openai', 'gpt-6-luna', self.content(1))
+        with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant', 'cams': {}}), mock.patch.object(ntcam, 'claude_call', lambda k, c, models, mt: ('x', 5, models[0])):
+            self.assertEqual(ntcam.provider_call('claude', 'claude-haiku-5-5', self.content(1))[2], 'claude:claude-haiku-5-5')
+
+    def test_ai_call_chuna_model_phir_purana_raasta(self):
+        ntcam.AI_SET.update({'mode': 'free', 'cheap': 'openai:gpt-6-luna', 'big': ''})
+        seen = []
+        def pc(prov, model, content, mt): seen.append((prov, model)); return 'jawab', 10, f'{prov}:{model}'
+        with mock.patch.object(ntcam, 'provider_call', pc):
+            self.assertEqual(ntcam.ai_call(self.content(2), False, 100)[2], 'openai:gpt-6-luna')
+        def bad(*a): raise RuntimeError('401')
+        import requests
+        fake, calls = self.post(body={'candidates': [{'content': {'parts': [{'text': 'gem'}]}}]})
+        with mock.patch.object(ntcam, 'provider_call', bad), mock.patch.object(ntcam, 'secrets', lambda: {'geminiKey': 'gm', 'cams': {}}), mock.patch.object(requests, 'post', fake):
+            txt, ms, model = ntcam.ai_call(self.content(2), False, 100)
+        self.assertEqual(txt, 'gem', 'chuna hua na chale to Gemini free'); self.assertIn(model, ntcam.GEM_CHEAP)
+        with mock.patch.object(ntcam, 'secrets', lambda: {'openaiKey': 'sk-o', 'cams': {}}):
+            self.assertEqual(ntcam.ai_key(), 'sk-o', 'chune model ki key = AI tayyar')
+
+    def test_apply_vault(self):
+        writes, lists = [], []
+        class F:
+            def list(s, coll): lists.append(coll); return [('aa11-ch1', {'name': 'Galla', 'role': 'galla', 'zone': {'w': .2}})]
+            def patch(s, path, data): writes.append((path, data)); return True
+        store = {'claudeKey': 'old', 'deepseekKey': 'ds', 'cams': {}}
+        saved = []
+        joins = []
+        def nvr(fire, sec, user, pws, existing): joins.append((user, pws, set(existing))); return [{'ok': True, 't': '1 naye camera jude'}]
+        with mock.patch.object(ntcam, 'secrets', lambda: store), mock.patch.object(ntcam, 'save_json', lambda p, d: saved.append(dict(d))), mock.patch.object(ntcam, 'nvr_add', nvr):
+            ch = ntcam.apply_vault(F(), {'keys': {'gemini': ' AIza-new ', 'claude': '', 'xyz': 'nahi'}, 'cam': {'user': 'admin', 'pw': 'admin123', 'pw2': 'Galla99'}, 'camAt': 500},
+                                   {'models': {'cheap': 'openrouter:qwen/qwen3.8-omni-flash', 'big': 'banda:xyz'}}, {})
+            self.assertEqual(store['geminiKey'], 'AIza-new'); self.assertNotIn('claudeKey', store, "'' = mitao"); self.assertEqual(store['deepseekKey'], 'ds', 'jo nahi likhi wo wahi')
+            self.assertEqual(ntcam.AI_SET['cheap'], 'openrouter:qwen/qwen3.8-omni-flash'); self.assertEqual(ntcam.AI_SET['big'], '', 'anjaan provider nahi')
+            self.assertEqual(joins, [('admin', ['admin123', 'Galla99'], {'aa11-ch1'})], 'maujooda galla camera existing mein (kaam na badle)')
+            self.assertIn('cameras', ch); doc = [d for p, d in writes if p.endswith('cameraPC/doctor')][0]; self.assertEqual((doc['kind'], doc['cmdAt']), ('nvr', 500))
+            store['cams']['aa11-ch1'] = {'url': 'x'}
+            ntcam.apply_vault(F(), {'cam': {'pw': 'admin123'}, 'camAt': 500}, {}, {}); self.assertEqual(len(joins), 1, 'wahi password dobara nahi')
+            ntcam.apply_vault(F(), {'cam': {'pw': 'naya'}, 'camAt': 900}, {}, {}); self.assertEqual(len(joins), 2, 'naya password -> dobara jodo')
+            self.assertEqual(ntcam.AI_SET['cheap'], '', 'settings khali = purana raasta')
+
+    def test_cmd_nvr_vault_se(self):
+        writes, joins = [], []
+        class F:
+            def get(s, path): return {'kind': 'nvr', 'at': 7} if path.endswith('/cmd') else {'cam': {'user': 'admin', 'pw': 'admin123'}}
+            def delete(s, path): writes.append(('del', path))
+            def patch(s, path, data): writes.append((path, data)); return True
+        with mock.patch.object(ntcam, 'nvr_add', lambda fire, sec, user, pws, ex: (joins.append((user, pws)) or [{'ok': True, 't': 'x'}])), mock.patch.object(ntcam, 'secrets', lambda: {'cams': {}}):
+            ntcam.handle_cmd(F(), None, {}, {}, None, {}, {})
+        self.assertEqual(joins, [('admin', ['admin123'])], 'app ke button par save password')
+
+
 class Nigrani(unittest.TestCase):
     """v1.1 galla nigrani — harkat, tukre, AI faisla, ginti (bina camera / Claude ke)."""
     def test_zone_px(self):

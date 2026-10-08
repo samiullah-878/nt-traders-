@@ -24,6 +24,14 @@ const config = async () => {
   cfgCache = (await db.doc(`${BIZ}/staffConfig/main`).get()).data() || {}; cfgAt = Date.now();
   return cfgCache;
 };
+// v234: camera ki khabrein malik app ke Nigrani > Khabar se chunta hai (cameraPC/settings.notify). Na likha ho = chalu (saaf nahi = band).
+let camCache = null, camAt = 0;
+const camNotify = async () => {
+  if (camCache && Date.now() - camAt < Number(process.env.NT_CAM_TTL ?? 60000)) return camCache;
+  camCache = ((await db.doc(`${BIZ}/cameraPC/settings`).get()).data() || {}).notify || {}; camAt = Date.now();
+  return camCache;
+};
+const camOn = async (k, dflt = true) => { const n = await camNotify(); return n[k] === undefined ? dflt : n[k] !== false; };
 const schedulesMap = async () => Object.fromEntries((await rows('staffSchedules')).map(s => [s.id, s]));
 
 /** Kis kis ke phone par khabar jaye: malik + manager (staff ke apne phone par nahi). */
@@ -116,6 +124,7 @@ async function handlePushTest(before, after) {
 /* ---------- v225: malik ki mangwayi clip tayyar (req -> ok) ---------- */
 async function handleClip(event, before) {
   const c = event.data?.data(); if (!c || c.kind !== 'req' || c.status !== 'ok' || (before?.status || '') === 'ok') return;
+  if (!(await camOn('clip'))) return;
   const t = ms => new Date(Number(ms) || Date.now()).toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit' }).toLowerCase();
   await push({ title: `Clip tayyar: ${c.title || t(c.from) + ' – ' + t(c.to)}`, body: 'Nigrani mein "Mangwayi hui clips" ke neeche ▶ Dekhein', tag: `clip-${event.params.id}`, kinds: ['owner'] });
 }
@@ -123,6 +132,7 @@ async function handleClip(event, before) {
 const money = n => 'Rs ' + Math.round(Number(n) || 0).toLocaleString('en-PK');
 async function handlePosAlert(event) {
   const a = event.data?.data(); if (!a) return;
+  if (!(await camOn('bill'))) return;
   const t = ms => new Date(Number(ms) || Date.now()).toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit' }).toLowerCase();
   const title = a.kind === 'cancel' ? `Bill cancel: #${a.no} · ${money(a.before)}` : a.kind === 'edit' ? `Bill badla: #${a.no} · ${money(a.before)} → ${money(a.after)}` : `Bill ke items badle: #${a.no} · ${money(a.before)}`;
   const body = `${t(a.at)} ka bill ${t(a.when)} par ${a.kind === 'cancel' ? 'cancel' : 'edit'} hua${a.by ? ' (' + a.by + ')' : ''}${a.replacedBy ? ` — naya #${a.replacedBy.no} ${money(a.replacedBy.amount)}` : ''} · Nigrani mein dekhein`;
@@ -134,11 +144,18 @@ async function handleCamEvent(event, before = null) {
   const time = new Date(Number(e.at) || Date.now()).toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit' }).toLowerCase();
   // naya event: shak par foran
   if (!before && e.verdict === 'shak') {
+    if (!(await camOn('shak'))) return;
     await push({ title: `Galla: shak · ${e.camName || 'camera'} · ${time}`, body: `${String(e.why || 'AI ko shak hua').slice(0, 140)} — photos Nigrani mein`, tag: `cam-${event.params.id}`, kinds: ['owner'] });
+    return;
+  }
+  // v234: AI ko parchi saaf nazar nahi aayi — sirf jab malik ne chalu kiya ho (default band)
+  if (!before && e.verdict === 'saaf_nahi' && (e.flags || []).includes('parchi_saaf')) {
+    if (await camOn('saaf', false)) await push({ title: `Galla: parchi saaf nahi · ${e.camName || 'camera'} · ${time}`, body: `${String(e.why || '').slice(0, 140)} — photos Nigrani mein`, tag: `cams-${event.params.id}`, kinds: ['owner'] });
     return;
   }
   // v223 GALLA MILAAN: 5 minute tak bill / entry na mili (wait -> missing) — sirf aik dafa
   if (e.matchState === 'missing' && (before?.matchState || '') !== 'missing' && e.verdict !== 'shak') {
+    if (!(await camOn('shak'))) return;
     await push({ title: `Galla: entry nahi · ${e.camName || 'camera'} · ${time}`, body: `${FLOW_TXT[e.flow] || 'paisa hila'} lekin POS bill / Galla screen entry nahi mili — photos Nigrani mein`, tag: `camm-${event.params.id}`, kinds: ['owner'] });
   }
 }
@@ -199,6 +216,17 @@ export const watchDay = onSchedule({ ...NORMAL, schedule: 'every 15 minutes', ti
     for (const o of over) b.set(col('staffOuts').doc(o.id), { overdueAlert: true }, { merge: true });
     await b.commit();
   }
+  // v234: 4) Camera PC band — dukaan ke waqt (9 am - 10 pm) 20 minute se PC ki khabar nahi (aik dafa; wapas aaye to phir se)
+  try {
+    const pc = (await db.doc(`${BIZ}/cameraPC/status`).get()).data();
+    if (pc?.at && (await camOn('pcband'))) {
+      const down = now - Number(pc.at) > 20 * 60000, open = nowMin >= 9 * 60 && nowMin <= 22 * 60;
+      if (down && open && !state.camDown) {
+        await push({ title: 'Camera PC band hai', body: `${pc.host || 'PC'} ne ${Math.round((now - Number(pc.at)) / 60000)} minute se khabar nahi bheji — nigrani ruki hui. PC / laptop on karein.`, tag: 'camdown-' + date, kinds: ['owner'] });
+        await stateRef(date).set({ camDown: true }, { merge: true });
+      } else if (!down && state.camDown) await stateRef(date).set({ camDown: false }, { merge: true });
+    }
+  } catch (err) { logger.error('camera pc band', err); }
   // 3) Duty khatam ke 30 minute baad bhi Check-Out baqi
   if (!state.checkout) {
     const pend = checkoutPending({ staff, attendance, schedules, config: cfg, date, nowMin, after: Number(cfg.push?.checkoutAfter ?? 30) });

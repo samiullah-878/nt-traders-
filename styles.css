@@ -727,3 +727,13 @@ html.is-snap .live-clock,html.is-snap [data-live]{opacity:.6}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(prefers-reduced-motion:reduce){.test-dot{animation:none}}
 .test-cam small.txt-ok{color:var(--ok)}.test-cam small.txt-bad{color:var(--bad)}
+
+/* ---------- v234: Nigrani = camera ki poori screen ---------- */
+.nig-nav{margin:-4px -4px 12px;padding:8px 4px;border-bottom:1px solid var(--rule);background:var(--ground);position:sticky;top:0;z-index:5}
+.nig-nav .chip{white-space:nowrap}
+.cam-screen{display:grid;gap:12px}
+.cam-keys .key-row{display:grid;gap:4px;margin-bottom:6px}
+.key-state{display:flex;gap:10px;align-items:center;font-size:.85rem;color:var(--muted)}.key-state.is-ok{color:var(--ok)}
+.key-state .link{font-size:.85rem}
+.cam-models .sub-in{margin-top:-4px}.cam-models .sub-in input{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9rem}
+.cam-models select{width:100%}
