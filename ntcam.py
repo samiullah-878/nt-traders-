@@ -31,7 +31,10 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '2.1'
+VERSION = '2.2'
+# v2.2: SEEDHA CAMERA + AI (bina POS) — PC par POS ki files na hon (laptop) to 'parchi' ka rule: paisa hila -> parchi di? chhota AI ->
+#       na dikhi to bara AI -> dono kahein bina parchi = shak + photos + video (galla + counter). Counter camera ki tasveerein bhi AI ko.
+#       Naya PC code lagte hi (403) purana PC khud camera band kar deta hai.
 # v2.1: TEST LEN-DEN — kaam 'Counter' wale camera (NVR) ki bhi recording (960 px, AI / harkat nahi) taake malik ke test aur
 #       clip mein counter nazar aaye; farmaish wali clip tab banti hai jab us waqt ka 60 s tukra poora ho chuka ho.
 
@@ -51,6 +54,8 @@ TAPE_SEC, TAPE_W, TAPE_Q = 360, 416, 62   # v1.8: galla + counter ki 0.5 s tasve
 STORY_N, STORY_PRE, STORY_POST = 20, 30, 10   # kahani: ~20 tasveerein, len-den se 30 s pehle se 10 s baad
 NOPAY_WAIT = 150                     # parchi scan (Cash Received) ke 2.5 min baad dekho: galle par harkat hui ya nahi
 CHEAP_N, CHEAP_W, CHEAP_Q = 8, 288, 60   # v1.9: sasta sawal — 8 tasveerein 288 px
+COUNTER_W = 480                           # v2.2: counter camera ki tape (parchi ke liye)
+PARCHI_N, PARCHI_C, PARCHI_BIG_N, PARCHI_BIG_C = 8, 6, 14, 8   # v2.2: galla / counter tasveerein — chhota AI, bara AI
 FX_PKR = 280.0                       # v1.9: kharcha rupay mein dikhane ke liye (andaza)
 PRICE = {'claude-haiku-4-5-20251001': (1.0, 5.0), 'claude-sonnet-5-5': (2.0, 10.0), 'claude-sonnet-4-6': (3.0, 15.0)}   # $/M tokens (in, out)
 DAILY_VIDEOS = 5                     # v1.9: roz itni len-den ki video bila tarteeb (bina AI)
@@ -712,6 +717,16 @@ class Watch(threading.Thread):
             chosen.add(k)
         return [(c[k][0], c[k][1]) for k in sorted(chosen)[:n]]
 
+    def frames_at(self, times, gap=1.0):
+        """v2.2: har waqt ke qareeb (gap s ke andar) wali tasveer — [(t, b64)], dobara nahi."""
+        tape, out, used = list(self.tape), [], set()
+        for want in times:
+            best = min(range(len(tape)), key=lambda k: abs(tape[k][0] - want), default=None)
+            if best is not None and best not in used and abs(tape[best][0] - want) <= gap:
+                used.add(best)
+                out.append((tape[best][0], tape[best][1]))
+        return sorted(out)
+
     def tape_covers(self, a, b):
         return bool(self.tape) and self.tape[0][0] <= a and self.tape[-1][0] >= b
 
@@ -739,6 +754,14 @@ class Watch(threading.Thread):
                             url, self.stream = url.replace('subtype=0', 'subtype=1'), 'sub'
                             log('nigrani: PC dheema — halki video', self.cid)
                             break
+                    if self.rec_only:                    # v2.2: counter camera — har 0.5 s choti tasveer (AI ko parchi dikhane ke liye)
+                        if now - last_ring >= 0.5:
+                            last_ring = now
+                            try:
+                                self.tape.append((now, jpeg_b64(f, width=COUNTER_W, quality=62)[0], 0.0))
+                            except Exception as e:
+                                log('counter tape:', e)
+                        continue
                     if not self.zone.get('w') or now - last_sample < 0.2:
                         continue
                     last_sample = now
@@ -952,6 +975,9 @@ class Pos(threading.Thread):
 
     def run(self):
         while True:
+            if RETIRED['on']:                  # v2.2
+                time.sleep(30)
+                continue
             try:
                 self.poll_sql()
                 self.sql_at, self.sql_err = time.time(), ''
@@ -1680,7 +1706,63 @@ def judge_cheap(res, crvs, tender=False):
 FLAG_TEXT = {'jeb': 'Paisa jeb / kapron mein', 'noparchi': 'Bina parchi paisa liya', 'parchi': 'Parchi di, paisa nahi diya',
              'aurko': 'Voucher ke waqt paisa kisi aur ko', 'nochange': 'Baqaya banta hi nahi tha', 'double': 'Aik bill par do dafa paisa nikla',
              'badanote': 'Chhote baqaye par bada note', 'nopay': 'Parchi scan · paisa nazar nahi aaya',
-             'novoucher': 'Bina voucher paisa nikla', 'unsure': 'Paisa diya — kis ko, saaf nahi'}
+             'novoucher': 'Bina voucher paisa nikla', 'unsure': 'Paisa diya — kis ko, saaf nahi',
+             'noparchi_out': 'Bina parchi paisa diya', 'parchi_saaf': 'Parchi saaf nazar nahi aayi'}
+
+# ---------- v2.2: SEEDHA CAMERA + AI (bina POS) — parchi ka rule ----------
+PARCHI_PROMPT = ('Ye tasveerein aik dukaan ki CCTV se hain, waqt ki tarteeb mein (har tasveer ke sath us ka waqt). {cams}Dukaan ka QAIDA: har '
+                 'customer pehle counter se PARCHI (chhota safed kaghaz / bill slip) leta hai, phir galle wale larke ko parchi + paisa deta hai; larka '
+                 'parchi le kar paisa galle mein rakhta hai aur baqaya USI customer ko deta hai. Ye normal hai. Haath seene / jeb / gode ke paas dikhna '
+                 'koi baat NAHI — sirf parchi dekho.{prev} SIRF ye batao: (1) "paisa": "aaya" (kisi ne galle wale ko paisa diya), "nikla" (galle se '
+                 'paisa nikal kar kisi ko diya), "dono" (liya aur baqaya diya), "nahi" (paisa ka len-den hi nahi — sirf ginti / galla chhua). (2) '
+                 '"parchi": true agar jis bande ne paisa diya ya liya us ne ISI len-den mein galle wale ko parchi di (haath mein, counter par, ya '
+                 'galle ke paas safed parchi saaf dikhe); false agar paisa hila magar koi parchi nazar NAHI aayi; "?" agar tasveer saaf nahi. (3) '
+                 '"kaun": jagah + kapron ka rang (naam / chehra HARGIZ nahi). (4) "why": Roman Urdu (English harf) mein aik chhoti line. '
+                 'Jawab SIRF JSON: {{"paisa": "aaya", "parchi": true, "kaun": "...", "why": "..."}}')
+
+
+def parse_parchi(text):
+    m = re.search(r'\{.*\}', text or '', re.S)
+    try:
+        j = json.loads(m.group(0)) if m else {}
+    except ValueError:
+        j = {}
+    pa = str(j.get('paisa') or '').strip().lower()
+    pc = j.get('parchi')
+    if isinstance(pc, str):
+        pc = {'true': True, 'haan': True, 'han': True, 'yes': True, 'false': False, 'nahi': False, 'no': False}.get(pc.strip().lower(), '?')
+    elif pc is not True and pc is not False:
+        pc = '?'
+    return {'paisa': pa if pa in ('aaya', 'nikla', 'dono', 'nahi') else 'nahi' if pa in ('', 'none') else '?', 'parchi': pc,
+            'kaun': str(j.get('kaun') or '')[:80], 'why': str(j.get('why') or '')[:200]}
+
+
+def ai_parchi(galla, counter, big=False, prev=''):
+    """galla / counter = [(t, b64)]. Wapas (dict, ms, model)."""
+    cams = 'Pehle GALLA camera (upar se galla + counter), phir COUNTER camera (saamne se, jahan parchi di jati hai). ' if counter else ''
+    content = [{'type': 'text', 'text': PARCHI_PROMPT.format(cams=cams, prev=(' Pehle chhote AI ne kaha: ' + prev + ' — ghaur se DOBARA dekho, parchi kahin bhi di gayi ho to true.') if prev else '')}]
+    n = 0
+    for label, rows in (('Galla camera', galla), ('Counter camera', counter)):
+        for t, b in rows:
+            n += 1
+            content += [{'type': 'text', 'text': f'{label} · Tasveer {n} ({clock(t)})'}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': b if big else small_b64(b)}}]
+    txt, ms, model = ai_call(content, big, 260, CONFIRM_MODELS if big else (MODEL,))
+    return parse_parchi(txt), ms, model
+
+
+FLOW_OF = {'aaya': 'aaya', 'nikla': 'nikla', 'dono': 'len_den'}
+
+
+def thumb_small(b):
+    try:
+        return small_b64(b, 240, 55)
+    except Exception:
+        return b
+
+
+def denied_error(e):
+    """v2.2: Firebase ne is PC ko mana kiya (naya PC code kahin aur) — AuthError ya 403."""
+    return isinstance(e, AuthError) or ' 403 ' in str(e) or 'PERMISSION_DENIED' in str(e)
 
 
 def judge_story(res, t0, t1, near, vouchers=True, tender=False):
@@ -1817,6 +1899,7 @@ class Galla(threading.Thread):
         self.hold, self.waiting, self.examples, self.ex_at = [], [], '', 0
         self.by_bill = {}                                      # v1.3: bill no -> camera event id
         self.clips = None                                      # v1.4: Clips thread (shak par clip)
+        self.counters = {}                                     # v2.2: counter camera (readers) — parchi ki tasveerein
         self.moves, self.watch_of, self.crv_seen, self.nopay_at = collections.deque(maxlen=4000), {}, set(), 0   # v1.8
         self.daily = {}                                        # v1.9: (cid, date) -> aaj kitni "daily" videos
 
@@ -1940,6 +2023,10 @@ class Galla(threading.Thread):
             self.bump(w.cid, date, unchecked=1)
             return
         self.last_ai[w.cid] = at
+        if PARCHI['on'] and hasattr(w, 'key_frames'):                # v2.2: bina POS — sirf parchi ka rule
+            kf = w.key_frames(t0 - 6, t1 + 6, PARCHI_N)
+            if len(kf) >= 4:
+                return self.handle_parchi(w, at, t0, t1, kf, date)
         near = self.recs(t0 - 180, t1 + 180)
         if hasattr(w, 'key_frames'):                                  # v1.9: sasta sawal; 🔴 par kahani (v1.8)
             must = [r['at'] for r in near if r['kind'] == 'crv' and t0 - VCH_AFTER <= r['at'] <= t1 + VCH_BEFORE]
@@ -2010,6 +2097,79 @@ class Galla(threading.Thread):
         self.clips.q.put({'id': f'{w.cid}-d-{int(t0 * 1000)}', 'cam': w.cid, 'kind': 'daily', 'eventId': '', 'from': int((t0 - 5) * 1000),
                           'to': int(min(t1 + 10, t0 - 5 + SHAK_MAX) * 1000), 'date': date, 'title': f'Aaj ki video {n + 1}'})
         return True
+
+    def counter_frames(self, times, n):
+        """v2.2: har counter camera se un waqton ki tasveerein (pehla jis ke paas hon)."""
+        for r in list(self.counters.values()):
+            fr = r.frames_at(times)
+            if fr:
+                return fr[:n], r
+        return [], None
+
+    def handle_parchi(self, w, at, t0, t1, kf, date):
+        """v2.2: paisa hila -> parchi di? Chhota AI. Parchi dikhi -> halka card (Normal chip mein). Na dikhi -> bara AI dobara ->
+        dono kahein bina parchi -> shak (photos galla + counter, video dono camera, khabar). Saaf nahi -> 'saaf nahi' card (khabar nahi)."""
+        self.daily_video(w, t0, t1, date)
+        cf, cam2 = self.counter_frames([t for t, _ in kf], PARCHI_C)
+        try:
+            res, ms, model = ai_parchi(kf, cf)
+            self.bump(w.cid, date, checks=1, cost=COST['last'], gem=1 if str(model).startswith('gemini') else 0)
+        except Exception as e:
+            self.pause_until = time.time() + AI_PAUSE
+            log('parchi sawal nahi chala:', e)
+            self.bump(w.cid, date, unchecked=1)
+            return
+        if res['paisa'] in ('nahi', '?') and res['parchi'] is not False:
+            return                                                   # paisa hila hi nahi — kuch nahi
+        flow = FLOW_OF.get(res['paisa'], 'aaya')
+        verdict, flags, why, frames = 'normal', [], 'Parchi di — ' + res['why'], (kf, cf)
+        if res['parchi'] is not True:
+            if getattr(w, 'second', True):
+                try:
+                    kf2 = w.key_frames(t0 - 8, t1 + 8, PARCHI_BIG_N)
+                    cf2, cam2b = self.counter_frames([t for t, _ in kf2], PARCHI_BIG_C)
+                    cam2 = cam2b or cam2
+                    r2, ms2, m2 = ai_parchi(kf2, cf2, True, res['why'] or 'parchi nazar nahi aayi')
+                    self.bump(w.cid, date, cost=COST['last'])
+                    ms, model, frames = ms + ms2, (model + '+' + m2)[:60], (kf2, cf2)
+                    if r2['paisa'] == 'nahi' and r2['parchi'] is not False:
+                        return                                       # bara AI: paisa hila hi nahi
+                    flow = FLOW_OF.get(r2['paisa'], flow)
+                    if r2['parchi'] is True:
+                        why = 'Doosre AI ne parchi dekhi: ' + (r2['why'] or '') + ' (pehle: ' + res['why'] + ')'
+                    else:
+                        res = r2
+                        verdict = 'shak' if r2['parchi'] is False else 'saaf_nahi'
+                except Exception as e2:
+                    log('parchi doosri raaye nahi:', e2)
+                    verdict = 'shak' if res['parchi'] is False else 'saaf_nahi'
+            else:
+                verdict = 'shak' if res['parchi'] is False else 'saaf_nahi'
+            if verdict == 'shak':
+                flags = ['noparchi_out' if flow == 'nikla' else 'noparchi']
+                why = FLAG_TEXT[flags[0]] + ' — ' + (res['why'] or '') + (f" ({res['kaun']})" if res.get('kaun') else '')
+            elif verdict == 'saaf_nahi':
+                flags = ['parchi_saaf']
+                why = FLAG_TEXT['parchi_saaf'] + ' — ' + (res['why'] or '')
+        eid, t = f'{w.cid}-{int(at * 1000)}', int(at * 1000)
+        self.bump(w.cid, date, moneyIn=1 if flow in ('aaya', 'len_den') else 0, moneyOut=1 if flow in ('nikla', 'len_den') else 0,
+                  matched=1 if verdict == 'normal' else 0, missing=1 if verdict == 'shak' else 0, shak=1 if verdict == 'shak' else 0)
+        g, c = frames
+        allf = (g + c)[:24]
+        if verdict != 'normal':                                      # photos sirf shak / saaf nahi par (normal halka)
+            self.fire.patch(f'{BIZ}/cameraFrames/{eid}', {'frames': [b for _, b in allf], 'times': [int(x * 1000) for x, _ in allf], 'at': t, 'cam': w.cid})
+        doc = {'cam': w.cid, 'camName': w.name, 'at': t, 'date': date, 'verdict': verdict, 'why': why[:290], 'flow': flow,
+               'matchState': 'missing' if verdict == 'shak' else 'none', 'start': int(t0 * 1000), 'end': int(t1 * 1000),
+               'thumb': thumb_small(g[len(g) // 2][1]) if verdict == 'normal' else g[len(g) // 2][1], 'n': len(allf) if verdict != 'normal' else 0,
+               'ms': ms, 'model': model, 'agent': VERSION, 'flags': flags}
+        self.fire.patch(f'{BIZ}/cameraEvents/{eid}', doc)
+        if verdict == 'shak' and self.clips:
+            self.clips.shak(w.cid, eid, t0, t1, date)
+            if cam2 is not None:
+                self.clips.shak(cam2.cid, eid, t0, t1, date, clip_id=eid + '-c')
+        log('parchi', w.cid, res['paisa'], res['parchi'], verdict)
+        when = time.strftime('%I:%M %p', time.gmtime(at + 5 * 3600)).lstrip('0').lower()
+        self.fire.patch(f'{BIZ}/cameras/{w.cid}', {'aiTest': f"AI chal raha hai (parchi) — aakhri {when} ({'Bina parchi' if verdict == 'shak' else 'Saaf nahi' if verdict == 'saaf_nahi' else 'Parchi di'})"[:200], 'aiTestAt': t})
 
     def handle_cheap(self, w, at, t0, t1, kf, near, date, key):
         """v1.9: 'galle se paisa bahar kis ko?' — 8 chhoti tasveerein. nikla nahi -> kuch nahi. ✅ baqaya -> halka card.
@@ -2327,12 +2487,15 @@ class Clips(threading.Thread):
         super().__init__(daemon=True)
         self.fire, self.recorders, self.q = fire, recorders, queue.Queue()
 
-    def shak(self, cid, eid, t0, t1, date):
-        self.q.put({'id': eid, 'cam': cid, 'kind': 'shak', 'eventId': eid, 'from': int((t0 - SHAK_BEFORE) * 1000), 'to': int(min(t1 + SHAK_AFTER, t0 - SHAK_BEFORE + SHAK_MAX) * 1000), 'date': date})
+    def shak(self, cid, eid, t0, t1, date, clip_id=None):
+        self.q.put({'id': clip_id or eid, 'cam': cid, 'kind': 'shak', 'eventId': eid, 'from': int((t0 - SHAK_BEFORE) * 1000), 'to': int(min(t1 + SHAK_AFTER, t0 - SHAK_BEFORE + SHAK_MAX) * 1000), 'date': date})
 
     def run(self):
         last = 0
         while True:
+            if RETIRED['on']:                      # v2.2: PC code kahin aur — kuch nahi
+                time.sleep(30)
+                continue
             try:
                 job = self.q.get(timeout=5)
                 self.make(job)
@@ -2372,6 +2535,15 @@ class Clips(threading.Thread):
 
 def watch_wanted(c, s):
     return bool(s) and c.get('enabled') is not False and c.get('role') == 'galla' and bool((c.get('zone') or {}).get('w'))
+
+
+PARCHI = {'on': False}          # v2.2: True = bina POS, parchi ka rule (main loop set karta hai)
+RETIRED = {'on': False}         # v2.2: naya PC code kahin aur lag gaya (403) — is PC par camera band
+
+
+def pos_files():
+    """v2.2: is PC par khata-sync ki POS setting hai? (laptop par nahi hogi -> POS band, parchi ka rule)"""
+    return os.path.exists(os.path.join(KHATA_DIR, 'local-config.json'))
 
 
 def rec_wanted(c, s):
@@ -2589,7 +2761,9 @@ def doctor(fire, pos, watchers, recorders, galla):
     add(bool(sec.get('geminiKey')), 'Gemini key ' + ('hai' if sec.get('geminiKey') else 'NAHI — app > Cameras > AI keys'))
     add(True, 'DeepSeek key ' + ('hai (backup)' if sec.get('deepseekKey') else 'nahi (backup band)'))
     add(True, f"AI: {ai_mode()} · aaj Gemini {COST['gem']} jaanch" + (' · free had poori: ' + ', '.join(sorted(QUOTA['out'])) if QUOTA['out'] else ''))
-    if galla and pos:
+    if PARCHI['on']:
+        add(True, 'POS band — parchi ka rule (seedha camera + AI)' + (f' · counter camera: {len(galla.counters)}' if galla else ''))
+    elif galla and pos:
         add(pos.ok_sql(), pos.status()[:150])
     return out
 
@@ -2762,14 +2936,29 @@ def run():
             wait = min(120, wait * 2)
     cams, shot_at, asked, state, watchers, recorders = {}, {}, {}, {}, {}, {}
     readers = {}                                   # v2.1: counter camera — sirf video + recording
+    def stop_all():
+        for d in (watchers, readers, recorders):
+            for x in list(d.values()):
+                try:
+                    x.stop()
+                except Exception:
+                    pass
+            d.clear()
     pos = Pos(fire)                                # v1.2: POS + Galla screen (sirf parhna); v1.3: bill badla / cancel
     galla = Galla(fire, pos)
     pos.galla = galla
     clips = Clips(fire, recorders)                 # v1.4
     galla.clips = clips
-    pos.start()
+    galla.counters = readers                       # v2.2: counter camera ki tasveerein parchi ke liye
+    PARCHI['on'] = not pos_files()                 # v2.2: laptop (POS files nahi) = bina POS, parchi ka rule
+    if PARCHI['on']:
+        log('POS nahi — parchi ka rule (seedha camera + AI)')
+    else:
+        pos.start()
     galla.start()
     clips.start()
+    denied = 0                                     # v2.2: lagatar 403 (naya PC code kahin aur) -> camera band
+    retry_at = 0
     last_list = last_status = 0
     last_update = time.time() - UPDATE_EVERY + 120   # shuru ke 2 minute baad pehli jaanch
     last_scan = 0
@@ -2777,6 +2966,17 @@ def run():
     last_cmd = 0
     while True:
         heartbeat()
+        if RETIRED['on']:                              # v2.2: is PC par camera band — har 10 min dekho shayad wapas yahi PC
+            if time.time() >= retry_at:
+                retry_at = time.time() + 600
+                try:
+                    put_status(fire, cams=0, online=0, pos='wapas is PC par')
+                    RETIRED['on'], denied = False, 0
+                    log('PC code wapas is PC ka — camera dobara shuru')
+                except Exception:
+                    pass
+            time.sleep(5)
+            continue
         try:
             t = time.time()
             if t - last_cmd > 15:                      # v2.0: app ka hukam (Doctor / NVR / keys)
@@ -2880,7 +3080,19 @@ def run():
                 if state.get(cid) == 'online':
                     online += 1
             if t - last_status > STATUS_EVERY:
-                put_status(fire, cams=len(cams), online=online, pos=pos.status())
+                try:
+                    put_status(fire, cams=len(cams), online=online, pos=('POS band — parchi ka rule (seedha camera + AI)' if PARCHI['on'] else pos.status()))
+                    denied = 0
+                except (AuthError, RuntimeError) as e:
+                    if denied_error(e):
+                        denied += 1
+                        log(f'PC ki ijazat nahi ({denied}/3):', str(e)[:120])
+                        if denied >= 3:                # naya PC code kisi aur PC / laptop par — yahan sab band (CPU khali)
+                            stop_all()
+                            RETIRED['on'], retry_at = True, time.time() + 600
+                            log('naya PC code kahin aur laga — is PC par camera band (har 10 min dekhega)')
+                            continue
+                    raise
                 for cid, wt in watchers.items():
                     rc = recorders.get(cid)
                     fire.patch(f'{BIZ}/cameras/{cid}', {'watch': 'on' if wt.latest_at and t - wt.latest_at < 30 else 'down', 'fps': round(wt.fps, 1),

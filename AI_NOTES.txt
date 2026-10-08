@@ -1,8 +1,45 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v232   Tareekh: 2026-10-08  (🧪 TEST LEN-DEN + counter camera recording; ntcam.py v2.1; RULES NAHI badle)
+Version: v233   Tareekh: 2026-10-08  (SEEDHA CAMERA + AI bina POS — parchi ka rule; laptop; ntcam.py v2.2; RULES NAHI badle)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+00000000000000000000000000000000000. v233 + ntcam.py v2.2 — SEEDHA CAMERA + AI (BINA POS): PARCHI KA RULE, LAPTOP, PURANA PC KHUD BAND
+------------------------------------------------------------
+Malik (8 Oct raat): camera program purane PC par ~20% CPU — naye laptop (Core i5 7th gen, 16 GB) par chalana hai. "POS ki ab zaroorat hi
+nahi — seedha camera aur AI, faltu jhanjhat nahi." Qaida: har customer pehle larke se PARCHI leta hai phir paisa deta hai; jo bina parchi
+paisa de ya le woh record mein aaye. Bataya (malik ne maana): bill cancel / edit alert bhi POS se tha — woh bhi band; parchi tabhi pakri
+jayegi jab counter camera mein saaf dikhe (🧪 test se pata chalega). Ab se MAIN par khud push (malik: "auto update karo, mene kuch nahi
+krna") — rules badlein to malik ko Firebase mein publish karne honge (chat mein poora matn).
+- ntcam.py v2.2:
+  * pos_files() = C:\khata-sync\local-config.json hai? PARCHI['on'] = not pos_files() (run shuru mein). on -> Pos thread start NAHI,
+    put_status pos = "POS band — parchi ka rule (seedha camera + AI)" (app isi matn se parchi mode pehchanti hai), doctor line wahi.
+  * Galla.handle: PARCHI on + watcher ke paas key_frames -> kf = key_frames(t0-6, t1+6, PARCHI_N 8) -> handle_parchi. counter_frames(times,
+    n): galla.counters (= readers, counter camera) ki tape se un waqton ki tasveerein (Watch.frames_at, 1 s ke andar, dobara nahi).
+    ai_parchi(galla, counter, big, prev) — PARCHI_PROMPT (qaida + "haath seene / jeb ke paas koi baat NAHI — sirf parchi dekho") ->
+    parse_parchi {paisa aaya|nikla|dono|nahi|?, parchi True|False|'?', kaun, why}; chhota = small_b64 288 px + MODEL, bara = asal 416/480
+    px + CONFIRM_MODELS (free mode: GEM_BIG). Raasta: paisa nahi -> kuch nahi; parchi True -> normal card (photos NAHI, thumb 240 px, n 0,
+    matched +1); warna (second on) bara AI 14 + 8 tasveer, prev = chhote ki baat: parchi True -> normal "Doosre AI ne parchi dekhi";
+    False -> shak flags noparchi (aaya / len_den) ya noparchi_out (nikla), matchState missing, missing +1, photos (galla + counter <= 24
+    + times), video: galla clip (eid) + counter clip (eid-c, eventId eid); '?' -> saaf_nahi flags parchi_saaf, photos, video / khabar
+    NAHI. second off -> chhote ka faisla. stats moneyIn / moneyOut / matched / missing / shak / checks / cost / gem.
+  * Counter camera (readers, rec_only): Watch.run har 0.5 s tape (t, JPEG 480 px q62, 0) — TAPE_SEC.
+  * RETIRED: put_status par denied_error (AuthError / 403 / PERMISSION_DENIED) lagatar 3 dafa -> stop_all() (watchers, readers,
+    recorders) + RETIRED on -> main loop sirf heartbeat, har 10 min put_status aazmaye (wapas yahi PC ho to chalu). Clips / Pos loops
+    RETIRED par so jate. Matlab: laptop par naya PC code lagte hi purana PC ~1 min mein camera band (CPU khali). Chowkidar heartbeat
+    se zinda rakhta hai, restart nahi karta.
+  * Clips.shak(..., clip_id). FLAG_TEXT + noparchi_out, parchi_saaf. ntcam_test 71 (+7 Parchi: parse, parchi di = halka card bina
+    photos, paisa nahi = kuch nahi, bara AI ne parchi dekhi, bina parchi = shak + 22 photos galla+counter + 2 clips + rules keys,
+    nikla = noparchi_out, saaf nahi = koi video nahi, doosri raaye band, frames_at, denied_error, pos_files).
+- App v233: parchiMode() = /parchi/ S.camPC.pos. Nigrani: default filter 'parchi' (shak + saaf nahi) — chips "Bina parchi / saaf nahi",
+  Sab, Na dekhe shak, Shak, Normal (POS wale Bill badle / Bina voucher / Parchi-baqaya chips aur bill-cancel notice NAHI); milaan qataar
+  "parchi di" / "bina parchi"; hint parchi ka rule. nig-day par filter default (undefined). FLAG + noparchi_out, parchi_saaf. clipBlock:
+  2+ clips ho to "▶ <camera> video". clipReqSheet: galla phir counter cameras. app.dom 24 pass (+1 v233).
+- RULES / FUNCTIONS NAHI BADLE (flags list, frames <= 24, keys wahi; shak par push pehle se).
+- Laptop par: Cameras > "Naya PC code banayein" -> laptop PowerShell: irm .../ntcam.txt|iex -> PC code, camera password (galla .32),
+  Claude key Enter (free mode) -> app 🔑 AI keys (Gemini) + ➕ NVR -> counter channel kaam Counter. POS files laptop par NAHI rakhni.
+- Yahan test NAHI: asal Gemini ka parchi pehchanna, laptop par 2-3 stream ka CPU, asal 403 par retire.
 
 ------------------------------------------------------------
 0000000000000000000000000000000000. v232 + ntcam.py v2.1 — 🧪 TEST LEN-DEN (malik ke naqli len-den -> video + AI ka jawab, aik zip)

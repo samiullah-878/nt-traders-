@@ -861,6 +861,93 @@ class TestLenDen(unittest.TestCase):
         self.assertEqual(probe.split()[0], '960,540', 'counter 960 px')
 
 
+class Parchi(unittest.TestCase):
+    """v2.2 — bina POS: paisa hila -> parchi di? chhota AI -> bara AI -> bina parchi = shak + photos (galla + counter) + 2 videos."""
+    def _g(self):
+        writes, clips = [], []
+        class F:
+            def get(s, path): return None
+            def patch(s, path, data): writes.append((path, data)); return True
+            def query(s, *a, **k): return []
+        g = ntcam.Galla(F(), None)
+        g.clips = types.SimpleNamespace(shak=lambda cid, eid, t0, t1, date, clip_id=None: clips.append((cid, clip_id or eid)))
+        import collections
+        import threading
+        r = ntcam.Watch.__new__(ntcam.Watch); threading.Thread.__init__(r, daemon=True); r.cid, r.name = 'nvr-3', 'Counter'
+        r.tape = collections.deque([(900 + k * 0.5, f'C{k}', 0.0) for k in range(600)], maxlen=720)
+        g.counters = {'nvr-3': r}
+        return g, writes, clips
+
+    def _w(self):
+        return Kahani._w(Kahani())
+
+    def run_case(self, cheap, big=None, second=True):
+        g, writes, clips = self._g()
+        calls = []
+        def fake(galla, counter, big_=False, prev=''):
+            calls.append((len(galla), len(counter), big_, prev))
+            return (big if big_ else cheap), 300, ('claude-sonnet-5-5' if big_ else ntcam.MODEL)
+        w = self._w(); w.second = second
+        old = ntcam.PARCHI['on']; ntcam.PARCHI['on'] = True
+        try:
+            with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'geminiKey': 'g-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_parchi', fake), \
+                 mock.patch.object(ntcam, 'ai_cheap', lambda *a: self.fail('POS wala raasta nahi')), mock.patch.object(ntcam, 'ai_story', lambda *a: self.fail('kahani nahi')):
+                g.handle(w, 1045.0, 1040.0, 1060.0, [], True)
+        finally:
+            ntcam.PARCHI['on'] = old
+        evs = [d for p, d in writes if '/cameraEvents/' in p]; frs = [d for p, d in writes if '/cameraFrames/' in p]
+        return g, evs, frs, clips, calls
+
+    def test_parse(self):
+        P = ntcam.parse_parchi
+        self.assertEqual(P('{"paisa":"aaya","parchi":true,"kaun":"daayen","why":"parchi di"}')['parchi'], True)
+        self.assertEqual(P('{"paisa":"dono","parchi":"false"}')['parchi'], False); self.assertEqual(P('{"paisa":"nikla","parchi":"?"}')['parchi'], '?')
+        self.assertEqual(P('kuch nahi')['paisa'], 'nahi'); self.assertEqual(P('{"paisa":"udaa"}')['paisa'], '?')
+        self.assertIn('parchi', ntcam.PARCHI_PROMPT); self.assertIn('sirf parchi dekho', ntcam.PARCHI_PROMPT)
+
+    def test_parchi_di_halka_card(self):
+        g, evs, frs, clips, calls = self.run_case({'paisa': 'dono', 'parchi': True, 'kaun': 'daayen', 'why': 'parchi aur paisa diya'})
+        self.assertEqual(len(calls), 1, 'sirf chhota AI'); self.assertEqual(calls[0][:3], (ntcam.PARCHI_N, ntcam.PARCHI_C, False), 'galla 8 + counter 6')
+        self.assertEqual((evs[0]['verdict'], evs[0]['flow'], evs[0]['flags']), ('normal', 'len_den', [])); self.assertEqual(frs, [], 'normal par photos nahi')
+        self.assertEqual(clips, []); st = g.stats[('c1', ntcam.pk_date(1045.0))]; self.assertEqual((st['matched'], st['moneyIn'], st['moneyOut'], st['shak']), (1, 1, 1, 0))
+
+    def test_paisa_nahi_hila(self):
+        g, evs, frs, clips, calls = self.run_case({'paisa': 'nahi', 'parchi': '?', 'why': 'sirf gine'})
+        self.assertEqual((evs, frs, clips), ([], [], []))
+
+    def test_bara_AI_ne_parchi_dekhi(self):
+        g, evs, frs, clips, calls = self.run_case({'paisa': 'aaya', 'parchi': False, 'why': 'parchi nahi dikhi'}, {'paisa': 'aaya', 'parchi': True, 'why': 'counter par safed parchi'})
+        self.assertEqual([c[2] for c in calls], [False, True]); self.assertEqual(calls[1][:2], (ntcam.PARCHI_BIG_N, ntcam.PARCHI_BIG_C)); self.assertIn('parchi nahi dikhi', calls[1][3])
+        self.assertEqual(evs[0]['verdict'], 'normal'); self.assertIn('Doosre AI ne parchi dekhi', evs[0]['why']); self.assertEqual(clips, [])
+
+    def test_bina_parchi_shak(self):
+        g, evs, frs, clips, calls = self.run_case({'paisa': 'aaya', 'parchi': False, 'why': 'parchi nahi'}, {'paisa': 'aaya', 'parchi': False, 'kaun': 'baayen, neela kurta', 'why': 'sirf paisa diya'})
+        ev, fr = evs[0], frs[0]
+        self.assertEqual((ev['verdict'], ev['flags'], ev['matchState']), ('shak', ['noparchi'], 'missing')); self.assertIn('Bina parchi paisa liya', ev['why']); self.assertIn('neela kurta', ev['why'])
+        self.assertEqual(len(fr['frames']), ntcam.PARCHI_BIG_N + ntcam.PARCHI_BIG_C); self.assertTrue(any(str(b).startswith('C') for b in fr['frames']), 'counter camera ki tasveerein bhi')
+        self.assertEqual(clips, [('c1', 'c1-1045000'), ('nvr-3', 'c1-1045000-c')], 'dono camera ki video')
+        st = g.stats[('c1', ntcam.pk_date(1045.0))]; self.assertEqual((st['shak'], st['missing']), (1, 1))
+        rules = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'firestore.rules'), encoding='utf-8').read()
+        blk = rules[rules.index('cameraEvents/{eventId}'):]; blk = blk[:blk.index('\n    }')]
+        for k in ev: self.assertIn("'" + k + "'", blk, 'rules mein nahi: ' + k)
+        self.assertLessEqual(len(fr['frames']), 24); self.assertLessEqual(len(ev['flags']), 8)
+
+    def test_nikla_bina_parchi_aur_saaf_nahi(self):
+        g, evs, frs, clips, calls = self.run_case({'paisa': 'nikla', 'parchi': False, 'why': 'note diye'}, {'paisa': 'nikla', 'parchi': False, 'why': 'kisi ko note diye'})
+        self.assertEqual(evs[0]['flags'], ['noparchi_out']); self.assertIn('Bina parchi paisa diya', evs[0]['why'])
+        g, evs, frs, clips, calls = self.run_case({'paisa': 'aaya', 'parchi': '?', 'why': 'dhundla'}, {'paisa': 'aaya', 'parchi': '?', 'why': 'haath chhupa'})
+        self.assertEqual((evs[0]['verdict'], evs[0]['flags']), ('saaf_nahi', ['parchi_saaf'])); self.assertEqual(clips, [], 'saaf nahi par video / khabar nahi'); self.assertTrue(frs)
+        g, evs, frs, clips, calls = self.run_case({'paisa': 'aaya', 'parchi': False, 'why': 'x'}, second=False)
+        self.assertEqual(len(calls), 1, 'doosri raaye band'); self.assertEqual(evs[0]['verdict'], 'shak')
+
+    def test_frames_at_aur_denied(self):
+        g, _, _ = self._g(); r = g.counters['nvr-3']
+        fr = r.frames_at([1000.1, 1000.2, 2000.0]); self.assertEqual([t for t, _ in fr], [1000.0], 'qareeb wali aik dafa, door wali nahi')
+        self.assertTrue(ntcam.denied_error(RuntimeError('patch x: 403 {"error": {"status": "PERMISSION_DENIED"}}'))); self.assertTrue(ntcam.denied_error(ntcam.AuthError('USER_DISABLED')))
+        self.assertFalse(ntcam.denied_error(RuntimeError('patch x: 503 unavailable')))
+        with mock.patch.object(ntcam, 'KHATA_DIR', '/nahi/hai'): self.assertFalse(ntcam.pos_files())
+
+
 class Nigrani(unittest.TestCase):
     """v1.1 galla nigrani — harkat, tukre, AI faisla, ginti (bina camera / Claude ke)."""
     def test_zone_px(self):

@@ -218,6 +218,32 @@ test('v232: 🧪 test len-den — shuru, khatam, sach, cameras, PC ki video, zip
   await click('[data-action=tab][data-arg=hazri]');
 });
 
+test('v233: bina POS — parchi ka rule: default "Bina parchi", labels, do videos', async () => {
+  const ref = p => ({ path: B + p, kind: 'doc', id: p.split('/').at(-1) });
+  const st0 = structuredClone(records.get(B + 'cameraPC/status'));
+  await fake.sdk.setDoc(ref('cameraPC/status'), { ...st0, at: Date.now() - 30000, v: '2.2', pos: 'POS band — parchi ka rule (seedha camera + AI)' });
+  const d = C.pkDate(), at = Date.now() - 300000;
+  await fake.sdk.setDoc(ref('cameraEvents/cc33-ch1-p1'), { cam: 'cc33-ch1', camName: 'Tokri', at, date: d, verdict: 'shak', flow: 'aaya', matchState: 'missing', flags: ['noparchi'], why: 'Bina parchi paisa liya — sirf paisa diya (baayen, neela kurta)', thumb: '/9j/P1', n: 22, ms: 900, model: 'gemini', agent: '2.2' });
+  await fake.sdk.setDoc(ref('cameraEvents/cc33-ch1-p2'), { cam: 'cc33-ch1', camName: 'Tokri', at: at - 60000, date: d, verdict: 'normal', flow: 'len_den', matchState: 'none', flags: [], why: 'Parchi di — parchi aur paisa diya', thumb: '/9j/P2', n: 0, ms: 300, model: 'gemini', agent: '2.2' });
+  await fake.sdk.setDoc(ref('cameraClips/cc33-ch1-p1'), { cam: 'cc33-ch1', kind: 'shak', eventId: 'cc33-ch1-p1', from: at - 10000, to: at + 20000, date: d, status: 'ok', n: 1, at });
+  await fake.sdk.setDoc(ref('cameraClips/cc33-ch1-p1-c'), { cam: 'nvr88-ch3', kind: 'shak', eventId: 'cc33-ch1-p1', from: at - 10000, to: at + 20000, date: d, status: 'ok', n: 1, at });
+  await fake.sdk.setDoc(ref(`cameraStats/cc33-ch1_${d}`), { ...records.get(B + `cameraStats/cc33-ch1_${d}`), moneyIn: 9, matched: 8, missing: 1 });
+  await click('[data-action=tab][data-arg=nigrani]'); await settle(12);
+  await click('[data-action=nig-day][data-arg="-1"]'); await settle(10); await click('[data-action=nig-day][data-arg="1"]'); await settle(12);   // filter wapas default
+  assert.match($('[data-action=nig-filter][data-arg=parchi]').getAttribute('aria-selected'), /true/, 'default: bina parchi');
+  assert.ok($('.nig-ev[data-id="cc33-ch1-p1"]'), 'bina parchi card'); assert.ok(!$('.nig-ev[data-id="cc33-ch1-p2"]'), 'parchi wala card default mein nahi');
+  assert.match($('.nig-ev[data-id="cc33-ch1-p1"]').textContent, /🔴 Bina parchi paisa liya/);
+  assert.match($('.nig-milaan').textContent, /8\s*parchi di/); assert.match($('.nig-milaan').textContent, /1\s*bina parchi/);
+  assert.match($('main').textContent, /parchi ka rule/); assert.ok(!$('[data-action=nig-filter][data-arg=alerts]'), 'POS wale chips nahi');
+  await click('[data-action=nig-filter][data-arg=all]'); assert.ok($('.nig-ev[data-id="cc33-ch1-p2"]'), 'Sab mein parchi wala bhi');
+  await click('.nig-ev[data-id="cc33-ch1-p1"]'); await settle(10);
+  const vids = $$('[data-sheet=nig-ev] [data-action=nig-video]').map(b => b.textContent);
+  assert.equal(vids.length, 2); assert.ok(vids.some(v => /Counter video/.test(v)) && vids.some(v => /Tokri video/.test(v)), vids.join(' | '));
+  await click('[data-sheet=nig-ev] [data-sheet-close]');
+  await fake.sdk.setDoc(ref('cameraPC/status'), st0); await settle(8);
+  await click('[data-action=tab][data-arg=hazri]');
+});
+
 test('filter, din badalna, mahine ka jaal', async () => {
   await click('[data-action=filter][data-arg=late]'); assert.equal($$('.register .row').length, 1);
   await click('[data-action=filter][data-arg=all]');
