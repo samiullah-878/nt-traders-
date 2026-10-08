@@ -1,6 +1,6 @@
 {
-  "version": "v231",
+  "version": "v232",
   "variant": "Production",
-  "buildDate": "2026-10-01",
-  "notes": "Free AI (Gemini, backup DeepSeek), NT Doctor app se, NVR aur AI keys app se, POS ghari ki jaanch. ntcam.py v2.0, ntwaqt.txt. RULES publish zaroori."
+  "buildDate": "2026-10-08",
+  "notes": "\ud83e\uddea Test len-den: naqli len-den ki video (galla + counter camera) + AI ka jawab aik zip mein. Counter camera ki recording (ntcam.py v2.1). Rules NAHI badle."
 }

@@ -10,7 +10,7 @@ import { enablePush, disablePush, currentToken, pushPermission, pushSupported, r
 import { openBreakSheet, breakStatusHtml } from './breaks.js';
 const clock = ms => ms ? fmtTime(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(ms))) : '—';
 const to24FromMin = m => { const x = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
-import { icon, avatar, nameHtml, toast, busy, openSheet, refreshSheets, fileToDataUrl, deliverPdf, $, errorText, timeField, IN_TICKETS, OUT_TICKETS, viewImage, viewVideo, b64ToBlobUrl } from './ui.js';
+import { icon, avatar, nameHtml, toast, busy, openSheet, refreshSheets, fileToDataUrl, deliverPdf, $, errorText, timeField, IN_TICKETS, OUT_TICKETS, viewImage, viewVideo, b64ToBlobUrl, zipBlob } from './ui.js';
 import { loadPdfLib, browserTextImages, dailyPdf, staffMonthPdf, registerPdf, salarySheetPdf } from './pdf.js';
 
 const ORDER = { due: 0, late: 1, waiting: 2, absent: 3, loading: 3, present: 4, leave: 5, off: 6, closed: 6, na: 7 };
@@ -761,7 +761,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
                 <label>Kaunsa AI<select name="ai">${[['free', 'Gemini free (had poori ho to DeepSeek)'], ['claude', 'Claude (paisa)'], ['off', 'Band — bina AI muft mode']].map(([k, t]) => `<option value="${k}" ${(c.ai || 'free') === k ? 'selected' : ''}>${t}</option>`).join('')}</select></label>` : ''}
                 <div class="cam-roles" role="radiogroup" aria-label="Harkat ki hissasiyat">${[['low', 'Kam'], ['mid', 'Aam'], ['high', 'Zyada']].map(([k, t]) => `<label class="cam-pick"><input type="radio" name="sens" value="${k}" ${(c.sens || 'mid') === k ? 'checked' : ''}><span>Harkat: ${t}</span></label>`).join('')}</div>
                 <div class="btn-row"><button class="btn btn-primary">Save</button><button type="button" class="btn btn-ghost" data-action="cam-edit" data-id="">Rehne dein</button><button type="button" class="btn btn-ghost txt-bad" data-action="cam-del" data-id="${esc(c.id)}">Hatayein</button></div></form>`
-              : `${c.role === 'galla' ? `<p class="cam-watch ${c.zone?.w ? '' : 'is-need'}">${c.zone?.w ? `${icon('check', 14)} Galla ka hissa mark hai${c.watch === 'on' && on ? ` · nigrani chalu${c.fps ? ' (' + esc(String(c.fps)) + ' fps' + (c.stream === 'sub' ? ', halki video' : '') + ')' : ''}` : ' · PC par nigrani shuru hone ka intezar'}` : `${icon('alert', 14)} Galla ka hissa abhi mark nahi — nigrani band`}</p>${c.zone?.w ? `<p class="cam-watch ${c.zone2?.w ? '' : 'is-need'}">${icon(c.zone2?.w ? 'check' : 'alert', 14)} <span>${c.zone2?.w ? 'Counter ka hissa mark hai — kahani: parchi / paisa / baqaya' : 'Counter ka hissa mark nahi — kahani adhoori (parchi aur baqaya ka haath nazar nahi aayega)'}</span></p>` : ''}${recLine(c, on)}${costLine(c)}` : ''}
+              : `${c.role === 'galla' ? `<p class="cam-watch ${c.zone?.w ? '' : 'is-need'}">${c.zone?.w ? `${icon('check', 14)} Galla ka hissa mark hai${c.watch === 'on' && on ? ` · nigrani chalu${c.fps ? ' (' + esc(String(c.fps)) + ' fps' + (c.stream === 'sub' ? ', halki video' : '') + ')' : ''}` : ' · PC par nigrani shuru hone ka intezar'}` : `${icon('alert', 14)} Galla ka hissa abhi mark nahi — nigrani band`}</p>${c.zone?.w ? `<p class="cam-watch ${c.zone2?.w ? '' : 'is-need'}">${icon(c.zone2?.w ? 'check' : 'alert', 14)} <span>${c.zone2?.w ? 'Counter ka hissa mark hai — kahani: parchi / paisa / baqaya' : 'Counter ka hissa mark nahi — kahani adhoori (parchi aur baqaya ka haath nazar nahi aayega)'}</span></p>` : ''}${recLine(c, on)}${costLine(c)}` : ''}${c.role === 'counter' ? `<p class="cam-watch">${icon('camera', 14)} <span>Counter: PC iski recording rakhta hai — 🧪 test aur clip ke liye (AI nahi lagta)</span></p>${recLine(c, on)}` : ''}
                 <div class="btn-row"><button type="button" class="btn btn-ghost btn-sm" data-action="cam-snap" data-id="${esc(c.id)}" ${st === 'off' ? 'disabled' : ''}>${icon('camera', 16)} Abhi ki tasveer</button>${c.role === 'galla' ? `<button type="button" class="btn ${c.zone?.w ? 'btn-ghost' : 'btn-primary'} btn-sm" data-action="cam-zone" data-id="${esc(c.id)}">${icon('edit', 16)} Galla ka hissa</button>${c.zone?.w ? `<button type="button" class="btn ${c.zone2?.w ? 'btn-ghost' : 'btn-primary'} btn-sm" data-action="cam-zone" data-arg="zone2" data-id="${esc(c.id)}">${icon('edit', 16)} Counter ka hissa</button>` : ''}` : ''}<button type="button" class="btn btn-ghost btn-sm" data-action="cam-edit" data-id="${esc(c.id)}">${icon('edit', 16)} Badlein</button></div>`}
           </div></article>`;
       };
@@ -855,7 +855,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
           <small>${esc(e.why || '')}</small><small class="muted">${esc(e.camName || '')}</small></span></button>`; };
     return `<section class="nig-head"><div class="day-nav"><button type="button" class="icon-btn" data-action="nig-day" data-arg="-1" aria-label="Pichla din">${icon('left')}</button>
         <b>${day === today ? 'Aaj' : esc(shortDate(day))}</b><button type="button" class="icon-btn" data-action="nig-day" data-arg="1" ${day >= today ? 'disabled' : ''} aria-label="Agla din">${icon('right')}</button></div>
-        ${camChips ? `<div class="nig-cams">${camChips}${galla.length ? `<button type="button" class="btn btn-ghost btn-sm" data-action="clip-req" data-id="">🎬 Waqt ki clip</button>` : ''}</div>` : ''}</section>
+        ${camChips ? `<div class="nig-cams">${camChips}${galla.length ? `<button type="button" class="btn btn-ghost btn-sm" data-action="clip-req" data-id="">🎬 Waqt ki clip</button>` : ''}<button type="button" class="btn ${testLoad()?.start && !testLoad()?.end ? 'btn-primary' : 'btn-ghost'} btn-sm" data-action="cam-test">${testLoad()?.start && !testLoad()?.end ? '🧪 Test chal raha…' : '🧪 Test len-den'}</button></div>` : ''}</section>
       ${setup}
       <section class="nig-sum">
         <div><b>${sum('touches')}</b><small>galla chhua</small></div>
@@ -876,6 +876,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       ${sum('unchecked') ? `<p class="hint">${sum('unchecked')} dafa AI jaanch nahi hui (roz ki had poori, AI ruka, ya key nahi) — sirf ginti hui.</p>` : ''}
       <div class="chips" role="tablist">${[['all', 'Sab', evs.length], ['alerts', 'Bill badle', alerts.length], ['missing', 'Bina voucher', missing.length], ['flags', 'Parchi / baqaya', evs.filter(e => e.flags?.length).length], ['open', 'Na dekhe shak', open.length], ['shak', 'Shak', shakList.length], ['normal', 'Normal', evs.filter(e => e.verdict === 'normal').length]].map(([k, t, n]) => `<button type="button" class="chip" role="tab" aria-selected="${f === k}" data-action="nig-filter" data-arg="${k}"><b>${n}</b> ${t}</button>`).join('')}</div>
       <div class="nig-list">${f === 'alerts' ? (alerts.map(alertCard).join('') || '<p class="empty-line">Is din koi bill cancel ya badla nahi gaya.</p>') : shown.map(card).join('') || `<p class="empty-line">${!S.loaded.has('camEvents') ? 'Aa raha hai…' : f === 'all' ? 'Is din galla par koi harkat record nahi hui.' : 'Is filter mein kuch nahi.'}</p>`}</div>
+      ${testsList()}
       ${clipsList()}
       <p class="hint">Galla sirf POS ke <b>Cash Received voucher</b> par khulna chahiye (voucher se 1 minute pehle se 1.5 minute baad tak), ya refund / Galla screen "de diye" / POS kharch ke voucher par. 2 minute tak koi voucher na aaye to "Bina voucher galla khula" — khabar aur clip khud. Jeb mein note = "Shak" (voucher ho tab bhi). Chhutta (note khula karwana), shaam ki ginti ya aap ka khud paisa nikalna bhi "bina voucher" mein aayega — us par "Theek hai" daba dein. Aap ke faislon se AI seekhta hai. Photos 30 din baad khud mit jati hain.</p>`;
   }
@@ -981,11 +982,67 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
   }
   function clipsList() {
     const day = ui.nigDay || pkDate();
-    const rows = (S.camDay === day ? S.camClips || [] : []).filter(c => c.kind === 'req');
+    const rows = (S.camDay === day ? S.camClips || [] : []).filter(c => c.kind === 'req' && !String(c.eventId || '').startsWith('test-'));
     if (!rows.length) return '';
     return `<section class="nig-clips"><h3 class="sub">Mangwayi hui clips</h3>${rows.map(c => `<div class="nig-clip-row"><span><b>${esc(c.title || 'Clip')}</b><small>${esc(clockOf(c.from))} – ${esc(clockOf(c.to))}${c.keep ? ' · rakhi hui' : ''}</small></span>
       ${c.status === 'ok' ? `<span class="btn-row"><button type="button" class="btn btn-primary btn-sm" data-action="nig-video" data-id="${esc(c.id)}">▶ Dekhein</button><button type="button" class="btn btn-ghost btn-sm" data-action="clip-keep" data-id="${esc(c.id)}" data-arg="${c.keep ? '0' : '1'}">${c.keep ? 'Rakhi hui' : 'Rakhein'}</button><button type="button" class="btn btn-ghost btn-sm txt-bad" data-action="clip-del" data-id="${esc(c.id)}">Mitayein</button></span>`
       : `<span class="tag ${c.status === 'error' ? 't-bad' : 't-off'}">${esc(CLIP_ST[c.status] || c.status)}${c.status === 'error' && c.error ? ': ' + esc(c.error) : ''}</span>`}</div>`).join('')}</section>`;
+  }
+  /* ---------- v232: 🧪 TEST LEN-DEN — naqli len-den: ▶ Shuru → larke len-den karein → ■ Khatam → asal mein kya hua. PC har chune
+     camera ki video banata hai; app video + us waqt AI ka jawab aik zip mein deti hai (Claude ko bhejne ke liye). ---------- */
+  const TEST_KEY = 'nt-cam-test-v232';
+  const TEST_TAGS = [['baqaya', 'Baqaya usi customer ko'], ['aurko', 'Paisa kisi aur ko diya'], ['jeb', 'Note jeb mein dala'], ['seena', 'Haath seene / jeb ke paas (normal)'],
+    ['noparchi', 'Bina parchi paisa liya'], ['parchi', 'Parchi di, paisa nahi'], ['rush', '2-3 customer aik saath'], ['ginti', 'Sirf ginti / kuch nahi']];
+  const testLoad = () => { if (ui.test) return ui.test; try { ui.test = JSON.parse(globalThis.localStorage?.getItem(TEST_KEY) || 'null'); } catch { ui.test = null; } return ui.test; };
+  const testSave = t => { ui.test = t; try { if (t) globalThis.localStorage?.setItem(TEST_KEY, JSON.stringify(t)); else globalThis.localStorage?.removeItem(TEST_KEY); } catch { /* storage band */ } };
+  const testCams = () => (S.cameras || []).filter(c => c.enabled !== false);
+  const camRecOk = c => c.rec === 'on';
+  const testPick = t => t?.cams || testCams().filter(c => ['galla', 'counter'].includes(c.role)).map(c => c.id);
+  const mmss = ms => { const s2 = Math.max(0, Math.round(ms / 1000)); return `${Math.floor(s2 / 60)}:${String(s2 % 60).padStart(2, '0')}`; };
+  function testSheet() {
+    let tick = null;
+    const sheet = openSheet({ id: 'cam-test', title: '🧪 Test len-den', onClose: () => clearInterval(tick), render: () => {
+      const t = testLoad();
+      if (!t?.start) return `<p class="hint">Apne larkon se <b>naqli len-den</b> karwayein — aik customer bane, aik cashier. PC us waqt ki video har chune camera se bana kar yahan rakh dega; phir <b>zip</b> Claude ko chat mein bhej dein — wo video aur AI ka jawab mila kar dekhega.</p>
+        <ol class="steps-list"><li><span><b>▶ Shuru</b> dabayein</span></li><li><span>Len-den karwayein (zyada se zyada 3 minute)</span></li><li><span><b>■ Khatam</b> dabayein aur likhein asal mein kya hua</span></li></ol>
+        <button type="button" class="btn btn-primary btn-lg test-go" data-action="test-start">▶ Test shuru</button>
+        <button type="button" class="link" data-action="test-manual">Waqt khud likhein (pehle ho chuka len-den)</button>`;
+      if (!t.end) { const el = Date.now() - t.start - 5000, over = el > 175000;
+        return `<div class="test-run ${over ? 'is-over' : ''}"><span class="test-dot" aria-hidden="true"></span><div><b>Test chal raha hai · ${esc(mmss(el))}</b><small>Shuru ${esc(clockOf(t.start + 5000))}${over ? ' — 3 minute poore hone wale hain, ab Khatam dabayein' : ' — len-den karwayein'}</small></div></div>
+          <button type="button" class="btn btn-primary btn-lg test-go" data-action="test-stop">■ Khatam</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-action="test-cancel">Chhoren (test nahi)</button>`; }
+      const day = pkDate(new Date(t.start)), cams = testCams(), pick = testPick(t);
+      const tags = new Set(t.tags || []);
+      return `<form class="form" data-form="cam-test" data-date="${esc(day)}">
+        <p class="hint">Din: <b>${esc(shortDate(day))}</b> · aage peeche 5 second khud shamil hain.</p>
+        <div class="grid2"><label>Shuru<input type="time" name="from" step="1" value="${esc(hhmmss(t.start))}" required data-change="test-time" data-arg="start" data-date="${esc(day)}"></label><label>Khatam<input type="time" name="to" step="1" value="${esc(hhmmss(t.end))}" required data-change="test-time" data-arg="end" data-date="${esc(day)}"></label></div>
+        <fieldset class="test-cams"><legend>Kin cameras ki video</legend>${cams.map(c => `<label class="check test-cam"><input type="checkbox" name="cam_${esc(c.id)}" ${pick.includes(c.id) ? 'checked' : ''} data-change="test-cam" data-arg="${esc(c.id)}"><span><b>${esc(c.name || c.id)}</b><small class="${camRecOk(c) ? 'txt-ok' : 'txt-bad'}">${esc(CAM_ROLE_TEXT[c.role] || 'Sirf dekhna')} · ${camRecOk(c) ? 'recording chalu' : c.role === 'view' || !c.role ? 'recording nahi — kaam "Counter" karein' : 'recording band'}</small></span></label>`).join('') || '<p class="muted">Koi camera nahi.</p>'}</fieldset>
+        <fieldset><legend>Asal mein kya hua</legend><div class="chips test-tags">${TEST_TAGS.map(([k, txt]) => `<button type="button" class="chip" aria-pressed="${tags.has(k)}" data-action="test-tag" data-arg="${k}">${esc(txt)}</button>`).join('')}</div>
+          <label class="sr-only" for="testNote">Tafseel</label><textarea id="testNote" name="truth" rows="3" maxlength="500" data-change="test-note" placeholder="Misal: Ali ne Rs 5,000 kisi aur ko diye, bill Rs 1,215 ka tha">${esc(t.note || '')}</textarea></fieldset>
+        <button class="btn btn-primary">${icon('camera', 18)} Bhejein — video banwayein</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-action="test-cancel">Chhoren</button></form>`;
+    } });
+    tick = setInterval(() => { const t = testLoad(); if (t?.start && !t.end) sheet.refresh(); }, 1000);
+    return sheet;
+  }
+  function testsList() {
+    const day = ui.nigDay || pkDate();
+    const all = S.camDay === day ? S.camClips || [] : [];
+    const tests = all.filter(c => c.kind === 'test');
+    if (!tests.length) return '';
+    const cams = new Map((S.cameras || []).map(c => [c.id, c]));
+    const evs = S.camDay === day ? S.camEvents || [] : [];
+    return `<section class="nig-clips nig-tests"><h3 class="sub">🧪 Test len-den <small class="muted">— video + AI ka jawab, zip Claude ko bhejein</small></h3>${tests.map(t => {
+      const clips = all.filter(c => c.eventId === t.id), done = clips.filter(c => ['ok', 'error'].includes(c.status)).length, ok = clips.filter(c => c.status === 'ok').length;
+      const ai = evs.filter(e => (e.end || e.at) >= t.from - 30000 && (e.start || e.at) <= t.to + 30000);
+      const aiTxt = ai.length ? ai.map(e => (VERDICT[e.verdict] || VERDICT.saaf_nahi)[0]).join(', ') : 'koi card nahi';
+      return `<div class="nig-clip-row test-row"><span><b>${esc(t.truth || (t.tags || []).map(k => (TEST_TAGS.find(x => x[0] === k) || [k, k])[1]).join(', ') || 'Test')}</b>
+          <small>${esc(clockOf(t.from))} – ${esc(clockOf(t.to))} · AI: ${esc(aiTxt)}</small>
+          <span class="test-vids">${clips.map(c => `<span class="tag ${c.status === 'ok' ? 't-ok' : c.status === 'error' ? 't-bad' : 't-off'}">${esc(cams.get(c.cam)?.name || c.cam)}: ${c.status === 'ok' ? '🎬 tayyar' : c.status === 'error' ? 'nahi bani' + (c.error ? ' — ' + esc(c.error) : '') : 'PC bana raha (1-2 min)…'}</span>`).join('')}</span></span>
+        <span class="btn-row"><button type="button" class="btn ${done === clips.length ? 'btn-primary' : 'btn-ghost'} btn-sm" data-action="test-zip" data-id="${esc(t.id)}" ${done < clips.length ? 'disabled' : ''}>${icon('down', 16)} Zip${ok ? ` (${ok} video)` : ''}</button>
+          ${ok ? `<button type="button" class="btn btn-ghost btn-sm" data-action="nig-video" data-id="${esc(clips.find(c => c.status === 'ok').id)}">▶</button>` : ''}
+          <button type="button" class="btn btn-ghost btn-sm txt-bad" data-action="test-del" data-id="${esc(t.id)}">Mitayein</button></span></div>`;
+    }).join('')}</section>`;
   }
   /** Tasveer par ungli se dabba: galla (paise ki tokri / drawer). 0-1 mein save (camera ki resolution se azad). */
   function zoneSheet(camId, which = 'zone') {
@@ -1187,6 +1244,20 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       await busy(el, async () => { const b64 = await data.loadClip(c.id); if (!b64) throw new Error('Video ke tukre nahi mile'); viewVideo(b64ToBlobUrl(b64) + (sec ? '#t=' + sec : ''), `${c.title || (c.kind === 'shak' ? 'Shak' : 'Clip')} · ${clockOf(c.from + sec * 1000)}`); const v = document.querySelector('.viewer video'); if (v && sec) v.addEventListener('loadedmetadata', () => { try { v.currentTime = sec; } catch { /* ignore */ } }, { once: true }); });
     },
     'clip-req'(el) { open('clip-req', () => clipReqSheet(el.dataset.id || '')); },
+    'cam-test'() { open('cam-test', () => testSheet()); },                                                         // v232
+    'test-start'() { testSave({ start: Date.now() - 5000, tags: [], note: '' }); sheets['cam-test']?.refresh(true); rerender(); },
+    'test-stop'() { const t = testLoad() || {}; testSave({ ...t, end: Math.min(Date.now() + 5000, (t.start || Date.now()) + 180000) }); sheets['cam-test']?.refresh(true); rerender(); },
+    'test-manual'() { testSave({ start: Date.now() - 120000, end: Date.now() - 60000, tags: [], note: '' }); sheets['cam-test']?.refresh(true); },
+    'test-cancel'() { if (testLoad()?.start && !confirm('Yeh test chhor dein?')) return; testSave(null); sheets['cam-test']?.close(); rerender(); },
+    'test-tag'(el) { const t = testLoad() || {}; const tags = new Set(t.tags || []); tags.has(el.dataset.arg) ? tags.delete(el.dataset.arg) : tags.add(el.dataset.arg); testSave({ ...t, tags: [...tags] }); sheets['cam-test']?.refresh(true); },
+    async 'test-zip'(el) {
+      await busy(el, async () => {
+        const pack = await data.testPack(el.dataset.id);
+        deliverPdf([{ blob: zipBlob(pack.files), filename: pack.filename }]);
+        if (pack.ready < pack.total) toast(`${pack.total - pack.ready} camera ki video nahi bani — zip mein baqi sab hai`, 'bad');
+      });
+    },
+    async 'test-del'(el) { if (!confirm('Yeh test aur us ki videos mitayein?')) return; await busy(el, () => data.deleteTest(el.dataset.id), 'Test mit gaya'); },
     async 'clip-keep'(el) { await busy(el, () => data.keepClip(el.dataset.id, el.dataset.arg === '1'), el.dataset.arg === '1' ? 'Video 30 din rahegi' : 'Agle din mit jayegi'); },
     async 'clip-del'(el) { if (!confirm('Yeh clip mitayein?')) return; await busy(el, () => data.deleteClip(el.dataset.id), 'Clip mit gayi'); },
     async 'zone-save'(el) { const w = ui.zoneWhich === 'zone2' ? 'zone2' : 'zone'; await busy(el, () => data.saveZone(ui.zoneCam, ui.zoneDraft, w), w === 'zone2' ? (ui.zoneDraft ? 'Counter ka hissa save — ab kahani mein parchi / paisa / baqaya' : 'Counter ka dabba hata diya') : (ui.zoneDraft ? 'Galla ka hissa save — PC 20-30 second mein nigrani shuru karega' : 'Dabba hata diya — nigrani band')); sheets['cam-zone']?.close(); },
@@ -1348,6 +1419,14 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     }
   };
   const forms = {
+    async 'cam-test'(form, v, button) { // v232
+      const t = testLoad() || {}, day = form.dataset.date;
+      const cams = testCams().filter(c => v[`cam_${c.id}`]).map(c => c.id);
+      let from = pkMs(day, v.from), to = pkMs(day, v.to);
+      if (Number.isFinite(from) && Number.isFinite(to) && to < from) to += 86400000;   // aadhi raat ke paar
+      const id = await busy(button, () => data.requestTest({ from, to, cams, truth: v.truth, tags: (t.tags || []).map(k => (TEST_TAGS.find(x => x[0] === k) || [k, k])[1]) }), 'Test save — PC 1-2 minute mein video bana dega');
+      if (id) { testSave(null); sheets['cam-test']?.close(); }
+    },
     async 'clip-req'(form, v, button) { // v225
       const from = pkMs(form.dataset.date, v.from), to = pkMs(form.dataset.date, v.to);
       const id = await busy(button, () => data.requestClip({ cam: v.cam, from, to, eventId: form.dataset.event, title: v.title }), 'Farmaish PC ko chali gayi — 1-2 minute mein clip aa jayegi');
@@ -1383,6 +1462,9 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     async payment(form, v, button) { await busy(button, () => data.addPayment(form.dataset.phone, ui.salaryMonth, v), 'Payment likh di'); }
   };
   const changes = {
+    'test-note'(el) { const t = testLoad(); if (t) testSave({ ...t, note: el.value.slice(0, 500) }); },   // v232
+    'test-time'(el) { const t = testLoad(), ms = pkMs(el.dataset.date, el.value); if (t && Number.isFinite(ms)) testSave({ ...t, [el.dataset.arg]: ms }); },
+    'test-cam'(el) { const t = testLoad(); if (!t) return; const set = new Set(testPick(t)); el.checked ? set.add(el.dataset.arg) : set.delete(el.dataset.arg); testSave({ ...t, cams: [...set] }); },
     'pick-date'(el) { if (!el.value) return; if (ui.view === 'day') { if (isDate(el.value) && el.value <= pkDate()) ui.date = el.value; data.watchMonth(ui.date.slice(0, 7)); } else { ui.month = el.value; data.watchMonth(ui.month); } rerender(); },
     'pick-salary-month'(el) { if (!el.value) return; ui.salaryMonth = el.value; data.watchMonth(ui.salaryMonth); rerender(); },
     async 'staff-photo'(el) { const f = el.files?.[0]; if (!f) return; try { sheets.staffForm?.setPhoto(await fileToDataUrl(f, 360)); } catch (e) { toast(errorText(e), 'bad'); } },

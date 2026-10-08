@@ -139,6 +139,34 @@ export function viewVideo(src, title = '', fps = 8) {
   document.body.appendChild(el);
   return el;
 }
+/* ---------- v232: chhota zip (STORE — videos pehle hi dabi hui hain) ---------- */
+let CRC_T = null;
+function crc32(u8) {
+  if (!CRC_T) { CRC_T = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; CRC_T[n] = c >>> 0; } }
+  let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0;
+}
+/** files: [{name, data: Uint8Array | string}] -> Blob (application/zip). */
+export function zipBlob(files, when = new Date()) {
+  const enc = new TextEncoder(), parts = [], central = [];
+  const dt = ((when.getHours() << 11) | (when.getMinutes() << 5) | (when.getSeconds() >> 1)) & 0xFFFF;
+  const dd = (((when.getFullYear() - 1980) << 9) | ((when.getMonth() + 1) << 5) | when.getDate()) & 0xFFFF;
+  let off = 0;
+  for (const f of files) {
+    const name = enc.encode(f.name), data = typeof f.data === 'string' ? enc.encode(f.data) : f.data, crc = crc32(data);
+    const h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true); h.setUint16(10, dt, true); h.setUint16(12, dd, true);
+    h.setUint32(14, crc, true); h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, name.length, true); h.setUint16(28, 0, true);
+    parts.push(new Uint8Array(h.buffer), name, data);
+    const c = new DataView(new ArrayBuffer(46));
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, 0, true); c.setUint16(12, dt, true); c.setUint16(14, dd, true);
+    c.setUint32(16, crc, true); c.setUint32(20, data.length, true); c.setUint32(24, data.length, true); c.setUint16(28, name.length, true); c.setUint32(42, off, true);
+    central.push(new Uint8Array(c.buffer), name);
+    off += 30 + name.length + data.length;
+  }
+  const size = central.reduce((a, x) => a + x.length, 0), e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, size, true); e.setUint32(16, off, true);
+  return new Blob([...parts, ...central, new Uint8Array(e.buffer)], { type: 'application/zip' });
+}
 export function b64ToBlobUrl(b64, type = 'video/mp4') {
   const bin = atob(b64), u8 = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
@@ -268,9 +296,10 @@ export function deliverPdf(input) {
   const canShare = files.length === list.length && !!navigator.canShare?.({ files });
   const many = list.length > 1;
   const sheet = openSheet({
-    title: many ? `${list.length} PDF tayyar hain` : /\.xlsx$/.test(list[0].filename) ? 'Excel file tayyar hai' : 'PDF tayyar hai', id: 'pdf',
+    title: many ? `${list.length} PDF tayyar hain` : /\.xlsx$/.test(list[0].filename) ? 'Excel file tayyar hai' : /\.zip$/.test(list[0].filename) ? 'Test zip tayyar hai' : 'PDF tayyar hai', id: 'pdf',
     render: () => `${canShare ? `<button type="button" class="btn btn-primary btn-lg" id="pdfShare">${icon('share')} ${many ? 'Sab WhatsApp / Share' : 'WhatsApp / Share'}</button>` : ''}
       ${many ? '<p class="hint">WhatsApp mein har larke ki slip alag file ban kar jati hai. Aik aik bhejni ho to neeche wali list se download karein.</p>' : ''}
+      ${/\.zip$/.test(list[0].filename) ? '<p class="hint">Share dabayein aur <b>Claude</b> app chunein — ya Download kar ke chat mein ➕ se lagayein.</p>' : ''}
       <ul class="pdf-list">${list.map(x => `<li><span class="pdf-name">${icon('pdf')} <span>${esc(x.filename)}</span></span>
         <span class="btn-row"><a class="btn ${canShare || many ? 'btn-ghost' : 'btn-primary'} btn-sm" href="${x.url}" download="${esc(x.filename)}">${icon('down', 16)} Download</a><a class="btn btn-ghost btn-sm" href="${x.url}" target="_blank" rel="noopener">Kholein</a></span></li>`).join('')}</ul>`,
     onClose: () => setTimeout(() => list.forEach(x => URL.revokeObjectURL(x.url)), 60000)

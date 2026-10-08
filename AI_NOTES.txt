@@ -1,8 +1,46 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v231   Tareekh: 2026-10-02  (FREE AI + NT DOCTOR + NVR/keys app se; ntcam.py v2.0.1 NVR fix; ntwaqt.txt; RULES v231)
+Version: v232   Tareekh: 2026-10-08  (🧪 TEST LEN-DEN + counter camera recording; ntcam.py v2.1; RULES NAHI badle)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+0000000000000000000000000000000000. v232 + ntcam.py v2.1 — 🧪 TEST LEN-DEN (malik ke naqli len-den -> video + AI ka jawab, aik zip)
+------------------------------------------------------------
+Malik (8 Oct raat): jeb wala shak baar baar ghalat; "pehle tum (Claude) apne samajhne ka tareeqa banao". Mashwara jo malik ne maana:
+(1) PC par muft tracker (har banda number + haath ka raasta, live 5-8 fps) — counter camera (NVR) jodne ke baad; (2) test: Gemini video,
+TwelveLabs Pegasus, bara Claude — sab ko malik ke naqli len-den par aazma kar score. Pehla qadam = YE: test len-den ka saman. Saaf
+baat bataya: koi AI video insaan ki tarah nahi dekhta — sab frames (Gemini default 1 fps); jeb wala AI-shak band karne ka mashwara
+(hissa 1) malik ne abhi OK nahi kiya (pehle test). Counter camera subah NVR se jodna hai (kaam: Counter). Malik chhote jawab chahta hai.
+- ntcam.py v2.1: rec_wanted(c, s) = kaam 'counter' + chalu + password. Main loop: readers{} — Watch(rec_only=True) (zone/zone2 khali,
+  apply() AI_SET['mode'] NAHI badalta, sirf naam) + Recorder(width=REC_W_COUNTER 960). Na chahiye / galla ban jaye -> band, cameras
+  rec 'off'. Status har STATUS_EVERY: readers ke liye cameras {fps, stream, rec, recFree, seenAt} (watch / lastMotionAt NAHI). Snapshot
+  readers ka taaza frame bhi. Doctor ko {**watchers, **readers} (video + recording lines). Recorder: W = min(width, frame w), H barabar.
+  clip_ready(r): farmaish (status req) tab banti hai jab to <= now - SEG_SEC - 5 (aakhri 60 s ka tukra band ho chuka). ntcam_test 64 (+4
+  TestLenDen: rec_wanted / watch_wanted, rec_only AI mode nahi badalta, clip_ready, counter 960x540 asal ffmpeg).
+- RULES NAHI BADLE: test doc cameraClips mein (malik generic; PC sirf status 'req' uthata hai), clips 'req' ki keys PC list mein hi
+  (by, title, keep); cameras rec/recFree/fps/stream pehle se PC ke liye allowed. FUNCTIONS NAHI BADLE (handleClip 'req' -> ok par
+  "Clip tayyar: Test: .." khabar khud aati hai).
+- App v232:
+  * data.requestTest({from, to, cams<=6, truth<=500, tags}): 3 s - 3 min, aane wala waqt nahi (to <= now+15 s), sach ya chip zaroori.
+    id 'test-<b36>'; har camera cameraClips 'req-<b36>-<i>' {cam, kind req, eventId = test id, from, to, date, status req, by, title
+    "Test: ..", keep true, at}; test doc {kind 'test', status 'test', from, to, date, truth, tags, cams, clips, keep, by, at, title}.
+    deleteTest (clips + parts + doc). testPack(id) -> {files, filename test-<date>-<hhmm>.zip, ready, total}: README.txt (sach, waqt,
+    videos, AI ne kya kaha), test.json {test, videos, events (thumb ke baghair, frames file naam), app}, video-<n>-<camera>.mp4 (parts
+    jod kar), ai/<hhmmss>-<verdict>/<nn>-<hhmmss>.jpg (cameraFrames frames + times). Events = us din ke jo [from-30 s, to+30 s] se takrayein.
+  * ui.zipBlob(files) — STORE zip (CRC32, UTF-8 naam flag), python zipfile / unzip -t se jaancha. deliverPdf .zip par title "Test zip
+    tayyar hai" + "Share > Claude app" hint (Download / Kholein / WhatsApp-Share wahi).
+  * owner: Nigrani header "🧪 Test len-den" (chal raha ho to "🧪 Test chal raha…" primary). testSheet: ▶ Test shuru (start = now-5 s) ->
+    chalta timer (har second, 3 min ke qareeb peela) + ■ Khatam (end = now+5 s, max start+3 min) / Chhoren; "Waqt khud likhein" (2 min
+    pehle). Form: Shuru / Khatam (step 1 s, data-change test-time), cameras checkbox (default galla + counter; har ek par kaam + recording
+    chalu / band / "kaam Counter karein"), TEST_TAGS chips (aria-pressed, wrap), sach textarea (data-change test-note). ui.test
+    localStorage 'nt-cam-test-v232' (try/catch) — app band ho kar khule to test chalta rahe. testsList(): "🧪 Test len-den" rows: sach, waqt,
+    "AI: Normal, Shak" (window ke cards), har camera "🎬 tayyar / PC bana raha / nahi bani — wajah", ⬇ Zip (sab clips ok/error par), ▶,
+    Mitayein. clipsList test-clips nahi dikhata. Camera card: kaam Counter par line "PC iski recording rakhta hai — test aur clip" +
+    recLine. CSS .test-*. app.dom 23 pass (+1 v232 poora raasta). Baqi 6 test files repo layout ki wajah se pehle se fail (task-service.js
+    path) — v232 ka asar nahi.
+- Malik ko: app zip + ntcam.py (PC khud update / ntcam.txt). Counter camera: Cameras > Badlein > kaam Counter. Test: Nigrani > 🧪.
+- Yahan test NAHI: asal NVR counter video ki fps / CPU (2 main stream), asal phone par zip share Claude app tak.
 
 ------------------------------------------------------------
 000000000000000000000000000000000. ntcam.py v2.0.1 — NVR JODNA THEEK (web se password / lock, har channel alag)

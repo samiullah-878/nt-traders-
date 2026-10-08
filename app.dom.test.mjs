@@ -165,6 +165,59 @@ test('malik login → Hazri tab, qataarein, tawajju', async () => {
   assert.match($('.register').textContent, /9:00 am – 7:00 pm/); assert.match($('.register').textContent, /10h duty/);
   assert.match($('.register').textContent, /Aaya 9:25 am/);
 });
+test('v232: 🧪 test len-den — shuru, khatam, sach, cameras, PC ki video, zip, mitana', async () => {
+  const ref = p => ({ path: B + p, kind: 'doc', id: p.split('/').at(-1) });
+  // NVR ka counter camera — kaam "Counter", PC recording rakhta hai
+  await fake.sdk.setDoc(ref('cameras/nvr88-ch3'), { name: 'Counter', ip: '192.168.0.88', brand: 'dahua', channel: 3, role: 'counter', enabled: true, createdAt: 20, status: 'online', rec: 'on', recFree: 120 });
+  await click('[data-action=tab][data-arg=nigrani]'); await settle(10);
+  await click('main [data-action=cam-test]');
+  const ts = () => $('[data-sheet=cam-test]');
+  assert.match(ts().textContent, /naqli len-den/);
+  await click('[data-sheet=cam-test] [data-action=test-start]');
+  assert.match(ts().textContent, /Test chal raha hai/); assert.match($('main [data-action=cam-test]').textContent, /Test chal raha/, 'Nigrani mein bhi pata chale');
+  await click('[data-sheet=cam-test] [data-action=test-stop]');
+  let form = $('[data-sheet=cam-test] form[data-form=cam-test]'); assert.ok(form, 'sach likhne ka form');
+  assert.equal(form.elements['cam_nvr88-ch3'].checked, true, 'counter khud chuna'); assert.equal(form.elements['cam_aa11-ch1'].checked, true, 'galla khud chuna');
+  assert.match(form.textContent, /Counter · recording chalu/); assert.match(form.textContent, /Galla · recording band/);
+  await submit(form); assert.match(toastText(), /asal mein kya hua/i, 'khali sach nahi');
+  form.elements['cam_aa11-ch1'].checked = false; form.elements['cam_aa11-ch1'].dispatchEvent(new win.Event('change', { bubbles: true }));
+  form.elements.truth.value = 'Ali ne Rs 5,000 kisi aur ko diye'; form.elements.truth.dispatchEvent(new win.Event('change', { bubbles: true }));
+  await click('[data-sheet=cam-test] [data-action=test-tag][data-arg=aurko]');
+  form = $('[data-sheet=cam-test] form[data-form=cam-test]');
+  assert.equal(form.elements.truth.value, 'Ali ne Rs 5,000 kisi aur ko diye', 'chip dabane par likha hua na mite'); assert.equal(form.elements['cam_aa11-ch1'].checked, false, 'camera ka chunao na mite');
+  assert.equal($('[data-sheet=cam-test] [data-action=test-tag][data-arg=aurko]').getAttribute('aria-pressed'), 'true');
+  await submit(form); await settle(10);
+  assert.equal(ts(), null, 'kamyabi par band');
+  const [tk, tv] = [...records].find(([k]) => k.includes('cameraClips/test-'));
+  const tid = tk.split('/').at(-1);
+  assert.equal(tv.kind, 'test'); assert.equal(tv.status, 'test'); assert.equal(tv.truth, 'Ali ne Rs 5,000 kisi aur ko diye'); assert.deepEqual(tv.tags, ['Paisa kisi aur ko diya']);
+  assert.equal(tv.keep, true); assert.ok(tv.cams.includes('nvr88-ch3') && !tv.cams.includes('aa11-ch1')); assert.ok(tv.to - tv.from >= 9000 && tv.to - tv.from <= 12000, 'aage peeche 5 s');
+  const reqs = [...records].filter(([k, v]) => k.includes('cameraClips/req-') && v.eventId === tid);
+  assert.equal(reqs.length, tv.cams.length, 'har camera ki aik clip farmaish'); assert.ok(reqs.every(([, v]) => v.status === 'req' && v.keep === true && v.kind === 'req' && v.from === tv.from && /^Test: /.test(v.title)));
+  assert.match($('.nig-tests').textContent, /PC bana raha/); assert.ok($('.nig-tests [data-action=test-zip]').disabled, 'video ke baghair zip band');
+  assert.ok(![...$$('.nig-clips:not(.nig-tests)')].some(el => /Test: Ali/.test(el.textContent)), 'test ki clips "Mangwayi hui" mein dobara nahi');
+  // PC ne videos bana di + us waqt AI ka card
+  for (const [k] of reqs) { const id = k.split('/').at(-1); await fake.sdk.setDoc(ref('cameraClips/' + id), { status: 'ok', n: 1, size: 7 }, { merge: true }); await fake.sdk.setDoc(ref(`cameraClipParts/${id}_0`), { clip: id, i: 0, data: btoa('MP4DATA') }); }
+  await fake.sdk.setDoc(ref('cameraEvents/cc33-ch1-t'), { cam: 'cc33-ch1', camName: 'Tokri', at: tv.from + 3000, start: tv.from + 1000, end: tv.from + 8000, date: tv.date, verdict: 'normal', flow: 'nikla', why: 'Baqaya usi customer ko', thumb: '/9j/T', n: 2 });
+  await fake.sdk.setDoc(ref('cameraFrames/cc33-ch1-t'), { frames: ['/9j/AAAA', '/9j/BBBB'], times: [tv.from + 2000, tv.from + 4000], at: tv.from + 3000, cam: 'cc33-ch1' });
+  await settle(12);
+  assert.match($('.nig-tests').textContent, /Counter: 🎬 tayyar/); assert.match($('.nig-tests').textContent, /AI: Normal/); assert.equal($('.nig-tests [data-action=test-zip]').disabled, false);
+  const pack = await app.data.testPack(tid);
+  const names = pack.files.map(f => f.name);
+  assert.ok(names.includes('README.txt') && names.includes('test.json')); assert.ok(names.some(n => /^video-\d-Counter\.mp4$/.test(n)), names.join(','));
+  assert.equal(names.filter(n => n.startsWith('ai/')).length, 2, 'AI ne jo 2 tasveerein dekhin');
+  assert.equal(new TextDecoder().decode(pack.files.find(f => f.name.endsWith('Counter.mp4')).data), 'MP4DATA');
+  const j = JSON.parse(pack.files.find(f => f.name === 'test.json').data);
+  assert.equal(j.test.truth, 'Ali ne Rs 5,000 kisi aur ko diye'); assert.equal(j.events.length, 1); assert.equal(j.events[0].why, 'Baqaya usi customer ko'); assert.equal(j.events[0].thumb, undefined, 'thumb nahi');
+  assert.match(pack.files[0].data, /Asal mein kya hua \(malik\): Ali ne Rs 5,000/); assert.match(pack.filename, /^test-\d{4}-\d{2}-\d{2}-\d{4}\.zip$/);
+  await click('.nig-tests [data-action=test-zip]'); await settle(10);
+  assert.match($('[data-sheet=pdf]').textContent, /Test zip tayyar hai/); assert.match($('[data-sheet=pdf] a[download]').getAttribute('download'), /\.zip$/);
+  await click('[data-sheet=pdf] [data-sheet-close]');
+  await click('.nig-tests [data-action=test-del]'); await settle(10);
+  assert.equal(records.get(tk), undefined, 'test mita'); assert.ok(reqs.every(([k]) => !records.has(k)), 'videos bhi mitin'); assert.equal($('.nig-tests'), null);
+  await click('[data-action=tab][data-arg=hazri]');
+});
+
 test('filter, din badalna, mahine ka jaal', async () => {
   await click('[data-action=filter][data-arg=late]'); assert.equal($$('.register .row').length, 1);
   await click('[data-action=filter][data-arg=all]');

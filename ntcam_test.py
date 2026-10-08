@@ -819,6 +819,48 @@ class Video(unittest.TestCase):
         self.assertGreater(ntcam.free_gb(ntcam.HOME), 0)
 
 
+class TestLenDen(unittest.TestCase):
+    """v2.1 — Counter camera ki recording (AI nahi), 960 px, farmaish wali clip tukra poora hone ke baad."""
+    def test_rec_wanted_aur_watch_wanted(self):
+        s = {'url': 'rtsp://x'}
+        self.assertTrue(ntcam.rec_wanted({'role': 'counter'}, s))
+        self.assertFalse(ntcam.rec_wanted({'role': 'counter', 'enabled': False}, s), 'band camera nahi')
+        self.assertFalse(ntcam.rec_wanted({'role': 'counter'}, None), 'password nahi')
+        self.assertFalse(ntcam.rec_wanted({'role': 'view'}, s)); self.assertFalse(ntcam.rec_wanted({'role': 'galla', 'zone': {'w': .2}}, s))
+        self.assertFalse(ntcam.watch_wanted({'role': 'counter', 'zone': {'w': .2}}, s), 'counter par AI nigrani nahi')
+
+    def test_rec_only_watch_ai_mode_nahi_badalta(self):
+        ntcam.AI_SET['mode'] = 'claude'
+        w = ntcam.Watch('nvr-3', 'rtsp://x', {'name': 'Counter', 'role': 'counter', 'zone': {'x': 0, 'y': 0, 'w': .5, 'h': .5}}, None, rec_only=True)
+        self.assertEqual(ntcam.AI_SET['mode'], 'claude', 'galla ka AI mode wahi'); self.assertEqual(w.zone, {}, 'harkat / AI nahi'); self.assertEqual(w.name, 'Counter')
+        w.apply({'name': 'Counter 2', 'ai': 'off', 'zone': {'w': .3}}); self.assertEqual(ntcam.AI_SET['mode'], 'claude'); self.assertEqual(w.zone, {})
+        g = ntcam.Watch('g1', 'rtsp://x', {'name': 'Galla', 'role': 'galla', 'ai': 'free', 'zone': {'w': .2}}, None)
+        self.assertEqual(ntcam.AI_SET['mode'], 'free', 'galla camera hi mode badalta'); self.assertEqual(g.zone, {'w': .2})
+
+    def test_clip_ready(self):
+        now = 10_000.0
+        self.assertFalse(ntcam.clip_ready({'to': int((now - 30) * 1000)}, now), 'tukra abhi likha ja raha')
+        self.assertTrue(ntcam.clip_ready({'to': int((now - 66) * 1000)}, now))
+
+    def test_counter_960_recording(self):
+        if not os.environ.get('NTCAM_FFMPEG'):
+            self.skipTest('NTCAM_FFMPEG nahi (asal ffmpeg chahiye)')
+        import numpy as np, threading, time, subprocess
+        class W: latest = None; latest_at = 0
+        w = W(); stop = {'x': False}
+        def feed():
+            while not stop['x']:
+                f = np.zeros((1080, 1920, 3), np.uint8); f[:, int(time_now() * 100) % 1800:, :] = 200
+                w.latest, w.latest_at = f, time_now(); time.sleep(0.05)
+        threading.Thread(target=feed, daemon=True).start(); time.sleep(0.3)
+        old = ntcam.SEG_SEC; ntcam.SEG_SEC = 2
+        r = ntcam.Recorder('cnt' + str(int(time_now())), w, ntcam.REC_W_COUNTER); r.start(); time.sleep(4.5); r.stop(); time.sleep(3)
+        ntcam.SEG_SEC = old; stop['x'] = True
+        segs = ntcam.seg_files(r.dir); self.assertTrue(segs)
+        probe = subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', segs[0][1]], capture_output=True, text=True).stdout.strip()
+        self.assertEqual(probe.split()[0], '960,540', 'counter 960 px')
+
+
 class Nigrani(unittest.TestCase):
     """v1.1 galla nigrani — harkat, tukre, AI faisla, ginti (bina camera / Claude ke)."""
     def test_zone_px(self):

@@ -31,7 +31,9 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '2.0.1'
+VERSION = '2.1'
+# v2.1: TEST LEN-DEN — kaam 'Counter' wale camera (NVR) ki bhi recording (960 px, AI / harkat nahi) taake malik ke test aur
+#       clip mein counter nazar aaye; farmaish wali clip tab banti hai jab us waqt ka 60 s tukra poora ho chuka ho.
 
 import base64, collections, getpass, ipaddress, json, os, queue, re, socket, subprocess, sys, threading, time, traceback, urllib.parse
 from concurrent.futures import ThreadPoolExecutor
@@ -636,9 +638,9 @@ def pick(items, n=6):
 class Watch(threading.Thread):
     """Aik galla camera: video lagatar parho (taaza frame app ki tasveer ke liye bhi), dabbe mein harkat par 1.6 s pehle + 1.6 s
     baad ke tukre (2 fps) kaam ki qataar mein. Dheema PC (3 fps se kam) ho to khud halki (sub) video par."""
-    def __init__(self, cid, url, cam, jobs):
+    def __init__(self, cid, url, cam, jobs, rec_only=False):
         super().__init__(daemon=True)
-        self.cid, self.url, self.jobs, self.alive = cid, url, jobs, True
+        self.cid, self.url, self.jobs, self.alive, self.rec_only = cid, url, jobs, True, rec_only   # v2.1: rec_only = sirf video (counter)
         self.motion, self.ring, self.pending = Motion(), collections.deque(maxlen=90), None   # 0.5 s * 90 = 45 s
         self.tape, self.tape_prev = collections.deque(maxlen=TAPE_SEC * 2), None             # v1.8: (t, jpeg, counter harkat)
         self.latest, self.latest_at, self.fps, self.last_motion, self.last_trigger, self.stream = None, 0, 0.0, 0, 0, 'main'
@@ -646,6 +648,9 @@ class Watch(threading.Thread):
 
     def apply(self, cam):
         self.name = str(cam.get('name') or self.cid)[:40]
+        if self.rec_only:                              # v2.1: counter camera — na harkat, na AI, na AI mode badle
+            self.zone, self.zone2 = {}, {}
+            return
         self.zone = cam.get('zone') or {}
         self.zone2 = cam.get('zone2') or {}            # v1.8: counter / len-den ka hissa (malik mark karta hai)
         self.sens = cam.get('sens') or 'mid'
@@ -2156,6 +2161,7 @@ class Galla(threading.Thread):
 # ---------------------------------------------------------------- v1.4 RECORDING + CLIPS
 REC_DIR = os.path.join(HOME, 'rec')
 REC_HOURS, REC_FPS, REC_W, SEG_SEC, MIN_FREE_GB = 48, 8, 640, 60, 5
+REC_W_COUNTER = 960                                # v2.1: kaam 'Counter' wale camera ki recording
 CLIP_MAX, SHAK_PAD, PART_CHARS = 180, 5, 700_000
 SHAK_BEFORE, SHAK_AFTER, SHAK_MAX = 10, 20, 40    # v1.6: shak / bina voucher par clip — 10 s pehle se 20 s baad tak (40 s had)
 
@@ -2223,9 +2229,10 @@ def clip_cmd(exe, segs, t0, t1, out):
 
 class Recorder(threading.Thread):
     """Watch ke taaza frame ko har 1/8 s ffmpeg ko do -> 60 s ke .ts tukre (naam = shuru ka epoch). Sirf disk par, 2 din."""
-    def __init__(self, cid, watch):
+    def __init__(self, cid, watch, width=None):
         super().__init__(daemon=True)
         self.cid, self.watch, self.alive, self.dir = cid, watch, True, os.path.join(REC_DIR, cid)
+        self.width = int(width or REC_W)               # v2.1: counter camera 960 px (haath / parchi saaf)
         self.err, self.last_seg = '', 0
         os.makedirs(self.dir, exist_ok=True)
 
@@ -2246,7 +2253,8 @@ class Recorder(threading.Thread):
                 time.sleep(1)
                 continue
             h, w = f.shape[:2]
-            W, H = REC_W, max(2, int(h * REC_W / w) // 2 * 2)
+            W = min(self.width, w // 2 * 2)
+            H = max(2, int(h * W / w) // 2 * 2)
             start = int(time.time())
             path = os.path.join(self.dir, f'{start}.ts')
             cmd = [exe, '-loglevel', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'bgr24', '-s', f'{W}x{H}', '-r', str(REC_FPS), '-i', '-',
@@ -2336,6 +2344,8 @@ class Clips(threading.Thread):
                 last = time.time()
                 try:
                     for r in self.fire.query('cameraClips', 'status', 'EQUAL', 'req', 10):
+                        if not clip_ready(r):
+                            continue               # v2.1: us waqt ka 60 s tukra abhi likha ja raha — agli dafa
                         self.make({'id': r['id'], 'cam': r.get('cam', ''), 'kind': 'req', 'eventId': r.get('eventId', ''), 'from': int(r.get('from') or 0),
                                    'to': int(r.get('to') or 0), 'date': r.get('date') or pk_date()})
                 except Exception as e:
@@ -2362,6 +2372,17 @@ class Clips(threading.Thread):
 
 def watch_wanted(c, s):
     return bool(s) and c.get('enabled') is not False and c.get('role') == 'galla' and bool((c.get('zone') or {}).get('w'))
+
+
+def rec_wanted(c, s):
+    """v2.1: kaam 'Counter' + chalu + password ho = sirf recording (test / clip ke liye; AI nahi)."""
+    return bool(s) and c.get('enabled') is not False and c.get('role') == 'counter'
+
+
+def clip_ready(r, now=None):
+    """v2.1: farmaish ki clip tab banao jab 'to' ke baad wala tukra band ho chuka (SEG_SEC + 5 s) — warna aakhri second kat jate."""
+    now = time.time() if now is None else now
+    return int(r.get('to') or 0) / 1000 <= now - SEG_SEC - 5
 
 
 # ---------------------------------------------------------------- setup (desktop icon "NT Camera jodein")
@@ -2740,6 +2761,7 @@ def run():
             time.sleep(wait)
             wait = min(120, wait * 2)
     cams, shot_at, asked, state, watchers, recorders = {}, {}, {}, {}, {}, {}
+    readers = {}                                   # v2.1: counter camera — sirf video + recording
     pos = Pos(fire)                                # v1.2: POS + Galla screen (sirf parhna); v1.3: bill badla / cancel
     galla = Galla(fire, pos)
     pos.galla = galla
@@ -2760,7 +2782,7 @@ def run():
             if t - last_cmd > 15:                      # v2.0: app ka hukam (Doctor / NVR / keys)
                 last_cmd = t
                 try:
-                    handle_cmd(fire, pos, watchers, recorders, galla, cams, state)
+                    handle_cmd(fire, pos, {**watchers, **readers}, recorders, galla, cams, state)
                 except Exception as e:
                     log('hukam ghalti:', e)
             if t - last_list > LIST_EVERY:
@@ -2799,6 +2821,26 @@ def run():
                         recorders.pop(cid).stop()
                     fire.patch(f'{BIZ}/cameras/{cid}', {'watch': 'off', 'seenAt': now_ms()})
                     log('nigrani band', cid)
+                # v2.1: kaam 'Counter' = sirf recording (malik ka test len-den / clip)
+                for cid, c in cams.items():
+                    s = sec['cams'].get(cid)
+                    if rec_wanted(c, s) and cid not in watchers:
+                        if cid not in readers or not readers[cid].is_alive():
+                            readers[cid] = Watch(cid, s['url'], c, None, rec_only=True)
+                            readers[cid].start()
+                            log('counter video shuru', cid)
+                        else:
+                            readers[cid].apply(c)
+                        if cid not in recorders or not recorders[cid].is_alive():
+                            recorders[cid] = Recorder(cid, readers[cid], REC_W_COUNTER)
+                            recorders[cid].start()
+                            log('counter recording shuru', cid)
+                for cid in [k for k in readers if not rec_wanted(cams.get(k, {}), sec['cams'].get(k)) or k in watchers]:
+                    readers.pop(cid).stop()
+                    if cid in recorders and cid not in watchers:
+                        recorders.pop(cid).stop()
+                    fire.patch(f'{BIZ}/cameras/{cid}', {'rec': 'off', 'seenAt': now_ms()})
+                    log('counter recording band', cid)
             online = 0
             for cid, c in cams.items():
                 s = sec['cams'].get(cid)
@@ -2816,7 +2858,7 @@ def run():
                 due = t - shot_at.get(cid, 0) > SHOT_EVERY or (req > int(c.get('lastShotAt') or 0) and req > asked.get(cid, 0))
                 if due:
                     asked[cid] = max(req, asked.get(cid, 0))
-                    wt = watchers.get(cid)
+                    wt = watchers.get(cid) or readers.get(cid)
                     frame = wt.latest.copy() if wt and wt.latest is not None and t - wt.latest_at < 10 else grab(s['url'])
                     shot_at[cid] = t
                     if frame is not None:
@@ -2843,6 +2885,11 @@ def run():
                     rc = recorders.get(cid)
                     fire.patch(f'{BIZ}/cameras/{cid}', {'watch': 'on' if wt.latest_at and t - wt.latest_at < 30 else 'down', 'fps': round(wt.fps, 1),
                                                          'stream': wt.stream, 'lastMotionAt': int(wt.last_motion * 1000), 'seenAt': now_ms(),
+                                                         'rec': ('on' if rc and rc.is_alive() and t - rc.last_seg < 180 and not rc.err else (rc.err if rc and rc.err else 'off'))[:120],
+                                                         'recFree': round(free_gb(HOME), 1)})
+                for cid, rd in readers.items():        # v2.1: counter camera ki recording ki halat
+                    rc = recorders.get(cid)
+                    fire.patch(f'{BIZ}/cameras/{cid}', {'fps': round(rd.fps, 1), 'stream': rd.stream, 'seenAt': now_ms(),
                                                          'rec': ('on' if rc and rc.is_alive() and t - rc.last_seg < 180 and not rc.err else (rc.err if rc and rc.err else 'off'))[:120],
                                                          'recFree': round(free_gb(HOME), 1)})
                 galla.flush()

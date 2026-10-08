@@ -1140,6 +1140,68 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     await sdk.deleteDoc(ref('cameraClips', id)).catch(() => {});
   }
   async function keepClip(id, keep) { ownerOnly(); await quick(sdk.setDoc(ref('cameraClips', id), { keep: !!keep }, { merge: true })); }
+  /* ---------- v232: TEST LEN-DEN — malik apne larkon se naqli len-den karwata hai; har chune camera ki clip (PC), asal mein kya
+     hua (malik ka likha), aur us waqt AI ne kya kaha — sab aik zip mein (Claude ko samjhane / model jaanchne ke liye).
+     Test ka doc cameraClips mein (kind 'test', status 'test' — PC sirf 'req' uthata hai), har camera ki clip 'req' + eventId = test id. */
+  const TEST_MIN_MS = 3000;
+  async function requestTest({ from, to, cams = [], truth = '', tags = [] }) {
+    ownerOnly();
+    const a = Number(from), b = Number(to), list = [...new Set(cams.filter(Boolean))].slice(0, 6), note = String(truth || '').trim().slice(0, 500);
+    if (!list.length) throw new Error('Kam az kam aik camera chunein.');
+    if (!Number.isFinite(a) || !Number.isFinite(b) || b - a < TEST_MIN_MS) throw new Error('Shuru aur khatam ka waqt sahi likhein.');
+    if (b - a > CLIP_MAX_MS) throw new Error('Test zyada se zyada 3 minute ka ho sakta hai — lamba ho to do test bana lein.');
+    if (a > Date.now() || b > Date.now() + 15000) throw new Error('Aane wala waqt nahi.');
+    if (!note && !tags.length) throw new Error('Likhein ke asal mein kya hua (ya upar se chunein).');
+    const id = 'test-' + Date.now().toString(36), date = pkDate(new Date(a)), by = actor(), at = Date.now();
+    const title = ('Test: ' + (note || tags.join(', '))).slice(0, 60);
+    const clips = list.map((cam, i) => ({ id: `req-${id.slice(5)}-${i}`, cam }));
+    for (const c of clips) await quick(sdk.setDoc(ref('cameraClips', c.id), { cam: c.cam, kind: 'req', eventId: id, from: a, to: b, date, status: 'req', by, title, keep: true, at }));
+    await quick(sdk.setDoc(ref('cameraClips', id), { kind: 'test', status: 'test', from: a, to: b, date, truth: note, tags: tags.slice(0, 12).map(String), cams: list,
+      clips: clips.map(c => c.id), keep: true, by, at, title: title.slice(6) }));
+    return id;
+  }
+  async function deleteTest(id) {
+    ownerOnly();
+    const t = (state.camClips || []).find(c => c.id === id);
+    for (const c of (state.camClips || []).filter(c => c.eventId === id || t?.clips?.includes(c.id))) await deleteClip(c.id, c.n).catch(() => {});
+    await deleteClip(id).catch(() => {});
+  }
+  /** Zip ka mawad: [{name, data: Uint8Array | string}]. Videos (jo bani), AI ne us waqt kya kaha (events.json + tasveerein jo AI ne dekhin), README. */
+  async function testPack(id) {
+    ownerOnly();
+    const t = (state.camClips || []).find(c => c.id === id); if (!t) throw new Error('Test nahi mila.');
+    const cams = new Map((state.cameras || []).map(c => [c.id, c]));
+    const clips = (state.camClips || []).filter(c => c.eventId === id);
+    const b64bytes = b => { const bin = atob(b); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
+    const safe = s => String(s || '').normalize('NFKD').replace(/[^\w-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 30) || 'camera';
+    const hms = ms => new Date(ms).toLocaleTimeString('en-GB', { timeZone: 'Asia/Karachi', hour12: false });
+    const files = [], videos = [];
+    for (const [i, c] of clips.entries()) {
+      const name = cams.get(c.cam)?.name || c.cam;
+      if (c.status !== 'ok') { videos.push({ cam: c.cam, name, status: c.status, error: c.error || '' }); continue; }
+      const b64 = await loadClip(c.id);
+      if (!b64) { videos.push({ cam: c.cam, name, status: 'error', error: 'tukre nahi mile' }); continue; }
+      const file = `video-${i + 1}-${safe(name)}.mp4`;
+      files.push({ name: file, data: b64bytes(b64) }); videos.push({ cam: c.cam, name, status: 'ok', file, from: c.from, to: c.to });
+    }
+    const snap = await sdk.getDocs(sdk.query(col('cameraEvents'), sdk.where('date', '==', t.date)));
+    const evs = readList(snap).filter(e => (e.end || e.at) >= t.from - 30000 && (e.start || e.at) <= t.to + 30000).sort((a, b) => (a.at || 0) - (b.at || 0));
+    const events = [];
+    for (const e of evs) {
+      const { thumb, ...rest } = e; void thumb;
+      const fs = await sdk.getDoc(ref('cameraFrames', e.id)).catch(() => null);
+      const fr = fs?.exists?.() ? fs.data() : {};
+      const pics = (fr.frames || []).map((f, k) => { const file = `ai/${hms(e.at).replace(/:/g, '')}-${safe(e.verdict)}/${String(k + 1).padStart(2, '0')}${fr.times?.[k] ? '-' + hms(fr.times[k]).replace(/:/g, '') : ''}.jpg`; files.push({ name: file, data: b64bytes(f) }); return file; });
+      events.push({ ...rest, time: hms(e.at), frames: pics });
+    }
+    const pack = { test: { id, date: t.date, from: t.from, to: t.to, fromText: hms(t.from), toText: hms(t.to), truth: t.truth || '', tags: t.tags || [], by: t.by || '' }, videos, events, app: APP_VERSION };
+    const readme = [`NOOR TRADERS — TEST LEN-DEN`, `Din: ${t.date}   Waqt: ${hms(t.from)} se ${hms(t.to)}`, `Asal mein kya hua (malik): ${t.truth || '—'}`, `Chips: ${(t.tags || []).join(', ') || '—'}`, '',
+      'Videos:', ...videos.map(v => `  ${v.name}: ${v.status === 'ok' ? v.file : 'NAHI — ' + (v.error || v.status)}`), '',
+      `Us waqt AI ne kya kaha (${events.length}):`, ...events.map(e => `  ${e.time} · ${e.verdict || ''} · ${e.flow || ''}${e.flags?.length ? ' · flags: ' + e.flags.join(',') : ''} · ${e.why || ''}`),
+      events.length ? '' : '  (koi AI card nahi bana)', '', 'Ye zip Claude ko chat mein bhejein — wo video aur AI ka jawab mila kar dekhega.'].join('\n');
+    files.unshift({ name: 'README.txt', data: readme }, { name: 'test.json', data: JSON.stringify(pack, null, 1) });
+    return { files, filename: `test-${t.date}-${hms(t.from).replace(/:/g, '').slice(0, 4)}.zip`, ready: videos.filter(v => v.status === 'ok').length, total: clips.length };
+  }
   /** v231: PC ko hukam (NT Doctor / NVR jodna / AI keys). secret sirf PC parhta hai aur foran mita deta hai. */
   async function pcCommand(kind, secret) {
     ownerOnly();
@@ -1183,7 +1245,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
 
   return {
     app, full, actor, auth, state, watchShots, createCameraPC, saveCamera, requestShot, deleteCamera,
-    watchEvents, loadFrames, reviewEvent, saveZone, pcCommand, cleanupCam, loadClip, requestClip, deleteClip, keepClip, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
+    watchEvents, loadFrames, reviewEvent, saveZone, pcCommand, cleanupCam, loadClip, requestClip, deleteClip, keepClip, requestTest, deleteTest, testPack, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
     requestOut, cancelOut, returnOut, reviewOut, isManager, isTicketer, startBreak, endBreaks, createTicket, returnTicket, decideTicket, ticketSuggestFor,
     savePushToken, removePushToken, pushDevices, pushTestPing,
     applyDefaultShiftAll, applyDefaultSalaryAll, toggleClosed, quickPresent, closeCheckouts, getSelfie, migrateSelfies, selfiesFor, auditLog,
