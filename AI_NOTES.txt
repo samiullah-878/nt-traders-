@@ -1,8 +1,34 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v235   Tareekh: 2026-10-09  (CAMERA JODNA APP SE — PC khud dhoondta / jodta hai, PC par sirf PC code; ntcam.py v2.4; RULES NAHI badle)
+Version: v236   Tareekh: 2026-10-09  (NAYA RANG "FIROZI" — sirf styles.css / shakal; ntcam.py v2.4 wahi; RULES NAHI badle)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+00000000000000000000000000000000000000. v236 — NAYA RANG "FIROZI" (PREMIUM LOOK): SIRF SHAKAL, KAAM WAHI
+------------------------------------------------------------
+Malik (9 Oct raat): "app mein colour add karo, premium feel; pehle options dikhao jo dekh kar OK karun." 5 options aik page par dikhaye
+(asal app ki screens phone ke frame mein, Artifact link): 1 Shahi Neela + Sona, 2 Zamurrad Sabz + Sona, 3 Jamni, 4 Firozi, 5 Siyah + Sona
+(dark). Malik: "neeche ke buttons ka colour bhi" -> neeche ke tabs rangeen; phir "option 4, chips bhi banao, main screen ki notifications
+(Tawajju ke cards) ko bhi premium feel".
+- App sirf styles.css load karti hai aur rang :root ke variables se aate hain — is liye sirf styles.css badli (JS / rules / ntcam nahi).
+- styles.css :root (Firozi): --ink #0b6b7d, --ink-2 #0f8a99, --ink-soft, --ground / --ground-2, --rule, --line (borders), --text,
+  --muted, --idle, --tint, --switch, --top-a / --top-b (header gradient), --top-soft, --accent #ff8a65 / --accent-2 (narangi nishan),
+  --accent-ink, --accent-soft, --on-ink, --focus, --shadow-1 / --shadow-s, --r 14px. Halat ke rang (ok / late / bad / leave / off) ka
+  matlab wahi. RANG BADALNA HO TO SIRF YE HISSA.
+- Jo purane neele / surmai rang seedhe likhe the (#c5cede, #cfd7ea, #b8c1d3, #dfe5f0, #f7f9fd, #1b2a4a background, rgba(27,42,74 ..)
+  wo variables par.
+- File ke aakhir mein "v236: PREMIUM RANG" hissa: body ka halka gradient; .top gradient + accent ki lakeer; logo ka nishan accent;
+  login card; .btn-primary gradient; cards ka halka saya; ginti ke khane; NEECHE KE TABS (.tabs) header jaise rang ke, chuna hua tab
+  narangi khane mein (860px se upar tabs header ke andar — wahan background nahi); CHIPS halke rangeen, chuna hua gehra, Hazri ke
+  filter apni halat ke rang mein (c-present / c-late / c-absent / c-leave; chuna hua = thos rang); TAWAJJU KE CARDS (.att-card):
+  --tone / --tone-bg / --tone-line, rangeen nishan (icon ka dabba), siyah surkhi, rangeen tafseel, saya, daayen teer.
+- index.html theme-color #07475c, manifest theme_color / background_color. Phone ki home screen ka icon (icon.svg / png) abhi purana
+  neela hai — nahi badla.
+- Jaanch: app.dom 26 pass (logic nahi badla); asal markup (8 screens: hazri, nigrani, cameras, salary, staff, settings, staff ka apna
+  view, login) par phone ke frame aur laptop ki chaurai (1280) par dekha — koi cheez page se bahar nahi.
+- Yahan test NAHI: asal phone; sheets (profile / salary sheet / camera zone) aur Mahina wala jaal sirf variables ke zariye badle hain
+  — alag se nahi dekhe. Dark (option 5) nahi bana.
 
 ------------------------------------------------------------
 0000000000000000000000000000000000000. v235 + ntcam.py v2.4 — CAMERA JODNA APP SE (PC KHUD DHOONDTA / JODTA HAI, PC PAR SIRF PC CODE)
