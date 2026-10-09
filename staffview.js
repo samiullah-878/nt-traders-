@@ -432,7 +432,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
         <nav class="tabs" aria-label="Hisse">${tabs.map(([k, label, ic]) => `<button type="button" data-action="tab" data-arg="${k}" aria-current="${ui.tab === k ? 'page' : 'false'}">${icon(ic, 22)}<span>${label}</span>${k === 'request' && pend ? `<em class="badge">${pend}</em>` : ''}</button>`).join('')}</nav>
       </div></header>
       <main class="view view-staff">${ui.tab === 'hazri' ? hazriTab() : ui.tab === 'salary' ? salaryTab() : requestTab()}
-        <p class="foot"><button type="button" class="link" data-action="update">Update check karein</button> &nbsp; ${APP_VERSION}${S.bootMs ? ` · ${(S.bootMs / 1000).toFixed(1)}s mein khuli` : ''} &nbsp; · &nbsp; <button type="button" class="link muted-link" data-action="logout">Logout</button></p></main>`;
+        <p class="foot"><button type="button" class="link" data-action="update">Update check karein</button> &nbsp; ${APP_VERSION}${S.bootMs ? ` · ${(S.bootMs / 1000).toFixed(1)}s mein khuli` : ''} &nbsp; · &nbsp; <button type="button" class="link muted-link" data-action="urdu-toggle" data-no-ur>اردو چالو / بند</button> &nbsp; · &nbsp; <button type="button" class="link muted-link" data-action="logout">Logout</button></p></main>`;
   }
   /** v217: server ne qubool kar liya -> premium animation. Purani (phone mein ruki) likhai baad mein pohanchi to sirf chhota paigham. */
   function onConfirmed(p = {}) {

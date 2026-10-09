@@ -315,6 +315,23 @@ test('v235: camera jodna app se — network par mile camera ki halat, har aik ka
   await click('.nig-nav [data-action=nig-sec][data-arg=lenden]'); await click('[data-action=tab][data-arg=hazri]');
 });
 
+test('v237: Urdu ki line — har lafz ke neeche, Settings se chalu / band (sirf is phone par)', async () => {
+  await settle(8);
+  assert.ok(doc.documentElement.classList.contains('ur-on'), 'shuru mein chalu');
+  assert.deepEqual($$('.tabs button ur-s').map(x => x.textContent), ['حاضری', 'تنخواہ', 'عملہ', 'نگرانی', 'ترتیبات'], 'neeche ke tabs');
+  assert.equal($('.section-label ur-s')?.textContent, 'توجہ چاہیے'); assert.ok($$('.chip ur-s').length >= 4, 'chips');
+  assert.match($('.att-card b').textContent, /^\d+ phone se Check-Out server tak nahi gayi\d+ فون سے چیک آؤٹ سرور تک نہیں گیا$/, 'ginti wala jumla');
+  assert.equal($$('.row-text b ur-s').length, 0, 'logon ke naam Roman hi');
+  await click('[data-action=tab][data-arg=settings]'); await settle(6);
+  const tog = () => $('.tools [data-action=urdu-toggle]'); assert.ok(tog(), 'Settings mein button');
+  await click(tog()); await settle(8);
+  assert.equal($$('ur-s, ur-p').length, 0, 'band: koi Urdu line nahi'); assert.equal(storage.getItem('nt-urdu-v1'), '0'); assert.ok(!doc.documentElement.classList.contains('ur-on'));
+  assert.match(toastText(), /Urdu ki line band/); assert.match($('.tabs').textContent, /^\s*Hazri\s*Salary\s*Staff\s*Nigrani\s*Settings/, 'asal matn wapas');
+  await click(tog()); await settle(8);
+  assert.ok($$('.tabs button ur-s').length === 5 && storage.getItem('nt-urdu-v1') === '1', 'dobara chalu');
+  await click('[data-action=tab][data-arg=hazri]');
+});
+
 test('filter, din badalna, mahine ka jaal', async () => {
   await click('[data-action=filter][data-arg=late]'); assert.equal($$('.register .row').length, 1);
   await click('[data-action=filter][data-arg=all]');

@@ -320,6 +320,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         ${install && !install.standalone ? tool('install', 'down', 'App home screen par lagayein', 'Icon se seedha khule') : ''}
         ${tool('links', 'share', 'Update ke links', 'GitHub upload · Firebase rules')}
         ${tool('update', 'down', 'App update check karein', 'Abhi ' + APP_VERSION + (S.bootMs ? ` · ${(S.bootMs / 1000).toFixed(1)}s mein khuli` : ''))}
+        ${tool('urdu-toggle', 'edit', 'Urdu ki line (chalu / band)', 'Har lafz ke neeche Urdu — sirf is phone par')}
         ${fixes && !manager ? tool('migrate-selfies', 'camera', 'App ko halka karein (aik dafa)', 'Purani selfies alag karein — hazri list tez khulegi') : ''}
         ${tool('phones', 'phone', 'Phones ki jaanch', 'Kis phone par kaunsi app · kis ki hazri server tak nahi gayi')}
         ${tool('diag', 'alert', 'App ki jaanch', 'Hazri na dikhe to is ka screenshot bhejein')}

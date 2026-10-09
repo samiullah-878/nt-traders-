@@ -809,3 +809,18 @@ body{background:radial-gradient(130% 320px at 50% 0,var(--ground-2),transparent 
 .att-card b{color:var(--text)}
 .att-card small{color:var(--tone);opacity:1;font-weight:600}
 .att-card::after{content:"";flex:none;width:8px;height:8px;margin-right:2px;border-top:2px solid var(--tone);border-right:2px solid var(--tone);transform:rotate(45deg);opacity:.65}
+
+
+/* ============================================================================================
+   v237: URDU KI LINE (urdu.js lagata hai) — <ur-p> = Roman + Urdu ka jora, <ur-s> = Urdu ki line. Settings se band ho sakti hai
+   (html par .ur-on nahi rehta). Naam, waqt aur ginti Roman hi rehte hain.
+   ============================================================================================ */
+ur-p{display:inline-grid;min-width:0;max-width:100%}
+ur-s{display:block;direction:rtl;unicode-bidi:isolate;text-align:-webkit-match-parent;text-align:match-parent;font-family:var(--font);
+  font-size:clamp(12px,.82em,15px);font-weight:500;line-height:1.6;letter-spacing:0;text-transform:none;white-space:normal;opacity:.88}
+ur-s.blk{margin-top:2px}
+.btn ur-s,.chip ur-s,.tag ur-s,.stamp ur-s,.switch ur-s,.mode-bar ur-s,.tabs ur-s{text-align:center}
+:root.ur-on{--tab-h:80px}
+.ur-on .tabs button{gap:0}
+.ur-on .btn{padding-block:6px}.ur-on .chip{padding-block:5px}.ur-on .tag{padding-block:3px;border-radius:14px}
+@media(min-width:860px){.ur-on .tabs button{height:auto;min-height:46px;padding-block:3px}}

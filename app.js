@@ -7,6 +7,7 @@ import { createStaffView } from './staffview.js';
 const loadOwnerView = () => import('./owner.js').then(m => m.createOwnerView);
 const loadManagerView = () => import('./manager.js').then(m => m.createManagerView);
 import { $, icon, toast, formValues, closeSheets, refreshSheets, errorText } from './ui.js';
+import { startUrdu, urduOn, setUrdu } from './urdu.js';   // v237: Roman matn ke neeche Urdu ki line
 
 const ROLE_KEY = 'nt-hazri-last-role';
 const FIELD = /^(INPUT|TEXTAREA|SELECT)$/;
@@ -22,6 +23,7 @@ const SNAP_KEY = 'nt-hazri-snap-v1';
  */
 export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalStorage(), win = window }) {
   const doc = win.document, root = $('#app', doc);
+  let stopUrdu = startUrdu({ doc, storage, win });   // v237: jo bhi matn screen par aaye us ke neeche Urdu (har phone ki apni pasand)
   let view = null, dirty = false, login = { role: storage?.getItem(ROLE_KEY) || 'staff', error: '', busy: false, showPass: false };
   let data = null, controller = null, sessionSeq = 0, snapTimer = null, firstPaint = true, hold = null;
   const hint = () => { try { return !!(storage?.getItem(STAFF_CACHE_KEY) || storage?.getItem(OWNER_IN_KEY)); } catch { return false; } };
@@ -105,7 +107,7 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
           ${login.busy ? '<p class="hint center">Kamzor internet par 10-20 second lag sakte hain. Button dobara na dabayein.</p>' : ''}
         </form>
       </div>
-      <p class="foot">${APP_VERSION} &nbsp; <button type="button" class="link" data-action="app-update">Update check karein</button></p>
+      <p class="foot">${APP_VERSION} &nbsp; <button type="button" class="link" data-action="app-update">Update check karein</button> &nbsp; · &nbsp; <button type="button" class="link" data-action="urdu-toggle" data-no-ur>${urduOn(storage) ? 'اردو بند' : 'اردو چالو'}</button></p>
     </main>`;
   }
   async function submitLogin(form) {
@@ -198,7 +200,12 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
   const shellActions = {
     'login-role'(el) { login.role = el.dataset.arg; login.error = ''; showLogin(); },
     'login-show'() { const input = $('input[name=password]', root), value = input?.value || ''; login.showPass = !login.showPass; showLogin(); const next = $('input[name=password]', root); if (next) { next.value = value; next.focus(); } },
-    'app-update'() { void checkUpdate(true); }
+    'app-update'() { void checkUpdate(true); },
+    'urdu-toggle'() {   // v237: Urdu ki line chalu / band — sirf is phone par
+      const on = !urduOn(storage); setUrdu(storage, on); stopUrdu(); stopUrdu = startUrdu({ doc, storage, win });
+      if (view) render(); else showLogin();
+      toast(on ? 'Urdu ki line chalu' : 'Urdu ki line band', 'ok');
+    }
   };
   doc.addEventListener('click', event => {
     const el = event.target.closest?.('[data-action]'); if (!el || el.disabled) return;

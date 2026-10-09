@@ -1,8 +1,33 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v236   Tareekh: 2026-10-09  (NAYA RANG "FIROZI" — sirf styles.css / shakal; ntcam.py v2.4 wahi; RULES NAHI badle)
+Version: v237   Tareekh: 2026-10-09  (URDU KI LINE — har Roman lafz ke neeche Urdu, urdu.js; ntcam.py v2.4 wahi; RULES NAHI badle)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+000000000000000000000000000000000000000. v237 — URDU KI LINE (har Roman lafz ke neeche Urdu) — MARHALA 1
+------------------------------------------------------------
+Malik (9 Oct raat): "poori app mein Urdu jod do English (Roman) ke neeche, mulazim ke panel aur manager ke panel par bhi." Pehle 4
+screens ka namoona (Artifact) dikhaya, "ok ha" mila. Tay hua: marhala 1 = buttons / tabs / surkhiyan / chips / halat / form ke naam /
+Tawajju ke cards; marhala 2 = lambi hidayaat, paigham, ghalti ke jumle. Malik khud Urdu lipi kam parhta hai — ye staff ke liye hai.
+- NAYA urdu.js (app ka baqi code / templates NAHI badle): UR = lughat {Roman matn: Urdu} (~507), PATTERNS = ginti / naam / waqt wale
+  jumle [regex, fn] (~81; naam aur waqt L() = U+2066..U+2069 mein taake "9:15 am – 7:00 pm" ulta na ho), urduFor(matn).
+  decorate(root): har matn ke neeche <ur-s lang=ur dir=rtl>; akela matn -> <ur-p>Roman<ur-s>Urdu</ur-s></ur-p> (icon apni jagah);
+  mila-jula jumla jis ka poora tarjuma ho -> aakhir mein <ur-s class=blk>. BEHTA HUA JUMLA (matn ke beech <b> / link) jis ka poora
+  tarjuma nahi -> us ke tukron ko alag alag Urdu NAHI (flowing(), STACK = label / button / legend / summary / th mein tukre theek).
+  Nahi lagti: option / select / input / textarea / code / svg, data-no-ur, logon ke naam, sirf ginti / waqt. startUrdu({doc, storage, win}):
+  html par class ur-on + MutationObserver (naya matn khud); band = undecorate. Pasand localStorage 'nt-urdu-v1' ('0' = band; na ho = chalu).
+- app.js: startUrdu shuru mein; shellActions 'urdu-toggle' (pasand badal kar dobara render, toast). Button: malik Settings > App
+  ("Urdu ki line (chalu / band)"), mulazim ke neeche foot, login foot. boot.js FILES + sw.js SHELL mein urdu.js.
+- styles.css aakhir mein "v237: URDU KI LINE": ur-p inline-grid, ur-s (font var(--font) — Urdu harf Noto Naskh se, size clamp 12-15px),
+  :root.ur-on --tab-h 80px (neeche ki patti oonchi), .ur-on .btn / .chip / .tag ki padding.
+- Tests: urdu.test.mjs 3 (lughat / patterns, screen par lagna, chalu-band + naya matn); app.dom 27 (+1 v237) — sab Urdu CHALU ke sath
+  chalte hain (default). theme/collect.py se tests ke dauran screen par aane wala har matn jama hota hai (1,150 alag), theme/todo.mjs
+  batata hai kis ka Urdu baqi hai.
+- BAQI (marhala 2): ~142 lambe jumle / hidayaat (p.hint, notice, toast ke lambe paigham, AI ke "why"), ~200 chhote tukre jo jumlon ke
+  hisse ya naam / model ke naam hain, placeholder aur dropdown ke options (browser do line nahi dikhata). Jo matn tests mein screen par
+  nahi aata (kam istemal wale sheets) wo bhi lughat mein nahi — dikhe to UR mein aik line jod dein.
+- Yahan test NAHI: asal phone par Urdu font / line ki oonchai, laptop ki chaurai par har screen (sirf phone ke frame mein 9 screens dekhin).
 
 ------------------------------------------------------------
 00000000000000000000000000000000000000. v236 — NAYA RANG "FIROZI" (PREMIUM LOOK): SIRF SHAKAL, KAAM WAHI
