@@ -1,6 +1,6 @@
 {
-  "version": "v234",
+  "version": "v235",
   "variant": "Production",
   "buildDate": "2026-10-09",
-  "notes": "Nigrani = camera ki poori screen (Len-den \u00b7 Cameras \u00b7 Doctor \u00b7 Keys/AI \u00b7 Khabar). Keys / password / AI model app se \u2014 PC khud uthata hai. Sab AI providers. ntcam.py v2.3. Rules NAHI badle."
+  "notes": "Camera jodna app se: Nigrani > Cameras mein network par mile camera / NVR ki halat aur har aik ke password ka khana. PC (ntcam.py v2.4) khud dhoondta / jodta hai — PC par sirf PC code. Rules NAHI badle."
 }

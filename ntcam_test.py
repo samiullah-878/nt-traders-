@@ -579,35 +579,244 @@ class Nvr(unittest.TestCase):
             self.assertEqual(ntcam.dahua_info('x', 'admin', 'bad')['why'], 'password ghalat')
             self.assertTrue(ntcam.dahua_info('x', 'admin', 'lock')['locked'])
 
-    def test_add(self):
-        import tempfile
-        writes, shots, tried = [], [], []
-        def http(ip, u, pw, path, timeout=6):
-            if ip == '192.168.0.32': return 401, 'Unauthorized'
-            if pw != 'admin123': return 401, 'Unauthorized'
-            return (200, 'type=DHI-NVR2108-I2') if 'getDeviceType' in path else (200, 'table.ChannelTitle[1].Name=Godam darwaza')
-        def grab(u):
-            tried.append(u)
-            ch = int(re.search(r'channel=(\d+)', u).group(1)) if 'channel=' in u else 0
-            if ch in (3, 7): return None                              # khali channel
-            if ch == 5 and 'subtype=0' in u: return None              # sirf sub stream
-            return 'F' if 'channel=' in u else None
+
+class Jodna(unittest.TestCase):
+    """v2.4 — app se camera jodna: password RTSP se aik koshish, ghalat yaad (lock nahi), har channel alag, IP badli, malik ne hataya."""
+    GALLA = {'ip': '192.168.0.32', 'brand': 'dahua', 'mac': 'cc33'}
+    NVR = {'ip': '192.168.0.88', 'brand': 'dahua', 'mac': 'aa88'}
+
+    def world(self, pw=None, nch=None, empty=(), sub_only=(), lock=(), down=()):
+        """Naqli network: pw {ip: sahi password}, nch {ip: channel ginti}. Wapas (describe, grab, logins [(ip, pw, code)])."""
         import re
-        fire = types.SimpleNamespace(patch=lambda p, d: writes.append((p, d)))
-        with tempfile.TemporaryDirectory() as d, mock.patch.object(ntcam, 'SECRETS', os.path.join(d, 's.json')), \
-             mock.patch.object(ntcam, 'scan', lambda: [{'ip': '192.168.0.32', 'brand': 'dahua', 'mac': 'cc33'}, {'ip': '192.168.0.88', 'brand': 'dahua', 'mac': 'aa88'}]), \
-             mock.patch.object(ntcam, 'dahua_http', http), mock.patch.object(ntcam, 'grab', grab), mock.patch.object(ntcam, 'put_shot', lambda f, c, fr: shots.append(c)), \
-             mock.patch.object(ntcam, 'heartbeat', lambda: None):
-            sec = {'cams': {}}
-            out = ntcam.nvr_add(fire, sec, 'admin', ['Samkhan786', 'admin123'], {'cc33-ch1'})
-        t = ' | '.join(x['t'] for x in out)
-        self.assertIn('192.168.0.32: password ghalat', t, 'galla camera ka alag password — chhor diya, lock nahi')
-        self.assertIn('192.168.0.88 · DHI-NVR2108-I2 · password theek · 6/8 jude (ch 3, 7 khali)', t)
-        self.assertEqual(out[0]['t'], '6 naye camera jude')
-        cams = [p.split('/')[-1] for p, dd in writes]; self.assertEqual(cams, [f'aa88-ch{c}' for c in (1, 2, 4, 5, 6, 8)])
-        self.assertEqual([dd['name'] for p, dd in writes][1], 'Godam darwaza', 'naam NVR se'); self.assertEqual(writes[0][1]['name'], '88-1')
-        self.assertIn('subtype=1', sec['cams']['aa88-ch5']['url'], 'main na mile to sub stream'); self.assertEqual(sec['cams']['aa88-ch1']['pw'], 'admin123')
-        self.assertFalse(any('channel=9' in u for u in tried), 'NVR2108 = sirf 8 channel')
+        pw, nch, logins = pw or {}, nch or {}, []
+        def chan(path):
+            return int(re.search(r'channel=(\d+)', path).group(1)) if 'channel=' in path else 0
+        def desc(ip, user, p, path, **k):
+            if ip in down:
+                return 0, 'timed out'
+            if p != pw.get(ip):
+                logins.append((ip, p, 401))
+                return 401, ('RTSP/1.0 401 Unauthorized\r\nX: account locked' if ip in lock else 'RTSP/1.0 401 Unauthorized')
+            ch = chan(path)
+            return (200, 'RTSP/1.0 200 OK') if 1 <= ch <= nch.get(ip, 1) else (404, 'RTSP/1.0 404 Not Found')
+        def grab(u):
+            ch = chan(u)
+            if ch in empty or (ch in sub_only and 'subtype=0' in u):
+                return None
+            return 'F'
+        return desc, grab, logins
+
+    def join(self, store, creds, existing, found, desc, grab, force=False, now=1000.0, http=None):
+        writes, shots = [], []
+        fire = types.SimpleNamespace(patch=lambda p, d: writes.append((p.split('/')[-1], d)))
+        http = http or (lambda ip, u, pw, path, timeout=6: (0, 'web nahi'))
+        with mock.patch.object(ntcam, 'secrets', lambda: store), mock.patch.object(ntcam, 'save_json', lambda p, d: None), \
+             mock.patch.object(ntcam, 'rtsp_describe', desc), mock.patch.object(ntcam, 'grab', grab), mock.patch.object(ntcam, 'dahua_http', http), \
+             mock.patch.object(ntcam, 'put_shot', lambda f, c, fr: shots.append(c)):
+            lines, devs, added = ntcam.join_devices(fire, creds, existing, force=force, found=found, now=now)
+        return lines, {d['id']: d for d in devs}, added, writes, shots
+
+    def test_naya_laptop_nvr_aur_galla_alag_password(self):
+        def http(ip, u, pw, path, timeout=6):
+            if ip != '192.168.0.88': return 0, 'timed out'
+            return (200, 'type=DHI-NVR2108-I2') if 'getDeviceType' in path else (200, 'table.ChannelTitle[1].Name=Godam darwaza')
+        desc, grab, logins = self.world(pw={'192.168.0.32': 'gallapw', '192.168.0.88': 'nvrpw'}, nch={'192.168.0.88': 8}, empty=(3, 7), sub_only=(5,))
+        store = {'cams': {}}
+        existing = {'cc33-ch1': {'name': 'Galla', 'role': 'galla', 'ip': '192.168.0.33'}}       # purane PC ka banaya hua — kaam / naam na badle
+        lines, devs, added, writes, shots = self.join(store, {'user': 'admin', 'pws': ['nvrpw', 'gallapw']}, existing, [self.GALLA, self.NVR], desc, grab, http=http)
+        t = ' | '.join(x['t'] for x in lines)
+        self.assertEqual(lines[0], {'ok': True, 't': '6 naye camera jude'})
+        self.assertIn('192.168.0.88 · DHI-NVR2108-I2 · 6 camera jude (ch 3, 7 par video nahi)', t); self.assertIn('192.168.0.32 · 1 camera jude', t)
+        self.assertEqual(logins, [('192.168.0.32', 'nvrpw', 401)], 'ghalat password sirf AIK dafa (pehle har channel par video kholta tha = lock)')
+        self.assertEqual(sorted(store['cams']), ['aa88-ch1', 'aa88-ch2', 'aa88-ch4', 'aa88-ch5', 'aa88-ch6', 'aa88-ch8', 'cc33-ch1'])
+        self.assertEqual(store['cams']['cc33-ch1']['pw'], 'gallapw'); self.assertIn('@192.168.0.32:554/cam/realmonitor?channel=1&subtype=0', store['cams']['cc33-ch1']['url'])
+        self.assertIn('subtype=1', store['cams']['aa88-ch5']['url'], 'main na mile to halki video')
+        made = [(c, d) for c, d in writes if 'name' in d]
+        self.assertEqual([c for c, d in made], [f'aa88-ch{c}' for c in (1, 2, 4, 5, 6, 8)]); self.assertEqual(made[1][1]['name'], 'Godam darwaza', 'naam NVR se'); self.assertEqual(made[0][1]['name'], '88-1')
+        self.assertIn(('cc33-ch1', {'ip': '192.168.0.32'}), [(c, {'ip': d.get('ip')}) for c, d in writes if set(d) == {'ip', 'seenAt'}], 'purani IP app mein theek')
+        self.assertFalse(any('role' in d for c, d in writes if c == 'cc33-ch1'), 'maujooda galla camera ka kaam nahi chhua')
+        self.assertEqual(len(shots), 7); self.assertEqual((devs['aa88']['st'], devs['aa88']['n'], devs['cc33']['st']), ('ok', 6, 'ok'))
+        self.assertNotIn('cc33', store.get('bad') or {}, 'jud gaya to ghalat ki yaad saaf')
+        rules = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'firestore.rules'), encoding='utf-8').read()
+        block = rules[rules.index('match /businesses/noor-traders/cameras/{camId}'):]
+        for k in made[0][1]: self.assertIn("'" + k + "'", block[:block.index('allow update')], 'rules create mein nahi: ' + k)
+
+    def test_ghalat_password_lock_nahi_karta(self):
+        desc, grab, logins = self.world(pw={'192.168.0.88': 'asal'})
+        store, ex = {'cams': {}}, {}
+        creds = {'user': 'admin', 'pws': ['p1', 'p2'], 'devs': {'aa88': {'user': 'admin', 'pw': 'p3', 'at': 5}}}
+        go = lambda now, force=False: self.join(store, creds, ex, [self.NVR], desc, grab, force=force, now=now)[1]['aa88']
+        d = go(1000); self.assertEqual(d['st'], 'bad'); self.assertIn('Password nahi chala', d['msg'])
+        self.assertEqual([p for _, p, _ in logins], ['p3', 'p1'], 'aik daur = zyada se zyada 2 password; pehle is device ka apna')
+        go(1600); self.assertEqual([p for _, p, _ in logins], ['p3', 'p1', 'p2'], 'teesra agle daur mein')
+        d = go(2200); self.assertEqual(len(logins), 3, 'jo na chala wo dobara nahi'); self.assertRegex(d['msg'], r'\d+ minute baad khud dobara')
+        go(1000 + 36 * 60); self.assertEqual(len(logins), 5, '35 minute baad aik dafa aur (lock khul gaya ho)')
+        go(1000 + 36 * 60 + 40 * 60); self.assertEqual([p for _, p, _ in logins][5:], ['p2'], 'do dafa na chala -> 6 ghante')
+        go(1000 + 36 * 60 + 41 * 60, force=True); self.assertEqual(len(logins), 8, 'malik ne button dabaya: 35 min ho gaye hon to dobara')
+        go(1000 + 36 * 60 + 42 * 60, force=True); self.assertEqual(len(logins), 8, 'button baar baar dabane se koshishein nahi barhtin')
+        self.assertEqual(sorted(len(m) for m in store['bad']['aa88']), [16, 16, 16], 'sirf nishan — password khud nahi likha')
+        self.assertNotIn('p1', json.dumps(store))
+        creds['devs']['aa88'] = {'user': 'admin', 'pw': 'asal', 'at': 9}
+        d = go(9000); self.assertEqual((d['st'], d['n']), ('ok', 1)); self.assertEqual(store['cams']['aa88-ch1']['pw'], 'asal'); self.assertNotIn('aa88', store['bad'])
+
+    def test_lock_jawab_nahi_password_chahiye(self):
+        desc, grab, logins = self.world(pw={}, lock=('192.168.0.88',), down=('192.168.0.143',))
+        dn = {'ip': '192.168.0.143', 'brand': 'dahua', 'mac': 'dd43'}
+        store = {'cams': {}}
+        lines, devs, added, writes, shots = self.join(store, {'user': 'admin', 'pws': ['p1', 'p2']}, {}, [self.NVR, dn], desc, grab)
+        self.assertEqual(devs['aa88']['st'], 'lock'); self.assertEqual(len(logins), 1, 'lock par agla password NAHI')
+        self.assertEqual(devs['dd43']['st'], 'down'); self.assertNotIn('dd43', store.get('bad') or {}, 'jawab na aaye to password ghalat nahi gina')
+        self.assertEqual(lines[0], {'ok': False, 't': '0 naye camera jude'}); self.assertFalse(writes)
+        lines, devs, *_ = self.join({'cams': {}}, {'user': 'admin', 'pws': []}, {}, [self.NVR], desc, grab)
+        self.assertEqual(devs['aa88']['st'], 'pw'); self.assertEqual(len(logins), 1, 'password na ho to koshish hi nahi')
+        lines, devs, *_ = self.join({'cams': {}}, {'pws': ['x']}, {}, [], desc, grab); self.assertIn('koi camera / NVR nahi mila', lines[1]['t'])
+
+    def test_juda_hua_chhua_nahi_ip_badli_naya_channel(self):
+        desc, grab, logins = self.world(pw={'192.168.0.36': 'gallapw', '192.168.0.88': 'nvrpw'}, nch={'192.168.0.88': 2})
+        url = 'rtsp://admin:gallapw@192.168.0.33:554/cam/realmonitor?channel=1&subtype=0'
+        store = {'cams': {'cc33-ch1': {'url': url, 'user': 'admin', 'pw': 'gallapw', 'ip': '192.168.0.33', 'brand': 'dahua', 'ch': 1, 'mac': 'cc33'},
+                          'aa88-ch1': {'url': 'rtsp://admin:nvrpw@192.168.0.88:554/cam/realmonitor?channel=1&subtype=0', 'user': 'admin', 'pw': 'nvrpw', 'ip': '192.168.0.88', 'brand': 'dahua', 'ch': 1, 'mac': 'aa88'}}}
+        ex = {'cc33-ch1': {'name': 'Galla', 'ip': '192.168.0.33'}, 'aa88-ch1': {'name': 'Counter', 'ip': '192.168.0.88'}}
+        calls = []
+        d2 = lambda *a, **k: (calls.append(a), desc(*a, **k))[1]
+        moved = dict(self.GALLA, ip='192.168.0.36')
+        lines, devs, added, writes, shots = self.join(store, {'pws': ['nvrpw']}, ex, [moved, self.NVR], d2, grab)
+        self.assertFalse(calls, 'juda hua device: bina force camera se kuch nahi poochte'); self.assertEqual((devs['cc33']['st'], devs['aa88']['n']), ('ok', 1))
+        self.assertEqual(store['cams']['cc33-ch1']['ip'], '192.168.0.36'); self.assertIn('@192.168.0.36:554/', store['cams']['cc33-ch1']['url'], 'router ne nayi IP di — khud theek')
+        self.assertEqual(writes[0][0], 'cc33-ch1'); self.assertEqual(writes[0][1]['ip'], '192.168.0.36')
+        lines, devs, added, writes, shots = self.join(store, {'pws': ['nvrpw']}, ex, [moved, self.NVR], d2, grab, force=True)
+        self.assertEqual(added, 1, 'force: NVR par naya channel 2 mila'); self.assertIn('aa88-ch2', store['cams']); self.assertEqual(devs['aa88']['n'], 2)
+        self.assertEqual(shots, ['aa88-ch2'], 'jo pehle se juda us ki video dobara nahi kholi'); self.assertFalse(logins)
+
+    def test_malik_ne_hataya_dobara_khud_nahi(self):
+        desc, grab, logins = self.world(pw={'192.168.0.88': 'nvrpw'}, nch={'192.168.0.88': 3})
+        cam = lambda ch: {'url': f'rtsp://admin:nvrpw@192.168.0.88:554/cam/realmonitor?channel={ch}&subtype=0', 'user': 'admin', 'pw': 'nvrpw', 'ip': '192.168.0.88', 'brand': 'dahua', 'ch': ch, 'mac': 'aa88'}
+        store = {'cams': {f'aa88-ch{c}': cam(c) for c in (1, 2, 3)}}
+        ex = {'aa88-ch1': {'name': 'Counter', 'ip': '192.168.0.88'}}                              # malik ne ch 2, 3 app se hata diye
+        creds = {'pws': ['nvrpw'], 'devs': {}}
+        lines, devs, added, *_ = self.join(store, creds, ex, [self.NVR], desc, grab, force=True)
+        self.assertEqual(added, 0, 'hataya hua camera force par bhi wapas nahi aata'); self.assertEqual(sorted(store['cams']), ['aa88-ch1']); self.assertEqual(store['gone'], {'aa88': [2, 3]})
+        del ex['aa88-ch1']
+        lines, devs, added, *_ = self.join(store, creds, ex, [self.NVR], desc, grab, force=True)
+        self.assertEqual((devs['aa88']['st'], added), ('off', 0)); self.assertFalse(store['cams'])
+        creds['devs']['aa88'] = {'user': 'admin', 'pw': 'nvrpw', 'at': 77}                         # malik ne is device ka password dobara likha = dobara jodo
+        lines, devs, added, *_ = self.join(store, creds, ex, [self.NVR], desc, grab)
+        self.assertEqual((devs['aa88']['st'], added), ('ok', 3)); self.assertNotIn('aa88', store['gone']); self.assertEqual(store['devAt'], {'aa88': 77})
+        lines, devs, added, *_ = self.join(store, creds, ex, [self.NVR], desc, grab); self.assertEqual(added, 0, 'wahi password dobara kuch nahi karta')
+
+    def test_camera_ka_password_badla(self):
+        desc, grab, logins = self.world(pw={'192.168.0.32': 'naya'})
+        store = {'cams': {'cc33-ch1': {'url': 'rtsp://admin:purana@192.168.0.32:554/cam/realmonitor?channel=1&subtype=1', 'user': 'admin', 'pw': 'purana', 'ip': '192.168.0.32', 'brand': 'dahua', 'ch': 1, 'mac': 'cc33'}}}
+        ex = {'cc33-ch1': {'name': 'Galla', 'ip': '192.168.0.32'}}
+        lines, devs, added, writes, shots = self.join(store, {'pws': ['naya']}, ex, [self.GALLA], desc, grab, force=True)
+        self.assertEqual(devs['cc33']['st'], 'ok'); self.assertEqual(store['cams']['cc33-ch1']['pw'], 'naya')
+        self.assertEqual(store['cams']['cc33-ch1']['url'], 'rtsp://admin:naya@192.168.0.32:554/cam/realmonitor?channel=1&subtype=1', 'halki video wali hi rahi')
+        self.assertEqual(len(logins), 1); self.assertFalse(shots)
+
+    def test_app_doc_na_bane_to_password_bhi_nahi_rakha(self):
+        desc, grab, logins = self.world(pw={'192.168.0.32': 'gallapw'})
+        store = {'cams': {}}
+        def boom(p, d): raise RuntimeError('403')
+        with mock.patch.object(ntcam, 'secrets', lambda: store), mock.patch.object(ntcam, 'save_json', lambda p, d: None), mock.patch.object(ntcam, 'rtsp_describe', desc), \
+             mock.patch.object(ntcam, 'grab', grab), mock.patch.object(ntcam, 'dahua_http', lambda *a, **k: (0, '')), mock.patch.object(ntcam, 'put_shot', lambda *a: None):
+            lines, devs, added = ntcam.join_devices(types.SimpleNamespace(patch=boom), {'pws': ['gallapw']}, {}, found=[self.GALLA], now=5.0)
+        self.assertFalse(store['cams'], 'warna agle daur mein "malik ne hataya" samajh kar hamesha ke liye chhor deta'); self.assertEqual(devs[0]['st'], 'none')
+
+    def test_rtsp_describe_asal_socket(self):
+        """Naqli RTSP camera (digest) asal socket par: sahi password 200, ghalat 401, channel 2 = 404, jawab nahi = 0."""
+        import hashlib, re, socket, threading
+        md5 = lambda s: hashlib.md5(s.encode()).hexdigest()
+        srv = socket.socket(); srv.bind(('127.0.0.1', 0)); srv.listen(5); port = srv.getsockname()[1]
+        state = {'cut': False, 'conns': 0}
+        def serve():
+            while True:
+                try: c, _ = srv.accept()
+                except OSError: return
+                state['conns'] += 1
+                with c:
+                    c.settimeout(3)
+                    try:
+                        while True:
+                            buf = b''
+                            while b'\r\n\r\n' not in buf:
+                                part = c.recv(4096)
+                                if not part: break
+                                buf += part
+                            if not buf: break
+                            req = buf.decode()
+                            uri = req.split(' ')[1]; cseq = re.search(r'CSeq: (\d+)', req).group(1)
+                            m = re.search(r'response="([0-9a-f]+)"', req)
+                            if not m:
+                                c.sendall(f'RTSP/1.0 401 Unauthorized\r\nCSeq: {cseq}\r\nWWW-Authenticate: Digest realm="Login to X", nonce="abc123"\r\nWWW-Authenticate: Basic realm="Login to X"\r\n\r\n'.encode())
+                                if state['cut']: break
+                                continue
+                            good = md5(f"{md5('admin:Login to X:s@hi pw')}:abc123:{md5('DESCRIBE:' + uri)}")
+                            code = '401 Unauthorized' if m.group(1) != good else ('200 OK' if 'channel=1' in uri else '404 Not Found')
+                            c.sendall(f'RTSP/1.0 {code}\r\nCSeq: {cseq}\r\n\r\n'.encode())
+                    except OSError:
+                        pass
+        threading.Thread(target=serve, daemon=True).start()
+        try:
+            d = lambda pw, ch=1: ntcam.rtsp_describe('127.0.0.1', 'admin', pw, ntcam.rtsp_path('dahua', ch), timeout=2, port=port)[0]
+            self.assertEqual(d('s@hi pw'), 200); self.assertEqual(d('ghalat'), 401); self.assertEqual(d('s@hi pw', 2), 404); self.assertEqual(d(None), 401, 'bina password sirf poochna')
+            state['cut'] = True; n = state['conns']
+            self.assertEqual(d('s@hi pw'), 200, 'camera 401 ke baad line kaat de to nayi line par'); self.assertEqual(state['conns'], n + 2)
+        finally:
+            srv.close()
+        self.assertEqual(ntcam.rtsp_describe('127.0.0.1', 'admin', 'x', 'a', timeout=0.5, port=port)[0], 0, 'band camera = 0, ghalat password nahi')
+        self.assertEqual(ntcam.rtsp_path('hik', 3, True), 'Streaming/Channels/302'); self.assertEqual(ntcam.rtsp_url('dahua', '1.2.3.4', 'admin', 'p@ss', 2), ntcam.rtsp_urls('dahua', '1.2.3.4', 'admin', 'p@ss', 2)[0])
+        a = ntcam.rtsp_auth('admin', 'pw', 'rtsp://x/a', 'RTSP/1.0 401\r\nWWW-Authenticate: Digest realm="r", nonce="n", qop="auth", algorithm=SHA-256')
+        self.assertIn('qop=auth', a); self.assertIn('algorithm=SHA-256', a); self.assertRegex(a, r'response="[0-9a-f]{64}"')
+        self.assertTrue(ntcam.rtsp_auth('admin', 'pw', 'u', 'RTSP/1.0 401\r\nWWW-Authenticate: Basic realm="r"').startswith('Authorization: Basic YWRtaW46cHc='))
+
+    def test_hikvision_raasta(self):
+        def desc(ip, user, p, path, **k):
+            return (200, 'ok') if path == 'Streaming/Channels/101' else (404, 'nf')
+        with mock.patch.object(ntcam, 'rtsp_describe', desc):
+            self.assertEqual(ntcam.dev_login({'ip': 'x', 'brand': 'other'}, 'admin', 'p'), ('ok', 'hik'), 'dahua raasta 404 -> hik raasta 200')
+            self.assertEqual(ntcam.dev_login({'ip': 'x', 'brand': 'hik'}, 'admin', 'p'), ('ok', 'hik'))
+
+    def test_joiner_report_aur_status(self):
+        writes = []
+        class F:
+            def get(s, path): return {'cam': {'user': 'admin', 'pw': 'nvrpw', 'pw2': 'gallapw', 'devs': {'aa88': {'pw': 'x', 'at': 3}}}}
+            def list(s, coll): return [('cc33-ch1', {'name': 'Galla'})]
+            def patch(s, path, data): writes.append((path.split('/')[-1], data)); return True
+        seen = []
+        def jd(fire, creds, existing, force=False, **k):
+            seen.append((creds, set(existing), force))
+            return [{'ok': True, 't': '1 naye camera jude'}], [{'id': 'aa88', 'ip': '192.168.0.88', 'mac': 'aa88', 'brand': 'dahua', 'st': 'ok', 'n': 1, 'msg': '1 camera jude', 'model': ''}], 1
+        old = dict(ntcam.JOIN)
+        try:
+            with mock.patch.object(ntcam, 'join_devices', jd):
+                j = ntcam.Joiner(F())
+                j.request(); j.request(force=True, cmd_at=42, creds={'user': '', 'pws': ['typed']})
+                self.assertEqual(j.req, {'force': True, 'cmdAt': 42, 'creds': {'user': '', 'pws': ['typed']}}, 'do farmaishein = aik daur')
+                self.assertEqual(j.once(j.req), 1)
+                creds, ex, force = seen[0]
+                self.assertEqual((creds['user'], creds['pws'], force, ex), ('admin', ['typed', 'nvrpw', 'gallapw'], True, {'cc33-ch1'})); self.assertIn('aa88', creds['devs'])
+                st = dict(writes)['status']; self.assertEqual(st['found'][0], {'ip': '192.168.0.88', 'brand': 'dahua', 'mac': 'aa88', 'id': 'aa88', 'st': 'ok', 'msg': '1 camera jude', 'n': 1})
+                doc = dict(writes)['doctor']; self.assertEqual((doc['kind'], doc['cmdAt'], doc['lines'][0]['t']), ('nvr', 42, '1 naye camera jude'))
+                self.assertEqual(ntcam.JOIN['found'][0]['id'], 'aa88')
+                writes.clear(); seen.clear()
+                def bad(*a, **k): raise RuntimeError('net gaya')
+                with mock.patch.object(ntcam, 'join_devices', bad):
+                    j.once({'force': True, 'cmdAt': 50}); self.assertIn('ghalti', dict(writes)['doctor']['lines'][0]['t'], 'app intezar mein na rahe'); self.assertNotIn('status', dict(writes))
+                    writes.clear(); j.once({}); self.assertFalse(writes, 'khud wale daur ki ghalti par report nahi')
+        finally:
+            ntcam.JOIN.clear(); ntcam.JOIN.update(old)
+        rules = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'firestore.rules'), encoding='utf-8').read()
+        blk = rules[rules.index('match /businesses/noor-traders/cameraPC/{docId}'):]
+        for k in ('found', 'foundAt'): self.assertIn("'" + k + "'", blk[:blk.index('allow delete')], 'status ki key rules mein')
+        self.assertEqual(ntcam.found_doc([{'ip': '1.2.3.4', 'brand': 'dahua'}]), [{'ip': '1.2.3.4', 'brand': 'dahua', 'mac': ''}], 'purani shakal bhi')
+
+    def test_link_sirf_pc_code(self):
+        said, st = [], []
+        fire = types.SimpleNamespace(list=lambda c: [('a', {}), ('b', {})])
+        with mock.patch.object(ntcam, 'connect', lambda sec, ask=False: (said.append(('ask', ask)), fire)[1]), mock.patch.object(ntcam, 'say', lambda t='': said.append(t)), \
+             mock.patch.object(ntcam, 'put_status', lambda f, **k: st.append(k)), mock.patch('builtins.input', lambda *a: self.fail('link kuch aur nahi poochta')):
+            ntcam.link()
+        self.assertEqual(said[3], ('ask', True)); self.assertEqual(st, [{'cams': 2}]); self.assertTrue(any('Nigrani > Cameras' in str(x) for x in said))
 
 
 class Voucher(unittest.TestCase):
@@ -951,7 +1160,7 @@ class Parchi(unittest.TestCase):
 class AppKeys(unittest.TestCase):
     """v2.3 — app se keys / camera password / model (cameraPC/vault + settings); sab providers."""
     def setUp(self):
-        self.old = dict(ntcam.AI_SET); ntcam.VAULT_TRIED['done'] = False
+        self.old = dict(ntcam.AI_SET)
     def tearDown(self):
         ntcam.AI_SET.clear(); ntcam.AI_SET.update(self.old)
 
@@ -1017,35 +1226,35 @@ class AppKeys(unittest.TestCase):
             self.assertEqual(ntcam.ai_key(), 'sk-o', 'chune model ki key = AI tayyar')
 
     def test_apply_vault(self):
-        writes, lists = [], []
-        class F:
-            def list(s, coll): lists.append(coll); return [('aa11-ch1', {'name': 'Galla', 'role': 'galla', 'zone': {'w': .2}})]
-            def patch(s, path, data): writes.append((path, data)); return True
-        store = {'claudeKey': 'old', 'deepseekKey': 'ds', 'cams': {}}
-        saved = []
-        joins = []
-        def nvr(fire, sec, user, pws, existing): joins.append((user, pws, set(existing))); return [{'ok': True, 't': '1 naye camera jude'}]
-        with mock.patch.object(ntcam, 'secrets', lambda: store), mock.patch.object(ntcam, 'save_json', lambda p, d: saved.append(dict(d))), mock.patch.object(ntcam, 'nvr_add', nvr):
-            ch = ntcam.apply_vault(F(), {'keys': {'gemini': ' AIza-new ', 'claude': '', 'xyz': 'nahi'}, 'cam': {'user': 'admin', 'pw': 'admin123', 'pw2': 'Galla99'}, 'camAt': 500},
-                                   {'models': {'cheap': 'openrouter:qwen/qwen3.8-omni-flash', 'big': 'banda:xyz'}}, {})
+        class J:
+            def __init__(s): s.reqs = []
+            def request(s, force=False, cmd_at=0, creds=None): s.reqs.append((force, cmd_at, creds))
+        store, j = {'claudeKey': 'old', 'deepseekKey': 'ds', 'cams': {}}, J()
+        with mock.patch.object(ntcam, 'secrets', lambda: store), mock.patch.object(ntcam, 'save_json', lambda p, d: None):
+            ch = ntcam.apply_vault(None, {'keys': {'gemini': ' AIza-new ', 'claude': '', 'xyz': 'nahi'}, 'cam': {'user': 'admin', 'pw': 'admin123', 'pw2': 'Galla99'}, 'camAt': 500},
+                                   {'models': {'cheap': 'openrouter:qwen/qwen3.8-omni-flash', 'big': 'banda:xyz'}}, j)
             self.assertEqual(store['geminiKey'], 'AIza-new'); self.assertNotIn('claudeKey', store, "'' = mitao"); self.assertEqual(store['deepseekKey'], 'ds', 'jo nahi likhi wo wahi')
             self.assertEqual(ntcam.AI_SET['cheap'], 'openrouter:qwen/qwen3.8-omni-flash'); self.assertEqual(ntcam.AI_SET['big'], '', 'anjaan provider nahi')
-            self.assertEqual(joins, [('admin', ['admin123', 'Galla99'], {'aa11-ch1'})], 'maujooda galla camera existing mein (kaam na badle)')
-            self.assertIn('cameras', ch); doc = [d for p, d in writes if p.endswith('cameraPC/doctor')][0]; self.assertEqual((doc['kind'], doc['cmdAt']), ('nvr', 500))
-            store['cams']['aa11-ch1'] = {'url': 'x'}
-            ntcam.apply_vault(F(), {'cam': {'pw': 'admin123'}, 'camAt': 500}, {}, {}); self.assertEqual(len(joins), 1, 'wahi password dobara nahi')
-            ntcam.apply_vault(F(), {'cam': {'pw': 'naya'}, 'camAt': 900}, {}, {}); self.assertEqual(len(joins), 2, 'naya password -> dobara jodo')
+            self.assertEqual(j.reqs, [(True, 500, None)], 'v2.4: naya password -> Joiner (alag dhaaga) — main loop nahi rukta')
+            self.assertEqual(ch, ['gemini', 'claude (mitayi)', 'cameras']); self.assertEqual(store['vaultCamAt'], 500)
+            self.assertEqual(ntcam.apply_vault(None, {'keys': {'gemini': 'AIza-new'}, 'cam': {'pw': 'admin123'}, 'camAt': 500}, {}, j), [], 'wahi key / password dobara kuch nahi')
+            ntcam.apply_vault(None, {'cam': {'devs': {'aa88': {'pw': 'x', 'at': 900}}}, 'camAt': 900}, {}, j); self.assertEqual(j.reqs[-1], (True, 900, None), 'aik device ka apna password bhi')
+            self.assertEqual(ntcam.apply_vault(None, {'cam': {}, 'camAt': 950}, {}, j), [], 'password hi nahi to jodna nahi'); self.assertEqual(len(j.reqs), 2)
             self.assertEqual(ntcam.AI_SET['cheap'], '', 'settings khali = purana raasta')
 
-    def test_cmd_nvr_vault_se(self):
-        writes, joins = [], []
+    def test_cmd_nvr_joiner_ko(self):
+        writes, reqs = [], []
         class F:
-            def get(s, path): return {'kind': 'nvr', 'at': 7} if path.endswith('/cmd') else {'cam': {'user': 'admin', 'pw': 'admin123'}}
+            def __init__(s, cmd): s.cmd = cmd
+            def get(s, path): return s.cmd
             def delete(s, path): writes.append(('del', path))
             def patch(s, path, data): writes.append((path, data)); return True
-        with mock.patch.object(ntcam, 'nvr_add', lambda fire, sec, user, pws, ex: (joins.append((user, pws)) or [{'ok': True, 't': 'x'}])), mock.patch.object(ntcam, 'secrets', lambda: {'cams': {}}):
-            ntcam.handle_cmd(F(), None, {}, {}, None, {}, {})
-        self.assertEqual(joins, [('admin', ['admin123'])], 'app ke button par save password')
+        j = types.SimpleNamespace(request=lambda force=False, cmd_at=0, creds=None: reqs.append((force, cmd_at, creds)))
+        ntcam.handle_cmd(F({'kind': 'nvr', 'at': 7}), None, {}, {}, None, {}, {}, j)
+        self.assertEqual(reqs, [(True, 7, None)], 'app ke button par: password vault se, kaam Joiner ka')
+        self.assertEqual([w[0] for w in writes], ['del'], 'cmd mita diya; report Joiner likhega (main loop nahi rukta)')
+        ntcam.handle_cmd(F({'kind': 'nvr', 'at': 8, 'secret': {'user': 'admin', 'pw': 'typed'}}), None, {}, {}, None, {}, {}, j)
+        self.assertEqual(reqs[-1], (True, 8, {'user': 'admin', 'pws': ['typed']}), 'hukam ke sath likha password bhi')
 
 
 class Nigrani(unittest.TestCase):

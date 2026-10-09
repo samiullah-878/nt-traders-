@@ -1233,6 +1233,20 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     await quick(sdk.setDoc(ref('cameraPC', 'vault'), doc, { merge: true }));
     return doc;
   }
+  /** v235: network par mile AIK camera / NVR ka apna password (id = PC ki di hui pehchan: MAC ya IP). PC (ntcam v2.4) hukam
+      uthate hi usi device ko jodta hai; report cameraPC/doctor aur halat cameraPC/status.found mein. Wapas hukam ka waqt. */
+  async function saveCamDevice(id, { user, pw } = {}) {
+    ownerOnly();
+    const key = String(id || '').trim().toLowerCase();
+    if (!/^[a-z0-9-]{4,40}$/.test(key)) throw new Error('Ye camera pehchana nahi gaya — "Dobara dhoondein" dabayein');
+    const p = String(pw || '').trim(), u = String(user || '').trim() || 'admin';
+    if (!p) throw new Error('Password likhein');
+    const cur = state.camVault || {}, at = Date.now();
+    const cam = { ...(cur.cam || {}), devs: { ...(cur.cam?.devs || {}), [key]: { user: u.slice(0, 60), pw: p.slice(0, 100), at } } };
+    await quick(sdk.setDoc(ref('cameraPC', 'vault'), { cam, camAt: at, at, by: actor() }, { merge: true }));
+    await quick(sdk.setDoc(ref('cameraPC', 'cmd'), { kind: 'nvr', at, by: 'owner' }));
+    return at;
+  }
   const CAM_NOTIFY = ['shak', 'saaf', 'clip', 'pcband', 'bill'];
   async function saveCamSettings({ models, notify } = {}) {
     ownerOnly();
@@ -1278,7 +1292,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
 
   return {
     app, full, actor, auth, state, watchShots, createCameraPC, saveCamera, requestShot, deleteCamera,
-    watchEvents, loadFrames, reviewEvent, saveZone, pcCommand, cleanupCam, loadClip, requestClip, deleteClip, keepClip, requestTest, deleteTest, testPack, saveVault, saveCamSettings, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
+    watchEvents, loadFrames, reviewEvent, saveZone, pcCommand, cleanupCam, loadClip, requestClip, deleteClip, keepClip, requestTest, deleteTest, testPack, saveVault, saveCamDevice, saveCamSettings, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
     requestOut, cancelOut, returnOut, reviewOut, isManager, isTicketer, startBreak, endBreaks, createTicket, returnTicket, decideTicket, ticketSuggestFor,
     savePushToken, removePushToken, pushDevices, pushTestPing,
     applyDefaultShiftAll, applyDefaultSalaryAll, toggleClosed, quickPresent, closeCheckouts, getSelfie, migrateSelfies, selfiesFor, auditLog,

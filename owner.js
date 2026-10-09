@@ -719,6 +719,34 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     const base = /^https?:/.test(loc.origin || '') ? loc.origin + String(loc.pathname || '/').replace(/[^/]*$/, '') : CAM_DEFAULT_BASE;
     return base === CAM_DEFAULT_BASE ? `irm ${CAM_DEFAULT_BASE}ntcam.txt|iex` : "$b='" + base + "';irm \"$" + "{b}ntcam.txt\"|iex";
   }
+  /** v235: network par mile camera / NVR — PC (ntcam v2.4) khud dhoondta aur jodta hai (shuru mein, har 10 minute, password badalne
+      par). Yahan har aik ki halat (cameraPC/status.found: st ok | pw | bad | lock | down | none | off) aur zaroorat ho to password ka khana. */
+  const DEV_ICON = { ok: '✅', pw: '🔑', bad: '❌', lock: '🔒', down: '⚠️', none: '⚠️', off: '➖' };
+  const DEV_ASK = ['pw', 'bad', 'lock', 'none', 'off'];
+  const CAM_BRAND = { dahua: 'Dahua', hik: 'Hikvision' };
+  function devicesPanel() {
+    const pc = S.camPC, cams = S.cameras || [], found = pc?.found || [], on = camOnline();
+    const d = S.camDoctor, wait = on && ui.docAt && (!d || Number(d.cmdAt || 0) < ui.docAt);
+    const row = x => {
+      const id = x.id || '', mine = cams.filter(c => id && String(c.id).startsWith(id + '-ch')), ask = DEV_ASK.includes(x.st) || ui.devEdit === id;
+      const names = mine.map(c => c.name).filter(Boolean).slice(0, 4).join(', ');
+      return `<li class="dev-row st-${esc(x.st || 'old')}" data-dev="${esc(id)}"><div class="dev-main"><span><b>${esc(x.ip)}</b> <small class="muted">${esc(CAM_BRAND[x.brand] || 'Camera')}${x.model ? ' · ' + esc(x.model) : ''}</small></span>
+          <span class="dev-msg">${DEV_ICON[x.st] || '•'} ${esc(x.msg || '')}${x.st === 'ok' && names ? ` <small class="muted">— ${esc(names)}${mine.length > 4 ? '…' : ''}</small>` : ''}</span></div>
+        ${ask && id ? `<form class="form dev-form" data-form="cam-dev" data-id="${esc(id)}"><div class="grid2"><label>Username<input name="user" value="admin" autocomplete="off" spellcheck="false"></label>
+            <label>Is ka password<input name="pw" type="password" autocomplete="off" required placeholder="DMSS app wala"></label></div>
+            <div class="btn-row"><button class="btn btn-primary btn-sm">Jodein</button>${ui.devEdit === id ? '<button type="button" class="btn btn-ghost btn-sm" data-action="dev-edit" data-id="">Rehne dein</button>' : ''}</div></form>`
+          : id ? `<button type="button" class="link dev-change" data-action="dev-edit" data-id="${esc(id)}">Password badlein</button>` : ''}</li>`;
+    };
+    const known = new Set(cams.map(c => c.ip)), extra = found.filter(x => !known.has(x.ip));
+    const body = !found.length ? `<p class="hint">${on ? 'PC ko network par abhi koi camera / NVR nahi mila. Camera chalu aur usi WiFi / router par ho — phir "Dobara dhoondein".' : 'PC band hai — chalu hote hi khud network par cameras dhoond lega.'}</p>`
+      : found.some(x => x.st) ? `<ul class="dev-list">${found.map(row).join('')}</ul>`
+        : `${extra.length ? `<p class="notice">${icon('camera', 18)} <span>PC ne network par ye bhi dekhe: ${extra.map(x => `<b>${esc(x.ip)}</b> (${esc(CAM_BRAND[x.brand] || 'camera')})`).join(', ')}.</span></p>` : ''}
+          <p class="hint">PC ka program purana hai${pc?.v ? ' (v' + esc(pc.v) + ')' : ''} — 6 ghante ke andar khud naya ho jayega; phir yahan har camera ki halat aur password ka khana aayega.</p>`;
+    return `<section class="doc-panel dev-panel"><div class="doc-head"><h3 class="sub">📡 Network par cameras / NVR</h3>
+        <button type="button" class="btn btn-ghost btn-sm" data-action="cam-scan" ${on ? '' : 'disabled'}>${wait ? 'PC dhoond raha hai…' : '🔍 Dobara dhoondein'}</button></div>
+      ${wait ? '<p class="hint">PC 15-60 second mein jawab dega — ye list khud badal jayegi.</p>' : ''}${body}
+      <p class="hint">PC par kuch nahi likhna — wo har 10 minute network khud dekhta hai aur naya camera jod leta hai. Sab cameras ka aik hi password ho to <button type="button" class="link" data-action="nig-sec" data-arg="keys">🔐 Keys / AI</button> mein likh dein; kisi aik ka alag ho to us ke saamne yahin.</p></section>`;
+  }
   /** v234: Cameras ab Nigrani > 📷 Cameras mein (Settings se hata). */
   function camerasBody() {
     {
@@ -732,10 +760,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
           <li><span>${ui.camCode ? `PC code (sirf abhi nazar aa raha hai — likh lein): <b class="cam-code">${esc(ui.camCode)}</b>` : `PC ka code banayein.`}</span>${ui.camCode ? '' : `<button type="button" class="btn btn-primary btn-sm" data-action="cam-code">Code banayein</button>`}</li>
           <li><span>AnyDesk se shop PC kholein → Start par right-click → <b>Windows PowerShell</b>.</span></li>
           <li><span>Ye aik command type kar ke Enter dabayein:</span><code class="cmd">${esc(cmd)}</code><button type="button" class="btn btn-ghost btn-sm" data-action="cam-copy">Copy</button></li>
-          <li><span>PC poochega to PC code, camera ka password aur Claude API key <b>PC par hi</b> likhein — phone par nahi.</span></li></ol></section>` : '';
-      const known = new Set(cams.map(c => c.ip));
-      const extra = (pc?.found || []).filter(d => !known.has(d.ip));
-      const foundHtml = extra.length ? `<p class="notice">${icon('camera', 18)} <span>PC ne network par ye bhi dekhe: ${extra.map(d => `<b>${esc(d.ip)}</b> (${esc({ dahua: 'Dahua', hik: 'Hikvision' }[d.brand] || 'camera')})`).join(', ')}. Jodne ke liye PC par desktop icon <b>"NT Camera jodein"</b> chalayein.</span></p>` : '';
+          <li><span>PC sirf <b>PC code</b> poochega — bas. Camera ka password aur AI key yahin app mein likhein; PC khud le kar cameras jod lega.</span></li></ol></section>` : '';
       const card = c => {
         const shot = S.camShots?.get?.(c.id), src = shot?.jpg ? 'data:image/jpeg;base64,' + shot.jpg : '';
         const st = c.enabled === false ? 'off' : c.status === 'online' && on ? 'on' : 'down';
@@ -764,8 +789,8 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
                 <div class="btn-row"><button type="button" class="btn btn-ghost btn-sm" data-action="cam-snap" data-id="${esc(c.id)}" ${st === 'off' ? 'disabled' : ''}>${icon('camera', 16)} Abhi ki tasveer</button>${c.role === 'galla' ? `<button type="button" class="btn ${c.zone?.w ? 'btn-ghost' : 'btn-primary'} btn-sm" data-action="cam-zone" data-id="${esc(c.id)}">${icon('edit', 16)} Galla ka hissa</button>${c.zone?.w ? `<button type="button" class="btn ${c.zone2?.w ? 'btn-ghost' : 'btn-primary'} btn-sm" data-action="cam-zone" data-arg="zone2" data-id="${esc(c.id)}">${icon('edit', 16)} Counter ka hissa</button>` : ''}` : ''}<button type="button" class="btn btn-ghost btn-sm" data-action="cam-edit" data-id="${esc(c.id)}">${icon('edit', 16)} Badlein</button></div>`}
           </div></article>`;
       };
-      return `${pcCard}${connect}${foundHtml}
-        ${cams.length ? `<div class="cam-grid">${cams.map(card).join('')}</div>` : cfg ? '<p class="empty-line">Abhi koi camera nahi juda. 🔐 Keys / AI mein camera ka password likhein — PC khud jod lega.</p>' : ''}
+      return `${pcCard}${connect}${cfg ? devicesPanel() : ''}
+        ${cams.length ? `<div class="cam-grid">${cams.map(card).join('')}</div>` : cfg ? '<p class="empty-line">Abhi koi camera nahi juda. Upar camera ka password likhein (sab ka aik ho to 🔐 Keys / AI mein) — PC khud jod lega.</p>' : ''}
         ${cfg && !ui.camCode ? `<p class="hint">PC / laptop badal rahe hain ya code kho gaya? <button type="button" class="link" data-action="cam-code">Naya PC code banayein</button> (purana PC khud camera band kar dega).</p>` : ''}
         <p class="hint">Tasveer har 5 minute mein khud taza hoti hai jab PC chalu ho. Galla aur Counter camera par PC 2 din ki recording rakhta hai — shak par video khud banti hai.</p>`;
     }
@@ -1291,9 +1316,11 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     async 'cam-snap'(el) { await busy(el, () => data.requestShot(el.dataset.id), 'PC ko keh diya — 20-30 second mein nayi tasveer'); },
     'cam-edit'(el) { ui.camEdit = el.dataset.id || ''; rerender(); },
     async 'cam-del'(el) {
-      const c = (S.cameras || []).find(x => x.id === el.dataset.id); if (!c || !confirm(`"${c.name}" camera hatayein? PC par dobara jodna pare ga.`)) return;
+      const c = (S.cameras || []).find(x => x.id === el.dataset.id); if (!c || !confirm(`"${c.name}" camera hatayein? PC ise khud dobara nahi jodega — wapas lana ho to upar is ka password likh kar "Jodein" dabayein.`)) return;
       await busy(el, () => data.deleteCamera(c.id), 'Camera hata diya'); ui.camEdit = ''; rerender();
     },
+    async 'cam-scan'(el) { ui.docAt = await busy(el, () => data.pcCommand('nvr'), 'PC ko keh diya — 15-60 second') || ui.docAt; rerender(); },   // v235
+    'dev-edit'(el) { ui.devEdit = el.dataset.id || ''; rerender(); },
     async 'pc-doctor'(el) { ui.docAt = await busy(el, () => data.pcCommand('doctor'), 'PC ko hukam gaya — report yahin aayegi'); rerender(); },
     async 'pc-nvr'(el) {   // v234: app mein save password se PC seedha jodta hai
       if (S.camVault?.cam?.pw) { ui.docAt = await busy(el, () => data.pcCommand('nvr'), 'PC cameras dhoond raha hai — 2-3 minute'); rerender(); return; }
@@ -1492,6 +1519,10 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       const keys = Object.fromEntries(KEY_INFO.map(([id]) => [id, v['key_' + id] || '']));
       const done = await busy(button, () => data.saveVault({ keys, cam: { user: v.user, pw: v.pw, pw2: v.pw2 } }), 'Save — PC 1 minute mein khud le lega');
       if (done) { for (const el of form.querySelectorAll('input[type=password]')) el.value = ''; rerender(); }
+    },
+    async 'cam-dev'(form, v, button) { // v235: aik camera / NVR ka apna password -> PC foran usay jodta hai
+      const at = await busy(button, () => data.saveCamDevice(form.dataset.id, { user: v.user, pw: v.pw }), 'Password PC ko gaya — 15-60 second mein jod lega');
+      if (at) { ui.docAt = at; ui.devEdit = ''; rerender(); }
     },
     async 'cam-models'(form, v, button) {
       await busy(button, () => data.saveCamSettings({ models: { cheap: (v.cheapOwn || '').trim() || v.cheap, big: (v.bigOwn || '').trim() || v.big } }), 'Model save — agli jaanch se');

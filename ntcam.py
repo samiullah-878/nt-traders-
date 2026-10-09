@@ -31,7 +31,11 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '2.3'
+VERSION = '2.4'
+# v2.4: APP SE CAMERA JODNA — PC par sirf PC code (link); camera / NVR ka password app mein (sab ka aik, ya har device ka apna).
+#       Joiner (alag dhaaga) network khud dekhta hai (shuru mein, har 10 minute, password badalne par, app ke button par): password
+#       RTSP se AIK koshish mein jaanchta hai (ghalat yaad rakhta hai — lock nahi hota), har channel 0.2 s mein pehchanta hai, IP badle
+#       to khud theek, aur har device ki halat app ko (cameraPC/status.found: juda / password chahiye / nahi chala / jawab nahi).
 # v2.3: APP SE KEYS / PASSWORD / MODEL — PC har minute cameraPC/vault (AI keys, camera / NVR password) aur cameraPC/settings (chhota +
 #       bara AI model) parhta hai; naya password ho to cameras khud jodta hai. Sab providers: Gemini, Claude, OpenAI, DeepSeek,
 #       OpenRouter (bohat se models aik key), Groq, Qwen, Mistral, xAI.
@@ -41,7 +45,7 @@ VERSION = '2.3'
 # v2.1: TEST LEN-DEN — kaam 'Counter' wale camera (NVR) ki bhi recording (960 px, AI / harkat nahi) taake malik ke test aur
 #       clip mein counter nazar aaye; farmaish wali clip tab banti hai jab us waqt ka 60 s tukra poora ho chuka ho.
 
-import base64, collections, getpass, ipaddress, json, os, queue, re, socket, subprocess, sys, threading, time, traceback, urllib.parse
+import base64, collections, getpass, hashlib, ipaddress, json, os, queue, re, socket, subprocess, sys, threading, time, traceback, urllib.parse
 from concurrent.futures import ThreadPoolExecutor
 
 HOME = os.environ.get('NTCAM_HOME') or (r'C:\NTCam' if os.name == 'nt' else os.path.join(os.path.expanduser('~'), 'ntcam'))
@@ -344,7 +348,7 @@ def connect(sec, ask=False):
     while True:
         code = sec.get('pcCode', '')
         if not code and ask:
-            code = input('\nPC code likhein (phone par: hazri app > Settings > Cameras): ').strip()
+            code = input('\nPC code likhein (phone par: hazri app > Nigrani > Cameras): ').strip()
         cred = parse_code(code)
         if not cred:
             if not ask:
@@ -437,6 +441,72 @@ def rtsp_urls(brand, ip, user, pw, ch=1):
     dahua = f'rtsp://{u}:{p}@{ip}:554/cam/realmonitor?channel={ch}&subtype=0'
     hik = f'rtsp://{u}:{p}@{ip}:554/Streaming/Channels/{ch}01'
     return [hik, dahua] if brand == 'hik' else [dahua, hik]
+
+
+def rtsp_path(brand, ch, sub=False):
+    """v2.4: channel ka raasta (rtsp://ip:554/ ke baad). sub = halki video."""
+    return f'Streaming/Channels/{ch}0{2 if sub else 1}' if brand == 'hik' else f'cam/realmonitor?channel={ch}&subtype={1 if sub else 0}'
+
+
+def rtsp_url(brand, ip, user, pw, ch, sub=False):
+    return f"rtsp://{urllib.parse.quote(user, safe='')}:{urllib.parse.quote(pw, safe='')}@{ip}:554/" + rtsp_path(brand, ch, sub)
+
+
+def rtsp_auth(user, pw, uri, head):
+    """401 ke jawab se Authorization ki line (Digest MD5 / SHA-256, qop ho to wo bhi; Digest na ho to Basic)."""
+    chals = re.findall(r'WWW-Authenticate:\s*Digest\s+([^\r\n]*)', head, re.I)
+    if not chals:
+        return 'Authorization: Basic ' + base64.b64encode(f'{user}:{pw}'.encode('utf-8')).decode() + '\r\n'
+    chal = next((c for c in chals if 'sha' not in c.lower()), chals[0])
+    get = lambda k: (re.search(k + r'="([^"]*)"', chal) or [0, ''])[1]
+    realm, nonce, sha = get('realm'), get('nonce'), 'sha-256' in chal.lower()
+    h = lambda s: (hashlib.sha256 if sha else hashlib.md5)(s.encode('utf-8')).hexdigest()
+    ha1, ha2 = h(f'{user}:{realm}:{pw}'), h('DESCRIBE:' + uri)
+    out = f'Authorization: Digest username="{user}", realm="{realm}", nonce="{nonce}", uri="{uri}", '
+    if re.search(r'qop="?[^",]*auth', chal, re.I):
+        cn = os.urandom(4).hex()
+        out += f'response="{h(f"{ha1}:{nonce}:00000001:{cn}:auth:{ha2}")}", qop=auth, nc=00000001, cnonce="{cn}"'
+    else:
+        out += f'response="{h(f"{ha1}:{nonce}:{ha2}")}"'
+    return out + (', algorithm=SHA-256' if sha else '') + '\r\n'
+
+
+def rtsp_describe(ip, user, pw, path, timeout=4.0, port=554):
+    """v2.4: camera se video khole baghair poochna (RTSP DESCRIBE) — 0.2 s. Wapas (code, sar):
+    200 = password theek aur ye channel hai · 401 = password nahi chala · 404 = ye channel nahi · 0 = jawab nahi.
+    Aik password = aik hi koshish (purana tareeqa har channel par video kholta tha — 24 ghalat koshishein = Dahua lock)."""
+    uri = f'rtsp://{ip}:{port}/{path}'
+
+    def ask(sock, cseq, auth=''):
+        sock.sendall(f'DESCRIBE {uri} RTSP/1.0\r\nCSeq: {cseq}\r\nUser-Agent: ntcam\r\nAccept: application/sdp\r\n{auth}\r\n'.encode('utf-8'))
+        buf = b''
+        while b'\r\n\r\n' not in buf and len(buf) < 8192:
+            part = sock.recv(4096)
+            if not part:
+                break
+            buf += part
+        head = buf.split(b'\r\n\r\n', 1)[0].decode('latin-1', 'replace')
+        m = re.match(r'RTSP/\d\.\d\s+(\d{3})', head)
+        return (int(m.group(1)) if m else 0), head
+
+    try:
+        with socket.create_connection((ip, port), timeout=timeout) as s:
+            s.settimeout(timeout)
+            code, head = ask(s, 1)
+            if code != 401 or pw is None:
+                return code, head
+            auth = rtsp_auth(user, pw, uri, head)
+            try:
+                code2, head2 = ask(s, 2, auth)
+            except OSError:
+                code2, head2 = 0, ''
+            if code2:
+                return code2, head2
+        with socket.create_connection((ip, port), timeout=timeout) as s:      # kuch camera 401 ke baad line kaat dete hain
+            s.settimeout(timeout)
+            return ask(s, 2, auth)
+    except OSError as e:
+        return 0, str(e)[:80]
 
 
 def open_capture(url):
@@ -578,9 +648,23 @@ def put_status(fire, cams=0, online=0, found=None, error='', pos=None):
     if pos is not None:
         data['pos'] = str(pos)[:160]
     if found is not None:
-        data['found'] = [{'ip': d['ip'], 'brand': d['brand'], 'mac': d.get('mac', '')} for d in found][:20]
+        data['found'] = found_doc(found)
         data['foundAt'] = now_ms()
     fire.patch(f'{BIZ}/cameraPC/status', data)
+
+
+def found_doc(found):
+    """Network par mile camera / NVR app ke liye. v2.4: har aik ki halat bhi (id, st: ok | pw | bad | lock | down | none, n, msg, model)."""
+    out = []
+    for d in (found or [])[:20]:
+        x = {'ip': d['ip'], 'brand': d.get('brand') or 'other', 'mac': d.get('mac', '')}
+        for k in ('id', 'st', 'msg', 'model'):
+            if d.get(k):
+                x[k] = str(d[k])[:120]
+        if d.get('st'):
+            x['n'] = int(d.get('n') or 0)
+        out.append(x)
+    return out
 
 
 # ---------------------------------------------------------------- v1.1 GALLA NIGRANI
@@ -2757,6 +2841,24 @@ def setup():
         pass
 
 
+# ---------------------------------------------------------------- link (installer: sirf PC code)
+def link():
+    """v2.4: PC ko app se jodna — sirf PC code (pehle se sahi ho to kuch nahi poochta). Camera ka password aur AI key app mein
+    likhe jate hain; peeche chalne wala program (run) khud le kar cameras dhoondta aur jodta hai."""
+    say('=' * 58)
+    say(f'  NT CAMERA  v{VERSION}  —  PC ko app se jodein')
+    say('=' * 58)
+    fire = connect(secrets(), ask=True)
+    say('  [OK] PC app se jud gaya.')
+    try:
+        put_status(fire, cams=len(fire.list('cameras')))
+    except Exception as e:
+        say(f'  [!!] PC ki halat app tak nahi gayi: {e}')
+    say('\n  Ab is PC par kuch nahi likhna.')
+    say('  Phone par: hazri app > Nigrani > Cameras — camera / NVR ka password wahin likhein.')
+    say('  PC 1-2 minute mein khud cameras dhoond kar jod lega.')
+
+
 # ---------------------------------------------------------------- test (kuch nahi badalta)
 def test():
     sec = secrets()
@@ -2845,6 +2947,9 @@ def doctor(fire, pos, watchers, recorders, galla):
         rec = bool(rc and rc.is_alive() and time.time() - rc.last_seg < 180 and not rc.err)
         add(live, f'{w.name}: video ' + (f'aa rahi ({round(w.fps, 1)} fps)' if live else 'NAHI aa rahi'))
         add(rec, f'{w.name}: recording ' + ('chalu' if rec else ('ghalti: ' + str(rc.err)[:60] if rc and rc.err else 'band')))
+    for d in JOIN.get('found') or []:                  # v2.4: network par jo camera / NVR abhi jude nahi
+        if d.get('st') not in ('ok', 'off'):
+            add(False, f"{d['ip']}: {d.get('msg') or 'juda nahi'} (app > Nigrani > Cameras)")
     sk = getattr(pos, 'skew', None) if pos else None
     if sk is None:
         add(False, 'POS ghari: abhi parh nahi saka')
@@ -2874,9 +2979,9 @@ def dahua_http(ip, user, pw, path, timeout=6):
     return 0, err[:80]
 
 
-def dahua_info(ip, user, pw):
+def dahua_info(ip, user, pw, timeout=6):
     """Wapas {'ok': True|False|None, 'locked', 'model', 'names': {ch: naam}, 'why'}. None = web se pata nahi chala (RTSP aazmao)."""
-    code, txt = dahua_http(ip, user, pw, 'magicBox.cgi?action=getDeviceType')
+    code, txt = dahua_http(ip, user, pw, 'magicBox.cgi?action=getDeviceType', timeout=timeout)
     if code == 401:
         low = txt.lower()
         return {'ok': False, 'locked': 'lock' in low, 'why': 'account lock (thori der baad / NVR restart)' if 'lock' in low else 'password ghalat'}
@@ -2884,7 +2989,7 @@ def dahua_info(ip, user, pw):
         return {'ok': None, 'why': f'web jawab {code or txt}'}
     model = (re.search(r'type=(.+)', txt) or [None, ''])[1].strip()[:40]
     names = {}
-    c2, t2 = dahua_http(ip, user, pw, 'configManager.cgi?action=getConfig&name=ChannelTitle')
+    c2, t2 = dahua_http(ip, user, pw, 'configManager.cgi?action=getConfig&name=ChannelTitle', timeout=timeout)
     if c2 == 200:
         for m in re.finditer(r'ChannelTitle\[(\d+)\]\.Name=(.*)', t2):
             nm = m.group(2).strip()
@@ -2893,111 +2998,346 @@ def dahua_info(ip, user, pw):
     return {'ok': True, 'locked': False, 'model': model, 'names': names}
 
 
-def nvr_add(fire, sec, user, pws, existing, max_ch=16):
-    """App se: network par Dahua NVR / camera dhoondo. Pehle web se password / lock pakka (ghalat koshish kam — lock na ho),
-    phir har channel 1..max alag (khali chhoro), main stream na mile to sub stream. Channel ke naam NVR se."""
-    out, added = [], 0
-    found = scan()
+# ---------- v2.4: APP SE CAMERA JODNA — PC khud dhoondta aur jodta hai (PC par kuch likhna nahi) ----------
+JOIN_EVERY = 600                          # har 10 minute network dobara (naya camera / IP badli / ruka hua password)
+BAD_WAIT, BAD_WAIT2 = 35 * 60, 6 * 3600   # jo password na chale: 35 min baad aik dafa aur, phir har 6 ghante (Dahua: 5 ghalat = lock)
+MAX_TRY = 2                               # aik daur mein aik device par zyada se zyada itne password
+MAX_CH = 16
+SEC_LOCK = threading.RLock()              # secrets.json do dhaagon se likha jata hai (main loop + Joiner)
+JOIN = {'found': None, 'at': 0}           # aakhri daur: network par kya mila + har device ki halat (cameraPC/status.found)
+
+
+def sec_update(fn):
+    """secrets.json taaza parh kar badlo aur save — do dhaage aik doosre ka likha na mitayein."""
+    with SEC_LOCK:
+        s = secrets()
+        fn(s)
+        save_json(SECRETS, s)
+        return s
+
+
+def dev_id(dev):
+    """Device ki pehchan (app aur PC dono ke liye): MAC — IP badle to bhi wahi; MAC na mile to IP."""
+    return (dev.get('mac') or '').lower() or dev['ip'].replace('.', '-')
+
+
+def cams_of(sec, did):
+    return {cid: s for cid, s in sec['cams'].items() if cid.rsplit('-ch', 1)[0] == did}
+
+
+def pw_mark(user, pw):
+    """Password ka nishan — sirf ye yaad rakhne ke liye ke ye is device par nahi chala (password khud kahin nahi likha jata)."""
+    return hashlib.sha256(f'{user}\n{pw}'.encode('utf-8')).hexdigest()[:16]
+
+
+def pw_wait(bad, user, pw, force=False, now=None):
+    """Ye password is device par pehle na chala ho to kitne second aur rukna hai (0 = aazma lo)."""
+    rec = (bad or {}).get(pw_mark(user, pw))
+    if not rec:
+        return 0
+    wait = BAD_WAIT if (int(rec[0]) <= 1 or force) else BAD_WAIT2
+    return max(0, int(float(rec[1]) + wait - (time.time() if now is None else now)))
+
+
+def dev_login(dev, user, pw):
+    """Password ki jaanch RTSP se — AIK koshish. Wapas (halat, brand): ok | bad | lock | down (jawab nahi)."""
+    order = ['hik', 'dahua'] if dev.get('brand') == 'hik' else ['dahua', 'hik']
+    code, head = rtsp_describe(dev['ip'], user, pw, rtsp_path(order[0], 1))
+    if code == 0:
+        return 'down', order[0]
+    if code in (401, 403):
+        return ('lock' if 'lock' in head.lower() else 'bad'), order[0]
+    if code != 200 and rtsp_describe(dev['ip'], user, pw, rtsp_path(order[1], 1))[0] == 200:
+        return 'ok', order[1]
+    return 'ok', order[0]
+
+
+def dev_channels(dev, brand, user, pw, skip=(), max_ch=MAX_CH):
+    """Har channel se poocho (0.2 s): 200 -> aik tasveer (main video, na mile to halki). skip = jo pehle se jude / malik ne hataye.
+    Wapas (got [(ch, url, frame)], empty [ch] — channel hai magar video nahi mili)."""
+    got, empty, ip = [], [], dev['ip']
+    for ch in range(1, max_ch + 1):
+        if ch in skip:
+            continue
+        code = rtsp_describe(ip, user, pw, rtsp_path(brand, ch))[0]
+        if code in (0, 401, 403):
+            break                                  # device ne jawab dena chhor diya
+        if code != 200:
+            continue                               # ye channel is device par hai hi nahi (akela camera: 2..16)
+        url = rtsp_url(brand, ip, user, pw, ch)
+        frame = grab(url)
+        if frame is None and rtsp_describe(ip, user, pw, rtsp_path(brand, ch, True))[0] == 200:
+            url = rtsp_url(brand, ip, user, pw, ch, True)
+            frame = grab(url)
+        if frame is None:
+            empty.append(ch)
+        else:
+            got.append((ch, url, frame))
+    return got, empty
+
+
+def join_devices(fire, creds, existing, force=False, found=None, now=None):
+    """v2.4: network par har camera / NVR ko jodo. creds = app ka vault: {'user', 'pws': [sab ka password, doosra],
+    'devs': {id: {'user', 'pw', 'at'}} (kisi aik device ka apna)}. existing = {cid: camera doc}.
+    force = malik ne kaha (button / naya password): jude hue device par naye channel bhi dekho.
+    - Jo device juda hai (password is PC mein + camera app mein) aur force nahi -> chhuo nahi.
+    - Password RTSP se aik koshish; na chale to yaad (35 min / 6 ghante baad hi dobara) — lock nahi hota.
+    - IP badli (MAC wahi) -> secrets + app mein khud theek. Malik ne camera app se hataya -> dobara khud nahi jodta
+      (jab tak malik us device ka password dobara na likhe).
+    Wapas (report lines, devices app ke liye, kitne naye camera)."""
+    now = time.time() if now is None else now
+    found = scan() if found is None else found
+    user0 = (creds.get('user') or 'admin').strip() or 'admin'
+    lines, devs, added = [], [], 0
     for dev in found:
-        brand = dev.get('brand') or 'dahua'
-        if brand not in ('dahua',):
+        did, ip = dev_id(dev), dev['ip']
+        base = {'id': did, 'ip': ip, 'mac': dev.get('mac', ''), 'brand': dev.get('brand') or 'other'}
+
+        def done(st, msg, n=0, ok=False, model=''):
+            devs.append({**base, 'st': st, 'n': n, 'msg': msg, 'model': model})
+            lines.append({'ok': ok, 't': (f"{ip}{' · ' + model if model else ''} · {msg}" if ok else f'{ip}: {msg}')[:160]})
+
+        sec = secrets()
+        mine = cams_of(sec, did)
+        moved = [cid for cid, s in mine.items() if s.get('ip') and s['ip'] != ip]
+        if moved:                                              # router ne nayi IP di (MAC wahi)
+            def fix(s):
+                for cid in moved:
+                    c = s['cams'].get(cid)
+                    if c:
+                        c['url'], c['ip'] = c['url'].replace('@' + c['ip'] + ':', '@' + ip + ':'), ip
+            mine = cams_of(sec_update(fix), did)
+            log('nayi IP', did, ip)
+        for cid in mine:
+            if cid in existing and existing[cid].get('ip') != ip:
+                try:
+                    fire.patch(f'{BIZ}/cameras/{cid}', {'ip': ip, 'seenAt': now_ms()})
+                    existing[cid]['ip'] = ip
+                except Exception as e:
+                    log('nayi IP app mein nahi likhi:', cid, e)
+        dcred = (creds.get('devs') or {}).get(did) or {}
+        fresh = int(dcred.get('at') or 0) > int((sec.get('devAt') or {}).get(did) or 0)    # malik ne is device ka password abhi likha
+        if fresh:
+            def reset(s):
+                s.setdefault('devAt', {})[did] = int(dcred['at'])
+                (s.get('gone') or {}).pop(did, None)
+            sec = sec_update(reset)
+        lost = [cid for cid in mine if cid not in existing]    # malik ne app se camera hata diya
+        if lost and not fresh:
+            chs = [int(cid.rsplit('-ch', 1)[1]) for cid in lost]
+            def drop(s):
+                for cid in lost:
+                    s['cams'].pop(cid, None)
+                g = s.setdefault('gone', {})
+                g[did] = sorted(set(g.get(did) or []) | set(chs))
+            sec = sec_update(drop)
+            mine = cams_of(sec, did)
+        gone = set((sec.get('gone') or {}).get(did) or [])
+        have = [cid for cid in mine if cid in existing]
+        go = force or fresh
+        if have and not go:
+            done('ok', f'{len(have)} camera jude', len(have), True)
             continue
-        heartbeat()
-        info, pw_ok = None, None
-        for pw in pws:
-            info = dahua_info(dev['ip'], user, pw)
-            if info['ok'] is True or info['ok'] is None:
-                pw_ok = pw
-                break
-            if info.get('locked'):
-                break
-        if not pw_ok:
-            out.append({'ok': False, 't': f"{dev['ip']}: {(info or {}).get('why') or 'password ghalat'}"})
+        if gone and not have and not fresh:
+            done('off', 'Aap ne is ke camera app se hata diye — dobara jodna ho to is ka password likh kar "Jodein" dabayein')
             continue
-        mdl = info.get('model') or ''
-        mm = re.search(r'[NX]VR\d{2}(\d{2})', mdl)
-        n = int(mm.group(1)) if mm else (1 if 'IPC' in mdl.upper() else max_ch)       # DHI-NVR2108 = 8, IPC = 1
-        got, empty = [], []
-        for ch in range(1, n + 1):
-            heartbeat()
-            cid = (dev['mac'] or dev['ip'].replace('.', '-')) + f'-ch{ch}'
-            url, frame = None, None
-            for u in rtsp_urls(brand, dev['ip'], user, pw_ok, ch) + [rtsp_urls(brand, dev['ip'], user, pw_ok, ch)[0].replace('subtype=0', 'subtype=1')]:
-                frame = grab(u)
-                if frame is not None:
-                    url = u
-                    break
-            if frame is None:
-                empty.append(ch)
-                if info['ok'] is None and ch == 1 and n == max_ch:
-                    n = 8                                   # web nahi, RTSP se — 8 tak aazmao
+        cands = []
+        def cand(u, p):
+            u = (u or user0).strip() or user0
+            if p and (u, p) not in cands:
+                cands.append((u, p))
+        cand(dcred.get('user'), dcred.get('pw'))
+        for s in mine.values():
+            cand(s.get('user'), s.get('pw'))                   # jo pehle chal chuka
+        for p in creds.get('pws') or []:
+            cand(user0, p)
+        if not cands:
+            done('pw', 'Password chahiye — is ka password likhein', len(have))
+            continue
+        bad = (sec.get('bad') or {}).get(did) or {}
+        res, brand, cred, tried, waits = '', base['brand'], None, 0, []
+        for u, p in cands:
+            w = pw_wait(bad, u, p, go, now)
+            if w or tried >= MAX_TRY:
+                waits.append(w or JOIN_EVERY)
                 continue
-            got.append(ch)
-            sec['cams'][cid] = {'url': url, 'user': user, 'pw': pw_ok, 'ip': dev['ip'], 'brand': brand, 'ch': ch, 'mac': dev['mac']}
-            save_json(SECRETS, sec)
-            name = (info.get('names') or {}).get(ch) or f"{dev['ip'].split('.')[-1]}-{ch}"
-            if cid not in existing:
-                fire.patch(f'{BIZ}/cameras/{cid}', {'name': name, 'ip': dev['ip'], 'mac': dev['mac'], 'brand': brand, 'channel': ch,
-                                                     'role': 'view', 'enabled': True, 'createdAt': now_ms(), 'status': 'online', 'agent': VERSION})
-                added += 1
-            put_shot(fire, cid, frame)
-        if not got and info['ok'] is None:
-            out.append({'ok': False, 't': f"{dev['ip']}: video nahi mili (password ya RTSP band) — {info.get('why')}"})
+            tried += 1
+            res, brand = dev_login(dev, u, p)
+            if res == 'ok':
+                cred = (u, p)
+                break
+            if res == 'down':
+                break
+            mark = pw_mark(u, p)
+            def note(s):
+                b = s.setdefault('bad', {}).setdefault(did, {})
+                b[mark] = [int((b.get(mark) or [0])[0]) + 1, now]
+            bad = (sec_update(note).get('bad') or {}).get(did) or {}
+            waits.append(BAD_WAIT)
+            if res == 'lock':
+                break
+        if not cred:
+            mins = -(-min(waits) // 60) if waits else 0
+            again = f' — {mins} minute baad khud dobara aazmayega' if mins else ''
+            if res == 'down':
+                done('down', 'Jawab nahi de raha — camera / NVR ko band kar ke dobara chalu karein', len(have))
+            elif res == 'lock':
+                done('lock', 'Account lock hai (zyada ghalat koshishein)' + again, len(have))
+            else:
+                done('bad', 'Password nahi chala (ghalat, ya zyada koshishon se lock). Sahi password likhein' + again, len(have))
             continue
-        label = f"{dev['ip']}" + (f" · {info['model']}" if info.get('model') else '') + (' · password theek' if info['ok'] else '')
-        out.append({'ok': bool(got), 't': f"{label} · {len(got)}/{len(got) + len(empty)} jude" + (f" (ch {', '.join(map(str, empty[:10]))} khali)" if empty else '')})
+        user, pw = cred
+        stale = [cid for cid, s in mine.items() if s.get('pw') != pw or s.get('user') != user]
+        if bad or stale:
+            def good(s):
+                (s.get('bad') or {}).pop(did, None)
+                for cid in stale:                              # camera ka password badla tha — naya rakh lo
+                    c = s['cams'].get(cid)
+                    if c:
+                        sub = 'subtype=1' in c.get('url', '') or c.get('url', '').endswith('02')
+                        c.update({'user': user, 'pw': pw, 'url': rtsp_url(c.get('brand') or brand, ip, user, pw, c.get('ch') or 1, sub)})
+            sec_update(good)
+        joined = {int(cid.rsplit('-ch', 1)[1]) for cid in have}
+        got, empty = dev_channels(dev, brand, user, pw, skip=joined | gone)
+        info = {}
+        if got and brand == 'dahua':                           # naam / model NVR ke web se (na mile to koi baat nahi)
+            try:
+                info = dahua_info(ip, user, pw, timeout=3)
+            except Exception:
+                info = {}
+        names, model = ((info.get('names') or {}), (info.get('model') or '')) if info.get('ok') else ({}, '')
+        new = 0
+        for ch, url, frame in got:
+            cid = f'{did}-ch{ch}'
+            try:
+                if cid not in existing:
+                    doc = {'name': (names.get(ch) or f"{ip.split('.')[-1]}-{ch}")[:40], 'ip': ip, 'mac': dev.get('mac', ''), 'brand': brand, 'channel': ch,
+                           'role': 'view', 'enabled': True, 'createdAt': now_ms(), 'status': 'online', 'agent': VERSION}
+                    fire.patch(f'{BIZ}/cameras/{cid}', doc)
+                    existing[cid] = doc
+                    added += 1
+                elif existing[cid].get('ip') != ip:            # purane PC ne purani IP likhi thi
+                    fire.patch(f'{BIZ}/cameras/{cid}', {'ip': ip, 'seenAt': now_ms()})
+                    existing[cid]['ip'] = ip
+            except Exception as e:
+                log('camera app mein nahi bana:', cid, e)
+                continue
+            def put(s):
+                s['cams'][cid] = {'url': url, 'user': user, 'pw': pw, 'ip': ip, 'brand': brand, 'ch': ch, 'mac': dev.get('mac', '')}
+            sec_update(put)
+            new += 1
+            try:
+                put_shot(fire, cid, frame)
+            except Exception as e:
+                log('tasveer nahi gayi:', cid, e)
+        n = len(have) + new
+        if n:
+            done('ok', f'{n} camera jude' + (f" (ch {', '.join(map(str, empty[:10]))} par video nahi)" if empty else ''), n, True, model)
+        else:
+            done('none', 'Password theek hai, lekin kisi channel par video nahi mili', 0, False, model)
     if not found:
-        out.append({'ok': False, 't': 'Network par koi camera / NVR nahi mila (PC sirf apne network 192.168.x mein dhoondta hai)'})
-    out.insert(0, {'ok': added > 0 or any(x['ok'] for x in out), 't': f'{added} naye camera jude'})
-    return out
+        lines.append({'ok': False, 't': 'Network par koi camera / NVR nahi mila (PC sirf apne network 192.168.x mein dhoondta hai)'})
+    lines.insert(0, {'ok': added > 0 or any(x['ok'] for x in lines), 't': f'{added} naye camera jude'})
+    return lines, devs, added
+
+
+class Joiner(threading.Thread):
+    """v2.4: cameras dhoondna / jodna alag dhaage mein — main loop (status, nigrani, tasveer) kabhi na ruke.
+    Chalta hai: shuru mein, har JOIN_EVERY, aur request() par (app ka button, naya password, camera offline)."""
+    def __init__(self, fire):
+        super().__init__(daemon=True)
+        self.fire, self.wake, self.req, self.lock = fire, threading.Event(), None, threading.Lock()
+
+    def request(self, force=False, cmd_at=0, creds=None):
+        with self.lock:
+            r = self.req or {'force': False, 'cmdAt': 0, 'creds': None}
+            self.req = {'force': r['force'] or bool(force), 'cmdAt': max(int(r['cmdAt'] or 0), int(cmd_at or 0)), 'creds': creds or r['creds']}
+        self.wake.set()
+
+    def once(self, r):
+        r = r or {}
+        try:
+            cam = (self.fire.get(f'{BIZ}/cameraPC/vault') or {}).get('cam') or {}
+            extra = r.get('creds') or {}
+            creds = {'user': extra.get('user') or cam.get('user') or 'admin', 'devs': cam.get('devs') or {},
+                     'pws': [p for p in list(extra.get('pws') or []) + [cam.get('pw'), cam.get('pw2')] if p]}
+            lines, devs, added = join_devices(self.fire, creds, dict(self.fire.list('cameras')), force=bool(r.get('force')))
+        except Exception as e:
+            if denied_error(e):
+                return 0                               # ye PC ab camera PC nahi (naya code kahin aur) — main loop khud band karega
+            log('camera jodne mein ghalti:', e, traceback.format_exc()[-300:])
+            if not r.get('force'):
+                return 0
+            lines, devs, added = [{'ok': False, 't': f'Camera jodne mein ghalti: {e}'[:160]}], None, 0
+        if devs is not None:
+            JOIN.update(found=devs, at=time.time())
+            try:
+                self.fire.patch(f'{BIZ}/cameraPC/status', {'found': found_doc(devs), 'foundAt': now_ms()})
+            except Exception as e:
+                log('mile hue camera app ko nahi gaye:', e)
+        if r.get('force') or added:
+            try:
+                self.fire.patch(f'{BIZ}/cameraPC/doctor', {'at': now_ms(), 'v': VERSION, 'kind': 'nvr', 'lines': lines[:30], 'cmdAt': int(r.get('cmdAt') or now_ms())})
+            except Exception as e:
+                log('jodne ki report nahi gayi:', e)
+        if added:
+            log('naye camera jude:', added)
+        return added
+
+    def run(self):
+        self.wake.set()                                # shuru mein aik daur
+        while True:
+            self.wake.wait(JOIN_EVERY)
+            self.wake.clear()
+            with self.lock:
+                r, self.req = self.req, None
+            if RETIRED['on']:
+                continue
+            try:
+                self.once(r)
+            except Exception as e:
+                log('joiner ghalti:', e)
 
 
 VAULT_EVERY = 60          # v2.3: app ki keys / password / model har minute
 
 
-def apply_vault(fire, vault, settings, cams):
-    """v2.3: cameraPC/vault {keys: {gemini, claude, ...}, cam: {user, pw, pw2}, camAt} aur cameraPC/settings {models: {cheap, big}}.
-    Keys secrets.json mein ('' = mitao). Naya camera password (camAt) ya is PC par kisi camera ka password na ho -> cameras jodo
-    (nvr_add) aur report cameraPC/doctor. Wapas kya badla (log ke liye)."""
-    sec, changed = secrets(), []
+def apply_vault(fire, vault, settings, joiner=None):
+    """v2.3: cameraPC/vault {keys: {gemini, claude, ...}, cam: {user, pw, pw2, devs}, camAt} aur cameraPC/settings {models: {cheap, big}}.
+    Keys secrets.json mein ('' = mitao). v2.4: naya camera password (camAt) -> Joiner ko kaho (wo alag dhaage mein jodta hai aur
+    report cameraPC/doctor mein likhta hai). Wapas kya badla (log ke liye)."""
+    new, changed = {}, []
     for k, v in ((vault or {}).get('keys') or {}).items():
-        name = KEY_NAMES.get(k)
-        if not name or v is None:
-            continue
-        v = clean_key(v)
-        if v and sec.get(name) != v:
-            sec[name] = v; changed.append(k)
-        elif not v and sec.get(name):
-            sec.pop(name, None); changed.append(k + ' (mitayi)')
-    if changed:
-        save_json(SECRETS, sec)
+        if KEY_NAMES.get(k) and v is not None:
+            new[k] = clean_key(v)
+    def keys(s):
+        for k, v in new.items():
+            name = KEY_NAMES[k]
+            if v and s.get(name) != v:
+                s[name] = v; changed.append(k)
+            elif not v and s.get(name):
+                s.pop(name, None); changed.append(k + ' (mitayi)')
+    sec = secrets()
+    if any((v and sec.get(KEY_NAMES[k]) != v) or (not v and sec.get(KEY_NAMES[k])) for k, v in new.items()):
+        sec = sec_update(keys)
     m = ((settings or {}).get('models') or {})
     for which in ('cheap', 'big'):
         val = str(m.get(which) or '').strip()
         AI_SET[which] = val if (':' in val and val.split(':', 1)[0] in KEY_NAMES) else ''
     cam = (vault or {}).get('cam') or {}
-    pws = [p for p in (cam.get('pw'), cam.get('pw2')) if p]
     at = int((vault or {}).get('camAt') or 0)
-    if pws:
-        first, newer = not VAULT_TRIED.get('done'), at > int(sec.get('vaultCamAt') or 0)
-        VAULT_TRIED['done'] = True
-        if newer or first:
-            cams = dict(fire.list('cameras'))          # taaza list — maujooda camera (galla ka kaam / dabba) na badle
-            need = [cid for cid in cams if cid not in sec.get('cams', {})]
-            if newer or need:
-                sec['vaultCamAt'] = at
-                save_json(SECRETS, sec)
-                lines = nvr_add(fire, secrets(), (cam.get('user') or 'admin').strip(), pws, set(cams))
-                fire.patch(f'{BIZ}/cameraPC/doctor', {'at': now_ms(), 'v': VERSION, 'kind': 'nvr', 'lines': lines[:30], 'cmdAt': at or now_ms()})
-                changed.append('cameras')
+    if joiner is not None and at > int(sec.get('vaultCamAt') or 0) and (cam.get('pw') or cam.get('pw2') or cam.get('devs')):
+        def seen(s):
+            s['vaultCamAt'] = at
+        sec_update(seen)
+        joiner.request(force=True, cmd_at=at)
+        changed.append('cameras')
     return changed
 
 
-VAULT_TRIED = {'done': False}
-
-
-def handle_cmd(fire, pos, watchers, recorders, galla, cams, state):
-    """cameraPC/cmd: {kind: doctor|nvr|keys, at, secret?}. Report cameraPC/doctor mein; cmd mita do (secret Firebase par na rahe)."""
+def handle_cmd(fire, pos, watchers, recorders, galla, cams, state, joiner=None):
+    """cameraPC/cmd: {kind: doctor|nvr|keys, at, secret?}. Report cameraPC/doctor mein; cmd mita do (secret Firebase par na rahe).
+    v2.4: nvr = Joiner ko kaho (alag dhaaga) — report wahi likhta hai."""
     c = fire.get(f'{BIZ}/cameraPC/cmd')
     if not c or not c.get('at') or c.get('at') == state.get('cmd_at'):
         return
@@ -3010,23 +3350,17 @@ def handle_cmd(fire, pos, watchers, recorders, galla, cams, state):
     log('app ka hukam:', kind)
     try:
         if kind == 'keys':
-            sec = secrets()
-            for k, name in (('gemini', 'geminiKey'), ('deepseek', 'deepseekKey'), ('claude', 'claudeKey')):
-                v = clean_key(secret.get(k))
-                if v:
-                    sec[name] = v
-            save_json(SECRETS, sec)
+            def keys(s):
+                for k, name in (('gemini', 'geminiKey'), ('deepseek', 'deepseekKey'), ('claude', 'claudeKey')):
+                    v = clean_key(secret.get(k))
+                    if v:
+                        s[name] = v
+            sec_update(keys)
             lines = [{'ok': True, 't': 'AI keys PC par save'}] + doctor(fire, pos, watchers, recorders, galla)
-        elif kind == 'nvr':
+        elif kind == 'nvr' and joiner is not None:     # v2.4: password app ke vault se (ya hukam ke sath) — Joiner jodta aur report likhta hai
             pws = [p for p in (secret.get('pw'), secret.get('pw2')) if p]
-            if not pws:                                # v2.3: app mein save password
-                v = fire.get(f'{BIZ}/cameraPC/vault') or {}
-                cam = v.get('cam') or {}
-                pws = [p for p in (cam.get('pw'), cam.get('pw2')) if p]
-                secret = {**secret, 'user': secret.get('user') or cam.get('user')}
-            if not pws:
-                raise RuntimeError('Camera / NVR ka password nahi — app > Nigrani > Keys / AI mein likhein')
-            lines = nvr_add(fire, secrets(), (secret.get('user') or 'admin').strip(), pws, set(cams))
+            joiner.request(force=True, cmd_at=c['at'], creds={'user': (secret.get('user') or '').strip(), 'pws': pws} if pws else None)
+            return
         else:
             lines = doctor(fire, pos, watchers, recorders, galla)
     except Exception as e:
@@ -3101,6 +3435,8 @@ def run():
         pos.start()
     galla.start()
     clips.start()
+    joiner = Joiner(fire)                          # v2.4: cameras khud dhoondna / jodna (alag dhaaga)
+    joiner.start()
     denied = 0                                     # v2.2: lagatar 403 (naya PC code kahin aur) -> camera band
     retry_at = 0
     last_list = last_status = 0
@@ -3127,10 +3463,9 @@ def run():
             if t - last_vault > VAULT_EVERY:           # v2.3: app ki keys / password / model
                 last_vault = t
                 try:
-                    ch = apply_vault(fire, fire.get(f'{BIZ}/cameraPC/vault'), fire.get(f'{BIZ}/cameraPC/settings'), cams)
+                    ch = apply_vault(fire, fire.get(f'{BIZ}/cameraPC/vault'), fire.get(f'{BIZ}/cameraPC/settings'), joiner)
                     if ch:
                         log('app se badla:', ', '.join(ch))
-                        last_list = 0                  # naye camera foran list mein
                 except Exception as e:
                     if denied_error(e):
                         raise
@@ -3138,7 +3473,7 @@ def run():
             if t - last_cmd > 15:                      # v2.0: app ka hukam (Doctor / NVR / keys)
                 last_cmd = t
                 try:
-                    handle_cmd(fire, pos, {**watchers, **readers}, recorders, galla, cams, state)
+                    handle_cmd(fire, pos, {**watchers, **readers}, recorders, galla, cams, state, joiner)
                 except Exception as e:
                     log('hukam ghalti:', e)
             if t - last_list > LIST_EVERY:
@@ -3157,6 +3492,13 @@ def run():
                             fire.patch(f'{BIZ}/cameras/{cid}', {'aiTest': note[:200], 'aiTestAt': now_ms()})
                         except Exception as e:
                             log('ai note nahi:', e)
+                # v2.4: camera ki IP / password badla (Joiner ne naya raasta rakha) -> us ki video naye raaste se dobara
+                for d in (watchers, readers):
+                    for cid in [k for k, wt in d.items() if (sec['cams'].get(k) or {}).get('url') not in (None, wt.url)]:
+                        d.pop(cid).stop()
+                        if cid in recorders:
+                            recorders.pop(cid).stop()
+                        log('naya raasta — video dobara', cid)
                 # v1.1: galla nigrani — kaam 'galla' + dabba mark + chalu = video lagatar
                 for cid, c in cams.items():
                     s = sec['cams'].get(cid)
@@ -3207,7 +3549,7 @@ def run():
                     continue
                 if not s:
                     if state.get(cid) != 'nopass':
-                        fire.patch(f'{BIZ}/cameras/{cid}', {'status': 'offline', 'lastError': 'Is PC mein password nahi — PC par "NT Camera jodein" chalayein', 'seenAt': now_ms()})
+                        fire.patch(f'{BIZ}/cameras/{cid}', {'status': 'offline', 'lastError': 'Is PC mein is ka password nahi — app > Nigrani > Cameras mein password likhein', 'seenAt': now_ms()})
                         state[cid] = 'nopass'
                     continue
                 req = int(c.get('snapReq') or 0)
@@ -3224,20 +3566,15 @@ def run():
                         if state.get(cid) != 'offline':
                             fire.patch(f'{BIZ}/cameras/{cid}', {'status': 'offline', 'lastError': 'Video nahi mili — camera band, WiFi se hata, ya privacy mode', 'seenAt': now_ms()})
                             state[cid] = 'offline'
-                        if s.get('mac') and t - last_scan > 900:      # IP badal gayi ho (router ne nayi di)
+                        if t - last_scan > 300:               # IP badal gayi ho (router ne nayi di) — Joiner network dekh kar theek karega
                             last_scan = t
-                            for d in scan():
-                                if d['mac'] == s['mac'] and d['ip'] != s['ip']:
-                                    s['url'] = s['url'].replace('@' + s['ip'] + ':', '@' + d['ip'] + ':')
-                                    s['ip'] = d['ip']
-                                    save_json(SECRETS, sec)
-                                    fire.patch(f'{BIZ}/cameras/{cid}', {'ip': d['ip'], 'seenAt': now_ms()})
-                                    log('nayi IP', cid, d['ip'])
+                            joiner.request()
                 if state.get(cid) == 'online':
                     online += 1
             if t - last_status > STATUS_EVERY:
                 try:
-                    put_status(fire, cams=len(cams), online=online, pos=('POS band — parchi ka rule (seedha camera + AI)' if PARCHI['on'] else pos.status()))
+                    put_status(fire, cams=len(cams), online=online, found=JOIN['found'],
+                               pos=('POS band — parchi ka rule (seedha camera + AI)' if PARCHI['on'] else pos.status()))
                     denied = 0
                 except (AuthError, RuntimeError) as e:
                     if denied_error(e):
@@ -3283,13 +3620,13 @@ if __name__ == '__main__':
     os.makedirs(HOME, exist_ok=True)
     cmd = (sys.argv[1:] or ['setup'])[0]
     try:
-        {'setup': setup, 'run': run, 'test': test}.get(cmd, setup)()
+        {'setup': setup, 'run': run, 'test': test, 'link': link}.get(cmd, setup)()
     except KeyboardInterrupt:
         pass
     except Exception as e:
         log('band:', e, traceback.format_exc()[-600:])
         say(f'\n[!!] Ghalti: {e}\nNT Camera folder mein ntcam.log ka screenshot bhejein.')
-        if cmd == 'setup':
+        if cmd in ('setup', 'link'):
             try:
                 input('Enter dabayein...')
             except EOFError:

@@ -1,8 +1,63 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v234   Tareekh: 2026-10-09  (NIGRANI = CAMERA KI POORI SCREEN; keys / password / model app se; sab AI providers; ntcam.py v2.3; RULES NAHI badle)
+Version: v235   Tareekh: 2026-10-09  (CAMERA JODNA APP SE — PC khud dhoondta / jodta hai, PC par sirf PC code; ntcam.py v2.4; RULES NAHI badle)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+0000000000000000000000000000000000000. v235 + ntcam.py v2.4 — CAMERA JODNA APP SE (PC KHUD DHOONDTA / JODTA HAI, PC PAR SIRF PC CODE)
+------------------------------------------------------------
+Malik (9 Oct dopahar, laptop Dell Latitude 7280 — i5-7300U, 8 GB, WiFi 192.168.0.107, POS client bhi isi par): laptop par ntcam.txt
+chalaya; setup ki kaali window camera ka password poochti rahi (ghalat likha -> "Video nahi mili"), aur jab tak wo window band na ho
+peeche wala program (run) shuru hi nahi hota — is liye app mein likha password "nahi jur raha" tha. Phir "NVR jodein" baar baar dabaya.
+Malik: "app mein aisa system banao jis mein baar baar camera jodne wala jhanjhat khatam ho — app se jodein aur PC par khud chal jaye."
+ASAL MASLE (laptop par dekhe): (1) v2.3 nvr_add main loop ko 7 minute rokta tha (status / nigrani band); (2) Dahua web (port 80) is
+network ke camera par jawab nahi deta -> web check None -> sirf PEHLA password RTSP se, doosra kabhi nahi; (3) akele camera par 16
+channel x 3 raaste video khol kar (8 s timeout) — ghalat password ho to 24 ghalat koshishein = Dahua lock; (4) handle_cmd nvr purani
+(khali) cams list -> maujooda Galla doc par create-patch -> 403; (5) IP badle (.33 -> .36) to app mein purani IP.
+- ntcam.py v2.4:
+  * rtsp_describe(ip, user, pw, path) — RTSP DESCRIBE (Digest MD5 / SHA-256 / qop, Basic), video khole baghair 0.2 s: 200 = password
+    theek + channel hai, 401 = password nahi chala, 404 = channel nahi (asal Dahua camera par jaancha: ch1 200, ch2 404), 0 = jawab nahi.
+    rtsp_path / rtsp_url (dahua cam/realmonitor, hik Streaming/Channels; sub).
+  * join_devices(fire, creds, existing, force) — creds = vault {user, pws [pw, pw2], devs {id: {user, pw, at}}}; id = dev_id (MAC, warna
+    IP). Har device: juda (password is PC mein + camera doc) aur force nahi -> chhuo nahi. Warna password: device ka apna, jo pehle
+    chala, phir aam — har aik AIK DESCRIBE (dev_login: ok | bad | lock | down), aik daur mein zyada se zyada 2 (MAX_TRY). Na chale ->
+    secrets.bad[id][nishan] = [ginti, waqt] (nishan = sha256, password nahi): 35 min baad aik dafa (lock khula ho), phir 6 ghante;
+    force / naya password 6 ghante ko 35 min karta hai. Chal jaye: dev_channels — har channel DESCRIBE, 200 par hi grab (main, phir
+    sub); 404 = hai hi nahi (akela camera 2 s mein). Doc pehle bane phir secrets (doc na bane to password na rakho). Naam / model
+    dahua_info se (mile to). IP badli (MAC wahi) -> secrets url + cameras.ip. Stored password na chale aur naya chale -> sab channel
+    ka url / password naya. Malik ne camera app se hataya (secrets mein hai, doc nahi) -> secrets.gone[id] — force par bhi wapas nahi;
+    sirf jab malik us device ka password dobara likhe (devs[id].at > secrets.devAt[id]).
+    Halat (cameraPC/status.found, found_doc): {id, ip, mac, brand, st: ok | pw | bad | lock | down | none | off, n, msg, model}.
+  * Joiner (thread): shuru mein + har JOIN_EVERY 600 s + request(force, cmd_at, creds). vault + cameras list khud parhta hai, status
+    {found, foundAt} foran likhta hai; force / naye camera par cameraPC/doctor (kind nvr, cmdAt). 403 (purana PC) -> chup.
+  * apply_vault(fire, vault, settings, joiner): keys sec_update se; camAt naya + (pw | pw2 | devs) -> joiner.request(force, camAt).
+    VAULT_TRIED / nvr_add HATA. handle_cmd(..., joiner): nvr -> joiner.request (secret pw ho to creds) aur wapas (report Joiner ki).
+    sec_update(fn) + SEC_LOCK: secrets.json do dhaagon se. Main loop: IP wala scan hata (camera offline -> joiner.request har 5 min);
+    secrets ka url badle to us camera ka Watch / Recorder dobara; put_status found = JOIN['found']; doctor() mein na-jude device.
+  * link(): sirf PC code (connect ask) + put_status — kuch aur nahi poochta. ntcam.txt ab "link" chalata hai (setup nahi) phir run;
+    desktop icon "NT Camera jodein" = link. setup() (purana wizard) code mein hai lekin installer nahi chalata.
+  * ntcam_test 86 (+10 Jodna: naya laptop NVR 6/8 + galla alag password (ghalat sirf 1 koshish), ghalat password 35 min / 6 ghante /
+    force, lock / jawab nahi / password chahiye, juda hua chhua nahi + IP + naya channel, malik ne hataya, password badla, doc na bane,
+    asal socket par naqli RTSP camera (digest, line kaatna), hik raasta, Joiner report + status + rules keys, link).
+- RULES NAHI BADLE: cameraPC/status 'found' ke andar ki shakal rules nahi dekhte; vault malik likhta hai (generic); cameras create /
+  update keys wahi.
+- App v235: Nigrani > 📷 Cameras mein devicesPanel() "📡 Network par cameras / NVR": har device (IP, brand, model) ki halat + msg; st
+  pw / bad / lock / none / off par (ya "Password badlein") form data-form cam-dev (user admin, pw) -> data.saveCamDevice(id, {user, pw}):
+  vault.cam.devs[id] = {user, pw, at}, camAt = at (poora cam map likhta hai — aam password na mite) + cameraPC/cmd nvr (15 s mein).
+  "🔍 Dobara dhoondein" (cam-scan) = pcCommand('nvr'). ui.docAt intezar "PC dhoond raha hai…" (doctor.cmdAt). PC purana (found mein st
+  nahi) -> purani list + "program purana hai — khud naya ho jayega". PC jodne ka qadam 4: "PC sirf PC code poochega". Camera hatane
+  ka sawal: "PC khud dobara nahi jodega". CSS .dev-*. app.dom 26 pass (+1 v235).
+- Laptop par asal jaanch (v2.4 haath se C:\NTCam mein rakha, purana ntcam.v23.bak.py): daur ~30 s; .36 Galla juda (IP app mein theek),
+  .143 juda (naam "143-1"), .89 "Password nahi chala" (aik koshish) — malik ko us ka password app mein likhna hai. .88 par sirf web
+  (Basic "USER LOGIN"), RTSP band — NVR wahi ho to us mein RTSP chalu karna hoga. Gemini key app mein GHALAT thi (400 API key not
+  valid; "AIza" se shuru nahi) — malik ko nayi key lagani hai.
+- Malik ko bataya: is laptop par "laptop ke andar AI" nahi (RAM 1.2 GB khali, 2 core, card nahi; PlayStation nahi chalega; Latitude
+  7280 mein Thunderbolt nahi). Chahiye to desktop + Nvidia RTX 3060 12 GB + 16 GB RAM (OLX ~1.85-2.7 lakh) — pehle free Gemini aazmayein.
+- Yahan test NAHI: asal NVR (8 channel) par DESCRIBE khali channel par 200 deta hai ya 404 (dono raaste code mein hain), Hikvision,
+  asal phone par naya panel (happy-dom + 390 px par CSS dekha).
+- PEHLE SE (v2.4 se nahi): ntcam_test ke Parchi / Kahani tests kabhi kabhi (~har 5-6 daur mein aik) fail — daily_video ka random
+  (DAILY_VIDEOS/220) lag jaye to naqli clips mein .q nahi (AttributeError). Dobara chalane par pass. Theek karna ho: test mein random band.
 
 ------------------------------------------------------------
 000000000000000000000000000000000000. v234 + ntcam.py v2.3 — NIGRANI = CAMERA KI POORI SCREEN · KEYS / PASSWORD / MODEL APP SE · SAB AI

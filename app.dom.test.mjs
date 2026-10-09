@@ -278,6 +278,43 @@ test('v234: Nigrani = camera ki poori screen — keys / password / model / khaba
   await click('.nig-nav [data-action=nig-sec][data-arg=lenden]'); await click('[data-action=tab][data-arg=hazri]');
 });
 
+test('v235: camera jodna app se — network par mile camera ki halat, har aik ka password, PC khud jodta hai', async () => {
+  const ref = p => ({ path: B + p, kind: 'doc', id: p.split('/').at(-1) });
+  const st0 = structuredClone(records.get(B + 'cameraPC/status'));
+  await fake.sdk.setDoc(ref('cameraPC/status'), { ...st0, at: Date.now() - 20000, v: '2.4', foundAt: Date.now() - 20000, found: [
+    { id: 'aa11', ip: '192.168.0.105', mac: 'aa11', brand: 'dahua', st: 'ok', n: 1, msg: '1 camera jude' },
+    { id: 'bb89', ip: '192.168.0.89', mac: 'bb89', brand: 'dahua', st: 'bad', n: 0, msg: 'Password nahi chala (ghalat, ya zyada koshishon se lock). Sahi password likhein — 35 minute baad khud dobara aazmayega' },
+    { id: 'dd43', ip: '192.168.0.143', mac: 'dd43', brand: 'dahua', st: 'down', n: 0, msg: 'Jawab nahi de raha — camera / NVR ko band kar ke dobara chalu karein' }] });
+  await click('[data-action=tab][data-arg=nigrani]'); await settle(8);
+  await click('.nig-nav [data-action=nig-sec][data-arg=cams]'); await settle(8);
+  const panel = () => $('.cam-screen .dev-panel'); assert.ok(panel(), 'network par mile cameras');
+  assert.equal($$('.dev-row').length, 3);
+  const ok = $('.dev-row[data-dev=aa11]'); assert.match(ok.textContent, /✅ 1 camera jude/); assert.match(ok.textContent, /Galla wala/, 'jude hue camera ka naam'); assert.ok(!ok.querySelector('form'), 'juda hua: password ka khana band');
+  const bad = () => $('.dev-row[data-dev=bb89]'); assert.match(bad().textContent, /Password nahi chala/); assert.ok(bad().querySelector('form[data-form=cam-dev]'), 'password ka khana khula');
+  assert.ok(!$('.dev-row[data-dev=dd43] form'), 'jawab nahi de raha = password ka sawal nahi');
+  assert.doesNotMatch(panel().textContent, /NT Camera jodein|purana hai/);  // aik camera ka apna password -> vault.cam.devs + PC ko hukam; sab ka aam password na mite
+  const f = bad().querySelector('form'); f.elements.pw.value = ' Asal#99 '; await submit(f); await settle(8);
+  const v = records.get(B + 'cameraPC/vault'); assert.equal(v.cam.devs.bb89.pw, 'Asal#99'); assert.equal(v.cam.devs.bb89.user, 'admin'); assert.equal(v.cam.pw, 'admin123', 'sab ka password wahi');
+  assert.equal(v.camAt, v.cam.devs.bb89.at); const cmd = records.get(B + 'cameraPC/cmd'); assert.equal(cmd.kind, 'nvr'); assert.equal(cmd.at, v.camAt); assert.equal(cmd.secret, undefined, 'password hukam mein nahi');
+  assert.match(panel().textContent, /PC dhoond raha hai/); assert.match(toastText(), /Password PC ko gaya/);
+  // PC ka jawab: jud gaya
+  await fake.sdk.setDoc(ref('cameraPC/doctor'), { at: Date.now(), v: '2.4', kind: 'nvr', cmdAt: cmd.at, lines: [{ ok: true, t: '1 naye camera jude' }] });
+  const st = structuredClone(records.get(B + 'cameraPC/status')); st.found[1] = { ...st.found[1], st: 'ok', n: 1, msg: '1 camera jude' };
+  await fake.sdk.setDoc(ref('cameraPC/status'), st); await settle(10);
+  assert.doesNotMatch(panel().textContent, /PC dhoond raha hai/); assert.match(bad().textContent, /✅ 1 camera jude/); assert.ok(!bad().querySelector('form'));
+  // juda hua camera: "Password badlein" se khana khulta / band hota hai; "Dobara dhoondein" = PC ko hukam
+  await click('.dev-row[data-dev=aa11] [data-action=dev-edit]'); assert.ok($('.dev-row[data-dev=aa11] form[data-form=cam-dev]'));
+  await click('.dev-row[data-dev=aa11] [data-action=dev-edit]'); assert.ok(!$('.dev-row[data-dev=aa11] form'));
+  const before = records.get(B + 'cameraPC/cmd').at; await new Promise(r => setTimeout(r, 3)); await click('.dev-panel [data-action=cam-scan]'); await settle(8);
+  assert.ok(records.get(B + 'cameraPC/cmd').at > before, 'dobara dhoondne ka hukam');
+  await assert.rejects(app.data.saveCamDevice('../x', { pw: 'a' }), /pehchana nahi/); await assert.rejects(app.data.saveCamDevice('bb89', { pw: ' ' }), /Password likhein/);
+  // purana PC (found mein halat nahi): sirf list + "khud naya ho jayega"
+  await fake.sdk.setDoc(ref('cameraPC/status'), { ...st0, at: Date.now() - 20000 }); await settle(8);
+  assert.match(panel().textContent, /192\.168\.0\.110/); assert.match(panel().textContent, /program purana hai \(v1\.2\)/); assert.equal($$('.dev-row').length, 0);
+  await fake.sdk.setDoc(ref('cameraPC/status'), st0); await settle(8);
+  await click('.nig-nav [data-action=nig-sec][data-arg=lenden]'); await click('[data-action=tab][data-arg=hazri]');
+});
+
 test('filter, din badalna, mahine ka jaal', async () => {
   await click('[data-action=filter][data-arg=late]'); assert.equal($$('.register .row').length, 1);
   await click('[data-action=filter][data-arg=all]');
