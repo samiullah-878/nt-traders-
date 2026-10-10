@@ -1,8 +1,22 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v237   Tareekh: 2026-10-09  (URDU KI LINE — har Roman lafz ke neeche Urdu, urdu.js; ntcam.py v2.4 wahi; RULES NAHI badle)
+Version: v238   Tareekh: 2026-10-10  (APP KHOLTE WAQT PHARAKNA THEEK — Urdu ki line foran; ntcam.py v2.4 wahi; RULES NAHI badle)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+0000000000000000000000000000000000000000. v238 — APP KHOLTE WAQT SCREEN KA PHARAKNA THEEK (Urdu ki line foran)
+------------------------------------------------------------
+Malik (10 Oct raat): "apps pharkna lag gayi hai open karte hi". Wajah (v237): urdu.js MutationObserver Urdu setTimeout(0) ke baad
+lagata tha — browser beech mein bina Urdu wali screen paint kar deta, phir Urdu lagti, page ooncha hota. App kholte waqt data aane par
+kai render (har listener softRender) = baar baar hilna. Asal Chromium mein napa: purana 30/30 frame bina Urdu, naya 0/30.
+- urdu.js startUrdu: MO callback mein seedha flush() (timer hata diya). MO callback microtask hai = paint se pehle. Hamari apni
+  ur-s / ur-p wali tabdeeliyan upar hi chhor di jati hain, is liye chakkar (loop) nahi.
+- index.html snapshot script: html par 'ur-on' bhi foran (agar localStorage 'nt-urdu-v1' != '0') — pichli screen ki tasveer aur asal
+  screen ka size barabar (neeche ki patti 80px), shuru ka jhatka nahi.
+- Tests: urdu.test.mjs +1 (sirf microtask ke baad Urdu maujood, 3 render, dugni nahi). app.dom 27 + urdu 4 = sab pass.
+  (6 purani test files pehle se fail — ghalat module raste, is kaam se ta'alluq nahi.)
+- APP_VERSION v238 (core.js, sw.js), index.html ?v=238, version.json.
 
 ------------------------------------------------------------
 000000000000000000000000000000000000000. v237 — URDU KI LINE (har Roman lafz ke neeche Urdu) — MARHALA 1

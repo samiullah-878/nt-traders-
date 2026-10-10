@@ -43,3 +43,15 @@ test('chalu / band har phone ki apni pasand; naya matn khud', async () => {
   assert.equal(doc.querySelectorAll('ur-s').length, 0); assert.ok(!doc.documentElement.classList.contains('ur-on'));
   doc.getElementById('app').innerHTML = '<button>Salary</button>'; await new Promise(r => setTimeout(r, 30)); assert.equal(doc.querySelectorAll('ur-s').length, 0, 'band = band');
 });
+test('v238: Urdu screen ke sath hi (paint se pehle) — bina Urdu wali screen beech mein nahi dikhti (pharakna)', async () => {
+  const win = new Window(), doc = win.document, storage = { getItem: () => null, setItem() {} };
+  doc.body.innerHTML = '<div id="app"></div>';
+  const stop = startUrdu({ doc, storage, win }), app = doc.getElementById('app');
+  for (let i = 0; i < 3; i++) {   // app kholte waqt kai render
+    app.innerHTML = '<button>Salary</button><p>Hazri <b>Aaj</b></p><i>Staff</i>';
+    await Promise.resolve(); await Promise.resolve();   // sirf microtask — koi setTimeout nahi
+    assert.deepEqual([...app.querySelectorAll('button ur-s, i ur-s')].map(x => x.textContent), ['تنخواہ', 'عملہ'], 'render #' + i + ': foran');
+  }
+  await new Promise(r => setTimeout(r, 20));
+  assert.equal(app.querySelectorAll('button ur-s').length, 1, 'dugni nahi / chakkar nahi'); stop();
+});

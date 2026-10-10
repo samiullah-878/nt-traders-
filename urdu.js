@@ -348,8 +348,10 @@ export function startUrdu({ doc, storage, win } = {}) {
   decorate(doc.body);
   const MO = win?.MutationObserver || globalThis.MutationObserver;
   if (!MO) return () => {};
-  let queued = new Set(), timer = 0;
-  const flush = () => { timer = 0; const list = [...queued]; queued = new Set(); for (const el of list) if (el.isConnected !== false) decorate(el); };
+  // v238: Urdu FORAN (MutationObserver ka callback screen paint hone se pehle chalta hai). Pehle setTimeout tha — browser beech mein
+  // bina Urdu wali screen dikha deta, phir Urdu lagti, page ooncha hota = har render par "pharakna" (app kholte waqt kai render).
+  let queued = new Set();
+  const flush = () => { const list = [...queued]; queued = new Set(); for (const el of list) if (el.isConnected !== false) decorate(el); };
   const mo = new MO(records => {
     for (const r of records) {
       if (r.type === 'characterData') { const p = r.target.parentElement; if (p && tag(p) !== 'UR-S' && tag(p) !== 'UR-P') queued.add(p); continue; }
@@ -358,7 +360,7 @@ export function startUrdu({ doc, storage, win } = {}) {
         else if (n.nodeType === 3 && r.target?.nodeType === 1 && tag(r.target) !== 'UR-S' && tag(r.target) !== 'UR-P') queued.add(r.target);
       }
     }
-    if (queued.size && !timer) timer = (win?.setTimeout || setTimeout)(flush, 0);
+    if (queued.size) flush();   // hamari apni lagayi ur-s / ur-p upar hi chhor di jati hain — dobara chakkar nahi
   });
   mo.observe(doc.body, { childList: true, subtree: true, characterData: true });
   return () => { mo.disconnect(); doc.documentElement.classList.remove('ur-on'); undecorate(doc.body); };

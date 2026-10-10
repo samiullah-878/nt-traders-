@@ -18,7 +18,7 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js" crossorigin>
 <link rel="modulepreload" href="./app.js"><link rel="modulepreload" href="./core.js"><link rel="modulepreload" href="./auth.js"><link rel="modulepreload" href="./data.js">
 <link rel="modulepreload" href="./ui.js"><link rel="modulepreload" href="./staffview.js"><link rel="modulepreload" href="./breaks.js"><link rel="modulepreload" href="./tickets.js"><link rel="modulepreload" href="./notify.js">
-<link rel="stylesheet" href="./styles.css?v=237">
+<link rel="stylesheet" href="./styles.css?v=238">
 </head>
 <body>
 <div id="app" class="app" data-screen="boot">
@@ -38,7 +38,7 @@ window.__ntT0=(window.performance&&performance.now)?performance.now():0;
   if(/login=/.test(location.hash))return;
   var a=document.getElementById('app');if(!a)return;
   a.innerHTML=s.html;a.setAttribute('data-screen','snapshot');a.setAttribute('data-snap-role',s.role||'');
-  document.documentElement.className+=' is-snap';
+  document.documentElement.className+=' is-snap'+(ls.getItem('nt-urdu-v1')!=='0'?' ur-on':'');/* v238: Urdu wala size shuru se — jhatka nahi */
 }catch(e){}})();
 </script>
 <div id="sheetHost"></div>
@@ -57,6 +57,6 @@ window.__bootTimer=setTimeout(function(){if(!document.querySelector('#app[data-s
   var off=navigator.onLine===false;
   window.__ntBootMsg((off?'Internet band hai. Internet on kar ke dobara kholein.':'App der se khul rahi hai.')+'<br><button type="button" onclick="window.__ntRepair()" class="btn btn-ghost" style="margin-top:12px">Taza kholein</button>')},15000);
 </script>
-<script type="module" src="./boot.js?v=237"></script>
+<script type="module" src="./boot.js?v=238"></script>
 </body>
 </html>

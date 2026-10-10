@@ -1,6 +1,6 @@
 {
-  "version": "v237",
+  "version": "v238",
   "variant": "Production",
-  "buildDate": "2026-10-09",
-  "notes": "Urdu ki line: har Roman lafz / button / surkhi ke neeche Urdu (malik, manager aur mulazim teeno ke panel). Settings se chalu / band (har phone ka apna). Lambi hidayaat agle marhale mein. Kaam, rules aur PC program wahi."
+  "buildDate": "2026-10-10",
+  "notes": "App kholte waqt screen ka pharakna theek: Urdu ki line ab screen ke sath hi lagti hai (pehle thori der baad lagti thi to har dafa screen hilti thi). Kaam, rules aur PC program wahi."
 }
