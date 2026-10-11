@@ -754,3 +754,31 @@ test('staff: request bhejna (sirf rules wali keys), salary tab', async () => {
 });
 
 test.after(async () => { app.data.stop(); await win.happyDOM.abort(); win.close(); });
+
+test('v240: phone ka Back button - video / tasveer / sheet band hoti hai, poori app nahi', async () => {
+  const U = await import('./ui.js');
+  const back = async () => { win.history.back(); await settle(10); };
+  const depth = () => Number(win.history.state?.ntLayer) || 0;
+  const scr = $('#app').dataset.screen;
+  assert.equal(depth(), 0, 'shuru mein koi qadam nahi');
+  // 1) video chal rahi hai -> Back = sirf video band
+  U.viewVideo('data:video/mp4;base64,AAAA', 'Test video'); assert.ok($('.viewer.is-video'), 'video khuli'); assert.equal(depth(), 1);
+  await back(); assert.equal($('.viewer'), null, 'Back se video band'); assert.equal($('#app').dataset.screen, scr, 'app wahin hai'); assert.equal(depth(), 0);
+  // 2) "Band karein" se band -> history ka qadam khud wapas (agla Back kuch na tode)
+  U.viewVideo('data:video/mp4;base64,AAAA', 'Test video'); await click('.viewer [data-vid=close]'); await settle(10);
+  assert.equal($('.viewer'), null); assert.equal(depth(), 0, 'qadam wapas');
+  // 3) sheet ke upar tasveer: pehla Back tasveer, doosra Back sheet
+  let closed = 0; const sh = U.openSheet({ id: 'back-test', title: 'Test', render: () => '<p>sheet</p>', onClose: () => closed++ });
+  U.viewImage('data:image/png;base64,AAAA', 'Tasveer'); assert.equal(depth(), 2);
+  await back(); assert.equal($('.viewer'), null, 'pehle tasveer band'); assert.ok($('[data-sheet=back-test]'), 'sheet abhi khuli'); assert.equal(closed, 0);
+  await back(); assert.equal($('[data-sheet=back-test]'), null, 'phir sheet band'); assert.equal(closed, 1); assert.equal(depth(), 0);
+  // 4) sheet apne button se band, upar tasveer khuli rahe -> ginti theek, Back tasveer band kare
+  const sh2 = U.openSheet({ id: 'back-test2', title: 'Test', render: () => '<p>sheet</p>' }); U.viewImage('data:image/png;base64,AAAA', 'Tasveer');
+  sh2.close(); await settle(10); assert.ok($('.viewer'), 'tasveer khuli'); assert.equal(depth(), 1);
+  await back(); assert.equal($('.viewer'), null); assert.equal(depth(), 0);
+  // 5) aik video ki jagah doosri -> aik hi qadam
+  U.viewVideo('data:video/mp4;base64,AAAA', 'A'); U.viewVideo('data:video/mp4;base64,BBBB', 'B'); await settle(10);
+  assert.equal($$('.viewer').length, 1); assert.equal(depth(), 1);
+  await back(); assert.equal($('.viewer'), null); assert.equal(depth(), 0);
+  void sh;
+});

@@ -1,6 +1,6 @@
 {
-  "version": "v239",
+  "version": "v240",
   "variant": "Production",
   "buildDate": "2026-10-11",
-  "notes": "Keys / AI (aur baqi forms) mein likha hua ab nahi mit-ta: pehle key paste kar ke khane se bahar tap karte hi screen taza ho kar key mita deti thi aur Save par khali jati thi. Rules aur PC program wahi."
+  "notes": "Phone ka Back button: video, tasveer ya khula hua panel pehle band hota hai, poori app nahi. Rules wahi; PC program v2.5 (Gemini ki nayi key)."
 }

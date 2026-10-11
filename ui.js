@@ -102,13 +102,41 @@ export function celebrate({ tone = 'ok', stamp = '', title = '', sub = '', count
   return el;
 }
 
+/* ---------- v240: phone ka Back button — pehle upar khuli cheez (video / tasveer / sheet) band ho, poori app nahi ----------
+   Har khulne wali cheez history mein aik qadam rakhti hai; Back us qadam ko wapas leta hai aur hum us cheez ko band karte hain.
+   Apne button se band ho to wo qadam hum khud wapas lete hain. Gehrai history.state.ntLayer mein — ginti kabhi aage peeche nahi hoti. */
+const layers = [];
+const H = typeof window !== 'undefined' ? window.history : null;
+let owe = 0;
+export function backLayer(close) {
+  const L = { close, pushed: false };
+  layers.push(L);
+  try { H.pushState({ ntLayer: layers.length }, ''); L.pushed = true; } catch { /* history na ho to Back pehle jaisa */ }
+  return () => {
+    const i = layers.indexOf(L); if (i < 0) return;
+    layers.splice(i, 1);
+    if (!L.pushed) return;
+    if (!owe++) queueMicrotask(() => { const n = owe; owe = 0; try { H.go(-n); } catch { /* ignore */ } });
+  };
+}
+if (H && typeof window.addEventListener === 'function') {
+  try { if (H.state?.ntLayer) H.replaceState(null, ''); } catch { /* ignore */ }     // page dobara khula — purani ginti saaf
+  window.addEventListener('popstate', () => {
+    const depth = Number(H.state?.ntLayer) || 0;
+    while (layers.length > depth) { const L = layers.pop(); try { L.close(); } catch { /* ignore */ } }
+  });
+}
+let viewerOff = null;                                    // khula hua viewer (tasveer / video) band karne wala
+function dropViewer() { const off = viewerOff; viewerOff = null; off?.(); document.querySelector('.viewer')?.remove(); }
+
 /* ---------- v220: tasveer poori screen par (tap / Escape / "Band karein" se band) ---------- */
 export function viewImage(src, title = '') {
-  document.querySelector('.viewer')?.remove();
+  dropViewer();
   const el = document.createElement('div');
   el.className = 'viewer'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', title || 'Tasveer');
   el.innerHTML = `<img src="${esc(src)}" alt="${esc(title)}"><div class="viewer-bar"><b>${esc(title)}</b><button type="button" class="btn btn-ghost btn-sm">Band karein</button></div>`;
-  const close = () => el.remove();
+  const close = () => { if (viewerOff === close) viewerOff = null; el.remove(); done(); };
+  const done = backLayer(close); viewerOff = close;      // v240: Back = sirf tasveer band
   el.addEventListener('click', close); el.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
   document.body.appendChild(el);
   try { el.querySelector('button')?.focus({ preventScroll: true }); } catch { /* ignore */ }
@@ -117,7 +145,7 @@ export function viewImage(src, title = '') {
 
 /* ---------- v225: video poori screen par (slow + aik-aik frame) ---------- */
 export function viewVideo(src, title = '', fps = 8) {
-  document.querySelector('.viewer')?.remove();
+  dropViewer();
   const el = document.createElement('div');
   el.className = 'viewer is-video'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', title || 'Video');
   el.innerHTML = `<video src="${esc(src)}" controls playsinline autoplay preload="auto"></video>
@@ -127,7 +155,13 @@ export function viewVideo(src, title = '', fps = 8) {
       <button type="button" class="btn btn-ghost btn-sm" data-vid="fwd" aria-label="Aik frame aage">frame ▶</button>
       <button type="button" class="btn btn-ghost btn-sm" data-vid="close">Band karein</button></span></div>`;
   const v = el.querySelector('video');
-  const close = () => { try { v.pause(); } catch { /* ignore */ } el.remove(); if (src.startsWith('blob:')) { try { URL.revokeObjectURL(src); } catch { /* ignore */ } } };
+  let shut = false;
+  const close = () => {
+    if (shut) return; shut = true; if (viewerOff === close) viewerOff = null;
+    try { v.pause(); } catch { /* ignore */ } el.remove(); if (src.startsWith('blob:')) { try { URL.revokeObjectURL(src); } catch { /* ignore */ } }
+    done();
+  };
+  const done = backLayer(close); viewerOff = close;      // v240: video chalte Back = sirf video band, app nahi
   el.addEventListener('click', e => {
     const b = e.target.closest?.('[data-vid]'); if (!b) return;
     const k = b.dataset.vid;
@@ -197,8 +231,10 @@ export function openSheet({ title = '', render, wide = false, onClose, id = '' }
       const i = stack.indexOf(api); if (i < 0) return;
       stack.splice(i, 1); wrap.remove(); onClose?.();
       if (!stack.length) document.body.classList.remove('sheet-open');
+      done();
     }
   };
+  const done = backLayer(() => api.close());             // v240: Back = ye sheet band
   api.setTitle(title);
   wrap.addEventListener('click', e => { if (e.target.closest('[data-sheet-close]')) api.close(); });
   host.append(wrap); stack.push(api); document.body.classList.add('sheet-open');

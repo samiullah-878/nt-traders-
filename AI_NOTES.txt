@@ -1,8 +1,27 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v239   Tareekh: 2026-10-11  (FORMS MEIN LIKHA HUA NAHI MIT-TA — Keys / AI mein key paste; ntcam.py v2.5 = key mein nuqta; RULES NAHI badle)
+Version: v240   Tareekh: 2026-10-11  (PHONE KA BACK BUTTON — video / tasveer / sheet band, app nahi; ntcam.py v2.5; RULES NAHI badle)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+000000000000000000000000000000000000000000. v240 — PHONE KA BACK BUTTON (video chalte Back = poori app band ho jati thi)
+------------------------------------------------------------
+Malik (11 Oct): "camera wali screen par jab video play ho to back karne par poori app hi back chali jati hai". Wajah: app mein history
+ka koi intezam hi nahi tha (na pushState na popstate) — Back hamesha app se bahar le jata tha.
+- ui.js backLayer(close): har khulne wali cheez (viewVideo, viewImage, openSheet) history.pushState({ntLayer: gehrai}) karti hai.
+  popstate: history.state.ntLayer se gehrai parh kar us se upar wali cheezein band. Apne button se band ho to wapas kiya hua
+  function layers se nikal kar history.go(-n) (aik microtask mein ikattha) — is liye "aik band, foran doosri khuli" mein bhi ginti
+  theek rehti hai. Page dobara khule aur state mein ntLayer ho to replaceState(null). pushState na chale to Back pehle jaisa.
+- viewImage / viewVideo: pehle wala viewer ab dropViewer() se (us ka qadam bhi wapas), seedha .remove() nahi.
+- TABS par Back abhi bhi app se bahar le jata hai (sirf khuli cheezein band hoti hain) — malik ne sirf video ka kaha tha.
+- Tests: app.dom +1 (video Back, button se band, sheet + tasveer do Back, sheet neeche se band, video badalna) = 29; asal Chromium
+  mein alag page par wahi 6 surtein OK. Asal phone ka Back button nahi dabaya (Chrome sirf wo qadam ginta hai jis se pehle screen
+  par tap hua ho — video button dabane se khulti hai, is liye theek hona chahiye).
+- APP_VERSION v240 (core.js, sw.js), index.html ?v=240, version.json.
+- PARCHI KA PEHLA ASAL CHECK (11 Oct 2:08 pm, v2.5 + sahi key): AI ne "paisa nahi, parchi False" kaha -> program ne shak banaya. Recording
+  mein paisa hilta dikhta hai (customer ne safed cheez + note diye, baqaya liya) = ghalat alarm lagta hai. Malik se poocha: dabba
+  (zone) sahi jagah hai? aur "paisa nahi" par shak ki jagah saaf_nahi kar dein? — jawab ka intezar. Camera ki ghari PC se ~2.5 min peeche.
 
 ------------------------------------------------------------
 00000000000000000000000000000000000000000. v239 — KEY PASTE KAR KE SAVE NAHI HOTI THI (likha hua screen taza hone par mit jata tha)
