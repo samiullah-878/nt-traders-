@@ -1,8 +1,27 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v241   Tareekh: 2026-10-11  (ntcam.py v2.7 = RECORDING HD 1280 + 1 DIN; app v241 sirf matn; RULES NAHI badle)
+Version: v241   Tareekh: 2026-10-11  (ntcam.py v2.8 = AI KO BARI TASVEER 768; v2.7 recording HD + 1 din; RULES NAHI badle)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+000000000000000000000000000000000000000000000. ntcam.py v2.8 — PARCHI KE AI KO BARI TASVEER (768 px, pehle 416)
+------------------------------------------------------------
+Malik (11 Oct sham): "mujhe ab AI ki tasveer heavy karni hai — kya is se us ki performance achhi hogi?"
+Halat: dabba (zone .062/.067 .53x.567) + counter (zone2 .461/.113 .539x.887) = taqreeban poora frame, jo 416x234 ban kar AI ko jata
+tha — parchi chand pixel ki. v2.7 par recording 1280x720 chal gayi (15.5 MB / minute = ~0.93 GB / ghanta, pythonw + ffmpeg theek).
+- Watch.tape_hd: (t, 768 px JPEG q70) — sirf PARCHI['on'] aur jab camera ki video 416 se bari ho. Watch.hd_frames(kf): usi waqt ki bari
+  tasveer (na ho to wahi chhoti). handle_parchi: chhota aur bara AI dono ko hd_frames; cameraFrames / thumb / debug ke siwa sab wahi.
+  cameraFrames aur thumb mein 416 hi (frames doc 1 MB, thumb < 80000 harf ki had) — is liye tape ka size nahi badla, alag tape rakhi.
+- RAM: tape_hd ~720 x 85 KB = ~60 MB. Gemini: 768x432 = ~6 tile fi tasveer (~1,500 token) x 12-16 = 19-25k token fi sawal (free).
+- debug ki tasveer ab wahi jo AI ko gayi (bari). ntcam_test +1 = 88 pass.
+- PROMPT mein malik ki baat: "Pakistani currency mein koi safed note nahi" -> "HAATH ghaur se dekho, parchi aur paisa mein FARQ karo:
+  parchi SAFED; note KABHI safed nahi (10 sabz, 20 narangi, 50 jamni, 100 laal, 500 sabz, 1000 neela, 5000 peela)"; sirf parchi di aur
+  paisa nahi -> paisa "nahi", parchi true (abhi is par koi card NAHI banta - malik chahe to "Parchi di, paisa nahi diya" ka card).
+- MUQABLA (HD recording 1280x720, asal Gemini, wahi waqt wahi sawal, 416 vs 768): 4:37 pm dono "paisa aaya, parchi true"; 4:40 pm
+  dono parchi true (live v2.7 purane sawal par chhote AI ne "nahi False" kaha tha; recording mein lambi safed parchi counter par aur
+  haath mein note saaf hain). Yani in 2 par faisla size se nahi badla - sawal / khirki se badla. 768 par jawab 5-7 s (416 par ~3.5 s),
+  tasveerein ~815 KB (416 par ~240 KB). Fayda mushkil surton mein mutawaqqe hai, sabit nahi - malik ko yahi bataya.
 
 ------------------------------------------------------------
 00000000000000000000000000000000000000000000. v241 + ntcam.py v2.7 — RECORDING HD (1280) AUR 1 DIN KI

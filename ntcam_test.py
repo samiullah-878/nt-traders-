@@ -1152,7 +1152,7 @@ class Parchi(unittest.TestCase):
 
     def test_v26_tarteeb_koi_bhi(self):
         """v2.6: parchi paisa se pehle ya baad — lambi khirki, zyada tasveerein; 'paisa nahi' par shak nahi."""
-        self.assertIn('TARTEEB KOI BHI', ntcam.PARCHI_PROMPT); self.assertIn('pehle paisa phir parchi', ntcam.PARCHI_PROMPT)
+        self.assertIn('TARTEEB KOI BHI', ntcam.PARCHI_PROMPT); self.assertIn('KABHI safed nahi', ntcam.PARCHI_PROMPT); ntcam.PARCHI_PROMPT.format(cams='', prev=''); self.assertIn('pehle paisa phir parchi', ntcam.PARCHI_PROMPT)
         w = self._w(); w.tape = __import__('collections').deque([(900 + k * 0.5, f'G{k}', 0.0) for k in range(600)], maxlen=720)
         kf = ntcam.parchi_frames(w, 1040.0, 1060.0, ntcam.PARCHI_PRE, ntcam.PARCHI_POST, ntcam.PARCHI_N)
         ts = [t for t, _ in kf]
@@ -1163,6 +1163,25 @@ class Parchi(unittest.TestCase):
         g, evs, frs, clips, calls = self.run_case({'paisa': 'nahi', 'parchi': False, 'why': 'kuch nahi dikha'}, {'paisa': 'nahi', 'parchi': False, 'why': 'paisa nahi hila'})
         self.assertEqual((evs[0]['verdict'], evs[0]['flags']), ('saaf_nahi', ['parchi_saaf']), 'paisa hila hi nahi -> shak nahi'); self.assertEqual(clips, [])
         st = g.stats[('c1', ntcam.pk_date(1045.0))]; self.assertEqual(st['shak'], 0)
+
+    def test_v28_ai_ko_bari_tasveer(self):
+        """v2.8: AI ko tape_hd ki bari tasveer, card (cameraFrames / thumb) mein wahi chhoti."""
+        g, writes, clips = self._g()
+        w = self._w(); w.tape_hd = __import__('collections').deque([(900 + k * 0.5, f'HD{k}') for k in range(600)], maxlen=720)
+        self.assertEqual(w.hd_frames([(900.0, 'J0'), (5.0, 'x')]), [(900.0, 'HD0'), (5.0, 'x')], 'bari na ho to wahi chhoti')
+        seen = []
+        def fake(galla, counter, big_=False, prev=''):
+            seen.append([b for _, b in galla]); return {'paisa': 'aaya', 'parchi': False, 'kaun': '', 'why': 'nahi dikhi'}, 300, 'gemini-x'
+        old = ntcam.PARCHI['on']; ntcam.PARCHI['on'] = True
+        try:
+            with mock.patch.object(ntcam, 'secrets', lambda: {'geminiKey': 'g-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_parchi', fake):
+                g.handle(w, 1045.0, 1040.0, 1060.0, [], True)
+        finally:
+            ntcam.PARCHI['on'] = old
+        self.assertEqual(len(seen), 2); self.assertTrue(all(b.startswith('HD') for call in seen for b in call), 'chhota aur bara AI dono ko bari tasveer')
+        fr = [d for p, d in writes if '/cameraFrames/' in p][0]; ev = [d for p, d in writes if '/cameraEvents/' in p][0]
+        self.assertTrue(all(str(b).startswith(('J', 'C')) for b in fr['frames']), 'card mein chhoti tasveerein (1 MB ki had)'); self.assertTrue(ev['thumb'].startswith('J'))
+        w2 = self._w(); self.assertEqual(w2.hd_frames([(900.0, 'J0')]), [(900.0, 'J0')], 'tape_hd na ho (purana / test) to bhi chale')
 
     def test_frames_at_aur_denied(self):
         g, _, _ = self._g(); r = g.counters['nvr-3']
