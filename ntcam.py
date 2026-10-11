@@ -31,7 +31,11 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '2.5'
+VERSION = '2.6'
+# v2.6: PARCHI — TARTEEB KOI BHI (pehle parchi phir paisa, ya pehle paisa phir parchi). AI ko ab len-den se 30 s pehle se 12 s baad
+#       tak ki tasveerein (bara AI 45 s / 20 s), zyada (12 / 16) aur bari (416 px — pehle chhote AI ko 288 px). "Paisa hila hi nahi"
+#       par ab shak nahi banta (pehle har aisi harkat 'Bina parchi' ban jati thi) — 'Saaf nahi' ka halka card.
+#       Jaanch ke liye: AI ko jo tasveerein gayin wo C:\NTCam\debug mein (aakhri 40), log mein AI ki wajah aur camera ka dabba.
 # v2.5: AI KEY MEIN NUQTA (.) — Google ki nayi Gemini keys "AQ." se shuru hoti hain; clean_key nuqta bhi hata deta tha, is liye
 #       Google har dafa "API key not valid" kehta tha aur parchi ka koi sawal nahi chalta tha. Ab nuqta rehta hai.
 # v2.4: APP SE CAMERA JODNA — PC par sirf PC code (link); camera / NVR ka password app mein (sab ka aik, ya har device ka apna).
@@ -64,7 +68,8 @@ STORY_N, STORY_PRE, STORY_POST = 20, 30, 10   # kahani: ~20 tasveerein, len-den 
 NOPAY_WAIT = 150                     # parchi scan (Cash Received) ke 2.5 min baad dekho: galle par harkat hui ya nahi
 CHEAP_N, CHEAP_W, CHEAP_Q = 8, 288, 60   # v1.9: sasta sawal — 8 tasveerein 288 px
 COUNTER_W = 480                           # v2.2: counter camera ki tape (parchi ke liye)
-PARCHI_N, PARCHI_C, PARCHI_BIG_N, PARCHI_BIG_C = 8, 6, 14, 8   # v2.2: galla / counter tasveerein — chhota AI, bara AI
+PARCHI_N, PARCHI_C, PARCHI_BIG_N, PARCHI_BIG_C = 12, 6, 16, 8   # v2.2: galla / counter tasveerein — chhota AI, bara AI (v2.6: 12 / 16)
+PARCHI_PRE, PARCHI_POST, PARCHI_BIG_PRE, PARCHI_BIG_POST = 30, 12, 45, 20   # v2.6: parchi paisa se pehle ya baad mein — itne second pehle / baad tak dekho
 FX_PKR = 280.0                       # v1.9: kharcha rupay mein dikhane ke liye (andaza)
 PRICE = {'claude-haiku-4-5-20251001': (1.0, 5.0), 'claude-sonnet-5-5': (2.0, 10.0), 'claude-sonnet-4-6': (3.0, 15.0)}   # $/M tokens (in, out)
 DAILY_VIDEOS = 5                     # v1.9: roz itni len-den ki video bila tarteeb (bina AI)
@@ -1894,13 +1899,52 @@ FLAG_TEXT = {'jeb': 'Paisa jeb / kapron mein', 'noparchi': 'Bina parchi paisa li
 # ---------- v2.2: SEEDHA CAMERA + AI (bina POS) — parchi ka rule ----------
 PARCHI_PROMPT = ('Ye tasveerein aik dukaan ki CCTV se hain, waqt ki tarteeb mein (har tasveer ke sath us ka waqt). {cams}Dukaan ka QAIDA: har '
                  'customer pehle counter se PARCHI (chhota safed kaghaz / bill slip) leta hai, phir galle wale larke ko parchi + paisa deta hai; larka '
-                 'parchi le kar paisa galle mein rakhta hai aur baqaya USI customer ko deta hai. Ye normal hai. Haath seene / jeb / gode ke paas dikhna '
+                 'parchi le kar paisa galle mein rakhta hai aur baqaya USI customer ko deta hai. Ye normal hai. TARTEEB KOI BHI ho sakti hai: pehle '
+                 'parchi phir paisa, pehle paisa phir parchi, ya dono aik sath — teeno theek hain; parchi aur paisa ke beech 30-40 second ka farq bhi '
+                 'ho sakta hai (customer note gin raha ho, larka parchi parh raha ho). Is liye SAARI tasveerein dekho, sirf paisa wali nahi: safed '
+                 'parchi customer ke barhe hue haath mein, counter par rakhi hui, larke ke haath mein, ya galle / laptop ke paas — KISI BHI tasveer mein '
+                 'dikhe to parchi di gayi hai. Parchi chhoti aur safed hoti hai, note rangeen. Haath seene / jeb / gode ke paas dikhna '
                  'koi baat NAHI — sirf parchi dekho.{prev} SIRF ye batao: (1) "paisa": "aaya" (kisi ne galle wale ko paisa diya), "nikla" (galle se '
-                 'paisa nikal kar kisi ko diya), "dono" (liya aur baqaya diya), "nahi" (paisa ka len-den hi nahi — sirf ginti / galla chhua). (2) '
-                 '"parchi": true agar jis bande ne paisa diya ya liya us ne ISI len-den mein galle wale ko parchi di (haath mein, counter par, ya '
-                 'galle ke paas safed parchi saaf dikhe); false agar paisa hila magar koi parchi nazar NAHI aayi; "?" agar tasveer saaf nahi. (3) '
+                 'paisa nikal kar kisi ko diya), "dono" (liya aur baqaya diya), "nahi" (in tasveeron mein paisa ka len-den hi nahi — sirf ginti / '
+                 'galla chhua / customer ne abhi paisa diya nahi). (2) "parchi": true agar in tasveeron mein KAHIN BHI (paisa se pehle, baad mein ya '
+                 'sath) us bande ki parchi galle wale ko di gayi (haath mein, counter par, ya galle ke paas safed parchi dikhe); false SIRF agar '
+                 'paisa saaf hila aur SAARI tasveeron mein koi parchi nazar NAHI aayi; "?" agar tasveer saaf nahi ya paisa hila hi nahi. (3) '
                  '"kaun": jagah + kapron ka rang (naam / chehra HARGIZ nahi). (4) "why": Roman Urdu (English harf) mein aik chhoti line. '
                  'Jawab SIRF JSON: {{"paisa": "aaya", "parchi": true, "kaun": "...", "why": "..."}}')
+
+
+DEBUG_KEEP = 40
+
+
+def debug_sheet(tag, rows):
+    """v2.6: AI ko jo tasveerein gayin un sab ki aik tasveer HOME/debug mein (aakhri DEBUG_KEEP) — 'AI ko kya dikha' dekhne ke liye."""
+    try:
+        import cv2, numpy as np
+        ims = [cv2.imdecode(np.frombuffer(base64.b64decode(b), dtype='uint8'), cv2.IMREAD_COLOR) for _, b in rows[:24]]
+        ims = [i for i in ims if i is not None]
+        if not ims:
+            return
+        h, wd = ims[0].shape[:2]
+        ims = [i if i.shape[:2] == (h, wd) else cv2.resize(i, (wd, h)) for i in ims]
+        while len(ims) % 4:
+            ims.append(np.zeros_like(ims[0]))
+        d = os.path.join(HOME, 'debug')
+        os.makedirs(d, exist_ok=True)
+        cv2.imwrite(os.path.join(d, tag + '.jpg'), np.vstack([np.hstack(ims[r:r + 4]) for r in range(0, len(ims), 4)]), [cv2.IMWRITE_JPEG_QUALITY, 70])
+        for f in sorted(os.listdir(d))[:-DEBUG_KEEP]:
+            os.remove(os.path.join(d, f))
+    except Exception:
+        pass                                             # sirf jaanch ki cheez — asal kaam kabhi na ruke
+
+
+def parchi_frames(w, t0, t1, pre, post, n):
+    """v2.6: parchi paisa se pehle bhi di ja sakti hai aur baad mein bhi. Aadhi tasveerein len-den ke aas paas (t0-6 .. t1+6), baqi
+    us se `pre` second pehle se `post` second baad tak phaili hui. Wapas [(t, b64)] waqt ki tarteeb mein, dohrai nahi."""
+    core = w.key_frames(t0 - 6, t1 + 6, max(4, n // 2))
+    wide = w.key_frames(t0 - pre, t1 + post, n)
+    have = {t for t, _ in core}
+    rest = [x for x in wide if x[0] not in have and not (t0 - 6 <= x[0] <= t1 + 6)]
+    return sorted(core + rest[:max(0, n - len(core))], key=lambda x: x[0])
 
 
 def parse_parchi(text):
@@ -1927,7 +1971,7 @@ def ai_parchi(galla, counter, big=False, prev=''):
     for label, rows in (('Galla camera', galla), ('Counter camera', counter)):
         for t, b in rows:
             n += 1
-            content += [{'type': 'text', 'text': f'{label} · Tasveer {n} ({clock(t)})'}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': b if big else small_b64(b)}}]
+            content += [{'type': 'text', 'text': f'{label} · Tasveer {n} ({clock(t)})'}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': b}}]   # v2.6: chhote AI ko bhi 416 px (288 mein parchi nahi dikhti)
     txt, ms, model = ai_call(content, big, 260, CONFIRM_MODELS if big else (MODEL,))
     return parse_parchi(txt), ms, model
 
@@ -2203,7 +2247,7 @@ class Galla(threading.Thread):
             return
         self.last_ai[w.cid] = at
         if PARCHI['on'] and hasattr(w, 'key_frames'):                # v2.2: bina POS — sirf parchi ka rule
-            kf = w.key_frames(t0 - 6, t1 + 6, PARCHI_N)
+            kf = parchi_frames(w, t0, t1, PARCHI_PRE, PARCHI_POST, PARCHI_N)
             if len(kf) >= 4:
                 return self.handle_parchi(w, at, t0, t1, kf, date)
         near = self.recs(t0 - 180, t1 + 180)
@@ -2298,6 +2342,7 @@ class Galla(threading.Thread):
             log('parchi sawal nahi chala:', e)
             self.bump(w.cid, date, unchecked=1)
             return
+        debug_sheet(f"{time.strftime('%m%d-%H%M%S', time.gmtime(at + 5 * 3600))}-{res['paisa']}-{res['parchi']}", kf + cf)
         if res['paisa'] in ('nahi', '?') and res['parchi'] is not False:
             return                                                   # paisa hila hi nahi — kuch nahi
         flow = FLOW_OF.get(res['paisa'], 'aaya')
@@ -2305,7 +2350,7 @@ class Galla(threading.Thread):
         if res['parchi'] is not True:
             if getattr(w, 'second', True):
                 try:
-                    kf2 = w.key_frames(t0 - 8, t1 + 8, PARCHI_BIG_N)
+                    kf2 = parchi_frames(w, t0, t1, PARCHI_BIG_PRE, PARCHI_BIG_POST, PARCHI_BIG_N)
                     cf2, cam2b = self.counter_frames([t for t, _ in kf2], PARCHI_BIG_C)
                     cam2 = cam2b or cam2
                     r2, ms2, m2 = ai_parchi(kf2, cf2, True, res['why'] or 'parchi nazar nahi aayi')
@@ -2324,6 +2369,8 @@ class Galla(threading.Thread):
                     verdict = 'shak' if res['parchi'] is False else 'saaf_nahi'
             else:
                 verdict = 'shak' if res['parchi'] is False else 'saaf_nahi'
+            if verdict == 'shak' and res['paisa'] == 'nahi':            # v2.6: AI ne paisa hilta hi nahi dekha — "bina parchi" ka ilzaam nahi
+                verdict = 'saaf_nahi'
             if verdict == 'shak':
                 flags = ['noparchi_out' if flow == 'nikla' else 'noparchi']
                 why = FLAG_TEXT[flags[0]] + ' — ' + (res['why'] or '') + (f" ({res['kaun']})" if res.get('kaun') else '')
@@ -2346,7 +2393,7 @@ class Galla(threading.Thread):
             self.clips.shak(w.cid, eid, t0, t1, date)
             if cam2 is not None:
                 self.clips.shak(cam2.cid, eid, t0, t1, date, clip_id=eid + '-c')
-        log('parchi', w.cid, res['paisa'], res['parchi'], verdict)
+        log('parchi', w.cid, res['paisa'], res['parchi'], verdict, '|', len(g), '+', len(c), 'tasveer |', (res.get('why') or '')[:120])
         when = time.strftime('%I:%M %p', time.gmtime(at + 5 * 3600)).lstrip('0').lower()
         self.fire.patch(f'{BIZ}/cameras/{w.cid}', {'aiTest': f"AI chal raha hai (parchi) — aakhri {when} ({'Bina parchi' if verdict == 'shak' else 'Saaf nahi' if verdict == 'saaf_nahi' else 'Parchi di'})"[:200], 'aiTestAt': t})
 
@@ -3508,7 +3555,7 @@ def run():
                         if cid not in watchers or not watchers[cid].is_alive():
                             watchers[cid] = Watch(cid, s['url'], c, galla.q)
                             watchers[cid].start()
-                            log('nigrani shuru', cid)
+                            log('nigrani shuru', cid, 'dabba', json.dumps(c.get('zone') or {}), 'counter', json.dumps(c.get('zone2') or {}))
                         if cid not in recorders or not recorders[cid].is_alive():
                             recorders[cid] = Recorder(cid, watchers[cid])
                             recorders[cid].start()

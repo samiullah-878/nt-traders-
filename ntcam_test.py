@@ -1117,7 +1117,7 @@ class Parchi(unittest.TestCase):
 
     def test_parchi_di_halka_card(self):
         g, evs, frs, clips, calls = self.run_case({'paisa': 'dono', 'parchi': True, 'kaun': 'daayen', 'why': 'parchi aur paisa diya'})
-        self.assertEqual(len(calls), 1, 'sirf chhota AI'); self.assertEqual(calls[0][:3], (ntcam.PARCHI_N, ntcam.PARCHI_C, False), 'galla 8 + counter 6')
+        self.assertEqual(len(calls), 1, 'sirf chhota AI'); self.assertEqual(calls[0][:3], (ntcam.PARCHI_N, ntcam.PARCHI_C, False), 'galla 12 + counter 6')
         self.assertEqual((evs[0]['verdict'], evs[0]['flow'], evs[0]['flags']), ('normal', 'len_den', [])); self.assertEqual(frs, [], 'normal par photos nahi')
         self.assertEqual(clips, []); st = g.stats[('c1', ntcam.pk_date(1045.0))]; self.assertEqual((st['matched'], st['moneyIn'], st['moneyOut'], st['shak']), (1, 1, 1, 0))
 
@@ -1149,6 +1149,20 @@ class Parchi(unittest.TestCase):
         self.assertEqual((evs[0]['verdict'], evs[0]['flags']), ('saaf_nahi', ['parchi_saaf'])); self.assertEqual(clips, [], 'saaf nahi par video / khabar nahi'); self.assertTrue(frs)
         g, evs, frs, clips, calls = self.run_case({'paisa': 'aaya', 'parchi': False, 'why': 'x'}, second=False)
         self.assertEqual(len(calls), 1, 'doosri raaye band'); self.assertEqual(evs[0]['verdict'], 'shak')
+
+    def test_v26_tarteeb_koi_bhi(self):
+        """v2.6: parchi paisa se pehle ya baad — lambi khirki, zyada tasveerein; 'paisa nahi' par shak nahi."""
+        self.assertIn('TARTEEB KOI BHI', ntcam.PARCHI_PROMPT); self.assertIn('pehle paisa phir parchi', ntcam.PARCHI_PROMPT)
+        w = self._w(); w.tape = __import__('collections').deque([(900 + k * 0.5, f'G{k}', 0.0) for k in range(600)], maxlen=720)
+        kf = ntcam.parchi_frames(w, 1040.0, 1060.0, ntcam.PARCHI_PRE, ntcam.PARCHI_POST, ntcam.PARCHI_N)
+        ts = [t for t, _ in kf]
+        self.assertEqual(len(kf), ntcam.PARCHI_N); self.assertEqual(ts, sorted(set(ts)), 'tarteeb mein, dohrai nahi')
+        self.assertLess(min(ts), 1040.0 - 20, 'paisa se 20 s+ pehle ki tasveer bhi (parchi pehle di ho)'); self.assertGreater(max(ts), 1060.0 + 6, 'baad ki bhi (parchi baad mein)')
+        self.assertGreaterEqual(sum(1 for t in ts if 1034.0 <= t <= 1066.0), ntcam.PARCHI_N // 2, 'aadhi len-den ke aas paas')
+        self.assertLessEqual(ntcam.PARCHI_BIG_N + ntcam.PARCHI_BIG_C, 24, 'rules: 24 tasveeron se zyada nahi')
+        g, evs, frs, clips, calls = self.run_case({'paisa': 'nahi', 'parchi': False, 'why': 'kuch nahi dikha'}, {'paisa': 'nahi', 'parchi': False, 'why': 'paisa nahi hila'})
+        self.assertEqual((evs[0]['verdict'], evs[0]['flags']), ('saaf_nahi', ['parchi_saaf']), 'paisa hila hi nahi -> shak nahi'); self.assertEqual(clips, [])
+        st = g.stats[('c1', ntcam.pk_date(1045.0))]; self.assertEqual(st['shak'], 0)
 
     def test_frames_at_aur_denied(self):
         g, _, _ = self._g(); r = g.counters['nvr-3']

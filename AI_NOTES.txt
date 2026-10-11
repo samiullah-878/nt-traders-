@@ -1,8 +1,33 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v240   Tareekh: 2026-10-11  (PHONE KA BACK BUTTON — video / tasveer / sheet band, app nahi; ntcam.py v2.5; RULES NAHI badle)
+Version: v240   Tareekh: 2026-10-11  (app v240 wahi; ntcam.py v2.6 = PARCHI TARTEEB KOI BHI + jaanch ki tasveerein; RULES NAHI badle)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+0000000000000000000000000000000000000000000. ntcam.py v2.6 — PARCHI: TARTEEB KOI BHI (pehle parchi ya pehle paisa) + "AI KO KYA DIKHA"
+------------------------------------------------------------
+Malik (11 Oct 2:30 pm): "2:11 par aik video aayi, us mein mene customer se pehle parchi li phir paisa. Ab is ko samjhao ke agar customer
+pehle paisa de aur phir parchi, wo bhi track kare." Halat: v2.5 + sahi key ke baad 6 mein se 6 check "paisa nahi, parchi False" -> sab
+SHAK (ghalat alarm). Recording mein (2:11) safed kapron wale customer ke haath mein parchi saaf dikhti hai, phir larka parchi leta hai,
+phir paisa.
+- PARCHI_PROMPT: "TARTEEB KOI BHI" (pehle parchi phir paisa / pehle paisa phir parchi / sath), beech mein 30-40 s ka farq, SAARI
+  tasveerein dekho; false SIRF jab paisa saaf hila aur kahin parchi nahi; paisa hila hi nahi -> "?".
+- Khirki: parchi_frames(w, t0, t1, pre, post, n) — aadhi tasveerein t0-6..t1+6, baqi pre second pehle se post baad tak. Chhota AI
+  30 / 12 s, 12 tasveerein; bara 45 / 20 s, 16 (+ counter 8 = 24, rules ki had). Pehle t0-6..t1+6 mein 8 thi.
+- ai_parchi: chhote AI ko bhi 416 px (pehle small_b64 288 px — parchi nazar nahi aati thi). Gemini free, kharcha nahi.
+- handle_parchi: aakhri jawab paisa == 'nahi' ho to shak NAHI — 'saaf_nahi' (flag parchi_saaf; clip / khabar nahi). Malik se poocha tha,
+  jawab nahi aaya; ghalat alarm rokne ke liye kar diya — malik ko bata diya. Agar 'Saaf nahi' cards bohat hon to: bara AI 'nahi' kahe
+  to card hi na bane.
+- Jaanch: debug_sheet -> C:\NTCam\debug\MMDD-HHMMSS-paisa-parchi.jpg (AI ko gayi tasveerein, aakhri 40); log 'parchi ..' mein tasveeron
+  ki ginti + AI ki wajah; 'nigrani shuru' mein dabba (zone / zone2).
+- ASAL RECORDING PAR AAZMAISH (rec ke .ts se counter wala hissa 420x300 kaat kar, asal Gemini): 2:08, 2:11, 2:14 teeno par naya
+  tareeqa "paisa aaya, parchi true". LEKIN purana tareeqa bhi isi kaat par 2:11 ko "parchi true" kehta hai — yani live mein AI ko shayad
+  sahi hissa hi nahi ja raha (dabba ghalat jagah / chhota?). Dabba Firestore mein hai, yahan se nahi dekha. v2.6 lagne ke baad
+  C:\NTCam\debug ki tasveer aur log ka 'dabba' dekh kar faisla: zaroorat ho to malik Cameras > Galla ka hissa dobara mark kare
+  (counter jahan parchi / paisa haath badalta hai wo dabbe mein ho).
+- ntcam_test +1 (87 pass). Laptop par lagana: malik do command chalaye (taskkill pythonw; Start-Process pythonw ntcam.py run) ya 6
+  ghante wali jaanch. Claude ko program khud dobara chalane ki ijazat nahi mili (classifier).
 
 ------------------------------------------------------------
 000000000000000000000000000000000000000000. v240 — PHONE KA BACK BUTTON (video chalte Back = poori app band ho jati thi)
