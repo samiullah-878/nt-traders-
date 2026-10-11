@@ -1,8 +1,28 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v238   Tareekh: 2026-10-10  (APP KHOLTE WAQT PHARAKNA THEEK — Urdu ki line foran; ntcam.py v2.4 wahi; RULES NAHI badle)
+Version: v239   Tareekh: 2026-10-11  (FORMS MEIN LIKHA HUA NAHI MIT-TA — Keys / AI mein key paste; ntcam.py v2.4 wahi; RULES NAHI badle)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+00000000000000000000000000000000000000000. v239 — KEY PASTE KAR KE SAVE NAHI HOTI THI (likha hua screen taza hone par mit jata tha)
+------------------------------------------------------------
+Malik (11 Oct dopahar): "key paste kar raha hoon magar wo lag nahi rahi". PC log: 12:39 "app se badla: gemini (mitayi)" (malik ne
+purani ghalat key Mitayein se hatayi), us ke baad nayi key kabhi PC tak nahi pohanchi. Wajah (app.js): softRender likhte waqt rukta
+hai (dirty), lekin focusout ke 150 ms baad render() poora form dobara banata tha — sirf login form ka likha bachaya jata tha. Camera
+PC har thori der mein cameraPC/status / cameras likhta hai = dirty taqreeban hamesha; is liye key paste kar ke khane se bahar tap
+(ya keyboard band) karte hi khana khali, Save par '' jati ("khali = wahi rahe") aur kuch nahi badalta tha. Yehi baqi forms mein bhi tha.
+- app.js render({soft}): softRender se aaye to pehle typedFields() (form[data-form] ke wo khane jin ki value default se alag hai:
+  input / textarea / select / checkbox / radio; chabi = data-form | data-id | name), innerHTML ke baad restoreFields(). Aik jaise do
+  forms (data-form + data-id) hon to nahi chherte. View ka apna rerender (Save ke baad, tab badalna) = sakht render, kuch wapas nahi
+  rakhta — is liye Save ke baad khane khali hi rehte hain.
+- app.js pressAt: pointerdown se pointerup tak (zyada se zyada 4 s) softRender rukta hai, pointerup ke 200 ms baad chalta hai — warna
+  Save dabate dabate button badal jata aur click zaya hota.
+- Tests: app.dom +1 (key likho, PC status badlo, blur, 260 ms: key mojood, Save par vault mein, phir khana khali) — purane code par
+  fail ('' aata tha), naye par pass. app.dom 28 + urdu 4 = sab pass. 6 purani test files pehle ki tarah fail (index.html ka ghalat rasta).
+- APP_VERSION v239 (core.js, sw.js), index.html ?v=239, version.json. Asal phone par nahi dekha.
+- ABHI BAQI: Gemini key 9 Oct se ghalat thi (Google: "API key not valid") — parchi ka koi sawal aaj tak nahi chala (11 Oct tak 31 dafa
+  unchecked). Malik nayi key (aistudio.google.com/apikey, "AIza..") Nigrani > Keys / AI mein lagayega. Counter camera (.89) nahi juda.
 
 ------------------------------------------------------------
 0000000000000000000000000000000000000000. v238 — APP KHOLTE WAQT SCREEN KA PHARAKNA THEEK (Urdu ki line foran)

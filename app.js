@@ -24,7 +24,7 @@ const SNAP_KEY = 'nt-hazri-snap-v1';
 export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalStorage(), win = window }) {
   const doc = win.document, root = $('#app', doc);
   let stopUrdu = startUrdu({ doc, storage, win });   // v237: jo bhi matn screen par aaye us ke neeche Urdu (har phone ki apni pasand)
-  let view = null, dirty = false, login = { role: storage?.getItem(ROLE_KEY) || 'staff', error: '', busy: false, showPass: false };
+  let view = null, dirty = false, pressAt = 0, login = { role: storage?.getItem(ROLE_KEY) || 'staff', error: '', busy: false, showPass: false };
   let data = null, controller = null, sessionSeq = 0, snapTimer = null, firstPaint = true, hold = null;
   const hint = () => { try { return !!(storage?.getItem(STAFF_CACHE_KEY) || storage?.getItem(OWNER_IN_KEY)); } catch { return false; } };
   // v207: malik ka bheja hua login link  ...#login=03001234567  -> number likhe baghair khud login
@@ -133,7 +133,9 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
     if (!view) return;
     dirty = false;
     const scroll = win.scrollY;
+    const typed = options.soft ? typedFields() : null; // v239: data ki wajah se taza hona — likha hua (abhi save nahi) na mite
     root.innerHTML = view.render();
+    if (typed?.size) restoreFields(typed);
     if (firstPaint) {
       firstPaint = false;
       try { doc.documentElement.classList.remove('is-snap'); } catch { /* ignore */ }
@@ -154,15 +156,48 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
       storage?.setItem(SNAP_KEY, JSON.stringify({ v: APP_VERSION, role: root.dataset.screen, html, at: Date.now() }));
     } catch { /* jagah na ho to chup */ }
   }
+  /* v239: forms mein likha hua jo abhi save nahi hua. Pehle khane se bahar tap karte hi (focusout -> softRender) form dobara banta
+     aur paste ki hui key / password mit jata — Save par khali jata tha. Aik jaise do forms (data-form + data-id) hon to nahi chherte. */
+  function formFields(fn) {
+    const forms = [...root.querySelectorAll('form[data-form]')], sig = f => f.dataset.form + '|' + (f.dataset.id || ''), seen = {};
+    for (const f of forms) seen[sig(f)] = (seen[sig(f)] || 0) + 1;
+    for (const f of forms) {
+      if (seen[sig(f)] > 1) continue;
+      for (const el of f.elements) {
+        if (!el.name || !FIELD.test(el.tagName) || el.type === 'file' || el.type === 'hidden') continue;
+        fn(el, sig(f) + '|' + el.name + '|' + (el.type === 'radio' ? el.value : ''));
+      }
+    }
+  }
+  function typedFields() {
+    const out = new Map();
+    formFields((el, key) => {
+      if (el.type === 'checkbox' || el.type === 'radio') { if (el.checked !== el.defaultChecked) out.set(key, { checked: el.checked }); }
+      else if (el.tagName === 'SELECT') { if ([...el.options].some(o => o.selected !== o.defaultSelected)) out.set(key, { value: el.value }); }
+      else if (el.value !== el.defaultValue) out.set(key, { value: el.value });
+    });
+    return out;
+  }
+  function restoreFields(typed) {
+    formFields((el, key) => {
+      const was = typed.get(key); if (!was) return;
+      if ('checked' in was) el.checked = was.checked; else el.value = was.value;
+    });
+  }
   /** Data badalne par screen taza hoti hai, lekin agar koi kuch likh raha ho to us ka likha hua nahi mit-ta. */
   function softRender() {
     if (!view) return;
-    if (hold) { dirty = true; return; } // v217: button daba hua hai — beech mein screen na badlo
+    if (hold || Date.now() - pressAt < 4000) { dirty = true; return; } // v217: button daba hua hai — beech mein screen na badlo (v239: koi bhi button)
     const active = doc.activeElement;
     if (active && FIELD.test(active.tagName) && root.contains(active)) { dirty = true; return; }
-    render();
+    render({ soft: true });
   }
   doc.addEventListener('focusout', () => { if (dirty) setTimeout(() => { if (dirty) softRender(); }, 150); });
+  /* v239: ungli / mouse button par ho to screen na badlo — warna Save dabate dabate button hi badal jata aur click zaya ho jata. */
+  const pressEnd = () => { if (!pressAt) return; pressAt = 0; setTimeout(() => { if (dirty) softRender(); }, 200); };
+  doc.addEventListener('pointerdown', () => { pressAt = Date.now(); }, true);
+  doc.addEventListener('pointerup', pressEnd, true);
+  doc.addEventListener('pointercancel', pressEnd, true);
   win.addEventListener?.('online', () => { void data?.drainOutbox?.(); });
 
   /* ---------- v217: "daba kar rakhein" buttons (data-hold="action", data-hold-ms) ----------

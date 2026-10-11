@@ -1,6 +1,6 @@
 {
-  "version": "v238",
+  "version": "v239",
   "variant": "Production",
-  "buildDate": "2026-10-10",
-  "notes": "App kholte waqt screen ka pharakna theek: Urdu ki line ab screen ke sath hi lagti hai (pehle thori der baad lagti thi to har dafa screen hilti thi). Kaam, rules aur PC program wahi."
+  "buildDate": "2026-10-11",
+  "notes": "Keys / AI (aur baqi forms) mein likha hua ab nahi mit-ta: pehle key paste kar ke khane se bahar tap karte hi screen taza ho kar key mita deti thi aur Save par khali jati thi. Rules aur PC program wahi."
 }

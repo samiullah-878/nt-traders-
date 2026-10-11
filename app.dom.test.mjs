@@ -278,6 +278,23 @@ test('v234: Nigrani = camera ki poori screen — keys / password / model / khaba
   await click('.nig-nav [data-action=nig-sec][data-arg=lenden]'); await click('[data-action=tab][data-arg=hazri]');
 });
 
+test('v239: key likh kar khane se bahar tap — PC ki khabar par likhi hui key nahi mit-ti, Save par jati hai', async () => {
+  const ref = p => ({ path: B + p, kind: 'doc', id: p.split('/').at(-1) });
+  await click('[data-action=tab][data-arg=nigrani]'); await settle(8);
+  await click('.nig-nav [data-action=nig-sec][data-arg=keys]'); await settle(6);
+  const f = $('form[data-form=cam-vault]'), inp = f.elements.key_gemini;
+  inp.focus(); inp.value = 'AIza-naya-7777';
+  await fake.sdk.setDoc(ref('cameraPC/status'), { ...records.get(B + 'cameraPC/status'), at: Date.now() }); await settle(8);
+  assert.equal($('form[data-form=cam-vault]'), f, 'likhte waqt screen nahi badalti');
+  inp.blur(); await new Promise(r => setTimeout(r, 260));     // khane se bahar tap -> screen ab taza hoti hai
+  const f2 = $('form[data-form=cam-vault]'); assert.notEqual(f2, f, 'screen taza hui');
+  assert.equal(f2.elements.key_gemini.value, 'AIza-naya-7777', 'likhi hui key mojood');
+  await submit(f2); await settle(8);
+  assert.equal(records.get(B + 'cameraPC/vault').keys.gemini, 'AIza-naya-7777');
+  assert.equal($('form[data-form=cam-vault]').elements.key_gemini.value, '', 'save ke baad khana khali');
+  await click('.nig-nav [data-action=nig-sec][data-arg=lenden]'); await click('[data-action=tab][data-arg=hazri]');
+});
+
 test('v235: camera jodna app se — network par mile camera ki halat, har aik ka password, PC khud jodta hai', async () => {
   const ref = p => ({ path: B + p, kind: 'doc', id: p.split('/').at(-1) });
   const st0 = structuredClone(records.get(B + 'cameraPC/status'));
