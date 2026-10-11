@@ -793,7 +793,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       return `${pcCard}${connect}${cfg ? devicesPanel() : ''}
         ${cams.length ? `<div class="cam-grid">${cams.map(card).join('')}</div>` : cfg ? '<p class="empty-line">Abhi koi camera nahi juda. Upar camera ka password likhein (sab ka aik ho to 🔐 Keys / AI mein) — PC khud jod lega.</p>' : ''}
         ${cfg && !ui.camCode ? `<p class="hint">PC / laptop badal rahe hain ya code kho gaya? <button type="button" class="link" data-action="cam-code">Naya PC code banayein</button> (purana PC khud camera band kar dega).</p>` : ''}
-        <p class="hint">Tasveer har 5 minute mein khud taza hoti hai jab PC chalu ho. Galla aur Counter camera par PC 2 din ki recording rakhta hai — shak par video khud banti hai.</p>`;
+        <p class="hint">Tasveer har 5 minute mein khud taza hoti hai jab PC chalu ho. Galla aur Counter camera par PC 1 din ki HD recording rakhta hai — shak par video khud banti hai.</p>`;
     }
   }
   /* ---------- v222: NIGRANI tab (sirf malik) — galla par har harkat, AI ka faisla, photos, duty par kaun tha ---------- */
@@ -1060,7 +1060,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     const cams = (S.cameras || []).filter(c => c.role === 'galla').concat((S.cameras || []).filter(c => c.role === 'counter'));   // v233: counter ki recording bhi (galla pehle)
     const from = e ? e.at - 120000 : Date.now() - 180000, to = e ? e.at + 120000 : Date.now();
     return openSheet({ id: 'clip-req', title: 'Mukammal clip mangwayein', render: () => `
-      <p class="hint">PC apni recording (pichle 2 din) se clip bana kar yahan bhej dega — 1-2 minute lagte hain. Zyada se zyada <b>3 minute</b> ki clip; lambi chahiye to do dafa mangwa lein.</p>
+      <p class="hint">PC apni recording (pichla 1 din) se clip bana kar yahan bhej dega — 1-2 minute lagte hain. Zyada se zyada <b>3 minute</b> ki clip; lambi chahiye to do dafa mangwa lein.</p>
       <form class="form" data-form="clip-req" data-event="${esc(eventId || '')}" data-date="${esc(day)}">
         ${cams.length > 1 ? `<label>Camera<select name="cam">${cams.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('')}</select></label>` : `<input type="hidden" name="cam" value="${esc(cams[0]?.id || '')}">`}
         <p class="hint">Din: <b>${esc(shortDate(day))}</b></p>

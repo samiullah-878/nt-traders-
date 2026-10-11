@@ -31,7 +31,9 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '2.6'
+VERSION = '2.7'
+# v2.7: RECORDING HD (1280 px, pehle 640) aur 1 DIN ki (pehle 2 din) — malik: "recording aik din ki kar do" taake HD ki jagah bane.
+#       Shak / farmaish ki video clips bhi isi size ki. Camera halki video par ho (PC dheema) to recording utni hi rehti hai.
 # v2.6: PARCHI — TARTEEB KOI BHI (pehle parchi phir paisa, ya pehle paisa phir parchi). AI ko ab len-den se 30 s pehle se 12 s baad
 #       tak ki tasveerein (bara AI 45 s / 20 s), zyada (12 / 16) aur bari (416 px — pehle chhote AI ko 288 px). "Paisa hila hi nahi"
 #       par ab shak nahi banta (pehle har aisi harkat 'Bina parchi' ban jati thi) — 'Saaf nahi' ka halka card.
@@ -2546,7 +2548,7 @@ class Galla(threading.Thread):
 
 # ---------------------------------------------------------------- v1.4 RECORDING + CLIPS
 REC_DIR = os.path.join(HOME, 'rec')
-REC_HOURS, REC_FPS, REC_W, SEG_SEC, MIN_FREE_GB = 48, 8, 640, 60, 5
+REC_HOURS, REC_FPS, REC_W, SEG_SEC, MIN_FREE_GB = 24, 8, 1280, 60, 5   # v2.7: 1 din, HD
 REC_W_COUNTER = 960                                # v2.1: kaam 'Counter' wale camera ki recording
 CLIP_MAX, SHAK_PAD, PART_CHARS = 180, 5, 700_000
 SHAK_BEFORE, SHAK_AFTER, SHAK_MAX = 10, 20, 40    # v1.6: shak / bina voucher par clip — 10 s pehle se 20 s baad tak (40 s had)
@@ -2583,7 +2585,7 @@ def seg_files(d):
 
 
 def prune(d, hours=REC_HOURS, min_free=MIN_FREE_GB):
-    """48 ghante se purani, aur disk 5 GB se kam ho to sab se purani — jab tak jagah na bane."""
+    """REC_HOURS (24 ghante) se purani, aur disk 5 GB se kam ho to sab se purani — jab tak jagah na bane."""
     segs, cut = seg_files(d), time.time() - hours * 3600
     gone = []
     for st, pth in segs:
@@ -2753,7 +2755,7 @@ class Clips(threading.Thread):
         out = os.path.join(HOME, f"clip_{job['id']}.mp4")
         path = rec.clip(t0, t1, out)
         if not path:
-            self.fire.patch(f"{BIZ}/cameraClips/{job['id']}", {**base, 'status': 'error', 'error': 'Us waqt ki recording PC par nahi mili (PC band tha ya 2 din se purani)', 'at': now_ms()})
+            self.fire.patch(f"{BIZ}/cameraClips/{job['id']}", {**base, 'status': 'error', 'error': 'Us waqt ki recording PC par nahi mili (PC band tha ya 1 din se purani)', 'at': now_ms()})
             return
         n = upload_clip(self.fire, job['id'], path, base)
         log('clip', job['id'], n, 'parts')

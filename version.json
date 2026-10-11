@@ -1,6 +1,6 @@
 {
-  "version": "v240",
+  "version": "v241",
   "variant": "Production",
   "buildDate": "2026-10-11",
-  "notes": "Phone ka Back button: video, tasveer ya khula hua panel pehle band hota hai, poori app nahi. Rules wahi; PC program v2.5 (Gemini ki nayi key)."
+  "notes": "Camera ki recording ab HD (1280) aur 1 din ki — app mein sirf do hidayaat ka matn badla. PC program v2.7. Rules wahi."
 }

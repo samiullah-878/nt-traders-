@@ -1,8 +1,24 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v240   Tareekh: 2026-10-11  (app v240 wahi; ntcam.py v2.6 = PARCHI TARTEEB KOI BHI + jaanch ki tasveerein; RULES NAHI badle)
+Version: v241   Tareekh: 2026-10-11  (ntcam.py v2.7 = RECORDING HD 1280 + 1 DIN; app v241 sirf matn; RULES NAHI badle)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+00000000000000000000000000000000000000000000. v241 + ntcam.py v2.7 — RECORDING HD (1280) AUR 1 DIN KI
+------------------------------------------------------------
+Malik (11 Oct sham): "camera HD mein dekh raha hai ya SD?" -> bataya: camera HD deta hai, program AI ko 416x234 aur recording 640x360
+rakhta tha. Malik: "agar hum recording aik din ki kar dein — ye idea kaam karega?" Napa: C: par 56 GB khali; 640 par ~0.32 GB/ghanta
+(2 din mein sirf 2.4 GB jama thi kyun ke laptop raat ko band); 1280 par andaza ~1.1 GB/ghanta = 13 ghante ki dukaan ~15 GB, 24 ghante
+~27 GB — jagah hai. Laptop i5-7300U (2 core / 4 thread): pythonw ~17% + ffmpeg ~1% (640 par).
+- ntcam.py: REC_HOURS 48 -> 24, REC_W 640 -> 1280 (counter camera 960 wahi). Recorder upar nahi kheenchta (W = min(width, frame)).
+  Clips recording ke size par dobara encode hoti hain (veryfast crf 29) = HD clip ~3 guna bari (zyada cameraClipParts; rules mein
+  tukron ki ginti ki had nahi, har tukra < 800k harf wahi).
+- AI ki tasveerein (tape 416 px) NAHI badlin — v2.6 par 34 mein se 28 "parchi di", 0 shak; zaroorat ho to TAPE_W barhana alag kaam
+  (cameraFrames doc 1 MB ki had: 24 tasveerein — AI ko bari, card mein chhoti rakhni hongi).
+- owner.js: do hidayaat "2 din" -> "1 din (HD)". APP_VERSION v241. ntcam_test 87 pass, app.dom 29 + urdu 4 pass.
+- DEKHNA HAI (lagne ke baad): pythonw / ffmpeg ka CPU, watcher fps (3 se kam = "PC dheema — halki video" aur recording wapas 640),
+  disk. Bojh zyada ho to REC_W 960.
 
 ------------------------------------------------------------
 0000000000000000000000000000000000000000000. ntcam.py v2.6 — PARCHI: TARTEEB KOI BHI (pehle parchi ya pehle paisa) + "AI KO KYA DIKHA"
