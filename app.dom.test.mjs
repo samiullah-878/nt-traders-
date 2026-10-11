@@ -135,7 +135,15 @@ test('malik login → Hazri tab, qataarein, tawajju', async () => {
   await click('.nig-ev[data-id="cc33-ch1-2"]'); await settle(12);
   const ev = () => $('[data-sheet=nig-ev]'); assert.ok(ev(), 'event sheet');
   assert.equal(ev().querySelectorAll('.nig-strip img').length, 6, '6 tasveerein'); assert.match(ev().textContent, /Us waqt duty par/); assert.match(ev().textContent, /AI: Note jeb/);
+  // v242: tasveerein video ki tarah khud chalti hain; tap = rokna / chalana
+  assert.ok(ev().querySelector('.nig-big img[src$="F1"]'), 'pehli tasveer se shuru'); assert.match(ev().querySelector('.nig-count').textContent, /^1 \/ 6$/);
+  await new Promise(r => setTimeout(r, 1900));
+  assert.ok(ev().querySelector('.nig-big img[src$="F3"]'), 'khud aage barhi (2 qadam)'); assert.equal(ev().querySelector('.nig-count').textContent, '3 / 6'); assert.equal(ev().querySelectorAll('.nig-strip .is-on').length, 1);
+  await click('[data-sheet=nig-ev] .nig-big'); assert.ok(ev().querySelector('.nig-big.is-paused'), 'tap = ruk gayi'); assert.match(ev().querySelector('.nig-ctl').textContent, /Chalayein/);
+  await new Promise(r => setTimeout(r, 1000)); assert.ok(ev().querySelector('.nig-big img[src$="F3"]'), 'ruki hui hai');
+  await click('[data-sheet=nig-ev] .nig-ctl [data-action=nig-play]'); await new Promise(r => setTimeout(r, 1000)); assert.ok(ev().querySelector('.nig-big img[src$="F4"]'), 'dobara chali');
   await click('[data-sheet=nig-ev] [data-action=nig-idx][data-arg="3"]'); assert.ok(ev().querySelector('.nig-big img[src$="F4"]'), 'chauthi tasveer badi');
+  await new Promise(r => setTimeout(r, 1000)); assert.ok(ev().querySelector('.nig-big.is-paused img[src$="F4"]'), 'chhoti tasveer par tap = wahin ruki');
   await click('[data-sheet=nig-ev] [data-action=nig-full]'); assert.ok($('body > .viewer img[src$="F4"]')); await click('.viewer');
   // v225: video — dekhein (tukre jud kar), rakhein wala checkbox, faisle ke baad mit jaye
   assert.ok(ev().querySelector('[data-action=nig-video]'), 'Video dekhein'); assert.ok(ev().querySelector('input[name=keepVideo]'));

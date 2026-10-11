@@ -913,13 +913,29 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       ${clipsList()}
       ${pm ? `<p class="hint">Bina POS — <b>parchi ka rule</b>: galle par paisa aaye ya jaye to AI dekhta hai parchi di gayi ya nahi (galla + counter camera). Na dikhe to bara AI dobara dekhta hai; dono kahein "bina parchi" to card, photos, video aur khabar. Parchi wale len-den "Sab" / "Normal" mein halke card hain. Aap ke "Theek hai / Shak pakka" se AI seekhta hai.</p>` : `<p class="hint">Galla sirf POS ke <b>Cash Received voucher</b> par khulna chahiye (voucher se 1 minute pehle se 1.5 minute baad tak), ya refund / Galla screen "de diye" / POS kharch ke voucher par. 2 minute tak koi voucher na aaye to "Bina voucher galla khula" — khabar aur clip khud. Jeb mein note = "Shak" (voucher ho tab bhi). Chhutta (note khula karwana), shaam ki ginti ya aap ka khud paisa nikalna bhi "bina voucher" mein aayega — us par "Theek hai" daba dein. Aap ke faislon se AI seekhta hai. Photos 30 din baad khud mit jati hain.</p>`}`;
   }
+  /* v242: card ki tasveerein video ki tarah khud chalti hain (har NIG_PLAY_MS par agli, aakhri ke baad pehli). Bari tasveer par
+     tap = rokna / chalana; neeche ki chhoti tasveer par tap = wahin ruk jana. Har tick par poora sheet dobara nahi banta. */
+  const NIG_PLAY_MS = 800;
+  function showFrame(sheet, fr) {
+    const root = sheet.el, i = Math.min(ui.nigIdx || 0, fr.length - 1), img = root.querySelector('.nig-big img'); if (!img) return;
+    img.src = 'data:image/jpeg;base64,' + fr[i]; img.alt = `Tasveer ${i + 1}`;
+    const strip = root.querySelector('.nig-strip'), on = strip?.children[i];
+    for (const b of strip?.children || []) b.classList.toggle('is-on', b === on);
+    try { if (on) strip.scrollTo({ left: Math.max(0, on.offsetLeft - (strip.clientWidth - on.offsetWidth) / 2), behavior: 'smooth' }); } catch { /* ignore */ }
+    const n = root.querySelector('.nig-count'); if (n) n.textContent = `${i + 1} / ${fr.length}`;
+  }
   function eventSheet(id) {
-    ui.nigIdx = 0;
-    const sheet = openSheet({ id: 'nig-ev', wide: true, title: 'Galla ki harkat', render: () => {
+    ui.nigIdx = 0; ui.nigPlay = true;
+    const timer = setInterval(() => {
+      const fr = ui.nigFrames?.[id]; if (!ui.nigPlay || !fr || fr.length < 2 || document.querySelector('.viewer')) return;
+      ui.nigIdx = ((ui.nigIdx || 0) + 1) % fr.length; showFrame(sheet, fr);
+    }, NIG_PLAY_MS);
+    const sheet = openSheet({ id: 'nig-ev', wide: true, title: 'Galla ki harkat', onClose: () => clearInterval(timer), render: () => {
       const e = (S.camEvents || []).find(x => x.id === id); if (!e) return '<p class="empty-line">Ye event ab nahi mila.</p>';
       const [vt, vc] = VERDICT[e.verdict] || VERDICT.saaf_nahi, frames = ui.nigFrames?.[id], i = Math.min(ui.nigIdx || 0, Math.max(0, (frames?.length || 1) - 1));
       const duty = onDutyAt(e.date, e.at);
-      return `<div class="nig-photo">${frames?.length ? `<button type="button" class="nig-big" data-action="nig-full" data-id="${esc(id)}" aria-label="Poori screen"><img src="data:image/jpeg;base64,${esc(frames[i])}" alt="Tasveer ${i + 1}"></button>
+      return `<div class="nig-photo">${frames?.length ? `<button type="button" class="nig-big ${ui.nigPlay ? '' : 'is-paused'}" data-action="nig-play" aria-label="Rokein ya chalayein"><img src="data:image/jpeg;base64,${esc(frames[i])}" alt="Tasveer ${i + 1}"></button>
+            <div class="nig-ctl"><button type="button" class="btn btn-ghost btn-sm" data-action="nig-play">${ui.nigPlay ? '⏸ Rokein' : '▶ Chalayein'}</button><b class="nig-count">${i + 1} / ${frames.length}</b><button type="button" class="btn btn-ghost btn-sm" data-action="nig-full" data-id="${esc(id)}">Poori screen</button></div>
             <div class="nig-strip">${frames.map((b, k) => `<button type="button" class="${k === i ? 'is-on' : ''}" data-action="nig-idx" data-arg="${k}" aria-label="Tasveer ${k + 1}"><img src="data:image/jpeg;base64,${esc(b)}" alt=""></button>`).join('')}</div>`
           : frames ? `<p class="empty-line">Tasveerein nahi mileen (shayad 30 din purani ho kar mit gayin).</p>` : `<p class="loading-line">Tasveerein aa rahi hain…</p>`}</div>
         <p class="nig-meta"><b>${esc(clockOf(e.at))}</b> · ${esc(shortDate(e.date))} · ${esc(e.camName || '')} <span class="tag ${vc}">${vt}</span></p>
@@ -1362,7 +1378,8 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     'nig-day'(el) { const d = addDays(ui.nigDay || pkDate(), Number(el.dataset.arg)); if (d > pkDate()) return; ui.nigDay = d; ui.nigFilter = undefined; data.watchEvents(d); rerender(); },
     'nig-filter'(el) { ui.nigFilter = el.dataset.arg; rerender(); },
     'nig-open'(el) { open('nig-ev', () => eventSheet(el.dataset.id)); },
-    'nig-idx'(el) { ui.nigIdx = Number(el.dataset.arg) || 0; sheets['nig-ev']?.refresh(true); },
+    'nig-idx'(el) { ui.nigIdx = Number(el.dataset.arg) || 0; ui.nigPlay = false; sheets['nig-ev']?.refresh(true); },   // v242: chuni hui tasveer par ruk jao
+    'nig-play'() { ui.nigPlay = !ui.nigPlay; sheets['nig-ev']?.refresh(true); },
     'nig-full'(el) { const fr = ui.nigFrames?.[el.dataset.id], e = (S.camEvents || []).find(x => x.id === el.dataset.id); if (fr?.length) viewImage('data:image/jpeg;base64,' + fr[Math.min(ui.nigIdx || 0, fr.length - 1)], `${e?.camName || 'Galla'} · ${e ? clockOf(e.at) : ''}`); },
     'cam-photo'(el) { const c = (S.cameras || []).find(x => x.id === el.dataset.id), shot = S.camShots?.get?.(el.dataset.id); if (shot?.jpg) viewImage('data:image/jpeg;base64,' + shot.jpg, `${c?.name || 'Camera'} · ${agoText(shot.at)}`); },
     links() { open('links', linksSheet); },

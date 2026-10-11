@@ -1,8 +1,38 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v241   Tareekh: 2026-10-11  (ntcam.py v2.8 = AI KO BARI TASVEER 768; v2.7 recording HD + 1 din; RULES NAHI badle)
+Version: v242   Tareekh: 2026-10-11  (v242 = card ki tasveerein khud chalti hain; ntcam.py v2.9 = AI ko ghani tasveerein; RULES NAHI badle)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+0000000000000000000000000000000000000000000000. v242 + ntcam.py v2.9 — TASVEEREIN VIDEO KI TARAH + AI KO GHANI TASVEEREIN
+------------------------------------------------------------
+Malik (11 Oct sham), teen baatein:
+(1) "har shak wali video ke sath clip auto aana chahiye, wo kyun nahi aata" — log: aaj 8 shak (2:08-2:33), aathon ki clip bani. 2:36
+    (v2.6) ke baad koi shak hi nahi (36 normal, 7 saaf_nahi). 'Saaf nahi' / 'Parchi di' par clip design se nahi banti; har card par
+    "Mukammal clip mangwayein" hai. Saaf nahi par auto clip NAHI lagayi: HD clip ~5-20 MB, din mein darjanon = Firestore bhar jaye.
+    Shak ki clip sirf pehle 40 s ki thi jab ke len-den 3 minute ka — ab parchi ke rule mein t0-15 .. t1+15, 2 minute tak (Clips.shak).
+(2) "app mein tasveerein sab nazar nahi aatin — auto chalti jayein, click par pause, video ki tarah" — owner.js eventSheet: setInterval
+    NIG_PLAY_MS 800 -> ui.nigIdx aage, showFrame() sirf bari tasveer / strip ka is-on / ginti badalta hai (poora sheet nahi banta);
+    bari tasveer par tap ya "Rokein / Chalayein" = ui.nigPlay; strip ya kahani ki line par tap = wahin ruk jao; "Poori screen" alag
+    button (pehle bari tasveer par tap tha). Viewer khula ho to rukti hai. sheet onClose par timer band. CSS .nig-ctl / .is-paused.
+    urdu.js +3 lafz. app.dom: event wala test barha (khud aage, tap = ruki, dobara chali, strip = ruki). 33 pass.
+(3) "4:27 ki video dekho — is mein shak ya parchi saaf nazar kyun nahi aayi" — ASAL WAJAH: merge_items (MERGE_GAP 60, MERGE_MAX 180)
+    qareeb ki harkaton ko 3 minute ka aik len-den bana deta hai (dabba + counter taqreeban poora frame, log chalte rehte hain =
+    lagatar harkat; isi liye checks har ~3 minute). AI ko us 3.5 minute ki sirf 10-12 tasveerein (har ~17-20 s) — 4:27 par customer
+    ke haath mein note aur khaki kapron wale (galla) se len-den recording mein saaf hai, magar AI ki tasveeron ke beech chhoot gaya.
+    AAZMAISH (asal Gemini flash-lite, 3 minute ki khirki, har surat 2 dafa): 9-12 tasveerein -> 4:27 nahi/False x2 (ghalat), 4:40
+    (parchi + paisa pakka) nahi/False x2 (ghalat), 2:11 (pakka) 1 sahi 1 ghalat, 4:03 aaya/True x2. Har 4 s ki tasveer (53, 416 px)
+    -> aathon dafa parchi True; paisa 3/8 "aaya", 5/8 "nahi" (parchi dikhti hai, paisa nahi). 85 tasveerein (har 2.5 s) -> nahi/False
+    (bohat zyada = bigar). Is liye:
+    - parchi_frames: barabar faslay par har PARCHI_STEP 4 s, kam se kam n, had PARCHI_MAX 56 (thin()). 20 (PARCHI_HD_N) tak hon to
+      bari 768 (hd_frames), zyada to 416 (parchi_ai_frames). Card mein thin(g, 24 - counter).
+    - KHATRA / NA-MALOOM: ghani tasveeron par AI har dafa "parchi True" keh raha hai — ye sabit NAHI ke bina parchi wala len-den
+      pakrega (koi pakka bina-parchi namoona nahi). Malik se kaha: Nigrani > Test len-den se aik naqli len-den BINA parchi karwayein.
+      "paisa nahi + parchi True" par koi card nahi banta. Jawab 8-16 s. Gemini flash-lite ki rozana had (~500) ke qareeb na ho: ~20
+      check / ghanta.
+- ntcam_test: Parchi._g ke naqli clips mein q (daily_video bila tarteeb chunta to test toot-ta tha). Kahani.test_budget_min_change_daily
+  isi wajah se kabhi kabhi fail (purana, nahi chhera). 88 test.
 
 ------------------------------------------------------------
 000000000000000000000000000000000000000000000. ntcam.py v2.8 — PARCHI KE AI KO BARI TASVEER (768 px, pehle 416)

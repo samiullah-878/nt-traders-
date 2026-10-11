@@ -17,7 +17,7 @@ export const UR = {
   'Save': 'محفوظ کریں', 'Save karein': 'محفوظ کریں', 'Save ho gaya': 'محفوظ ہو گیا', 'Cancel': 'منسوخ', 'Delete': 'حذف کریں', 'Hatayein': 'ہٹائیں',
   'Mitayein': 'مٹائیں', 'Badlein': 'بدلیں', 'Jodein': 'جوڑیں', 'Kholein': 'کھولیں', 'Download': 'ڈاؤن لوڈ', 'Copy': 'کاپی', 'Dikhayein': 'دکھائیں',
   'Haan': 'ہاں', 'Nahi': 'نہیں', 'nahi': 'نہیں', 'Theek hai': 'ٹھیک ہے', 'Theek': 'ٹھیک', 'Rehne dein': 'رہنے دیں', 'Chhoren': 'چھوڑیں',
-  'Band karein': 'بند کریں', 'Dobara kholein': 'دوبارہ کھولیں', 'Dobara bhejein': 'دوبارہ بھیجیں', 'Likh dein': 'لکھ دیں', 'Likh diya': 'لکھ دیا',
+  'Band karein': 'بند کریں', '⏸ Rokein': 'روکیں', '▶ Chalayein': 'چلائیں', 'Poori screen': 'پوری سکرین', 'Dobara kholein': 'دوبارہ کھولیں', 'Dobara bhejein': 'دوبارہ بھیجیں', 'Likh dein': 'لکھ دیں', 'Likh diya': 'لکھ دیا',
   'Aaj': 'آج', 'Abhi': 'ابھی', 'abhi': 'ابھی', 'Baqi': 'باقی', 'baqi': 'باقی', 'Khali': 'خالی', 'Abhi khali': 'ابھی خالی', 'Note': 'نوٹ', 'Note (ikhtiyari)': 'نوٹ (اختیاری)',
   '(ikhtiyari)': '(اختیاری)', 'Naam (ikhtiyari)': 'نام (اختیاری)', 'Kuch aur (ikhtiyari)': 'کچھ اور (اختیاری)', 'Wajah': 'وجہ', 'Tareekh': 'تاریخ',
   'Shuru': 'شروع', 'Khatam': 'ختم', 'Kab se': 'کب سے', 'Kab tak': 'کب تک', 'Tafseel': 'تفصیل', 'Apna': 'اپنا', 'Apna waqt': 'اپنا وقت', 'Off': 'آف',
