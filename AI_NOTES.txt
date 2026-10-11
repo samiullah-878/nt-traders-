@@ -1,6 +1,6 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v239   Tareekh: 2026-10-11  (FORMS MEIN LIKHA HUA NAHI MIT-TA — Keys / AI mein key paste; ntcam.py v2.4 wahi; RULES NAHI badle)
+Version: v239   Tareekh: 2026-10-11  (FORMS MEIN LIKHA HUA NAHI MIT-TA — Keys / AI mein key paste; ntcam.py v2.5 = key mein nuqta; RULES NAHI badle)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
 
@@ -21,8 +21,11 @@ PC har thori der mein cameraPC/status / cameras likhta hai = dirty taqreeban ham
 - Tests: app.dom +1 (key likho, PC status badlo, blur, 260 ms: key mojood, Save par vault mein, phir khana khali) — purane code par
   fail ('' aata tha), naye par pass. app.dom 28 + urdu 4 = sab pass. 6 purani test files pehle ki tarah fail (index.html ka ghalat rasta).
 - APP_VERSION v239 (core.js, sw.js), index.html ?v=239, version.json. Asal phone par nahi dekha.
-- ABHI BAQI: Gemini key 9 Oct se ghalat thi (Google: "API key not valid") — parchi ka koi sawal aaj tak nahi chala (11 Oct tak 31 dafa
-  unchecked). Malik nayi key (aistudio.google.com/apikey, "AIza..") Nigrani > Keys / AI mein lagayega. Counter camera (.89) nahi juda.
+- ntcam.py v2.5 (11 Oct, usi din): ASAL WAJAH "API key not valid" — malik ki Gemini key Google ke naye format ki hai ("AQ." se shuru, beech
+  mein nuqta). clean_key [^A-Za-z0-9_-] nuqta hata deta tha (secrets.json mein 52 harf, "AQ" se shuru, nuqta ghayab) = Google 400. Ab
+  [^A-Za-z0-9_.-]. Vault (Firestore) mein key nuqte ke sath hi hai, is liye naya program 1 minute mein khud sahi key utha leta hai —
+  malik ko dobara paste nahi karna. ntcam_test +1 assert (86 pass). Doctor ka "khud lag raha hai (2 min)" sirf khabar hai; asal jaanch
+  har 6 ghante (UPDATE_EVERY) — is laptop par haath se lagaya. Counter camera (.89) abhi bhi nahi juda.
 
 ------------------------------------------------------------
 0000000000000000000000000000000000000000. v238 — APP KHOLTE WAQT SCREEN KA PHARAKNA THEEK (Urdu ki line foran)

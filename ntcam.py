@@ -31,7 +31,9 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '2.4'
+VERSION = '2.5'
+# v2.5: AI KEY MEIN NUQTA (.) — Google ki nayi Gemini keys "AQ." se shuru hoti hain; clean_key nuqta bhi hata deta tha, is liye
+#       Google har dafa "API key not valid" kehta tha aur parchi ka koi sawal nahi chalta tha. Ab nuqta rehta hai.
 # v2.4: APP SE CAMERA JODNA — PC par sirf PC code (link); camera / NVR ka password app mein (sab ka aik, ya har device ka apna).
 #       Joiner (alag dhaaga) network khud dekhta hai (shuru mein, har 10 minute, password badalne par, app ke button par): password
 #       RTSP se AIK koshish mein jaanchta hai (ghalat yaad rakhta hai — lock nahi hota), har channel 0.2 s mein pehchanta hai, IP badle
@@ -128,8 +130,8 @@ def save_json(path, value):
 
 def clean_key(k):
     """v1.1.1: Claude key mein sirf harf, ginti, - aur _ hote hain. AnyDesk (mobile) se paste par chhupe harf (jaise Ctrl+V ka
-    nishan) aa jate the — server 400 (khali wajah) deta tha. Baqi sab hata do."""
-    return re.sub(r'[^A-Za-z0-9_\-]', '', str(k or ''))
+    nishan) aa jate the — server 400 (khali wajah) deta tha. Baqi sab hata do. v2.5: nuqta (.) bhi key ka hissa hai (Gemini "AQ.")."""
+    return re.sub(r'[^A-Za-z0-9_.\-]', '', str(k or ''))
 
 
 def secrets():

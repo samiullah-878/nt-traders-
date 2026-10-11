@@ -64,6 +64,7 @@ class KeyFix(unittest.TestCase):
     def test_clean_key(self):
         self.assertEqual(ntcam.clean_key('\x16sk-ant-api03-Ab_9-xY\r\n \u200b'), 'sk-ant-api03-Ab_9-xY')
         self.assertEqual(ntcam.clean_key(None), '')
+        self.assertEqual(ntcam.clean_key(' AQ.Ab8_x-Y9​\r\n'), 'AQ.Ab8_x-Y9')   # v2.5: Gemini ki nayi key mein nuqta
 
     def test_saved_key_saaf(self):
         ntcam.save_json(ntcam.SECRETS, {'claudeKey': 'sk-ant-api03-AAA\x16', 'cams': {}})
