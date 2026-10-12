@@ -1206,7 +1206,9 @@ class Parchi(unittest.TestCase):
         seen = {}
         with mock.patch.object(ntcam, 'ai_call', lambda content, *a, **k: (seen.update(t=content[0]['text']) or '{"paisa":"aaya","parchi":true}', 5, 'm')):
             ntcam.ai_parchi([(1.0, 'G')], [(1.0, 'C')])
-        self.assertIn('COUNTER camera se karo', seen['t'])
+        self.assertIn('QAREEB wale camera se karo', seen['t'])
+        w.apply({'zone': {'x': 0, 'y': 0, 'w': 0.9, 'h': 0.9}}); self.assertEqual(w.zone2['w'], 0.9, 'v2.11: sirf galla ka dabba ho (qareeb wala camera) to wahi')
+        w.apply({'zone': {'x': .1, 'y': .1, 'w': .5, 'h': .5}, 'zone2': {'x': .4, 'y': .1, 'w': .5, 'h': .8}}); self.assertEqual(w.zone2, {}, 'v2.11: dono dabbe (upar wala camera) = poori tasveer')
         self.assertLessEqual(16 + ntcam.PARCHI_C_KEEP, 24, 'card mein 24 se zyada nahi')
 
     def test_frames_at_aur_denied(self):

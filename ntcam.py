@@ -31,7 +31,10 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '2.10'
+VERSION = '2.11'
+# v2.11: DO CAMERA, KOI BHI ASAL — malik ne galle ke qareeb wale camera ko 'Galla' (asal) bana diya; upar wala 'Counter' (madadgar) ho
+#        to bhi theek. Sawal ab kaam ke naam par nahi: "aik camera qareeb hai, doosra door — khud pehchano; paisa / parchi qareeb
+#        wale se, banda door wale se". Madadgar camera par galla + counter dono dabbe hon (purana upar wala) to us ki poori tasveer.
 # v2.10: COUNTER CAMERA (galle ke qareeb) — malik app mein us par 'Counter ka hissa' (zone2) mark kare to AI ko sirf wohi hissa, bara
 #        (768 px) jata hai; pehle poori tasveer 480 px. Counter ki tasveerein poore len-den par phaili hui (pehle sirf shuru ki 6-8),
 #        ab 12. Sawal: parchi / paisa COUNTER camera se dekho, banda GALLA camera se pehchano.
@@ -762,7 +765,9 @@ class Watch(threading.Thread):
     def apply(self, cam):
         self.name = str(cam.get('name') or self.cid)[:40]
         if self.rec_only:                              # v2.1: counter camera — na harkat, na AI, na AI mode badle
-            self.zone, self.zone2 = {}, (cam.get('zone2') or cam.get('zone') or {})   # v2.10: zone2 = 'Counter ka hissa' — AI ko sirf yahi
+            z, z2 = cam.get('zone') or {}, cam.get('zone2') or {}
+            # v2.10: mark kiya hissa hi AI ko. v2.11: dono dabbe hon (pehle galla camera tha — upar se poori dukaan) to poori tasveer
+            self.zone, self.zone2 = {}, ({} if (z.get('w') and z2.get('w')) else (z2 if z2.get('w') else z))
             return
         self.zone = cam.get('zone') or {}
         self.zone2 = cam.get('zone2') or {}            # v1.8: counter / len-den ka hissa (malik mark karta hai)
@@ -2021,9 +2026,9 @@ def parse_parchi(text):
 
 def ai_parchi(galla, counter, big=False, prev=''):
     """galla / counter = [(t, b64)]. Wapas (dict, ms, model)."""
-    cams = ('Do camera hain. Pehle GALLA camera ki tasveerein (upar se poori dukaan — is se dekho KAUN banda counter par aaya), phir COUNTER camera '
-            'ki (galle ke bilkul qareeb se — haath, note aur parchi bare nazar aate hain). Paisa aur parchi ka faisla COUNTER camera se karo; '
-            'banda GALLA camera se pehchano. ') if counter else ''
+    cams = ('Do camera hain: pehle "Galla camera" ki tasveerein, phir "Counter camera" ki. In mein se AIK galle ke bilkul qareeb hai (haath, note '
+            'aur parchi bare nazar aate hain) aur DOOSRA upar se poori dukaan dikhata hai (kaun banda counter par aaya) — tasveer dekh kar khud '
+            'pehchano kaunsa kaunsa hai. Paisa aur parchi ka faisla QAREEB wale camera se karo; banda DOOR wale camera se pehchano. ') if counter else ''
     content = [{'type': 'text', 'text': PARCHI_PROMPT.format(cams=cams, prev=(' Pehle chhote AI ne kaha: ' + prev + ' — ghaur se DOBARA dekho, parchi kahin bhi di gayi ho to true.') if prev else '')}]
     n = 0
     for label, rows in (('Galla camera', galla), ('Counter camera', counter)):

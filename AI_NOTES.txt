@@ -1,8 +1,29 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v243   Tareekh: 2026-10-12  (v243 + ntcam.py v2.10 = COUNTER CAMERA ka hissa; AI BAND — Gemini ka balance khatam, malik FREE key dega; RULES NAHI badle)
+Version: v243   Tareekh: 2026-10-12  (ntcam.py v2.11 = do camera, qareeb wala ASAL; AI abhi PAID key par chal raha hai — malik free key dega; RULES NAHI badle)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+000000000000000000000000000000000000000000000000. ntcam.py v2.11 — DO CAMERA: QAREEB WALA ASAL (Galla), UPAR WALA MADADGAR (Counter)
+------------------------------------------------------------
+12 Oct dopahar: malik ne naye camera (30ddaa6e968c-ch1, ab IP .110) ko seedha neeche galle par kar diya (galla ke note, laptop, parchiyon
+ka dhair, customer ka haath upar se — bohat saaf) aur app mein us ka kaam 'Galla' kar ke poori tasveer par dabba laga diya (12:19:54
+counter recording band, 12:45:25 "nigrani shuru 30ddaa.."). Nateeja: DONO camera alag alag 'Galla' = alag alag check (dugna kharcha),
+AI ko dono ki tasveerein aik sath nahi ("24 + 0").
+- AI 12 Oct subah se phir chal raha hai LEKIN key wahi purani PAID hai ("app se badla: gemini" 11 Oct 14:07 ke baad nahi) — malik ko bataya.
+- Test 12:26 (halki neeli shirt, upar wala camera): haath mein safed kaghaz + note -> AI "Parchi di" (recording se milta hai).
+- Test 12:47:25 (qareeb wala camera, HD mein bilkul saaf): customer ka haath upar se note deta hai; galle wale (malik) ke doosre haath
+  mein safed parchi jo us ne 1 s pehle counter ke baayen kinare se uthayi; phir ginti, galla, baqaya. Dono camera: "Parchi di". Malik se
+  poocha: parchi thi ya nahi (jawab baqi). Agar NAHI thi: AI ne galle wale ke apne kaghaz ko customer ki parchi samjha -> sawal mein
+  "parchi sirf customer ke haath se aaye to; counter par pari / galle wale ke haath ki purani nahi" + parchiyon ka dhair manzar se hatana.
+- v2.11: (1) ai_parchi ka `cams` matn kaam ke naam se azad: "aik camera qareeb, doosra door — khud pehchano; paisa / parchi QAREEB wale
+  se, banda DOOR wale se". Label 'Galla camera' / 'Counter camera' wahi (line ~1673 in se pehchanta hai). (2) rec_only.apply: zone aur
+  zone2 dono hon (purana upar wala camera) = poori tasveer; sirf aik ho = wahi kaato.
+- MALIK KO KARNA HAI: upar wale camera (d4430eb60712-ch1, naam Galla) ka kaam app mein 'Counter' karna; qareeb wala 'Galla' rahe. Tab
+  aik hi check, dono ki tasveerein aik sath. Qareeb wale ka dabba poori tasveer par hai = galle wale ke apne haath / laptop par bhi
+  harkat; dabba galle + us ke upar counter ke kinare tak chhota karna behtar (kam check).
+- ntcam_test 89 pass. Asal AI par v2.11 ka test nahi (malik ki key par bina ijazat aazmaish nahi).
 
 ------------------------------------------------------------
 00000000000000000000000000000000000000000000000. v243 + ntcam.py v2.10 — DOOSRA (COUNTER) CAMERA + AI KA KHARCHA / FREE KEY
