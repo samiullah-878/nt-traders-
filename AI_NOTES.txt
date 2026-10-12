@@ -1,8 +1,39 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v242   Tareekh: 2026-10-11  (v242 = card ki tasveerein khud chalti hain; ntcam.py v2.9 = AI ko ghani tasveerein; RULES NAHI badle)
+Version: v243   Tareekh: 2026-10-12  (v243 + ntcam.py v2.10 = COUNTER CAMERA ka hissa; AI BAND — Gemini ka balance khatam, malik FREE key dega; RULES NAHI badle)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+00000000000000000000000000000000000000000000000. v243 + ntcam.py v2.10 — DOOSRA (COUNTER) CAMERA + AI KA KHARCHA / FREE KEY
+------------------------------------------------------------
+11 Oct sham ka silsila (zaroor parhein):
+- BINA PARCHI KA TEST FAIL: malik ne Noor Traders ki neeli shirt wale larke se bina parchi 500 dilwaya (camera ki ghari 5:23-5:24 =
+  PC 5:26; camera PC se 2:31 peeche). Usi waqt doosra customer (brown kapre) parchi + note de raha tha. AI: "customer ne parchi aur paise
+  diye" = Parchi di. Recording par 3 ilaaj aazmaye (har bande ki alag ginti wala sawal, bara model gemini-3.5-flash, counter ka tang
+  crop) — teeno mein AI ne sab ko "parchi true" kaha. Nateeja: upar wale poori-dukaan camera se bina parchi bharose se nahi pakra ja sakta;
+  AI aksar andaze se "parchi di" kehta hai. Malik ko saaf bataya.
+- HAL: galle ke qareeb DOOSRA CAMERA. Malik ne laga diya: 192.168.0.111 (id 30ddaa6e968c-ch1), 7:29 pm juda, 7:40 kaam 'Counter'
+  ("counter video shuru"). Manzar: counter ka upar, cash machine, galle wala (neeche), khula galla (laal dabba) beech-neeche saaf;
+  daayen taraf dukaan ka shutter (raat ko neeche — subah nahi hoga). Malik: customer wala hissa pehla camera dekhta hai. Jagah theek.
+- KHARCHA (MERI GHALTI): 7:28 pm Gemini 402 "Your prepayment credits are depleted" — key FREE nahi thi, paid (prepaid) project ki thi.
+  Code / notes "Gemini free" kehte the; maine bina jaanche ~40 aazmaishi sawal (50-85 tasveeron wale bhi) bheje aur v2.9 mein har check ki
+  tasveerein 12 -> 24-56 kin. Malik ko bataya, maafi nahi balke haqeeqat; AB MALIK SE POOCHE BAGAIR US KI KEY PAR KOI AAZMAISH NAHI.
+  secrets.json mein sirf geminiKey hai (koi aur paid key nahi). Malik: "ab total free kar dete hain" — subah naye project (bina billing)
+  ki Gemini key app mein lagayega (aistudio.google.com/apikey > naya project, plan "Free tier"). Free ki rozana had: poori ho to us din
+  AI band, agle din khud. Had jaldi khatam ho to checks kam karne hain (maslan sirf jab counter camera mein haath dikhe).
+- v243 (app): counter-role camera par "Counter ka hissa" ka button (cam-zone, zone2) + halat ki line (mark hai / mark karein). Pehle is
+  role par koi hissa mark nahi hota tha aur likha tha "AI nahi lagta" (v2.2 se ghalat).
+- ntcam.py v2.10: rec_only (counter) reader ab cam.zone2 (ya zone) rakhta hai; counter_crop(f, zone2) (10% hashiya, 64 px se chhota =
+  poori) -> tape 480 px + tape_hd 768 px; counter_frames ab thin(fr, n) (poore len-den par, pehle sirf shuru ke n); PARCHI_C / BIG_C
+  12 / 12, card mein PARCHI_C_KEEP 8 (g = thin(g, 24 - len(c))). AI ko counter_ai_frames (bari). Sawal ka `cams` hissa: "paisa aur
+  parchi ka faisla COUNTER camera se, banda GALLA camera se". ASAL AI PAR TEST NAHI (key band) — subah free key ke baad: safed kapron
+  wale larke se bina parchi ka test, phir zaroorat ho to har bande ki alag ginti wala sawal.
+- Recording 5:49 pm se phir 640x360 ("PC dheema — halki video", us waqt internet ruka tha); program dobara chale to HD.
+- ntcam_test 89 (Parchi +1), app.dom 30 + urdu 4. Kahani.test_budget_min_change_daily / test_cheap_doosri_raaye kabhi kabhi fail
+  (daily_video bila tarteeb, purana).
+- BLUE KHATA (alag repo samiullah-878/Noor-traders-, usi din): transfer-sync v4.3 (parchi par stock pehle -> baad, Ctn + Pcs) aur v4.4
+  (POS mein bane note ki bhi hamari parchi) — tafseel us repo ke AI_NOTES mein. Us repo par malik ki aik aur (cloud) chat bhi kaam karti hai.
 
 ------------------------------------------------------------
 0000000000000000000000000000000000000000000000. v242 + ntcam.py v2.9 — TASVEEREIN VIDEO KI TARAH + AI KO GHANI TASVEEREIN

@@ -303,6 +303,22 @@ test('v239: key likh kar khane se bahar tap — PC ki khabar par likhi hui key n
   await click('.nig-nav [data-action=nig-sec][data-arg=lenden]'); await click('[data-action=tab][data-arg=hazri]');
 });
 
+test('v243: counter camera par "Counter ka hissa" — mark karne ka button, mark ho to halat badle', async () => {
+  const ref = p => ({ path: B + p, kind: 'doc', id: p.split('/').at(-1) });
+  const cam = { name: 'Counter', ip: '192.168.0.111', brand: 'dahua', channel: 1, role: 'counter', enabled: true, createdAt: 20, status: 'online', rec: 'on', recFree: 50 };
+  await fake.sdk.setDoc(ref('cameras/ctr111-ch1'), cam);
+  await click('[data-action=tab][data-arg=nigrani]'); await settle(8);
+  await click('.nig-nav [data-action=nig-sec][data-arg=cams]'); await settle(8);
+  const btn = $('main [data-action=cam-zone][data-arg=zone2][data-id="ctr111-ch1"]'); assert.ok(btn, 'counter camera par hissa ka button');
+  assert.match($('main').textContent, /Counter: hissa mark karein/);
+  await click(btn); assert.match($('[data-sheet=cam-zone]').textContent, /Counter ka hissa/); assert.ok($('[data-sheet=cam-zone] .zone-box'));
+  await click('[data-sheet=cam-zone] [data-sheet-close]');
+  await fake.sdk.setDoc(ref('cameras/ctr111-ch1'), { ...cam, zone2: { x: 0.2, y: 0.4, w: 0.4, h: 0.4 } }); await settle(10);
+  assert.match($('main').textContent, /Counter: hissa mark hai/);
+  await fake.sdk.deleteDoc(ref('cameras/ctr111-ch1')); await settle(8);
+  await click('.nig-nav [data-action=nig-sec][data-arg=lenden]'); await click('[data-action=tab][data-arg=hazri]');
+});
+
 test('v235: camera jodna app se — network par mile camera ki halat, har aik ka password, PC khud jodta hai', async () => {
   const ref = p => ({ path: B + p, kind: 'doc', id: p.split('/').at(-1) });
   const st0 = structuredClone(records.get(B + 'cameraPC/status'));

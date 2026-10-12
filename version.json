@@ -1,6 +1,6 @@
 {
-  "version": "v242",
+  "version": "v243",
   "variant": "Production",
-  "buildDate": "2026-10-11",
-  "notes": "Len-den ke card ki tasveerein ab video ki tarah khud chalti hain; tasveer par tap = rokna / chalana. PC program v2.9 (AI ko ghani tasveerein). Rules wahi."
+  "buildDate": "2026-10-12",
+  "notes": "Counter camera par bhi \"Counter ka hissa\" mark kar sakte hain (parchi ke AI ko sirf wohi hissa, bara ho kar). PC program v2.10. Rules wahi."
 }

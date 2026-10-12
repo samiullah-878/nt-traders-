@@ -1117,7 +1117,7 @@ class Parchi(unittest.TestCase):
 
     def test_parchi_di_halka_card(self):
         g, evs, frs, clips, calls = self.run_case({'paisa': 'dono', 'parchi': True, 'kaun': 'daayen', 'why': 'parchi aur paisa diya'})
-        self.assertEqual(len(calls), 1, 'sirf chhota AI'); self.assertEqual(calls[0][:3], (16, ntcam.PARCHI_C, False), 'galla har 4 s (62 s = 16) + counter 6')
+        self.assertEqual(len(calls), 1, 'sirf chhota AI'); self.assertEqual(calls[0][:3], (16, ntcam.PARCHI_C, False), 'galla har 4 s (62 s = 16) + counter 12')
         self.assertEqual((evs[0]['verdict'], evs[0]['flow'], evs[0]['flags']), ('normal', 'len_den', [])); self.assertEqual(frs, [], 'normal par photos nahi')
         self.assertEqual(clips, []); st = g.stats[('c1', ntcam.pk_date(1045.0))]; self.assertEqual((st['matched'], st['moneyIn'], st['moneyOut'], st['shak']), (1, 1, 1, 0))
 
@@ -1134,7 +1134,7 @@ class Parchi(unittest.TestCase):
         g, evs, frs, clips, calls = self.run_case({'paisa': 'aaya', 'parchi': False, 'why': 'parchi nahi'}, {'paisa': 'aaya', 'parchi': False, 'kaun': 'baayen, neela kurta', 'why': 'sirf paisa diya'})
         ev, fr = evs[0], frs[0]
         self.assertEqual((ev['verdict'], ev['flags'], ev['matchState']), ('shak', ['noparchi'], 'missing')); self.assertIn('Bina parchi paisa liya', ev['why']); self.assertIn('neela kurta', ev['why'])
-        self.assertEqual(len(fr['frames']), ntcam.PARCHI_BIG_N + ntcam.PARCHI_BIG_C); self.assertTrue(any(str(b).startswith('C') for b in fr['frames']), 'counter camera ki tasveerein bhi')
+        self.assertEqual(len(fr['frames']), 24, 'galla 16 + counter 8 (card ki had)'); self.assertEqual(sum(1 for b in fr['frames'] if str(b).startswith('C')), ntcam.PARCHI_C_KEEP, 'counter camera ki tasveerein bhi')
         self.assertEqual(clips, [('c1', 'c1-1045000'), ('nvr-3', 'c1-1045000-c')], 'dono camera ki video')
         st = g.stats[('c1', ntcam.pk_date(1045.0))]; self.assertEqual((st['shak'], st['missing']), (1, 1))
         rules = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'firestore.rules'), encoding='utf-8').read()
@@ -1164,7 +1164,7 @@ class Parchi(unittest.TestCase):
         self.assertEqual(len(ntcam.thin(long, 24)), 24); self.assertEqual(ntcam.thin(long, 24)[0], long[0]); self.assertEqual(ntcam.thin(long, 24)[-1], long[-1]); self.assertEqual(ntcam.thin(long[:5], 24), long[:5])
         w.tape_hd = __import__('collections').deque([(t, 'HD') for t, _, _ in w.tape], maxlen=720)
         self.assertTrue(all(b == 'HD' for _, b in ntcam.parchi_ai_frames(w, kf)), '20 tak: bari tasveer'); self.assertEqual(ntcam.parchi_ai_frames(w, long), long, 'ghani hon to 416 hi')
-        self.assertLessEqual(ntcam.PARCHI_BIG_N + ntcam.PARCHI_BIG_C, 24, 'rules: 24 tasveeron se zyada nahi')
+        self.assertLessEqual(ntcam.PARCHI_C_KEEP, 12, 'card mein counter ki tasveerein mehdood (kul 24 — test_bina_parchi_shak)')
         g, evs, frs, clips, calls = self.run_case({'paisa': 'nahi', 'parchi': False, 'why': 'kuch nahi dikha'}, {'paisa': 'nahi', 'parchi': False, 'why': 'paisa nahi hila'})
         self.assertEqual((evs[0]['verdict'], evs[0]['flags']), ('saaf_nahi', ['parchi_saaf']), 'paisa hila hi nahi -> shak nahi'); self.assertEqual(clips, [])
         st = g.stats[('c1', ntcam.pk_date(1045.0))]; self.assertEqual(st['shak'], 0)
@@ -1187,6 +1187,27 @@ class Parchi(unittest.TestCase):
         fr = [d for p, d in writes if '/cameraFrames/' in p][0]; ev = [d for p, d in writes if '/cameraEvents/' in p][0]
         self.assertTrue(all(str(b).startswith(('J', 'C')) for b in fr['frames']), 'card mein chhoti tasveerein (1 MB ki had)'); self.assertTrue(ev['thumb'].startswith('J'))
         w2 = self._w(); self.assertEqual(w2.hd_frames([(900.0, 'J0')]), [(900.0, 'J0')], 'tape_hd na ho (purana / test) to bhi chale')
+
+    def test_v210_counter_ka_hissa(self):
+        """v2.10: counter camera ka mark kiya hissa hi AI ko (bara), tasveerein poore len-den par phaili hui."""
+        import numpy as np
+        f = np.zeros((540, 960, 3), 'uint8')
+        self.assertEqual(ntcam.counter_crop(f, {}).shape[:2], (540, 960), 'mark na ho to poori')
+        c = ntcam.counter_crop(f, {'x': 0.25, 'y': 0.4, 'w': 0.35, 'h': 0.4}); self.assertLess(c.shape[1], 500); self.assertGreater(c.shape[1], 330); self.assertLess(c.shape[0], 300)
+        self.assertEqual(ntcam.counter_crop(f, {'x': 0.5, 'y': 0.5, 'w': 0.01, 'h': 0.01}).shape[:2], (540, 960), 'bohat chhota dabba = poori')
+        g, writes, clips = self._g(); r = g.counters['nvr-3']
+        r.tape_hd = __import__('collections').deque([(t, 'H' + b) for t, b, _ in r.tape], maxlen=720)
+        times = [1000.0 + 4 * k for k in range(20)]
+        fr, cam = g.counter_frames(times, ntcam.PARCHI_C)
+        self.assertEqual(len(fr), ntcam.PARCHI_C); self.assertEqual(fr[0][0], 1000.0); self.assertEqual(fr[-1][0], 1076.0, 'aakhri waqt tak (pehle sirf shuru ke)')
+        self.assertTrue(all(b.startswith('HC') for _, b in ntcam.counter_ai_frames(cam, fr)), 'AI ko bari'); self.assertEqual(ntcam.counter_ai_frames(None, fr), fr)
+        w = ntcam.Watch.__new__(ntcam.Watch); __import__('threading').Thread.__init__(w, daemon=True); w.rec_only = True; w.cid = 'x'
+        w.apply({'name': 'Counter', 'zone2': {'x': 0.1, 'y': 0.1, 'w': 0.5, 'h': 0.5}}); self.assertEqual(w.zone2['w'], 0.5); self.assertEqual(w.zone, {})
+        seen = {}
+        with mock.patch.object(ntcam, 'ai_call', lambda content, *a, **k: (seen.update(t=content[0]['text']) or '{"paisa":"aaya","parchi":true}', 5, 'm')):
+            ntcam.ai_parchi([(1.0, 'G')], [(1.0, 'C')])
+        self.assertIn('COUNTER camera se karo', seen['t'])
+        self.assertLessEqual(16 + ntcam.PARCHI_C_KEEP, 24, 'card mein 24 se zyada nahi')
 
     def test_frames_at_aur_denied(self):
         g, _, _ = self._g(); r = g.counters['nvr-3']
