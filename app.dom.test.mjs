@@ -667,6 +667,20 @@ test('logout → staff login → check-in / check-out', async () => {
   assert.equal(storage.getItem('nt-hazri-outbox-v217'), null, 'tasdeeq ke baad phone ki qataar khali');
   await click('.fx .fx-ok'); await new Promise(r => setTimeout(r, 320)); assert.equal($('.fx'), null, 'Theek hai se band');
   await assert.rejects(app.data.checkIn({ selfie: 'x', gps: { distance: 900 } }), /door/);
+  // v244: duty ka waqt pura nahi hua -> Check-Out band; jaldi jane ki ijazat -> malik "Haan" -> khul jata hai
+  if ($('.el-lock')) {
+    assert.equal($('[data-hold=check-out]'), null, 'duty se pehle Check-Out ka button nahi'); assert.match($('.el-lock').textContent, /ke baad khulega/);
+    await click('[data-action=early-open]'); assert.ok($('[data-sheet=early-ask]'), 'ijazat ka sheet');
+    await submit($('form[data-form=early-ask]')); await settle();
+    const er = [...records].find(([k, v]) => k.includes('staffRequests/') && v.kind === 'early' && v.phone === '03111112223');
+    assert.ok(er, 'jaldi jane ki request bani');
+    assert.deepEqual(Object.keys(er[1]).sort(), ['by', 'checkIn', 'checkOut', 'createdAt', 'date', 'half', 'kind', 'phone', 'reason', 'status', 'to'].sort(), 'sirf rules wali keys');
+    assert.equal(er[1].checkIn, ''); assert.equal(er[1].checkOut.length, 5); assert.equal(er[1].to, er[1].date); assert.equal(er[1].status, 'pending');
+    assert.match($('.punch').textContent, /jawab ka intezar/); assert.equal($('[data-hold=check-out]'), null, 'jawab tak band');
+    await assert.rejects(app.data.requestEarly({ row: { date: today, checkIn: '09:00' }, time: '17:00', reason: 'x' }), /pehle se/);
+    await fake.sdk.setDoc({ path: er[0] }, { status: 'approved', reviewedAt: Date.now() }, { merge: true }); await settle();
+    assert.equal($('.el-lock'), null, 'manzoor -> tala khul gaya'); assert.match($('.punch').textContent, /ijazat mil gayi/);
+  }
   assert.ok($('[data-hold=check-out]'), 'ab Check-Out button (daba kar rakhein)'); assert.match($('.punch').textContent, /baqi/); assert.match($('.punch').textContent, /Malik tak pohanch gayi/);
   // ---- v205: bahar jane ki parchi ----
   Object.defineProperty(win.navigator, 'geolocation', { value: undefined, configurable: true });

@@ -1,8 +1,37 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v243   Tareekh: 2026-10-12  (ntcam.py v2.12 = do camera, qareeb wala ASAL, madadgar halki video; AI abhi PAID key par chal raha hai — malik free key dega; RULES NAHI badle)
+Version: v244   Tareekh: 2026-10-12  (Duty se pehle Check-Out band + jaldi jane ki ijazat; RULES BADLE v244 — firestore-rules-v244.html)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+0000000000000000000000000000000000000000000000000. v244 — DUTY SE PEHLE CHECK-OUT BAND + JALDI JANE KI IJAZAT
+------------------------------------------------------------
+Malik (12 Oct sham): "Checkout ko duty timing ke sath sync karna hai — jo time likha hai us se pehle checkout na ho, upar likha ho;
+kisi ne jana ho to request bheje, hum OK karein to us ka checkout khul jaye." + "manager ko bhi timing ki access do, wo bhi duty timing set kar sake".
+- core.checkoutLock(a, schedule, {requests, phone, now, on}) -> null (khula) ya {until, left, at, half}. Khula: setting band
+  (config.earlyLock === false) / shiftEnd nahi / weeklyOff ya dukaan band din / poori chutti / earlyFor(...) 'approved' / waqt ho gaya.
+  Shaam ki aadhi chutti = halfSchedule(pm) ke aadhe waqt par khulta hai. Raat ki duty (end <= start) agle din. core.earlyFor = us din ki
+  sab se nayi kind 'early' request.
+- staffview: open record par lock ho to hold-button ki jagah gehra neela "Check-Out X ke baad khulega · N baqi" + disabled grey button +
+  "Jaldi jana hai? Ijazat mangein" (sheet early-ask: Abhi / apna waqt + 4 wajah + note). Pending = narangi "jawab ka intezar"; mana =
+  laal notice + dobara maang sakta hai; manzoor = hara "ijazat mil gayi" aur hold button wapas. 'check-out' action bhi lock dekhta hai.
+- data.requestEarly({row, time, reason, note}) -> staffRequests {phone, kind:'early', date, to=date, half:'', checkIn:'', checkOut:HH:MM,
+  reason, status:'pending', createdAt, by} + ping('leave') malik ko. Pending/approved pehle se ho to error. reviewRequest mein 'early'
+  ka koi alag kaam nahi (sirf status) — hazri nahi badalti; Check-Out larka khud location ke sath lagata hai.
+- Malik/manager: Requests sheet mein "⏰ Jaldi jana" chip + waqt + duty; hazri row par "Jaldi chutti manzoor / Jaldi jana chahta hai" tag
+  (daba kar Requests). Manager doosron ki request Haan / Nahi kar sakta hai (guardOwner + generic rule); apni nahi (notSelf).
+- Settings > Duty ka waqt (sab par): "Duty khatam hone se pehle Check-Out" Band (default) / Khula — sirf malik (saveConfig earlyLock,
+  manager ko sirf halat dikhti hai, data mein bhi mana).
+- MANAGER TIMING: manager pehle se (v211) Staff > staff > Duty ka waqt aur Settings > Duty ka waqt badal sakta tha (guardOwner + generic
+  rule). v244: manager APNI duty ka waqt nahi badal sakta (saveStaff selfMgr error; staffSchedules ka apna doc nahi likhta) — warna
+  apna Check-Out khud khol leta.
+- RULES v244: staffRequests create mein kind 'early' (to == date, checkIn '', checkOut 5 harf, via nahi). Malik ko
+  firestore-rules-v244.html (Pages par) se publish karna hai. Publish se pehle "jaldi jana" request permission-denied.
+- HAD: tala sirf app mein hai (rules Check-Out ka waqt nahi dekhte). Purani version wala phone tala nahi dikhayega — sab phone v244.
+- Tests: early-lock.test.mjs (5) + app.dom staff test mein poora silsila (tala -> request -> sirf rules wali keys -> malik Haan -> khula).
+  Pehle se fail: app.dom #3 (malik login tawajju 'dobara chali'), attendance-live / notifications / salary / shift-checkout /
+  staff-upgrades / tasks .test.mjs (file nahi milti / purane) — v244 se pehle bhi isi tarah.
 
 ------------------------------------------------------------
 000000000000000000000000000000000000000000000000. ntcam.py v2.11 — DO CAMERA: QAREEB WALA ASAL (Galla), UPAR WALA MADADGAR (Counter)

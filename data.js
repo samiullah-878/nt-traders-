@@ -303,11 +303,18 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       phone, useDefaultShift: input.useDefaultShift !== false, shiftStart: input.shiftStart || state.config.shiftStart || '09:15', shiftEnd: input.shiftEnd || '',
       grace: Math.max(0, Number(input.grace ?? state.config.grace ?? 10)), weeklyOff: input.weeklyOff === '' || input.weeklyOff == null ? [] : [Number(input.weeklyOff)]
     });
+    // v244: manager apni duty ka waqt khud nahi badal sakta (warna apna Check-Out khud khol le) — malik badlega
+    const selfMgr = state.role === 'manager' && phone === state.phone;
+    if (selfMgr) {
+      const cur = state.schedules.get(phone) || {}, a = resolveSchedule(state.config, cur), b = resolveSchedule(state.config, schedule);
+      if (a.shiftStart !== b.shiftStart || (a.shiftEnd || '') !== (b.shiftEnd || '') || Number(a.grace) !== Number(b.grace) || (cur.useDefaultShift !== false) !== (schedule.useDefaultShift !== false))
+        throw new Error('Apni duty ka waqt malik badlega — doosron ka aap badal sakte hain.');
+    }
     await fast(async tx => {
       // PIN ka option malik ne mana kiya — purana khali/likha PIN field bhi mita do
       tx.set(ref('staffAccounts', phone), old && 'pin' in old && sdk.deleteField ? { ...account, pin: sdk.deleteField() } : account, { merge: true });
       tx.set(ref('staff', phone), { ...account, id: phone }, { merge: true }); // purani hisab app ke liye
-      tx.set(ref('staffSchedules', phone), schedule, { merge: true });
+      if (!selfMgr) tx.set(ref('staffSchedules', phone), schedule, { merge: true });
       if (JSON.stringify(old?.salary || null) !== JSON.stringify(salary)) audit(tx, 'salary settings', phone, old?.salary || null, salary, old ? 'Malik ne salary settings badli' : 'Naya staff');
     });
     void mirrorSalaryToSettings(phone, salary, account.salaryExtras);
@@ -337,6 +344,8 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     if (has('notify')) next.notify = clean(patch.notify || { on: false });
     if (has('push')) next.push = clean(patch.push || {});
     if (has('appUrl')) next.appUrl = String(patch.appUrl || '');
+    // v244: duty se pehle Check-Out band (sirf malik on / off kare)
+    if (has('earlyLock')) { if (state.role !== 'owner') throw new Error('Ye setting sirf malik badal sakta hai.'); next.earlyLock = patch.earlyLock !== false && patch.earlyLock !== 'off'; }
     const salaryKeys = ['defSalary', 'defDays', 'defOt', 'salaryMode', 'leavePaid', 'lateEvery', 'lateFineDays', 'outDeduct', 'breakDeduct'];
     if (salaryKeys.some(has)) {
       const old = { ...DEFAULT_CONFIG.salaryDefault, ...(state.config.salaryDefault || {}) }, d = { ...old };
@@ -1016,6 +1025,25 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     ping('leave', { title: `${me()}: dukaan se bahar Check-Out`, message: `${fmtTime(outT)} · ${where.distance != null ? (where.distance >= 1000 ? (where.distance / 1000).toFixed(1) + ' km' : where.distance + ' m') + ' door' : 'location nahi'} · ${why}`, tags: ['house'] });
     return settle(write);
   }
+  /** v244: duty khatam hone se pehle jana ho to malik / manager se ijazat (kind 'early'). Manzoor = Check-Out ka button khul jata hai,
+      Check-Out larka khud (location ke sath) lagata hai. Keys firestore.rules mein ginti ki hain. */
+  async function requestEarly({ row, time, reason, note = '' }) {
+    if (state.role !== 'staff' && state.role !== 'manager') throw new Error('Staff login zaroori hai.');
+    if (!row?.checkIn || row.checkOut) throw new Error('Pehle Check-In karein.');
+    const outT = to24(time); if (!outT) throw new Error('Kab jana hai, wo waqt chunein.');
+    if (workMinutes({ checkIn: row.checkIn, checkOut: outT }) == null && to24(row.checkIn) !== outT) throw new Error(`Jane ka waqt (${fmtTime(outT)}) aane ke waqt (${fmtTime(row.checkIn)}) se pehle hai. AM / PM check karein.`);
+    const why = String(reason || '').trim(); if (!why) throw new Error('Wajah chunein.');
+    const old = state.requests.filter(r => r.phone === state.phone && r.kind === 'early' && r.date === row.date).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0];
+    if (old?.status === 'pending') throw new Error('Aaj ki jaldi jane ki request pehle se malik ke paas hai.');
+    if (old?.status === 'approved') throw new Error('Aap ki request manzoor ho chuki hai — Check-Out kar lein.');
+    const id = sdk.doc(col('staffRequests')).id;
+    const full = (why + (String(note || '').trim() ? ' — ' + String(note).trim() : '')).slice(0, 1000);
+    const write = sdk.setDoc(ref('staffRequests', id), { phone: state.phone, kind: 'early', date: row.date, to: row.date, half: '', checkIn: '', checkOut: outT, reason: full, status: 'pending', createdAt: Date.now(), by: auth.currentUser.uid });
+    write.catch(e => problem('save', e));
+    const sch = scheduleFor(state.phone);
+    ping('leave', { title: `${me()}: jaldi jana chahta hai`, message: `${fmtTime(outT)} par (duty ${sch.shiftEnd ? fmtTime(sch.shiftEnd) + ' tak' : ''}) · ${full.slice(0, 120)} — Haan / Nahi app mein`, priority: 4, tags: ['hourglass'] });
+    return settle(write);
+  }
   async function sendRequest({ kind, date, to, checkIn, checkOut, reason, half = '' }) {
     if (state.role !== 'staff' && state.role !== 'manager') throw new Error('Staff login zaroori hai.');
     if (!['leave', 'correction'].includes(kind)) throw new Error('Request ki qisam chunein.');
@@ -1302,7 +1330,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       async createSession(uid, phone) { await sdk.setDoc(ref('staffSessions', uid), { phone, createdAt: Date.now() }); }
     },
     saveStaff, deleteStaff, saveConfig, saveAttendance, deleteAttendance, markLeave, cancelLeave, reviewRequest,
-    addExtra, removeExtra, toggleFinal, addPayment, checkIn, checkOut, sendRequest, requestOutsideCheckout,
+    addExtra, removeExtra, toggleFinal, addPayment, checkIn, checkOut, sendRequest, requestOutsideCheckout, requestEarly,
     retrySync, dismissSync, drainOutbox, pendingSync, diagPing
   };
 }

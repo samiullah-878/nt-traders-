@@ -595,6 +595,20 @@ html.is-snap .live-clock,html.is-snap [data-live]{opacity:.6}
 .co-time{max-width:220px}
 .co-where{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 
+/* ---------- v244: duty se pehle Check-Out band + jaldi jane ki ijazat ---------- */
+.el-lock{display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:12px 14px;margin:6px 0 8px;border-radius:14px;
+  background:linear-gradient(135deg,#1b2a4a,#24406e);color:#fff;box-shadow:0 8px 22px -12px rgba(27,42,74,.7)}
+.el-lock .el-ico{display:grid;place-items:center;width:42px;height:42px;flex:none;border-radius:12px;background:rgba(255,255,255,.14);animation:elPulse 2.4s ease-in-out infinite}
+.el-lock div{display:grid;gap:2px}.el-lock b{font-size:1.0625rem}.el-lock small{color:#cfe0ff;font-weight:600}
+.el-btn[disabled]{background:#c9d1dc;color:#5b6676;cursor:not-allowed;box-shadow:none;opacity:1}
+.el-ask{width:100%;margin-top:8px;border-style:dashed}
+.el-ok{width:100%;margin:6px 0 8px;background:var(--ok-bg);color:var(--ok)}
+.el-wait{margin-top:10px}
+.notice.tone-ok{background:var(--ok-bg);color:var(--ok)}
+.tag.t-early{background:#e8eefc;color:#24406e;border-color:#c9d6f3}
+@keyframes elPulse{50%{transform:scale(1.06)}}
+@media(prefers-reduced-motion:reduce){.el-lock .el-ico{animation:none}}
+
 /* ---------- v222: Nigrani (galla) ---------- */
 .nig-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
 .nig-head .day-nav{display:flex;align-items:center;gap:8px}.nig-head .day-nav b{min-width:90px;text-align:center;font-size:1.0625rem}

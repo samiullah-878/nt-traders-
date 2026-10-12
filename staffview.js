@@ -1,7 +1,7 @@
 // staffview.js — staff ka apna panel. Sirf apni hazri, apni salary, apni request.
 import {
   APP_VERSION, STATUS_LABEL, DAY_SHORT, SHOP, esc, to24, pkTime24, money, hm, fmtTime, pkDate, pkMinutes, addMonths, weekday, monthLabel, dateLabel, shortDate,
-  monthSummary, openRecord, workMinutes, parseTime, checkoutDue, shiftMinutes, dayOuts, outMinutes, OUT_REASONS, OUT_MINUTES, reasonUr, minutesUr, dayColor, durText, hasArabic, breakGroup, ticketMinutes, ticketText
+  monthSummary, openRecord, workMinutes, parseTime, checkoutDue, checkoutLock, earlyFor, shiftMinutes, dayOuts, outMinutes, OUT_REASONS, OUT_MINUTES, reasonUr, minutesUr, dayColor, durText, hasArabic, breakGroup, ticketMinutes, ticketText
 } from './core.js';
 import { openTicketSheet } from './tickets.js';
 import { openBreakSheet, breakStatusHtml } from './breaks.js';
@@ -65,9 +65,9 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
         <div class="progress" role="img" aria-label="Duty ka hissa"><i style="width:${Math.min(100, Math.round(mins / Math.max(1, dutyMin()) * 100))}%"></i></div>
         <p class="punch-sub"><b>${hm(mins)}</b> ho gaye &nbsp;|&nbsp; ${left > 0 ? `<b>${hm(left)}</b> baqi` : `<b class="txt-ok">Duty poori${left < 0 ? ', ' + hm(-left) + ' overtime' : ''}</b>`}${sch.shiftEnd ? ' &nbsp;|&nbsp; Chutti ' + fmtTime(sch.shiftEnd) : ''}</p>
         ${syncLine(open)}${outsideLine(open)}
-        <button type="button" class="btn btn-out btn-xl btn-hold" data-hold="check-out" data-hold-ms="900" aria-label="Check-Out — button daba kar rakhein">
+        ${lockOf(open) ? lockedHtml(open) : `${earlyLine(open)}<button type="button" class="btn btn-out btn-xl btn-hold" data-hold="check-out" data-hold-ms="900" aria-label="Check-Out — button daba kar rakhein">
           <svg class="hold-ring" viewBox="0 0 36 36" aria-hidden="true"><circle class="hold-track" cx="18" cy="18" r="15"/><circle class="hold-fill" cx="18" cy="18" r="15" pathLength="100"/></svg>
-          <span class="hold-text"><b>Check-Out karein</b><small>Daba kar rakhein · location lagegi</small></span></button>
+          <span class="hold-text"><b>Check-Out karein</b><small>Daba kar rakhein · location lagegi</small></span></button>`}
         <p class="punch-step" id="punchStep">${esc(ui.step)}</p></section>`;
     }
     if (todayRow?.checkIn) {
@@ -81,6 +81,45 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
       <p class="punch-sub ${lateBy > 0 ? 'txt-late' : ''}">${lateBy > 0 ? `Waqt guzar chuka hai — abhi Check-In karein` : 'Dukaan pohanch kar Check-In karein'}</p>
       ${ui.stage ? stepper() : `<button type="button" class="btn btn-in btn-xl" data-action="check-in">${icon('camera', 22)} Check-In karein</button>`}
       <p class="punch-step" id="punchStep">${esc(ui.step) || `Selfie aur location lagegi. Dukaan se ${radius}m ke andar hona zaroori hai.`}</p></section>`;
+  }
+  /* ---------- v244: duty ka waqt pura hone se pehle Check-Out band; jaldi jana = malik / manager se ijazat ---------- */
+  const lockOf = open => checkoutLock(open, schedule(), { requests: S.requests, phone: S.phone, on: S.config.earlyLock !== false });
+  const leftText = m => (m >= 60 ? Math.floor(m / 60) + ' ghanta ' + (m % 60 ? (m % 60) + ' min' : '') : m + ' min').trim();
+  const EARLY_REASONS = ['Tabiyat kharab hai', 'Ghar ka zaroori kaam', 'Malik / manager ne bheja', 'Doosri wajah'];
+  function lockedHtml(open) {
+    const L = lockOf(open), r = earlyFor(S.requests, S.phone, open.date);
+    const reqBox = r?.status === 'pending'
+      ? `<div class="co-wait el-wait">${icon('clock', 20)}<div><b>Jaldi jane ki request — jawab ka intezar</b><small>${fmtTime(r.checkOut)} par jana · ${esc(r.reason || '')}. Malik / manager "Haan" karein to Check-Out khud khul jayega.</small></div></div>`
+      : r?.status === 'rejected'
+        ? `<p class="notice tone-bad">${icon('alert', 18)} <span>Jaldi jane ki request mana ho gayi${r.ownerNote ? ': ' + esc(r.ownerNote) : ''}. Duty poori karein.</span></p>`
+        : '';
+    return `<div class="el-lock" role="status">
+        <span class="el-ico" aria-hidden="true">${icon('clock', 22)}</span>
+        <div><b>Check-Out ${fmtTime(L.until)} ke baad khulega</b><small>${L.half ? 'Aadhi chutti (shaam) · ' : ''}${esc(leftText(L.left))} baqi</small></div>
+      </div>
+      <button type="button" class="btn btn-out btn-xl el-btn" disabled aria-disabled="true">${icon('clock', 22)}<span class="hold-text"><b>Check-Out band hai</b><small>Duty ka waqt pura nahi hua</small></span></button>
+      ${reqBox}${r?.status === 'pending' ? '' : `<button type="button" class="btn btn-ghost btn-lg el-ask" data-action="early-open">${icon('out', 20)} Jaldi jana hai? Ijazat mangein</button>`}`;
+  }
+  function earlyLine(open) {
+    const r = earlyFor(S.requests, S.phone, open.date);
+    return r?.status === 'approved' ? `<p class="notice tone-ok el-ok">${icon('check', 18)} <span>Jaldi jane ki ijazat mil gayi (${fmtTime(r.checkOut)}) — ab Check-Out kar sakte hain.</span></p>` : '';
+  }
+  function earlySheet(open) {
+    const sheet = openSheet({ id: 'early-ask', title: 'Jaldi jane ki ijazat', render: () => {
+      const L = lockOf(open), nowT = pkTime24();
+      return `<div class="co-head">${icon('clock', 26)}<div><b>Duty ${L ? fmtTime(L.until) : ''} tak hai${L ? ' · ' + esc(leftText(L.left)) + ' baqi' : ''}</b>
+          <small>Request malik / manager ko jayegi. Un ke <b>Haan</b> par aap ka Check-Out ka button khul jayega.</small></div></div>
+        <form class="form" data-form="early-ask">
+          <fieldset class="co-set"><legend>Kab jana hai?</legend><div class="cam-roles">
+            <label class="cam-pick"><input type="radio" name="when" value="now" checked><span>Abhi · ${esc(fmtTime(nowT))}</span></label>
+            <label class="cam-pick"><input type="radio" name="when" value="custom"><span>Apna waqt</span></label></div>
+            <label class="co-time">Apna waqt<input type="time" name="at" value="${esc(nowT)}"></label></fieldset>
+          <fieldset class="co-set"><legend>Wajah</legend><div class="cam-roles">${EARLY_REASONS.map((w, i) => `<label class="cam-pick"><input type="radio" name="reason" value="${esc(w)}" ${i === 0 ? 'checked' : ''}><span>${esc(w)}</span></label>`).join('')}</div></fieldset>
+          <label>Kuch aur (ikhtiyari)<input name="note" maxlength="200" placeholder="Misal: bachay ko doctor ke paas le jana hai"></label>
+          <button class="btn btn-out btn-lg">${icon('out', 20)} Ijazat mangein</button>
+        </form>`;
+    } });
+    ui.earlySheet = sheet; return sheet;
   }
   /* ---------- v221: dukaan se BAHAR Check-Out = malik ko request ---------- */
   const kmText = d => (d == null || !Number.isFinite(Number(d)) ? '' : d >= 1000 ? (d / 1000).toFixed(1) + ' km' : Math.round(d) + ' m');
@@ -268,8 +307,8 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
         <label>Wajah<textarea name="reason" rows="3" maxlength="1000" required placeholder="${kind === 'leave' ? 'Chutti kyun chahiye' : 'Maslan: Check-Out karna bhool gaya'}"></textarea></label>
         <div class="btn-row"><button class="btn btn-primary btn-lg">Malik ko bhejein</button></div></form></section>
       <h2 class="section-label">Meri requests</h2>
-      <section class="panel"><ul class="reqs">${list.map(r => `<li class="req"><p><b>${r.kind === 'leave' ? (r.half ? 'Aadhi chutti' : 'Chutti') : 'Hazri durust'}</b> <span class="stamp ${r.status === 'pending' ? 'st-late' : r.status === 'approved' ? 'st-present' : 'st-absent'}">${r.status === 'pending' ? 'Jawab ka intezar' : r.status === 'approved' ? 'Manzoor' : 'Na-manzoor'}</span></p>
-        <p>${esc(shortDate(r.date))}${r.to && r.to !== r.date ? ' – ' + esc(shortDate(r.to)) : ''}${r.half ? (r.half === 'am' ? ' (subah)' : ' (shaam)') : ''}${r.kind === 'leave' && r.status === 'approved' && typeof r.paid === 'boolean' ? ` &nbsp;|&nbsp; <b class="${r.paid ? 'txt-ok' : 'txt-bad'}">${r.paid ? 'Paisa nahi katega' : 'Paisa katega'}</b>` : ''}${r.kind === 'correction' ? (r.via === 'outside' ? ` &nbsp;|&nbsp; Bahar se Check-Out ${fmtTime(r.checkOut)}${r.distance != null ? ' · ' + kmText(r.distance) + ' door' : ''}` : ` &nbsp;|&nbsp; ${fmtTime(r.checkIn)} to ${fmtTime(r.checkOut)}`) : ''}</p><p class="muted">${nameHtml(r.reason || '')}</p>${r.ownerNote ? `<p class="muted">Malik: ${esc(r.ownerNote)}</p>` : ''}</li>`).join('') || '<li class="muted pad">Abhi koi request nahi bheji.</li>'}</ul></section>`;
+      <section class="panel"><ul class="reqs">${list.map(r => `<li class="req"><p><b>${r.kind === 'leave' ? (r.half ? 'Aadhi chutti' : 'Chutti') : r.kind === 'early' ? '⏰ Jaldi jana' : 'Hazri durust'}</b> <span class="stamp ${r.status === 'pending' ? 'st-late' : r.status === 'approved' ? 'st-present' : 'st-absent'}">${r.status === 'pending' ? 'Jawab ka intezar' : r.status === 'approved' ? 'Manzoor' : 'Na-manzoor'}</span></p>
+        <p>${esc(shortDate(r.date))}${r.to && r.to !== r.date ? ' – ' + esc(shortDate(r.to)) : ''}${r.half ? (r.half === 'am' ? ' (subah)' : ' (shaam)') : ''}${r.kind === 'leave' && r.status === 'approved' && typeof r.paid === 'boolean' ? ` &nbsp;|&nbsp; <b class="${r.paid ? 'txt-ok' : 'txt-bad'}">${r.paid ? 'Paisa nahi katega' : 'Paisa katega'}</b>` : ''}${r.kind === 'early' ? ` &nbsp;|&nbsp; ${fmtTime(r.checkOut)} par` : ''}${r.kind === 'correction' ? (r.via === 'outside' ? ` &nbsp;|&nbsp; Bahar se Check-Out ${fmtTime(r.checkOut)}${r.distance != null ? ' · ' + kmText(r.distance) + ' door' : ''}` : ` &nbsp;|&nbsp; ${fmtTime(r.checkIn)} to ${fmtTime(r.checkOut)}`) : ''}</p><p class="muted">${nameHtml(r.reason || '')}</p>${r.ownerNote ? `<p class="muted">Malik: ${esc(r.ownerNote)}</p>` : ''}</li>`).join('') || '<li class="muted pad">Abhi koi request nahi bheji.</li>'}</ul></section>`;
   }
 
   const setStep = text => { ui.step = text; const el = document.getElementById('punchStep'); if (el) el.textContent = text; };
@@ -314,6 +353,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
     async 'check-out'(el) {
       const open = openRecord(S.myAttendance);
       if (!open) { toast('Check-In ka record nahi mila. Page dobara kholein.', 'bad'); return; }
+      { const L = lockOf(open); if (L) { toast(`Check-Out ${fmtTime(L.until)} ke baad khulega — jaldi jana ho to ijazat mangein`, 'bad'); rerender(); return; } }
       // v217: purana OK/Cancel dabba nahi — button 0.9 second daba kar rakhna hi tasdeeq hai (app.js data-hold)
       // v221: location ZAROORI — dukaan ke andar ho to seedha, bahar / location na mile to malik ko request
       await busy(el, async () => {
@@ -331,6 +371,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
       });
       rerender();
     },
+    'early-open'() { const open = openRecord(S.myAttendance); if (!open) return; ui.earlySheet?.close(); earlySheet(open); },
     async 'co-regps'(el) {
       const open = openRecord(S.myAttendance); if (!open) return;
       await busy(el, async () => {
@@ -404,6 +445,16 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
     logout() { if (confirm('Logout karein?\n\nLogout ke baad dobara number likhna padega. Aam tor par logout ki zaroorat nahi.')) logout(); }
   };
   const forms = {
+    async 'early-ask'(form, v, button) {
+      const open = openRecord(S.myAttendance); if (!open) { toast('Check-In ka record nahi mila.', 'bad'); return; }
+      const time = v.when === 'custom' ? to24(v.at) : pkTime24();
+      await busy(button, async () => {
+        const r = await data.requestEarly({ row: open, time, reason: v.reason, note: v.note });
+        ui.earlySheet?.close(); ui.earlySheet = null;
+        toast(r?.queued ? 'Request phone mein mehfooz — internet aate hi malik tak jayegi.' : 'Request chali gayi — "Haan" hote hi Check-Out khul jayega', r?.queued ? '' : 'ok');
+      });
+      rerender();
+    },
     async 'co-outside'(form, v, button) {
       const open = openRecord(S.myAttendance); if (!open) { toast('Check-In ka record nahi mila.', 'bad'); return; }
       const sch = schedule(), time = v.when === 'end' ? to24(sch.shiftEnd) : v.when === 'custom' ? to24(v.at) : pkTime24();

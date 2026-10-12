@@ -2,7 +2,7 @@
 import {
   APP_VERSION, STATUS_LABEL, STATUS_MARK, DAY_SHORT, SHOP, esc, money, hm, fmtTime, to24, pkDate, pkMinutes, pkTime24, addDays, addMonths, weekday,
   monthDates, monthLabel, dateLabel, parseTime, shortDate, weekRange, dayRows, countStatuses, monthSummary, smartSearch, salaryConfig, checkoutDue, isDate,
-  shiftMinutes, usesDefaultSalary, weekSummary, isClosed, loanCuts, workMinutes, parseTime as C_parse, serverGap, STATUS_MARK as MARK, dayOuts, outMinutes, durText, breakGroup, ticketMinutes, ticketText
+  shiftMinutes, usesDefaultSalary, weekSummary, isClosed, loanCuts, workMinutes, parseTime as C_parse, serverGap, STATUS_MARK as MARK, dayOuts, outMinutes, durText, breakGroup, ticketMinutes, ticketText, earlyFor
 } from './core.js';
 import { openTicketSheet } from './tickets.js';
 import { NOTIFY_KINDS, newTopic, sendNotify, appLink } from './notify.js';
@@ -46,7 +46,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     const due = data.allAttendance().filter(a => checkoutDue(a, data.scheduleFor(a.phone)) && account(a.phone));
     if (due.length) items.push({ tone: 'bad', icon: 'clock', title: `${due.length} Check-Out baqi — daba kar band karein`, text: [...new Set(due.map(a => account(a.phone)?.name))].slice(0, 3).join(', '), action: 'close-due', arg: '' });
     const pend = pending();
-    if (pend.length) items.push({ tone: 'late', icon: 'note', title: `${pend.length} request ka jawab dein`, text: pend.slice(0, 2).map(r => `${account(r.phone)?.name || r.phone}: ${r.kind === 'leave' ? 'chutti' : r.via === 'outside' ? 'bahar se Check-Out' + (r.distance != null ? ' (' + kmText(r.distance) + ')' : '') : 'correction'}`).join(', '), action: 'requests' });
+    if (pend.length) items.push({ tone: 'late', icon: 'note', title: `${pend.length} request ka jawab dein`, text: pend.slice(0, 2).map(r => `${account(r.phone)?.name || r.phone}: ${r.kind === 'leave' ? 'chutti' : r.kind === 'early' ? 'jaldi jana ' + fmtTime(r.checkOut) : r.via === 'outside' ? 'bahar se Check-Out' + (r.distance != null ? ' (' + kmText(r.distance) + ')' : '') : 'correction'}`).join(', '), action: 'requests' });
     const week = weekRange(today), lateCount = new Map();
     for (let d = week.from; d <= today; d = addDays(d, 1)) for (const r of rowsFor(d)) if (r.status === 'late') lateCount.set(r.account.phone, (lateCount.get(r.account.phone) || 0) + 1);
     const repeat = [...lateCount].filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1]);
@@ -100,6 +100,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       chips.push(a.checkOut ? `<span class="tag t-ok">Gaya ${fmtTime(a.checkOut)}</span>` : due ? '<span class="tag t-bad">Check-Out baqi</span>' : '<span class="tag">Kaam par</span>');
       if (minutes != null) chips.push(`<span class="tag t-ink">${hm(minutes)}${duty && minutes > duty ? ' (+' + hm(minutes - duty) + ' OT)' : ''}</span>`);
       if (a.manual) chips.push('<span class="tag">Malik ne lagayi</span>');
+      { const er = earlyFor(S.requests, s.phone, a.date || date); if (er && er.status !== 'rejected') chips.push(`<button type="button" class="tag t-early" data-action="requests">${icon('clock', 12)} ${er.status === 'approved' ? 'Jaldi chutti manzoor' : 'Jaldi jana chahta hai'} · ${fmtTime(er.checkOut)}</button>`); }
       // v221: Check-Out dukaan se bahar hua (request se manzoor, ya purana v221 se pehle ka)
       if (a.checkOut && (a.checkOutVia === 'outside' || Number(a.checkOutDistance) > Number(S.config.radius || SHOP.radius))) chips.push(`<span class="tag t-late">${icon('pin', 12)} Check-Out bahar se${a.checkOutDistance != null ? ' · ' + esc(kmText(a.checkOutDistance)) : ''}</span>`);
       const od = dayOuts(S.outs, s.phone, date);
@@ -468,8 +469,9 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       render() {
         const list = S.requests.filter(r => r.kind !== 'suggestion').sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
         const card = r => `<li class="req"><p><b>${nameHtml(account(r.phone)?.name || r.phone)}</b> <span class="stamp ${r.status === 'pending' ? 'st-late' : r.status === 'approved' ? 'st-present' : 'st-absent'}">${r.status === 'pending' ? 'Jawab baqi' : r.status === 'approved' ? 'Manzoor' : 'Na-manzoor'}</span></p>
-          <p>${r.kind === 'leave' ? `Chutti: ${leaveDesc(r)}${paidDesc(r) ? ' · <b>' + paidDesc(r) + '</b>' : ''}` : r.via === 'outside' ? `<b>Dukaan se bahar Check-Out</b>: ${esc(shortDate(r.date))} &nbsp;|&nbsp; Gaya ${fmtTime(r.checkOut)}` : `Hazri durust: ${esc(shortDate(r.date))} &nbsp;|&nbsp; Aaya ${fmtTime(r.checkIn)} &nbsp;|&nbsp; Gaya ${fmtTime(r.checkOut)}`}</p>
+          <p>${r.kind === 'leave' ? `Chutti: ${leaveDesc(r)}${paidDesc(r) ? ' · <b>' + paidDesc(r) + '</b>' : ''}` : r.kind === 'early' ? `<span class="tag t-early">${icon('clock', 13)} Jaldi jana</span> ${esc(shortDate(r.date))} &nbsp;|&nbsp; <b>${fmtTime(r.checkOut)}</b> par${data.scheduleFor(r.phone).shiftEnd ? ` <small class="muted">(duty ${fmtTime(data.scheduleFor(r.phone).shiftEnd)} tak)</small>` : ''}` : r.via === 'outside' ? `<b>Dukaan se bahar Check-Out</b>: ${esc(shortDate(r.date))} &nbsp;|&nbsp; Gaya ${fmtTime(r.checkOut)}` : `Hazri durust: ${esc(shortDate(r.date))} &nbsp;|&nbsp; Aaya ${fmtTime(r.checkIn)} &nbsp;|&nbsp; Gaya ${fmtTime(r.checkOut)}`}</p>
           ${r.via === 'outside' ? `<p class="co-where">${r.distance != null ? `<span class="tag t-late">${icon('pin', 14)} Dukaan se ${esc(kmText(r.distance))} door${r.accuracy ? ' (±' + esc(String(r.accuracy)) + ' m)' : ''}</span> <a class="link" href="https://www.google.com/maps?q=${encodeURIComponent(r.lat + ',' + r.lng)}" target="_blank" rel="noopener">Naqsha dekhein</a>` : `<span class="tag t-bad">${icon('pin', 14)} Location nahi mili${r.gpsError ? ': ' + esc(r.gpsError) : ''}</span>`}</p>${r.status === 'pending' ? `<p class="hint">Manzoor karne par Check-Out <b>${fmtTime(r.checkOut)}</b> lagega.</p>` : ''}` : ''}
+          ${r.kind === 'early' && r.status === 'pending' ? '<p class="hint">Manzoor karne par us ka Check-Out ka button foran khul jayega — Check-Out wo khud dukaan se lagayega.</p>' : ''}
           <p class="muted">${nameHtml(r.reason || '')}</p>${r.ownerNote ? `<p class="muted">Malik: ${esc(r.ownerNote)}</p>` : ''}
           ${r.status === 'pending' ? (r.kind === 'leave'
             ? `<div class="btn-row"><button type="button" class="btn btn-primary btn-sm" data-action="req" data-id="${esc(r.id)}" data-arg="approved" data-paid="yes">Manzoor — paisa nahi katega</button><button type="button" class="btn btn-ink btn-sm" data-action="req" data-id="${esc(r.id)}" data-arg="approved" data-paid="no">Manzoor — paisa katega</button><button type="button" class="btn btn-ghost btn-sm" data-action="req" data-id="${esc(r.id)}" data-arg="rejected">Na-manzoor</button></div>`
@@ -490,6 +492,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         <p class="hint">${hrs ? 'Duty: <b>' + hm(hrs) + '</b> roz. Isi se default salary ke ghante bante hain.' : 'Jane ka waqt chunein taake roz ke ghante khud ban jayein.'}</p>
         <label>Late ki riayat (minute) <small>is ke baad Late</small><input name="grace" type="number" inputmode="numeric" min="0" max="120" value="${Number(c.grace ?? 10)}"></label>
         <p class="hint">${customShift ? `${customShift} staff ki apni alag duty hai.` : 'Sab staff default duty par hain.'}</p>
+        ${manager ? `<p class="hint">${icon('clock', 14)} Duty se pehle Check-Out: <b>${c.earlyLock === false ? 'khula' : 'band'}</b> (malik ki setting)</p>` : `<label>Duty khatam hone se pehle Check-Out<select name="earlyLock"><option value="on" ${c.earlyLock === false ? '' : 'selected'}>🔒 Band — jaldi jana ho to ijazat mangein</option><option value="off" ${c.earlyLock === false ? 'selected' : ''}>Khula — jab chahein Check-Out</option></select></label>`}
         ${customShift ? '<button type="button" class="btn btn-ghost btn-sm" data-action="apply-shift-all">Sab par default duty lagayein</button>' : ''}
         <div class="btn-row sticky"><button class="btn btn-primary btn-lg">Save karein</button></div></form>`;
     } });

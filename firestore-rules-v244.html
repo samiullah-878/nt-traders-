@@ -1,0 +1,381 @@
+<!doctype html><html lang="ur"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hazri — Firestore Rules v244</title><style>
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#eef1f7;color:#1b2a4a}
+.top{position:sticky;top:0;background:linear-gradient(135deg,#1b2a4a,#24406e);color:#fff;padding:14px 16px;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+h1{margin:0 0 6px;font-size:19px}.chips span{display:inline-block;margin:3px 4px 0 0;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.16);font-size:12px}
+button{margin-top:10px;width:100%;min-height:52px;border:0;border-radius:14px;background:#22c55e;color:#062;font-size:18px;font-weight:800}
+ol{background:#fff;margin:12px;padding:12px 12px 12px 30px;border-radius:14px;line-height:1.6;font-size:14px}
+textarea{display:block;width:calc(100% - 24px);margin:0 12px 24px;height:60vh;border-radius:14px;border:1px solid #c9d3e6;padding:10px;font:12px monospace;box-sizing:border-box}
+</style></head><body><div class="top"><h1>🔐 Hazri app — Firestore Rules v244</h1><div class="chips"><span>⏰ Jaldi jane ki request (v244)</span><span>🔒 Duty se pehle Check-Out band</span></div>
+<button id="cp">📋 Poori rules copy</button></div>
+<ol><li>Upar wala hara button dabayein — rules copy ho jayengi.</li><li>Firebase console → project <b>nt-traders</b> → Firestore Database → <b>Rules</b>.</li><li>Purani sab rules mita kar yeh paste karein → <b>Publish</b>.</li><li>Publish se pehle "Jaldi jana" ki request <b>nahi jayegi</b> (permission-denied). Baqi app wesi hi chalti rahegi.</li></ol>
+<textarea id="r" readonly>rules_version = &#x27;2&#x27;;
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Noor Traders Hazri v224 (v218: staffDiag, v220: cameras, v221: bahar se Check-Out, v222: galla nigrani, v223: galla milaan, v224: bill badla/cancel, v225: video clips). Owner emails auth.js ke OWNER_EMAILS se milni chahiye.
+    // An arbitrary Firebase email account must never gain business-owner access.
+    function isOwner() {
+      return signedIn()
+        &amp;&amp; request.auth.token.firebase.sign_in_provider == &#x27;password&#x27;
+        &amp;&amp; request.auth.token.email in [
+          &#x27;admin@nt-traders.firebaseapp.com&#x27;,
+          &#x27;owner@nttraders.local&#x27;,
+          &#x27;hp6235@gmail.com&#x27;
+        ];
+    }
+
+    function isStaff() {
+      return signedIn() &amp;&amp; request.auth.token.firebase.sign_in_provider == &#x27;anonymous&#x27;;
+    }
+
+    function sessionPhone() {
+      return get(/databases/$(database)/documents/businesses/noor-traders/staffSessions/$(request.auth.uid)).data.phone;
+    }
+
+    function enabledStaffAccount(phone) {
+      let account = get(/databases/$(database)/documents/businesses/noor-traders/staffAccounts/$(phone)).data;
+      return (!(&#x27;active&#x27; in account) || account.active == true)
+        &amp;&amp; (!(&#x27;loginEnabled&#x27; in account) || account.loginEnabled == true);
+    }
+
+    function validStaffSession() {
+      return isStaff() &amp;&amp; enabledStaffAccount(sessionPhone());
+    }
+
+    // v206: malik jis staff ko manager banaye, wo bahar jane ki parchi Haan / Nahi kar sakta hai.
+    function isOutManager() {
+      return validStaffSession()
+        &amp;&amp; get(/databases/$(database)/documents/businesses/noor-traders/staffAccounts/$(sessionPhone())).data.get(&#x27;canApproveOuts&#x27;, false) == true;
+    }
+
+    // v209: &quot;Bina bataye gaya&quot; ka ticket: manager ya senior (canTicket) bana sakta hai; faisla sirf malik.
+    function isTicketer() {
+      return validStaffSession()
+        &amp;&amp; (get(/databases/$(database)/documents/businesses/noor-traders/staffAccounts/$(sessionPhone())).data.get(&#x27;canApproveOuts&#x27;, false) == true
+          || get(/databases/$(database)/documents/businesses/noor-traders/staffAccounts/$(sessionPhone())).data.get(&#x27;canTicket&#x27;, false) == true);
+    }
+    function isManagerPhone(phone) {
+      return get(/databases/$(database)/documents/businesses/noor-traders/staffAccounts/$(phone)).data.get(&#x27;canApproveOuts&#x27;, false) == true;
+    }
+
+    // v220: dukaan ke camera ka PC — malik ne jis login (uid) ko cameraPC/config mein rakha, sirf wohi.
+    function isCameraPC() {
+      return signedIn()
+        &amp;&amp; request.auth.token.firebase.sign_in_provider == &#x27;password&#x27;
+        &amp;&amp; exists(/databases/$(database)/documents/businesses/noor-traders/cameraPC/config)
+        &amp;&amp; get(/databases/$(database)/documents/businesses/noor-traders/cameraPC/config).data.uid == request.auth.uid;
+    }
+
+    // Malik: sab kuch. v211 Manager: sab dekh sakta hai aur sab badal sakta hai, siwaye hazri (staffAttendance / staffSelfies) ke.
+    // v220: cameras (nigrani) SIRF malik — manager bhi staff hai, is liye na dekh sakta hai na badal sakta hai.
+    match /businesses/noor-traders/{collectionName}/{docId} {
+      allow read: if isOwner()
+        || (isOutManager() &amp;&amp; !(collectionName in [&#x27;cameras&#x27;, &#x27;cameraShots&#x27;, &#x27;cameraPC&#x27;, &#x27;cameraEvents&#x27;, &#x27;cameraFrames&#x27;, &#x27;cameraStats&#x27;, &#x27;posAlerts&#x27;, &#x27;cameraClips&#x27;, &#x27;cameraClipParts&#x27;]));
+      allow write: if isOwner()
+        || (isOutManager() &amp;&amp; !(collectionName in [&#x27;staffAttendance&#x27;, &#x27;staffSelfies&#x27;, &#x27;cameras&#x27;, &#x27;cameraShots&#x27;, &#x27;cameraPC&#x27;, &#x27;cameraEvents&#x27;, &#x27;cameraFrames&#x27;, &#x27;cameraStats&#x27;, &#x27;posAlerts&#x27;, &#x27;cameraClips&#x27;, &#x27;cameraClipParts&#x27;]));
+    }
+
+    // Staff can read only the account bound to their own server session.
+    match /businesses/noor-traders/staffAccounts/{phone} {
+      allow get: if isOwner()
+        || (isStaff() &amp;&amp; phone == sessionPhone()
+          &amp;&amp; (!(&#x27;active&#x27; in resource.data) || resource.data.active == true)
+          &amp;&amp; (!(&#x27;loginEnabled&#x27; in resource.data) || resource.data.loginEnabled == true));
+      allow list, create, update, delete: if isOwner();
+    }
+
+    // A phone-as-password login creates one binding for a fresh anonymous UID.
+    // It cannot rebind that UID to another employee later.
+    match /businesses/noor-traders/staffSessions/{uid} {
+      allow create: if isStaff()
+        &amp;&amp; request.auth.uid == uid
+        &amp;&amp; request.resource.data.keys().hasOnly([&#x27;phone&#x27;, &#x27;createdAt&#x27;])
+        &amp;&amp; request.resource.data.phone is string
+        &amp;&amp; request.resource.data.phone.matches(&#x27;^03[0-9]{9}$&#x27;)
+        &amp;&amp; enabledStaffAccount(request.resource.data.phone);
+      allow update: if isOwner();
+      allow get: if isOwner() || (isStaff() &amp;&amp; request.auth.uid == uid);
+      allow delete, list: if isOwner();
+    }
+
+    // The staff portal needs its attendance policy after authentication.
+    match /businesses/noor-traders/staffConfig/{configId} {
+      allow get: if isOwner() || (configId == &#x27;main&#x27; &amp;&amp; validStaffSession());
+      allow list, create, update, delete: if isOwner();
+    }
+
+    // Employee can only access attendance rows for the phone attached to their own session.
+    match /businesses/noor-traders/staffAttendance/{attendanceId} {
+      // v208: manager bhi (khane ke break ke liye) dekh sakta hai ke kaun duty par hai.
+      allow read: if isOwner() || isOutManager()
+        || (validStaffSession() &amp;&amp; resource.data.phone == sessionPhone());
+
+      // v204: staff sirf apne aaj ke record ka Check-In bana sakta hai; serverAt = asal server ka waqt (phone ki ghari nahi).
+      allow create: if isOwner()
+        || (validStaffSession()
+          &amp;&amp; request.resource.data.phone == sessionPhone()
+          &amp;&amp; attendanceId == request.resource.data.date + &#x27;_&#x27; + sessionPhone()
+          &amp;&amp; request.resource.data.serverAt == request.time
+          &amp;&amp; !(&#x27;selfie&#x27; in request.resource.data));
+
+      // v204: staff baad mein apna aane ka waqt nahi badal sakta. Sirf aik dafa Check-Out lagta hai.
+      allow update: if isOwner()
+        || (validStaffSession()
+          &amp;&amp; resource.data.phone == sessionPhone()
+          &amp;&amp; request.resource.data.phone == sessionPhone()
+          &amp;&amp; (!(&#x27;checkOut&#x27; in resource.data) || resource.data.checkOut == &#x27;&#x27;)
+          &amp;&amp; request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            &#x27;checkOut&#x27;, &#x27;checkOutTs&#x27;, &#x27;checkOutLat&#x27;, &#x27;checkOutLng&#x27;, &#x27;checkOutAccuracy&#x27;, &#x27;checkOutDistance&#x27;, &#x27;outServerAt&#x27;
+          ])
+          &amp;&amp; request.resource.data.outServerAt == request.time);
+
+      allow delete: if isOwner();
+    }
+
+    // Staff v104: owner reviews; staff can only create/read their own requests.
+    match /businesses/noor-traders/staffRequests/{requestId} {
+      allow read: if isOwner() || (validStaffSession() &amp;&amp; resource.data.phone == sessionPhone());
+      allow create: if validStaffSession()
+        &amp;&amp; request.resource.data.keys().hasOnly([&#x27;phone&#x27;,&#x27;kind&#x27;,&#x27;date&#x27;,&#x27;to&#x27;,&#x27;half&#x27;,&#x27;checkIn&#x27;,&#x27;checkOut&#x27;,&#x27;reason&#x27;,&#x27;status&#x27;,&#x27;createdAt&#x27;,&#x27;by&#x27;,&#x27;via&#x27;,&#x27;lat&#x27;,&#x27;lng&#x27;,&#x27;distance&#x27;,&#x27;accuracy&#x27;,&#x27;gpsError&#x27;])
+        // v221: dukaan se bahar ka Check-Out (sirf jane ka waqt, location ya us ke na milne ki wajah)
+        &amp;&amp; (!(&#x27;via&#x27; in request.resource.data) || (request.resource.data.via == &#x27;outside&#x27; &amp;&amp; request.resource.data.kind == &#x27;correction&#x27;
+             &amp;&amp; request.resource.data.checkIn == &#x27;&#x27; &amp;&amp; request.resource.data.checkOut.size() == 5))
+        &amp;&amp; (!(&#x27;lat&#x27; in request.resource.data) || request.resource.data.lat is number)
+        &amp;&amp; (!(&#x27;lng&#x27; in request.resource.data) || request.resource.data.lng is number)
+        &amp;&amp; (!(&#x27;distance&#x27; in request.resource.data) || request.resource.data.distance is number)
+        &amp;&amp; (!(&#x27;accuracy&#x27; in request.resource.data) || request.resource.data.accuracy is number)
+        &amp;&amp; (!(&#x27;gpsError&#x27; in request.resource.data) || (request.resource.data.gpsError is string &amp;&amp; request.resource.data.gpsError.size() &lt;= 60))
+        &amp;&amp; (!(&#x27;half&#x27; in request.resource.data) || request.resource.data.half == &#x27;&#x27;
+          || (request.resource.data.half in [&#x27;am&#x27;, &#x27;pm&#x27;] &amp;&amp; request.resource.data.kind == &#x27;leave&#x27; &amp;&amp; request.resource.data.to == request.resource.data.date))
+        &amp;&amp; request.resource.data.phone == sessionPhone()
+        &amp;&amp; request.resource.data.by == request.auth.uid
+        &amp;&amp; request.resource.data.kind in [&#x27;leave&#x27;,&#x27;correction&#x27;,&#x27;suggestion&#x27;,&#x27;early&#x27;]
+        // v244: jaldi jana — sirf aik din, jane ka waqt (HH:MM), aane ka waqt khali, bahar wala nahi
+        &amp;&amp; (request.resource.data.kind != &#x27;early&#x27; || (request.resource.data.to == request.resource.data.date
+             &amp;&amp; request.resource.data.checkIn == &#x27;&#x27; &amp;&amp; request.resource.data.checkOut.size() == 5 &amp;&amp; !(&#x27;via&#x27; in request.resource.data)))
+        &amp;&amp; request.resource.data.status == &#x27;pending&#x27;
+        &amp;&amp; request.resource.data.date is string &amp;&amp; request.resource.data.to is string
+        &amp;&amp; request.resource.data.date.matches(&#x27;^[0-9]{4}-[0-9]{2}-[0-9]{2}$&#x27;)
+        &amp;&amp; request.resource.data.to.matches(&#x27;^[0-9]{4}-[0-9]{2}-[0-9]{2}$&#x27;)
+        &amp;&amp; request.resource.data.to &gt;= request.resource.data.date
+        &amp;&amp; request.resource.data.checkIn is string &amp;&amp; request.resource.data.checkOut is string
+        &amp;&amp; request.resource.data.checkIn.size() &lt;= 5 &amp;&amp; request.resource.data.checkOut.size() &lt;= 5
+        &amp;&amp; request.resource.data.reason is string &amp;&amp; request.resource.data.reason.size() &gt; 0 &amp;&amp; request.resource.data.reason.size() &lt;= 1000
+        &amp;&amp; request.resource.data.createdAt is number;
+      allow update, delete: if isOwner();
+    }
+    // v204: selfie hazri ke record se alag (malik ki list halki/tez). Sirf daba kar dekhne par load hoti hai.
+    match /businesses/noor-traders/staffSelfies/{attendanceId} {
+      allow read: if isOwner() || (validStaffSession() &amp;&amp; resource.data.phone == sessionPhone());
+      allow create: if isOwner()
+        || (validStaffSession()
+          &amp;&amp; request.resource.data.keys().hasOnly([&#x27;phone&#x27;, &#x27;date&#x27;, &#x27;selfie&#x27;, &#x27;at&#x27;])
+          &amp;&amp; request.resource.data.phone == sessionPhone()
+          &amp;&amp; attendanceId == request.resource.data.date + &#x27;_&#x27; + sessionPhone()
+          &amp;&amp; request.resource.data.selfie is string
+          &amp;&amp; request.resource.data.selfie.size() &lt;= 300000
+          &amp;&amp; request.resource.data.selfie.matches(&#x27;data:image/jpeg;base64,.*&#x27;));
+      allow update, delete: if isOwner();
+    }
+    // v205/v206: bahar jane ki parchi. Staff mangta hai, malik ya manager Haan/Nahi karta hai, staff &quot;Wapas aa gaya&quot; lagata hai.
+    match /businesses/noor-traders/staffOuts/{outId} {
+      allow read: if isOwner() || isOutManager() || (validStaffSession() &amp;&amp; resource.data.phone == sessionPhone());
+      allow create: if isOwner()
+        || (validStaffSession()
+          &amp;&amp; request.resource.data.keys().hasOnly([&#x27;phone&#x27;, &#x27;name&#x27;, &#x27;date&#x27;, &#x27;reason&#x27;, &#x27;note&#x27;, &#x27;minutes&#x27;, &#x27;status&#x27;, &#x27;requestedAt&#x27;, &#x27;serverAt&#x27;, &#x27;by&#x27;])
+          &amp;&amp; (!(&#x27;name&#x27; in request.resource.data) || (request.resource.data.name is string &amp;&amp; request.resource.data.name.size() &lt;= 80))
+          &amp;&amp; request.resource.data.phone == sessionPhone()
+          &amp;&amp; request.resource.data.by == request.auth.uid
+          &amp;&amp; request.resource.data.status == &#x27;pending&#x27;
+          &amp;&amp; request.resource.data.serverAt == request.time
+          &amp;&amp; request.resource.data.date is string &amp;&amp; request.resource.data.date.matches(&#x27;^[0-9]{4}-[0-9]{2}-[0-9]{2}$&#x27;)
+          &amp;&amp; request.resource.data.reason is string &amp;&amp; request.resource.data.reason.size() &gt; 0 &amp;&amp; request.resource.data.reason.size() &lt;= 40
+          &amp;&amp; request.resource.data.note is string &amp;&amp; request.resource.data.note.size() &lt;= 300
+          &amp;&amp; request.resource.data.minutes is number &amp;&amp; request.resource.data.minutes &gt;= 1 &amp;&amp; request.resource.data.minutes &lt;= 600
+          &amp;&amp; request.resource.data.requestedAt is number)
+        || (isOutManager()
+          &amp;&amp; request.resource.data.keys().hasOnly([&#x27;phone&#x27;, &#x27;name&#x27;, &#x27;date&#x27;, &#x27;reason&#x27;, &#x27;note&#x27;, &#x27;minutes&#x27;, &#x27;status&#x27;, &#x27;kind&#x27;, &#x27;batch&#x27;, &#x27;requestedAt&#x27;, &#x27;serverAt&#x27;, &#x27;by&#x27;, &#x27;outAt&#x27;, &#x27;approvedAt&#x27;, &#x27;approvedBy&#x27;, &#x27;approvedByName&#x27;, &#x27;approvedServerAt&#x27;])
+          &amp;&amp; request.resource.data.kind == &#x27;break&#x27;
+          &amp;&amp; request.resource.data.status == &#x27;approved&#x27;
+          &amp;&amp; request.resource.data.by == request.auth.uid
+          &amp;&amp; request.resource.data.approvedBy == request.auth.uid
+          &amp;&amp; request.resource.data.serverAt == request.time
+          &amp;&amp; request.resource.data.approvedServerAt == request.time
+          &amp;&amp; request.resource.data.phone is string &amp;&amp; request.resource.data.phone.matches(&#x27;^03[0-9]{9}$&#x27;)
+          &amp;&amp; request.resource.data.date is string &amp;&amp; request.resource.data.date.matches(&#x27;^[0-9]{4}-[0-9]{2}-[0-9]{2}$&#x27;)
+          &amp;&amp; request.resource.data.minutes is number &amp;&amp; request.resource.data.minutes &gt;= 1 &amp;&amp; request.resource.data.minutes &lt;= 180);
+      allow update: if isOwner()
+        || (validStaffSession()
+          &amp;&amp; resource.data.phone == sessionPhone()
+          &amp;&amp; request.resource.data.phone == sessionPhone()
+          &amp;&amp; ((resource.data.status == &#x27;pending&#x27;
+                &amp;&amp; request.resource.data.diff(resource.data).affectedKeys().hasOnly([&#x27;status&#x27;])
+                &amp;&amp; request.resource.data.status == &#x27;cancelled&#x27;)
+            || (resource.data.status == &#x27;approved&#x27;
+                &amp;&amp; request.resource.data.diff(resource.data).affectedKeys().hasOnly([&#x27;status&#x27;, &#x27;returnAt&#x27;, &#x27;returnLat&#x27;, &#x27;returnLng&#x27;, &#x27;returnDistance&#x27;, &#x27;returnAccuracy&#x27;, &#x27;returnServerAt&#x27;])
+                &amp;&amp; request.resource.data.status == &#x27;returned&#x27;
+                &amp;&amp; request.resource.data.returnServerAt == request.time)))
+        || (isOutManager()
+          &amp;&amp; (resource.data.phone != sessionPhone() || resource.data.get(&#x27;kind&#x27;, &#x27;&#x27;) == &#x27;break&#x27;)
+          &amp;&amp; ((resource.data.status == &#x27;pending&#x27; &amp;&amp; resource.data.phone != sessionPhone()
+                &amp;&amp; request.resource.data.status in [&#x27;approved&#x27;, &#x27;rejected&#x27;]
+                &amp;&amp; request.resource.data.diff(resource.data).affectedKeys().hasOnly([&#x27;status&#x27;, &#x27;approvedAt&#x27;, &#x27;outAt&#x27;, &#x27;rejectedAt&#x27;, &#x27;approvedBy&#x27;, &#x27;approvedByName&#x27;, &#x27;approvedServerAt&#x27;])
+                &amp;&amp; request.resource.data.approvedBy == request.auth.uid
+                &amp;&amp; request.resource.data.approvedServerAt == request.time)
+            || (resource.data.status == &#x27;approved&#x27;
+                &amp;&amp; request.resource.data.status == &#x27;returned&#x27;
+                &amp;&amp; request.resource.data.diff(resource.data).affectedKeys().hasOnly([&#x27;status&#x27;, &#x27;returnAt&#x27;, &#x27;returnBy&#x27;, &#x27;returnByName&#x27;, &#x27;returnServerAt&#x27;])
+                &amp;&amp; request.resource.data.returnServerAt == request.time)));
+      allow delete: if isOwner();
+    }
+    // v209: bina bataye gaya. Koi apne upar ticket nahi bana sakta; senior manager par nahi. Faisla (maaf/warning/katauti) sirf malik.
+    match /businesses/noor-traders/staffTickets/{ticketId} {
+      allow read: if isOwner() || isTicketer() || (validStaffSession() &amp;&amp; resource.data.phone == sessionPhone());
+      allow create: if isOwner()
+        || (isTicketer()
+          &amp;&amp; request.resource.data.keys().hasOnly([&#x27;phone&#x27;, &#x27;name&#x27;, &#x27;date&#x27;, &#x27;from&#x27;, &#x27;returnAt&#x27;, &#x27;note&#x27;, &#x27;status&#x27;, &#x27;by&#x27;, &#x27;byName&#x27;, &#x27;createdAt&#x27;, &#x27;serverAt&#x27;])
+          &amp;&amp; request.resource.data.phone is string &amp;&amp; request.resource.data.phone.matches(&#x27;^03[0-9]{9}$&#x27;)
+          &amp;&amp; request.resource.data.phone != sessionPhone()
+          &amp;&amp; (isOutManager() || !isManagerPhone(request.resource.data.phone))
+          &amp;&amp; request.resource.data.status in [&#x27;open&#x27;, &#x27;returned&#x27;]
+          &amp;&amp; request.resource.data.by == request.auth.uid
+          &amp;&amp; request.resource.data.serverAt == request.time
+          &amp;&amp; request.resource.data.date is string &amp;&amp; request.resource.data.date.matches(&#x27;^[0-9]{4}-[0-9]{2}-[0-9]{2}$&#x27;)
+          &amp;&amp; request.resource.data.from is number
+          &amp;&amp; request.resource.data.note is string &amp;&amp; request.resource.data.note.size() &lt;= 300
+          &amp;&amp; (request.resource.data.status == &#x27;open&#x27; || request.resource.data.returnAt is number));
+      allow update: if isOwner()
+        || (isTicketer()
+          &amp;&amp; resource.data.phone != sessionPhone()
+          &amp;&amp; resource.data.status == &#x27;open&#x27;
+          &amp;&amp; request.resource.data.status == &#x27;returned&#x27;
+          &amp;&amp; request.resource.data.diff(resource.data).affectedKeys().hasOnly([&#x27;status&#x27;, &#x27;returnAt&#x27;, &#x27;returnBy&#x27;, &#x27;returnServerAt&#x27;])
+          &amp;&amp; request.resource.data.returnServerAt == request.time);
+      allow delete: if isOwner();
+    }
+    // v220: camera PC ki halat (online, kitne camera, network par kya mila). config (uid) sirf malik likhta hai.
+    match /businesses/noor-traders/cameraPC/{docId} {
+      allow read: if isCameraPC();
+      allow write: if isCameraPC() &amp;&amp; docId == &#x27;status&#x27;
+        &amp;&amp; request.resource.data.keys().hasOnly([&#x27;at&#x27;, &#x27;v&#x27;, &#x27;host&#x27;, &#x27;cams&#x27;, &#x27;online&#x27;, &#x27;error&#x27;, &#x27;python&#x27;, &#x27;found&#x27;, &#x27;foundAt&#x27;, &#x27;pos&#x27;]);
+      // v231: NT Doctor — malik cmd likhta hai (generic match), PC parh kar mitata hai (secret Firebase par na rahe) aur doctor mein report.
+      allow delete: if isCameraPC() &amp;&amp; docId == &#x27;cmd&#x27;;
+      allow write: if isCameraPC() &amp;&amp; docId == &#x27;doctor&#x27;
+        &amp;&amp; request.resource.data.keys().hasOnly([&#x27;at&#x27;, &#x27;v&#x27;, &#x27;kind&#x27;, &#x27;lines&#x27;, &#x27;cmdAt&#x27;])
+        &amp;&amp; request.resource.data.lines is list &amp;&amp; request.resource.data.lines.size() &lt;= 30;
+    }
+    // v220: cameras — PC banata hai aur apni halat likhta hai; naam / kaam / on-off malik (upar wala generic match).
+    match /businesses/noor-traders/cameras/{camId} {
+      allow read: if isCameraPC();
+      allow create: if isCameraPC()
+        &amp;&amp; request.resource.data.keys().hasOnly([&#x27;name&#x27;, &#x27;ip&#x27;, &#x27;mac&#x27;, &#x27;brand&#x27;, &#x27;channel&#x27;, &#x27;role&#x27;, &#x27;enabled&#x27;, &#x27;createdAt&#x27;, &#x27;status&#x27;, &#x27;agent&#x27;,
+             &#x27;lastFrameAt&#x27;, &#x27;lastShotAt&#x27;, &#x27;lastError&#x27;, &#x27;width&#x27;, &#x27;height&#x27;, &#x27;aiTest&#x27;, &#x27;aiTestAt&#x27;, &#x27;seenAt&#x27;])
+        &amp;&amp; request.resource.data.name is string &amp;&amp; request.resource.data.name.size() &lt;= 40;
+      allow update: if isCameraPC()
+        &amp;&amp; request.resource.data.diff(resource.data).affectedKeys().hasOnly([&#x27;ip&#x27;, &#x27;mac&#x27;, &#x27;brand&#x27;, &#x27;status&#x27;, &#x27;lastFrameAt&#x27;, &#x27;lastShotAt&#x27;, &#x27;lastError&#x27;,
+             &#x27;width&#x27;, &#x27;height&#x27;, &#x27;agent&#x27;, &#x27;aiTest&#x27;, &#x27;aiTestAt&#x27;, &#x27;seenAt&#x27;, &#x27;watch&#x27;, &#x27;fps&#x27;, &#x27;stream&#x27;, &#x27;lastMotionAt&#x27;, &#x27;rec&#x27;, &#x27;recFree&#x27;]);
+    }
+    // v220: har camera ki aakhri tasveer (chhoti JPEG). Sirf PC likhta hai, malik parhta hai.
+    match /businesses/noor-traders/cameraShots/{camId} {
+      allow write: if isCameraPC()
+        &amp;&amp; request.resource.data.keys().hasOnly([&#x27;jpg&#x27;, &#x27;w&#x27;, &#x27;h&#x27;, &#x27;at&#x27;, &#x27;cam&#x27;])
+        &amp;&amp; request.resource.data.jpg is string &amp;&amp; request.resource.data.jpg.size() &lt; 400000;
+    }
+    // v222: GALLA NIGRANI — PC har harkat ka faisla (chhoti thumb), 6 tasveerein alag, aur din ki ginti. Malik parhta /
+    // &quot;Theek hai&quot; / &quot;Shak pakka&quot; likhta / 30 din baad mitata (generic match). Manager ke liye band (upar).
+    // v223: GALLA MILAAN — flow (aaya/nikla/len_den/ginti/kuch_nahi/saaf_nahi), matchState (ok/wait/missing/none/nopos),
+    // match {kind sale|return|pay, no, amount, at, party, who}. PC baad mein sirf milaan badal sakta hai; malik ke faisle parh sakta hai.
+    match /businesses/noor-traders/cameraEvents/{eventId} {
+      allow read: if isCameraPC();
+      allow update: if isCameraPC()
+        &amp;&amp; request.resource.data.diff(resource.data).affectedKeys().hasOnly([&#x27;matchState&#x27;, &#x27;match&#x27;, &#x27;matchAt&#x27;])
+        &amp;&amp; request.resource.data.matchState in [&#x27;ok&#x27;, &#x27;wait&#x27;, &#x27;missing&#x27;, &#x27;none&#x27;, &#x27;nopos&#x27;];
+      allow create: if isCameraPC()
+        &amp;&amp; request.resource.data.keys().hasOnly([&#x27;cam&#x27;, &#x27;camName&#x27;, &#x27;at&#x27;, &#x27;date&#x27;, &#x27;verdict&#x27;, &#x27;why&#x27;, &#x27;thumb&#x27;, &#x27;n&#x27;, &#x27;ms&#x27;, &#x27;model&#x27;, &#x27;agent&#x27;,
+             &#x27;flow&#x27;, &#x27;matchState&#x27;, &#x27;match&#x27;, &#x27;start&#x27;, &#x27;end&#x27;, &#x27;story&#x27;, &#x27;flags&#x27;])
+        &amp;&amp; (!(&#x27;story&#x27; in request.resource.data) || (request.resource.data.story is list &amp;&amp; request.resource.data.story.size() &lt;= 16))
+        &amp;&amp; (!(&#x27;flags&#x27; in request.resource.data) || (request.resource.data.flags is list &amp;&amp; request.resource.data.flags.size() &lt;= 8))
+        &amp;&amp; (!(&#x27;matchState&#x27; in request.resource.data) || request.resource.data.matchState in [&#x27;ok&#x27;, &#x27;wait&#x27;, &#x27;missing&#x27;, &#x27;none&#x27;, &#x27;nopos&#x27;])
+        &amp;&amp; request.resource.data.verdict in [&#x27;normal&#x27;, &#x27;shak&#x27;, &#x27;saaf_nahi&#x27;, &#x27;error&#x27;]
+        &amp;&amp; request.resource.data.date is string &amp;&amp; request.resource.data.date.matches(&#x27;^[0-9]{4}-[0-9]{2}-[0-9]{2}$&#x27;)
+        &amp;&amp; request.resource.data.why is string &amp;&amp; request.resource.data.why.size() &lt;= 300
+        &amp;&amp; request.resource.data.thumb is string &amp;&amp; request.resource.data.thumb.size() &lt; 80000;
+    }
+    match /businesses/noor-traders/cameraFrames/{eventId} {
+      allow create: if isCameraPC()
+        &amp;&amp; request.resource.data.keys().hasOnly([&#x27;frames&#x27;, &#x27;at&#x27;, &#x27;cam&#x27;, &#x27;times&#x27;])
+        &amp;&amp; request.resource.data.frames is list &amp;&amp; request.resource.data.frames.size() &lt;= 24;
+    }
+    match /businesses/noor-traders/cameraStats/{statId} {
+      allow read: if isCameraPC();
+      allow create, update: if isCameraPC()
+        &amp;&amp; request.resource.data.keys().hasOnly([&#x27;cam&#x27;, &#x27;date&#x27;, &#x27;touches&#x27;, &#x27;checks&#x27;, &#x27;shak&#x27;, &#x27;unchecked&#x27;, &#x27;at&#x27;, &#x27;moneyIn&#x27;, &#x27;moneyOut&#x27;, &#x27;matched&#x27;, &#x27;missing&#x27;, &#x27;alerts&#x27;, &#x27;cost&#x27;, &#x27;gem&#x27;]);
+    }
+    // v224: BILL BADLA / CANCEL — PC ne POS mein dekha ke bill cancel hua (kind cancel), raqam kam hui (edit) ya items badle (items).
+    // replacedBy = 10 minute ke andar naya sasta bill. Malik parhta / note likhta (generic match). Manager ke liye band.
+    match /businesses/noor-traders/posAlerts/{alertId} {
+      allow create, update: if isCameraPC()
+        &amp;&amp; request.resource.data.keys().hasOnly([&#x27;kind&#x27;, &#x27;no&#x27;, &#x27;before&#x27;, &#x27;after&#x27;, &#x27;amount&#x27;, &#x27;at&#x27;, &#x27;when&#x27;, &#x27;by&#x27;, &#x27;date&#x27;, &#x27;eventId&#x27;, &#x27;replacedBy&#x27;])
+        &amp;&amp; request.resource.data.kind in [&#x27;cancel&#x27;, &#x27;edit&#x27;, &#x27;items&#x27;]
+        &amp;&amp; request.resource.data.date is string &amp;&amp; request.resource.data.date.matches(&#x27;^[0-9]{4}-[0-9]{2}-[0-9]{2}$&#x27;);
+    }
+    // v225: VIDEO CLIPS — PC recording se mp4 (base64 tukre). shak par khud, ya malik ki farmaish (malik status &#x27;req&#x27; banata hai —
+    // generic match). PC: status making/ok/error, parts. Malik dekh kar mitata; agle din khud (cleanupCam).
+    match /businesses/noor-traders/cameraClips/{clipId} {
+      allow read: if isCameraPC();
+      allow create, update: if isCameraPC()
+        &amp;&amp; request.resource.data.keys().hasOnly([&#x27;cam&#x27;, &#x27;kind&#x27;, &#x27;eventId&#x27;, &#x27;from&#x27;, &#x27;to&#x27;, &#x27;date&#x27;, &#x27;status&#x27;, &#x27;n&#x27;, &#x27;size&#x27;, &#x27;at&#x27;, &#x27;error&#x27;, &#x27;keep&#x27;, &#x27;by&#x27;, &#x27;title&#x27;])
+        &amp;&amp; request.resource.data.status in [&#x27;req&#x27;, &#x27;making&#x27;, &#x27;ok&#x27;, &#x27;error&#x27;];
+    }
+    match /businesses/noor-traders/cameraClipParts/{partId} {
+      allow create: if isCameraPC()
+        &amp;&amp; request.resource.data.keys().hasOnly([&#x27;clip&#x27;, &#x27;i&#x27;, &#x27;data&#x27;])
+        &amp;&amp; request.resource.data.data is string &amp;&amp; request.resource.data.data.size() &lt; 800000;
+    }
+    // v218: har larke ke phone ka &quot;jaanch ka record&quot; — sirf apna aik doc (phone = session ka phone). Malik/manager parhte hain
+    // (upar wala generic match). Keys data.js DIAG_KEYS se milni chahiye. serverAt = asal server ka waqt.
+    match /businesses/noor-traders/staffDiag/{phone} {
+      allow create, update: if validStaffSession()
+        &amp;&amp; phone == sessionPhone()
+        &amp;&amp; request.resource.data.phone == sessionPhone()
+        &amp;&amp; request.resource.data.keys().hasOnly([&#x27;phone&#x27;, &#x27;name&#x27;, &#x27;v&#x27;, &#x27;at&#x27;, &#x27;serverAt&#x27;, &#x27;device&#x27;, &#x27;app&#x27;, &#x27;pending&#x27;, &#x27;failKind&#x27;, &#x27;failCode&#x27;, &#x27;failAt&#x27;, &#x27;failId&#x27;, &#x27;failDate&#x27;, &#x27;fixedAt&#x27;, &#x27;lateKind&#x27;, &#x27;lateMin&#x27;, &#x27;lateAt&#x27;])
+        &amp;&amp; request.resource.data.serverAt == request.time
+        &amp;&amp; request.resource.data.v is string &amp;&amp; request.resource.data.v.size() &lt;= 12
+        &amp;&amp; (!(&#x27;name&#x27; in request.resource.data) || (request.resource.data.name is string &amp;&amp; request.resource.data.name.size() &lt;= 80))
+        &amp;&amp; (!(&#x27;device&#x27; in request.resource.data) || (request.resource.data.device is string &amp;&amp; request.resource.data.device.size() &lt;= 80))
+        &amp;&amp; (!(&#x27;failCode&#x27; in request.resource.data) || (request.resource.data.failCode is string &amp;&amp; request.resource.data.failCode.size() &lt;= 40))
+        &amp;&amp; (!(&#x27;failId&#x27; in request.resource.data) || (request.resource.data.failId is string &amp;&amp; request.resource.data.failId.size() &lt;= 80));
+    }
+    // v212: notification ke liye har phone ka token.
+    match /businesses/noor-traders/pushTokens/{tokenId} {
+      allow read: if isOwner() || isOutManager();
+      allow create, update: if signedIn()
+        &amp;&amp; request.resource.data.keys().hasOnly([&#x27;token&#x27;, &#x27;role&#x27;, &#x27;phone&#x27;, &#x27;name&#x27;, &#x27;device&#x27;, &#x27;at&#x27;, &#x27;testAt&#x27;])
+        &amp;&amp; request.resource.data.token is string
+        &amp;&amp; request.resource.data.token.size() &lt; 500;
+      allow delete: if isOwner() || isOutManager();
+    }
+
+    match /businesses/noor-traders/staffSchedules/{phone} {
+      allow read: if isOwner() || (validStaffSession() &amp;&amp; resource.data.phone == sessionPhone());
+      allow write: if isOwner();
+    }
+    match /businesses/noor-traders/staffPayroll/{payrollId} {
+      allow read: if isOwner() || (validStaffSession() &amp;&amp; resource.data.phone == sessionPhone());
+      allow write: if isOwner();
+    }
+    match /businesses/noor-traders/staffAudit/{eventId} {
+      allow read, create: if isOwner();
+    }
+
+  }
+}
+</textarea>
+<script>document.getElementById('cp').onclick=async function(){var t=document.getElementById('r');try{await navigator.clipboard.writeText(t.value)}catch(e){t.select();document.execCommand('copy')}this.textContent='✓ Copy ho gayi — ab Firebase mein paste karein'}</script>
+</body></html>

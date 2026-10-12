@@ -1,7 +1,7 @@
 // core.js — Noor Traders Hazri + Salary
 // Sirf hisab-kitab. Yahan na DOM hai na Firebase, is liye ye file Node mein test hoti hai.
 
-export const APP_VERSION = 'v243';
+export const APP_VERSION = 'v244';
 export const TZ = 'Asia/Karachi';
 export const BUSINESS_ID = 'noor-traders';
 export const SHOP = { name: 'Noor Traders Gulyana', lat: 32.7979125, lng: 73.956984375, radius: 200 };
@@ -228,6 +228,28 @@ export function checkoutDue(a = {}, schedule = {}, now = Date.now()) {
   if (end == null) return now >= day + 86400000;
   const start = parseTime(schedule.shiftStart) ?? 540;
   return now >= day + (end + (end <= start ? 1440 : 0)) * 60000;
+}
+/** v244: us din ki "jaldi jana" request (sab se nayi). */
+export function earlyFor(requests = [], phone, date) {
+  return requests.filter(r => r.phone === phone && r.kind === 'early' && r.date === date).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0] || null;
+}
+/**
+ * v244: Duty ka waqt pura hone se pehle Check-Out band. null = khula.
+ * Khula: setting band / duty khatam ka waqt nahi / poori chutti, off ya dukaan band wala din / malik ne "jaldi jana" manzoor kiya / waqt ho gaya.
+ * Shaam ki aadhi chutti manzoor = aadhi duty par khulta hai. Warna { until: 'HH:MM', left: minute, at: ms, half }.
+ */
+export function checkoutLock(a = {}, schedule = {}, { requests = [], phone = a.phone, now = Date.now(), on = true } = {}) {
+  if (!on || !a?.checkIn || a.checkOut || !isDate(a.date)) return null;
+  if ((schedule.weeklyOff || []).map(Number).includes(weekday(a.date)) || isClosed(schedule, a.date)) return null;
+  const lv = leaveFor(requests, phone, a.date);
+  if (lv && !lv.half) return null;
+  if (earlyFor(requests, phone, a.date)?.status === 'approved') return null;
+  const sch = lv?.half === 'pm' ? halfSchedule(schedule, 'pm') : schedule;
+  const end = parseTime(sch.shiftEnd); if (end == null) return null;
+  const start = parseTime(sch.shiftStart) ?? 540, day = Date.parse(a.date + 'T00:00:00+05:00');
+  const at = day + (end + (end <= start ? 1440 : 0)) * 60000;
+  if (now >= at) return null;
+  return { until: to24(sch.shiftEnd), left: Math.ceil((at - now) / 60000), at, half: lv?.half === 'pm' };
 }
 /** Staff ka khula record jis par Check-Out lagna hai (raat ki shift mein kal ka bhi ho sakta hai). */
 export function openRecord(rows = [], now = Date.now()) {

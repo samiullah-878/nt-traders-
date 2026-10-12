@@ -1,6 +1,6 @@
 {
-  "version": "v243",
+  "version": "v244",
   "variant": "Production",
   "buildDate": "2026-10-12",
-  "notes": "Counter camera par bhi \"Counter ka hissa\" mark kar sakte hain (parchi ke AI ko sirf wohi hissa, bara ho kar). PC program v2.10. Rules wahi."
+  "notes": "Duty ka waqt pura hone se pehle Check-Out band; jaldi jana ho to malik / manager se ijazat (Haan = Check-Out khul jata hai). RULES BADLE (v244) — firestore-rules-v244.html se publish karein."
 }
