@@ -31,7 +31,9 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '2.11'
+VERSION = '2.12'
+# v2.12: LAPTOP KA BOJH — madadgar camera (kaam 'Counter', galla + counter dono dabbe = upar se poori dukaan) shuru se halki video
+#        (sub stream) par: us se sirf 'kaun banda' chahiye. Do HD video aik sath 2-core laptop par CPU 90%+ le jati thin.
 # v2.11: DO CAMERA, KOI BHI ASAL — malik ne galle ke qareeb wale camera ko 'Galla' (asal) bana diya; upar wala 'Counter' (madadgar) ho
 #        to bhi theek. Sawal ab kaam ke naam par nahi: "aik camera qareeb hai, doosra door — khud pehchano; paisa / parchi qareeb
 #        wale se, banda door wale se". Madadgar camera par galla + counter dono dabbe hon (purana upar wala) to us ki poori tasveer.
@@ -768,6 +770,7 @@ class Watch(threading.Thread):
             z, z2 = cam.get('zone') or {}, cam.get('zone2') or {}
             # v2.10: mark kiya hissa hi AI ko. v2.11: dono dabbe hon (pehle galla camera tha — upar se poori dukaan) to poori tasveer
             self.zone, self.zone2 = {}, ({} if (z.get('w') and z2.get('w')) else (z2 if z2.get('w') else z))
+            self.prefer_sub = bool(z.get('w') and z2.get('w'))    # v2.12: door wala madadgar camera — halki video kaafi
             return
         self.zone = cam.get('zone') or {}
         self.zone2 = cam.get('zone2') or {}            # v1.8: counter / len-den ka hissa (malik mark karta hai)
@@ -852,6 +855,8 @@ class Watch(threading.Thread):
 
     def run(self):
         url, wait = self.url, 3
+        if getattr(self, 'prefer_sub', False) and 'subtype=0' in url:      # v2.12
+            url, self.stream = url.replace('subtype=0', 'subtype=1'), 'sub'
         while self.alive:
             cap = open_capture(url)
             if not cap.isOpened():

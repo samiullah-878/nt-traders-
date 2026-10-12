@@ -1,6 +1,6 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v243   Tareekh: 2026-10-12  (ntcam.py v2.11 = do camera, qareeb wala ASAL; AI abhi PAID key par chal raha hai — malik free key dega; RULES NAHI badle)
+Version: v243   Tareekh: 2026-10-12  (ntcam.py v2.12 = do camera, qareeb wala ASAL, madadgar halki video; AI abhi PAID key par chal raha hai — malik free key dega; RULES NAHI badle)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
 
@@ -24,6 +24,10 @@ AI ko dono ki tasveerein aik sath nahi ("24 + 0").
   aik hi check, dono ki tasveerein aik sath. Qareeb wale ka dabba poori tasveer par hai = galle wale ke apne haath / laptop par bhi
   harkat; dabba galle + us ke upar counter ke kinare tak chhota karna behtar (kam check).
 - ntcam_test 89 pass. Asal AI par v2.11 ka test nahi (malik ki key par bina ijazat aazmaish nahi).
+- v2.12 (12 Oct 1:15 pm): malik: "CPU 96 percent par chal raha hai". Napa: pythonw 29% + ffmpeg 5%, Claude app 24%, Chrome 18%; RAM
+  7.9 GB (16 nahi) — 1.7 GB khali, pythonw 1.5 GB. Dono camera 'Galla' = do HD video + do HD recording. Ilaaj: madadgar (rec_only,
+  dono dabbe) camera shuru se sub stream (prefer_sub). Malik ko: upar wala camera 'Counter' karo, Chrome band karo. Qareeb wale
+  camera ki video halki na ho (AI ki tasveer kharab) — "PC dheema" us par aaye to recording 960 / 640 karni hogi.
 
 ------------------------------------------------------------
 00000000000000000000000000000000000000000000000. v243 + ntcam.py v2.10 — DOOSRA (COUNTER) CAMERA + AI KA KHARCHA / FREE KEY
