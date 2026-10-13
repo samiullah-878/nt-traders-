@@ -1,8 +1,24 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v244   Tareekh: 2026-10-12  (Duty se pehle Check-Out band + jaldi jane ki ijazat; RULES BADLE v244 — firestore-rules-v244.html)
+Version: v245   Tareekh: 2026-10-13  (camera: har card ki video khud + clip mangwane ka button hata; ntcam.py v2.15; RULES wahi v244)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+v245 + ntcam.py v2.15 (13 Oct) — HAR CARD KI VIDEO KHUD, "CLIP MANGWAYEIN" KA BUTTON HATA
+------------------------------------------------------------
+Malik: "jitne bhi videos ke notification aa rahe hain wahan par auto sab videos upload honi chahiye, un ka clips mangwane wala option
+nahi chahiye". (Pehle maine 'Saaf nahi' par auto video is liye nahi lagayi thi ke HD clip 5-20 MB hai.)
+- ntcam.py: Clips.auto(cid, eid, t0, t1, date) — kind 'auto', t0-10 .. t1+10, 75 s tak, clip_cmd(..., width=640) (scale='min(640,iw)':-2).
+  handle_parchi: shak -> pehle jaisi (HD, dono camera, 2 minute tak); warna (normal / saaf_nahi) -> clips.auto asal camera ki.
+  Asal recording par napa: 75 s = 791 KB, 9 s mein, 2 tukre. ~20 card / ghanta = ~16 MB / ghanta upload, ~3 minute CPU / ghanta.
+- owner.js clipBlock: "🎬 Mukammal clip mangwayein" button card se hata; clip na ho to 15 minute tak "Video ban rahi hai", baad mein "nahi
+  bani". clipTag: naye card par "Video ka intezar". Nigrani ke upar "🎬 Waqt ki clip" (kisi bhi waqt ki) button abhi hai — malik kahe to hata dein.
+- data.js cleanupCam: clips ki had 40 -> 250 (roz 200+ videos; agle din malik ke Nigrani kholne par mitti hain). Faisla ("Theek hai")
+  dene par us card ki video foran mit jati hai jab tak "Video rakhein" na ho.
+- DEKHNA: Firestore ka kharcha / jagah (roz ~250 x 0.8 MB = ~200 MB, agle din mit-ti hain), laptop ka bojh, dukaan ka internet.
+  Zyada lage to 'Parchi di' cards ki video band kar ke sirf 'Saaf nahi' + shak rakhna (aik line: handle_parchi mein verdict dekh kar).
+- Tests: ntcam_test 92 (Parchi 14), app.dom 30 + urdu 4 + baqi = 66 pass.
 
 ------------------------------------------------------------
 CAMERA: ntcam.py v2.14 (13 Oct) — PARCHI: HAR BANDE KA ALAG JAWAB + SABOOT  (pehli dafa asal test par sahi)

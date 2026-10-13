@@ -1300,7 +1300,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     const cutoff = addDays(pkDate(), -days - 1); let n = 0;
     // v225: clips agle din khud (jo "rakhein" hon wo 30 din)
     try {
-      const snap = await sdk.getDocs(sdk.query(col('cameraClips'), sdk.where('date', '<=', addDays(pkDate(), -1)), ...(sdk.limit ? [sdk.limit(40)] : [])));
+      const snap = await sdk.getDocs(sdk.query(col('cameraClips'), sdk.where('date', '<=', addDays(pkDate(), -1)), ...(sdk.limit ? [sdk.limit(250)] : [])));   // v245: ab har card ki video hai (roz 200+) — 40 kaafi nahi
       const rows = []; snap.forEach(d => rows.push({ id: d.id, ...d.data() }));
       for (const c of rows) { if (c.keep && c.date > cutoff) continue; await deleteClip(c.id, c.n); n++; }
     } catch { /* ignore */ }

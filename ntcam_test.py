@@ -1268,6 +1268,31 @@ class Parchi(unittest.TestCase):
         do = P('{"log": [{"kaun": "brown", "paisa": true, "paisa_waqt": "1", "parchi": true, "parchi_waqt": "2"}, {"kaun": "neeli shirt", "paisa": true, "paisa_waqt": "3", "parchi": false}], "why": "do log"}')
         g, evs, frs, clips, calls = self.run_case(do, do); self.assertEqual(evs[0]['verdict'], 'shak'); self.assertIn('neeli shirt', evs[0]['why'])
 
+    def test_v215_har_card_ki_video(self):
+        """v2.15: shak ke ilawa bhi har card ki video khud (chhoti, 640 px) — clip mangwani na pare."""
+        P = ntcam.parse_parchi
+        g, writes, clips = self._g(); autos = []
+        g.clips.auto = lambda cid, eid, t0, t1, date: autos.append((cid, eid, t0, t1))
+        w = self._w()
+        theek = P('{"log": [{"kaun": "grey", "paisa": true, "paisa_waqt": "1", "parchi": true, "parchi_waqt": "2"}], "why": "dono"}')
+        old = ntcam.PARCHI['on']; ntcam.PARCHI['on'] = True
+        try:
+            with mock.patch.object(ntcam, 'secrets', lambda: {'geminiKey': 'g-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_parchi', lambda *a, **k: (theek, 5, 'm')):
+                g.handle(w, 1045.0, 1040.0, 1060.0, [], True)
+        finally:
+            ntcam.PARCHI['on'] = old
+        self.assertEqual(autos, [('c1', 'c1-1045000', 1040.0, 1060.0)], "'Parchi di' card ki bhi video"); self.assertEqual(clips, [], 'shak wali alag')
+        q = __import__('queue').Queue(); c = ntcam.Clips.__new__(ntcam.Clips); c.q = q
+        c.auto('c1', 'e1', 1000.0, 1200.0, '2026-10-13'); j = q.get_nowait()
+        self.assertEqual((j['kind'], j['eventId'], j['w']), ('auto', 'e1', ntcam.AUTO_W)); self.assertEqual(j['from'], 990000); self.assertEqual(j['to'] - j['from'], ntcam.AUTO_MAX * 1000, '75 s ki had')
+        segs = [(1000, os.path.join(ntcam.HOME, 'a.ts'))]
+        cmd = ntcam.clip_cmd('ffmpeg', segs, 1010, 1040, os.path.join(ntcam.HOME, 'z_auto.mp4'), 640)
+        self.assertIn('-vf', cmd); self.assertIn("scale='min(640,iw)':-2", cmd)
+        self.assertNotIn('-vf', ntcam.clip_cmd('ffmpeg', segs, 1010, 1040, os.path.join(ntcam.HOME, 'z_auto.mp4')))
+        for f in ('z_auto.mp4.txt',):
+            try: os.remove(os.path.join(ntcam.HOME, f))
+            except OSError: pass
+
     def test_frames_at_aur_denied(self):
         g, _, _ = self._g(); r = g.counters['nvr-3']
         fr = r.frames_at([1000.1, 1000.2, 2000.0]); self.assertEqual([t for t, _ in fr], [1000.0], 'qareeb wali aik dafa, door wali nahi')

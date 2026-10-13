@@ -1,6 +1,6 @@
 {
-  "version": "v244",
+  "version": "v245",
   "variant": "Production",
-  "buildDate": "2026-10-12",
-  "notes": "Duty ka waqt pura hone se pehle Check-Out band; jaldi jana ho to malik / manager se ijazat (Haan = Check-Out khul jata hai). RULES BADLE (v244) — firestore-rules-v244.html se publish karein."
+  "buildDate": "2026-10-13",
+  "notes": "Camera ke har card ki video ab khud aati hai (PC program v2.15) — card se \"clip mangwayein\" ka button hata diya. Rules wahi (v244)."
 }

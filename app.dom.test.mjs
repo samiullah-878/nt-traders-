@@ -150,7 +150,7 @@ test('malik login → Hazri tab, qataarein, tawajju', async () => {
   win.URL.createObjectURL = () => 'blob:test-1'; win.URL.revokeObjectURL = () => {}; globalThis.URL.createObjectURL = win.URL.createObjectURL; globalThis.URL.revokeObjectURL = win.URL.revokeObjectURL;
   await click('[data-sheet=nig-ev] [data-action=nig-video]'); await settle(10);
   assert.ok($('body > .viewer.is-video video'), 'video player'); assert.ok($('.viewer [data-vid=slow]') && $('.viewer [data-vid=fwd]'), 'slow + frame'); await click('.viewer [data-vid=close]'); assert.equal($('.viewer'), null);
-  assert.ok(ev().querySelector('[data-action=clip-req]'), 'mukammal clip mangwayein');
+  assert.equal(ev().querySelector('[data-action=clip-req]'), null, 'v245: card par clip mangwane ka button nahi — video khud aati hai');
   await submit(ev().querySelector('form[data-form=nig-review]'));
   assert.equal(records.get(B + 'cameraEvents/cc33-ch1-2').reviewed, 'ok', 'malik ka faisla'); assert.equal(ev(), null, 'sheet band');
   assert.equal(records.get(B + 'cameraClips/cc33-ch1-2'), undefined, 'v225: faisle ke baad video mit gayi'); assert.equal(records.get(B + 'cameraClipParts/cc33-ch1-2_1'), undefined);

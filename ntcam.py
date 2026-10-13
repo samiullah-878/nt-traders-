@@ -31,7 +31,10 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '2.14'
+VERSION = '2.15'
+# v2.15: HAR CARD KI VIDEO KHUD — malik: "jitne bhi notification aa rahe hain un sab ki video auto upload ho, clip mangwane wala option
+#        nahi chahiye". Shak: pehle jaisi (HD, dono camera, 2 minute tak). Baqi sab card ('Parchi di' / 'Saaf nahi'): asal camera ki
+#        chhoti video (640 px, 75 s tak) — kind 'auto'.
 # v2.14: PARCHI — HAR BANDE KA ALAG JAWAB + SABOOT. 13 Oct ke test (3 larke: parchi + paisa / bina paisa / bina parchi) mein purana sawal
 #        teeno par ghalat tha. Naya sawal: har customer alag (paisa? parchi? kis tasveer ke waqt), parchi sirf customer ke apne haath ka
 #        safed kaghaz (safed kapre / galle wale ka kaghaz / parchiyon ka dhair nahi). Tasveerein har 2 s. Doosri raaye ab wahi chhota
@@ -2549,6 +2552,8 @@ class Galla(threading.Thread):
             self.clips.shak(w.cid, eid, t0, t1, date)
             if cam2 is not None:
                 self.clips.shak(cam2.cid, eid, t0, t1, date, clip_id=eid + '-c')
+        elif self.clips and hasattr(self.clips, 'auto'):             # v2.15: baqi har card ki bhi video khud
+            self.clips.auto(w.cid, eid, t0, t1, date)
         log('parchi', w.cid, res['paisa'], res['parchi'], verdict, '|', len(g), '+', len(c), 'tasveer |', (res.get('why') or '')[:160],
             '|', '; '.join(f"{x['kaun'][:24]}: paisa {'haan' if x['paisa'] else 'nahi'} parchi {x['parchi']}" for x in (res.get('log') or [])[:4]))
         when = time.strftime('%I:%M %p', time.gmtime(at + 5 * 3600)).lstrip('0').lower()
@@ -2707,6 +2712,7 @@ REC_HOURS, REC_FPS, REC_W, SEG_SEC, MIN_FREE_GB = 24, 8, 1280, 60, 5   # v2.7: 1
 REC_W_COUNTER = 960                                # v2.1: kaam 'Counter' wale camera ki recording
 CLIP_MAX, SHAK_PAD, PART_CHARS = 180, 5, 700_000
 SHAK_BEFORE, SHAK_AFTER, SHAK_MAX = 10, 20, 40    # v1.6: shak / bina voucher par clip — 10 s pehle se 20 s baad tak (40 s had)
+AUTO_BEFORE, AUTO_AFTER, AUTO_MAX, AUTO_W = 10, 10, 75, 640   # v2.15: har card ki khud video — chhoti (640 px), 75 s tak
 
 
 def ffmpeg_exe():
@@ -2759,7 +2765,7 @@ def pick_segs(segs, t0, t1, seg=SEG_SEC):
     return [(st, p) for st, p in segs if st <= t1 and st + seg >= t0]
 
 
-def clip_cmd(exe, segs, t0, t1, out):
+def clip_cmd(exe, segs, t0, t1, out, width=0):
     """Concat list + ffmpeg command (chhoti clip = dobara encode, saaf shuru; 640 px, 8 fps)."""
     lst = out + '.txt'
     with open(lst, 'w', encoding='utf-8') as f:
@@ -2767,6 +2773,7 @@ def clip_cmd(exe, segs, t0, t1, out):
             f.write("file '" + p.replace("'", "'\\''") + "'\n")
     off = max(0.0, t0 - segs[0][0])
     return [exe, '-loglevel', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', lst, '-ss', f'{off:.2f}', '-t', f'{max(1.0, t1 - t0):.2f}',
+            *(['-vf', f"scale='min({int(width)},iw)':-2"] if width else []),
             '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '29', '-pix_fmt', 'yuv420p', '-an', '-movflags', '+faststart', out]
 
 
@@ -2835,13 +2842,13 @@ class Recorder(threading.Thread):
                     p.kill()
             prune(self.dir)
 
-    def clip(self, t0, t1, out):
+    def clip(self, t0, t1, out, width=0):
         """Disk ki recording se [t0, t1] ki mp4. Wapas: path ya None."""
         t1 = min(t1, t0 + CLIP_MAX)
         segs = pick_segs(seg_files(self.dir), t0, t1)
         if not segs:
             return None
-        cmd = clip_cmd(ffmpeg_exe(), segs, t0, t1, out)
+        cmd = clip_cmd(ffmpeg_exe(), segs, t0, t1, out, width)
         r = subprocess.run(cmd, capture_output=True, timeout=300, creationflags=NO_WINDOW)
         if r.returncode != 0 or not os.path.exists(out) or os.path.getsize(out) < 1000:
             log('clip nahi bani:', r.stderr[-200:])
@@ -2873,6 +2880,11 @@ class Clips(threading.Thread):
     def shak(self, cid, eid, t0, t1, date, clip_id=None):
         before, after, most = (15, 15, 120) if PARCHI['on'] else (SHAK_BEFORE, SHAK_AFTER, SHAK_MAX)   # v2.9: parchi ka rule — poora (jura hua) len-den, 2 minute tak
         self.q.put({'id': clip_id or eid, 'cam': cid, 'kind': 'shak', 'eventId': eid, 'from': int((t0 - before) * 1000), 'to': int(min(t1 + after, t0 - before + most) * 1000), 'date': date})
+
+    def auto(self, cid, eid, t0, t1, date):
+        """v2.15: har card ki chhoti video (shak ke ilawa) — malik ko mangwani na pare."""
+        a = t0 - AUTO_BEFORE
+        self.q.put({'id': eid, 'cam': cid, 'kind': 'auto', 'eventId': eid, 'from': int(a * 1000), 'to': int(min(t1 + AUTO_AFTER, a + AUTO_MAX) * 1000), 'date': date, 'w': AUTO_W})
 
     def run(self):
         last = 0
@@ -2909,7 +2921,7 @@ class Clips(threading.Thread):
         if t1 - t0 > CLIP_MAX:
             t1 = t0 + CLIP_MAX
         out = os.path.join(HOME, f"clip_{job['id']}.mp4")
-        path = rec.clip(t0, t1, out)
+        path = rec.clip(t0, t1, out, int(job.get('w') or 0)) if job.get('w') else rec.clip(t0, t1, out)
         if not path:
             self.fire.patch(f"{BIZ}/cameraClips/{job['id']}", {**base, 'status': 'error', 'error': 'Us waqt ki recording PC par nahi mili (PC band tha ya 1 din se purani)', 'at': now_ms()})
             return
