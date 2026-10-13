@@ -31,7 +31,10 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '2.19'
+VERSION = '2.20'
+# v2.20: VIDEO SIRF ASAL LEN-DEN KI — malik: "172630 mein asal len-den 35 second ka hai aur clip 2 minute ki aayi, time zaya hota hai".
+#        AI har bande ka paisa / parchi ka waqt batata hai; video ab usi ke gird (15 s pehle se 20 s baad, 30-60 s) — poore jure hue
+#        (3 minute tak ke) len-den ki nahi. Waqt na mile to pehle jaisi magar 75 s tak. Chhoti video = jaldi upload.
 # v2.19: HAWALA NUMBER — app (v248) har card / video par 'Video No. HHMMSS' (len-den ka waqt) dikhati hai; log ki 'parchi' wali line
 #        mein bhi wahi number ('No.124725'), taake malik ke bataye number se len-den foran mil jaye.
 # v2.18: SHAK KI VIDEO JALDI — malik: "video nahi aa rahi ... baad mein bohat late ho jata hai, nuqsaan hota hai". Wajah: shak ki video
@@ -2033,6 +2036,47 @@ def counter_ai_frames(reader, cf):
     return reader.hd_frames(cf) if (reader is not None and cf and getattr(reader, 'rec_only', False) and hasattr(reader, 'hd_frames')) else cf
 
 
+def waqt_epoch(s, lo, hi):
+    """v2.20: AI ka likha waqt ('5:26:41 pm' / '17:26:41' / '05:26:41') -> epoch, agar [lo, hi] ke andar ho; warna None. am / pm na ho ya
+    ghalat ho to wo ghanta chuno jo khirki ke andar aaye."""
+    m = re.search(r'(\d{1,2})[:.](\d{2})(?:[:.](\d{2}))?', str(s or ''))
+    if not m:
+        return None
+    h, mi, se = int(m.group(1)), int(m.group(2)), int(m.group(3) or 0)
+    if h > 23 or mi > 59 or se > 59:
+        return None
+    day0 = (int((lo + hi) / 2 + 5 * 3600) // 86400) * 86400 - 5 * 3600        # PK ke din ka shuru (epoch)
+    best = None
+    for hh in {h % 24, (h % 12) + 12, h % 12}:
+        for d in (-86400, 0, 86400):
+            t = day0 + d + hh * 3600 + mi * 60 + se
+            if lo <= t <= hi and (best is None or abs(t - (lo + hi) / 2) < abs(best - (lo + hi) / 2)):
+                best = t
+    return best
+
+
+def focus_span(res, verdict, t0, t1):
+    """v2.20: video ki (shuru, khatam) AI ke bataye waqt ke gird. Shak: sirf bina-parchi wale bande ke paisa ka waqt; warna sab bandon
+    ke paisa / parchi ke waqt. Waqt na mile to None (purana tareeqa)."""
+    lo, hi = t0 - 90, t1 + 60
+    people = res.get('log') or []
+    pick = [x for x in people if x.get('paisa') and x.get('parchi') is False] if verdict == 'shak' else people
+    ts = []
+    for x in pick or people:
+        for k in (('paisa_waqt',) if (verdict == 'shak' and pick) else ('paisa_waqt', 'parchi_waqt')):
+            t = waqt_epoch(x.get(k), lo, hi)
+            if t is not None:
+                ts.append(t)
+    if not ts:
+        return None
+    a, b = min(ts) - FOCUS_BEFORE, max(ts) + FOCUS_AFTER
+    if b - a < FOCUS_MIN:
+        b = a + FOCUS_MIN
+    if b - a > FOCUS_MAX:
+        b = a + FOCUS_MAX                                 # kai bande: pehle wale se 60 s
+    return a, b
+
+
 def parchi_main(watchers):
     """v2.13: do (ya zyada) 'Galla' camera chal rahe hon to parchi ka AI sirf AIK par — ASAL: jis par 'Counter ka hissa' (zone2) mark
     NAHI (galle ke bilkul qareeb wala; us mein counter alag nahi hota). Sab aik jaise hon to sab se naya (createdAt). Aik hi ho to None."""
@@ -2597,12 +2641,21 @@ class Galla(threading.Thread):
                'thumb': thumb_small(g[len(g) // 2][1]) if verdict == 'normal' else g[len(g) // 2][1], 'n': len(allf) if verdict != 'normal' else 0,
                'ms': ms, 'model': model, 'agent': VERSION, 'flags': flags}
         self.fire.patch(f'{BIZ}/cameraEvents/{eid}', doc)
+        span = focus_span(res, verdict, t0, t1) if (self.clips and hasattr(self.clips, 'exact')) else None   # v2.20: video sirf asal len-den ki
         if verdict == 'shak' and self.clips:
-            self.clips.shak(w.cid, eid, t0, t1, date)
-            if cam2 is not None:
-                self.clips.shak(cam2.cid, eid, t0, t1, date, clip_id=eid + '-c')
+            if span:
+                self.clips.exact(w.cid, eid, span[0], span[1], date, 'shak', SHAK_W)
+                if cam2 is not None:
+                    self.clips.exact(cam2.cid, eid, span[0], span[1], date, 'shak', SHAK_W2, clip_id=eid + '-c')
+            else:
+                self.clips.shak(w.cid, eid, t0, t1, date)
+                if cam2 is not None:
+                    self.clips.shak(cam2.cid, eid, t0, t1, date, clip_id=eid + '-c')
         elif verdict == 'saaf_nahi' and self.clips and hasattr(self.clips, 'auto'):   # v2.15 / v2.16: 'Saaf nahi' ki video khud; 'Parchi di' ki nahi
-            self.clips.auto(w.cid, eid, t0, t1, date)
+            if span:
+                self.clips.exact(w.cid, eid, span[0], span[1], date, 'auto', AUTO_W)
+            else:
+                self.clips.auto(w.cid, eid, t0, t1, date)
         log('parchi', w.cid, 'No.' + time.strftime('%H%M%S', time.gmtime(at + 5 * 3600)), res['paisa'], res['parchi'], verdict, '|', len(g), '+', len(c), 'tasveer |', (res.get('why') or '')[:160],
             '|', '; '.join(f"{x['kaun'][:24]}: paisa {'haan' if x['paisa'] else 'nahi'} parchi {x['parchi']}" for x in (res.get('log') or [])[:4]))
         # v2.17: 'AI ne kis waqt tak check kiya' ab Galla.progress() likhta hai (har surat mein, card bane ya na bane)
@@ -2762,6 +2815,7 @@ CLIP_MAX, SHAK_PAD, PART_CHARS = 180, 5, 700_000
 SHAK_BEFORE, SHAK_AFTER, SHAK_MAX = 10, 20, 40    # v1.6: shak / bina voucher par clip — 10 s pehle se 20 s baad tak (40 s had)
 AUTO_BEFORE, AUTO_AFTER, AUTO_MAX, AUTO_W = 10, 10, 75, 640   # v2.15: har card ki khud video — chhoti (640 px), 75 s tak
 SHAK_W, SHAK_W2 = 720, 640                                     # v2.18: parchi ke rule mein shak ki video (asal / madadgar camera) — jaldi upload
+FOCUS_BEFORE, FOCUS_AFTER, FOCUS_MIN, FOCUS_MAX = 15, 20, 30, 60   # v2.20: video AI ke bataye waqt ke gird: 15 s pehle, 20 s baad, 30-60 s
 
 
 def ffmpeg_exe():
@@ -2964,11 +3018,15 @@ class Clips(threading.Thread):
         self.fire, self.recorders, self.q = fire, recorders, ClipQueue()      # v2.18: naya shak pehle
 
     def shak(self, cid, eid, t0, t1, date, clip_id=None):
-        before, after, most = (15, 15, 120) if PARCHI['on'] else (SHAK_BEFORE, SHAK_AFTER, SHAK_MAX)   # v2.9: parchi ka rule — poora (jura hua) len-den, 2 minute tak
+        before, after, most = (15, 15, 75) if PARCHI['on'] else (SHAK_BEFORE, SHAK_AFTER, SHAK_MAX)   # v2.9: parchi ka rule — poora (jura hua) len-den; v2.20: AI ka waqt na mile to 75 s tak (pehle 2 minute)
         job = {'id': clip_id or eid, 'cam': cid, 'kind': 'shak', 'eventId': eid, 'from': int((t0 - before) * 1000), 'to': int(min(t1 + after, t0 - before + most) * 1000), 'date': date}
         if PARCHI['on']:
             job['w'] = SHAK_W2 if clip_id else SHAK_W            # v2.18: chhoti = jaldi (HD 20+ tukre 6-8 minute leti thi)
         self.q.put(job)
+
+    def exact(self, cid, eid, a, b, date, kind, width, clip_id=None):
+        """v2.20: bilkul (a, b) ki video — AI ke bataye len-den ke waqt ke gird (focus_span)."""
+        self.q.put({'id': clip_id or eid, 'cam': cid, 'kind': kind, 'eventId': eid, 'from': int(a * 1000), 'to': int(b * 1000), 'date': date, 'w': width})
 
     def auto(self, cid, eid, t0, t1, date):
         """v2.15: har card ki chhoti video (shak ke ilawa) — malik ko mangwani na pare."""

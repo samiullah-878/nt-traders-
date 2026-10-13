@@ -5,6 +5,21 @@ Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf)
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
 
 ------------------------------------------------------------
+CAMERA: ntcam.py v2.20 (13 Oct sham) — VIDEO SIRF ASAL LEN-DEN KI (AI ke bataye waqt ke gird)  (app v248 wahi)
+------------------------------------------------------------
+Malik: "jaise 172630 mein 35 second ki video hai asal, aur ye clip 2 minute ka aaya hai jis mein hamara time zaya hota hai."
+Video No. 172630: jura hua len-den 17:26:30 - 17:28:12; AI: "neeli shirt: paisa 5:26:44 pm, parchi nahi"; clip 9 tukre (2 minute),
+faisle ke 3 minute baad pohanchi.
+- waqt_epoch(s, lo, hi): AI ka likha waqt ('5:26:44 pm' / '16:19:01' / '05:26:44') -> epoch, sirf khirki ke andar. 13 Oct ke log ke
+  54 mein se 54 waqt samajh aaye.
+- focus_span(res, verdict, t0, t1): shak -> bina-parchi wale bande ke paisa_waqt; warna sab ke paisa / parchi waqt. (min - 15 s,
+  max + 20 s), kam se kam 30 s, zyada se zyada 60 s (kai bande hon to pehle se 60 s). Waqt na mile -> None.
+- handle_parchi: span mile to Clips.exact(cid, eid, a, b, date, kind, width[, clip_id]) — shak 720 / madadgar 640, saaf nahi 640.
+  Na mile to purana (Clips.shak ab 75 s tak, pehle 120). 172630 par nayi video 5:26:29 - 5:27:04 = 35 s hoti.
+- ntcam_test 95 pass. Asal video abhi nahi dekhi (lagne ke baad pehla shak).
+- BAQI (malik ne maanga, ijazat ka intezar): video mein bina-parchi wale bande par nishan (AI se dabba -> ffmpeg drawbox).
+
+------------------------------------------------------------
 v248 + ntcam.py v2.19 (13 Oct sham) — VIDEO / CARD KA HAWALA NUMBER
 ------------------------------------------------------------
 Malik: "videos par number lagao taake main us ka reference de kar tum ko bhej sakoon ke is video mein AI ne ye ghalat kiya; aur camera

@@ -1351,6 +1351,37 @@ class Parchi(unittest.TestCase):
         finally:
             ntcam.PARCHI['on'] = old
 
+    def test_v220_video_sirf_asal_len_den_ki(self):
+        """v2.20: video AI ke bataye waqt ke gird (15 s pehle, 20 s baad), poore 2-3 minute ke jure hue len-den ki nahi."""
+        import calendar
+        base = calendar.timegm((2026, 10, 13, 12, 26, 30))                        # 5:26:30 pm PK (12:26:30 UTC)
+        W = ntcam.waqt_epoch
+        self.assertEqual(W('5:26:41 pm', base - 100, base + 200), base + 11); self.assertEqual(W('17:26:41', base - 100, base + 200), base + 11)
+        self.assertEqual(W('05:26:41', base - 100, base + 200), base + 11, 'am / pm ke bagair bhi'); self.assertEqual(W('5:26 PM', base - 100, base + 200), base - 30)
+        self.assertIsNone(W('3:10:00 pm', base - 100, base + 200), 'khirki se bahar = nahi'); self.assertIsNone(W('', base, base + 9)); self.assertIsNone(W('abc', base, base + 9)); self.assertIsNone(W('25:99:99', base, base + 9))
+        noon = calendar.timegm((2026, 10, 13, 7, 9, 0)) - 0                       # 12:09:00 pm PK
+        self.assertEqual(W('12:09:24', noon - 60, noon + 120), noon + 24); self.assertEqual(W('12:09:24 pm', noon - 60, noon + 120), noon + 24)
+        P = ntcam.parse_parchi
+        bina = P('{"log": [{"kaun": "brown", "paisa": true, "paisa_waqt": "5:26:35 pm", "parchi": true, "parchi_waqt": "5:26:20 pm"}, {"kaun": "neeli shirt", "paisa": true, "paisa_waqt": "5:27:40 pm", "parchi": false}], "why": "x"}')
+        a, b = ntcam.focus_span(bina, 'shak', base, base + 170)
+        self.assertEqual((a, b), (base + 70 - 15, base + 70 + 20), 'shak: sirf bina-parchi wale ke paisa ka waqt'); self.assertEqual(b - a, 35)
+        a, b = ntcam.focus_span(bina, 'saaf_nahi', base, base + 170); self.assertEqual(a, base - 10 - 15); self.assertEqual(b - a, ntcam.FOCUS_MAX, 'kai waqt: 60 s ki had')
+        self.assertIsNone(ntcam.focus_span(P('{"log": [{"kaun": "x", "paisa": true, "paisa_waqt": "", "parchi": false}], "why": ""}'), 'shak', base, base + 60), 'waqt na ho to purana tareeqa')
+        one = P('{"log": [{"kaun": "x", "paisa": true, "paisa_waqt": "5:26:40 pm", "parchi": false}], "why": ""}')
+        # handle_parchi: exact() ho to usi waqt ki video, dono camera
+        g, writes, clips = self._g(); ex = []
+        g.clips.exact = lambda cid, eid, a, b, date, kind, width, clip_id=None: ex.append((cid, clip_id or eid, round(a - base), round(b - base), kind, width))
+        w = self._w(); w.tape = __import__('collections').deque([(base - 100 + k * 0.5, f'J{k}', 0.0) for k in range(700)], maxlen=720)
+        r = g.counters['nvr-3']; r.tape = __import__('collections').deque([(base - 100 + k * 0.5, f'C{k}', 0.0) for k in range(700)], maxlen=720)
+        old = ntcam.PARCHI['on']; ntcam.PARCHI['on'] = True
+        try:
+            with mock.patch.object(ntcam, 'secrets', lambda: {'geminiKey': 'g-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_parchi', lambda *a_, **k: (one, 5, 'm')):
+                g.handle(w, base + 5.0, base, base + 170.0, [], True)
+        finally:
+            ntcam.PARCHI['on'] = old
+        eid = f'c1-{int((base + 5) * 1000)}'
+        self.assertEqual(ex, [('c1', eid, -5, 30, 'shak', ntcam.SHAK_W), ('nvr-3', eid + '-c', -5, 30, 'shak', ntcam.SHAK_W2)], '35 s ki video, 170 s ke len-den mein se'); self.assertEqual(clips, [])
+
     def test_frames_at_aur_denied(self):
         g, _, _ = self._g(); r = g.counters['nvr-3']
         fr = r.frames_at([1000.1, 1000.2, 2000.0]); self.assertEqual([t for t, _ in fr], [1000.0], 'qareeb wali aik dafa, door wali nahi')
