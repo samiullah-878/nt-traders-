@@ -31,7 +31,10 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '2.17'
+VERSION = '2.18'
+# v2.18: SHAK KI VIDEO JALDI — malik: "video nahi aa rahi ... baad mein bohat late ho jata hai, nuqsaan hota hai". Wajah: shak ki video
+#        HD thi (20-28 tukre x 2 camera = aik video 6-8 minute mein upload) aur qataar barhti gayi — 4 baje ke shak ki video 5 baje.
+#        Ab parchi ke rule mein shak ki video 720 px (madadgar camera 640) = 2-4 tukre, aur qataar mein sab se pehle sab se naya shak.
 # v2.17: AI NE KIS WAQT TAK CHECK KIYA — malik: "Nigrani mein aik time laga do AI ne kahan tak check kiya hai, taake pata ho kitna
 #        kaam pending hai". Galla.progress(): asal camera ke doc mein aiTestAt = us waqt tak sab len-den check ho chuke (qataar khali
 #        ho to ab se 1 minute pehle), aiTest = matn (+ kitne baqi / AI kyun ruka). Har ~1 minute.
@@ -2756,6 +2759,7 @@ REC_W_COUNTER = 960                                # v2.1: kaam 'Counter' wale c
 CLIP_MAX, SHAK_PAD, PART_CHARS = 180, 5, 700_000
 SHAK_BEFORE, SHAK_AFTER, SHAK_MAX = 10, 20, 40    # v1.6: shak / bina voucher par clip — 10 s pehle se 20 s baad tak (40 s had)
 AUTO_BEFORE, AUTO_AFTER, AUTO_MAX, AUTO_W = 10, 10, 75, 640   # v2.15: har card ki khud video — chhoti (640 px), 75 s tak
+SHAK_W, SHAK_W2 = 720, 640                                     # v2.18: parchi ke rule mein shak ki video (asal / madadgar camera) — jaldi upload
 
 
 def ffmpeg_exe():
@@ -2914,15 +2918,55 @@ def upload_clip(fire, clip_id, path, meta):
     return len(parts)
 
 
+class ClipQueue:
+    """v2.18: video ki qataar. Pehle shak (asal camera, phir madadgar '-c'), phir malik ki farmaish, phir baqi; har qisam mein sab se
+    NAYI pehle — taake abhi ke shak ki video foran aaye, purani baad mein. put / get / get_nowait queue.Queue jaise."""
+    RANK = {'shak': 0, 'req': 2, 'auto': 3, 'daily': 4}
+
+    def __init__(self):
+        self.items, self.cv = [], threading.Condition()
+
+    def put(self, job):
+        with self.cv:
+            self.items.append(job)
+            self.cv.notify()
+
+    def _key(self, j):
+        helper = str(j.get('id') or '').endswith('-c')
+        return (self.RANK.get(j.get('kind'), 3) + (1 if helper else 0), -int(j.get('from') or 0))
+
+    def get(self, timeout=None):
+        with self.cv:
+            if not self.items and timeout:
+                self.cv.wait(timeout)
+            if not self.items:
+                raise queue.Empty
+            j = min(self.items, key=self._key)
+            self.items.remove(j)
+            return j
+
+    def get_nowait(self):
+        return self.get(0)
+
+    def qsize(self):
+        return len(self.items)
+
+    def empty(self):
+        return not self.items
+
+
 class Clips(threading.Thread):
     """Shak par khud clip; malik ki farmaish (cameraClips status 'req') har 20 s dekh kar clip bana kar app mein."""
     def __init__(self, fire, recorders):
         super().__init__(daemon=True)
-        self.fire, self.recorders, self.q = fire, recorders, queue.Queue()
+        self.fire, self.recorders, self.q = fire, recorders, ClipQueue()      # v2.18: naya shak pehle
 
     def shak(self, cid, eid, t0, t1, date, clip_id=None):
         before, after, most = (15, 15, 120) if PARCHI['on'] else (SHAK_BEFORE, SHAK_AFTER, SHAK_MAX)   # v2.9: parchi ka rule — poora (jura hua) len-den, 2 minute tak
-        self.q.put({'id': clip_id or eid, 'cam': cid, 'kind': 'shak', 'eventId': eid, 'from': int((t0 - before) * 1000), 'to': int(min(t1 + after, t0 - before + most) * 1000), 'date': date})
+        job = {'id': clip_id or eid, 'cam': cid, 'kind': 'shak', 'eventId': eid, 'from': int((t0 - before) * 1000), 'to': int(min(t1 + after, t0 - before + most) * 1000), 'date': date}
+        if PARCHI['on']:
+            job['w'] = SHAK_W2 if clip_id else SHAK_W            # v2.18: chhoti = jaldi (HD 20+ tukre 6-8 minute leti thi)
+        self.q.put(job)
 
     def auto(self, cid, eid, t0, t1, date):
         """v2.15: har card ki chhoti video (shak ke ilawa) — malik ko mangwani na pare."""
@@ -2969,7 +3013,7 @@ class Clips(threading.Thread):
             self.fire.patch(f"{BIZ}/cameraClips/{job['id']}", {**base, 'status': 'error', 'error': 'Us waqt ki recording PC par nahi mili (PC band tha ya 1 din se purani)', 'at': now_ms()})
             return
         n = upload_clip(self.fire, job['id'], path, base)
-        log('clip', job['id'], n, 'parts')
+        log('clip', job['id'], n, 'parts', '| qataar mein baqi', self.q.qsize(), '| len-den ke', int(time.time() - job['to'] / 1000), 's baad')
 
 
 def watch_wanted(c, s):

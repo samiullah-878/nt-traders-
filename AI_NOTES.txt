@@ -5,6 +5,22 @@ Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf)
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
 
 ------------------------------------------------------------
+CAMERA: ntcam.py v2.18 (13 Oct sham) — SHAK KI VIDEO JALDI (chhoti + qataar mein sab se pehle)  (app v247 wahi)
+------------------------------------------------------------
+Malik: "video nahi aa rahi — kya shak wali video ke sath hi PC videos bhej sakta hai speed se, baad mein bohat late ho jata hai, is
+tarah nuqsaan hota hai." Log (13 Oct): shak ki video HD thi = 20-28 tukre x 2 camera; aik video 6-8 minute mein upload; 4:03 ke shak
+ki video 4:10, us ke doosre camera ki 4:18, 4:21 ke shak ki 4:51-4:59 — qataar barhti gayi. 5:01 par dono camera "PC dheema — halki
+video" (bojh).
+- Clips.shak (parchi mode): job['w'] = SHAK_W 720 (asal) / SHAK_W2 640 (madadgar '-c'). Napa: 120 s = 1.9 MB, 6 s mein, 4 tukre
+  (pehle 21-28). Lambai wahi (t0-15 .. t1+15, 2 minute tak).
+- ClipQueue (queue.Queue ki jagah): shak asal -> shak madadgar -> farmaish -> auto -> daily; har qisam mein sab se NAYA pehle.
+- Log 'clip <id> N parts | qataar mein baqi K | len-den ke S s baad'.
+- 13 Oct ke faisle (v2.14+ sakht sawal): 86 mein se 28 SHAK, 14 saaf nahi, 44 normal — shak bohat zyada (ghalat alarm ka andesha, jaisa
+  v2.14 mein likha tha). Malik ko bataya; agla qadam: malik chand shak cards par "Theek hai / Shak pakka" kare, phir un ko recording se
+  mila kar sawal narm / behtar karna. Abhi sawal nahi badla.
+- ntcam_test 94 pass.
+
+------------------------------------------------------------
 v247 + ntcam.py v2.17 (13 Oct) — "AI NE KIS WAQT TAK CHECK KIYA" + CARD SE LARKON KE NAAM HATE
 ------------------------------------------------------------
 Malik: "Nigrani mein aik time laga do AI ne kahan tak check kiya hai, taake pata ho itne time tak pending hai kaam; aur larkon ke naam

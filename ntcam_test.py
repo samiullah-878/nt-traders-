@@ -1328,6 +1328,29 @@ class Parchi(unittest.TestCase):
         finally:
             ntcam.PARCHI['on'] = old
 
+    def test_v218_shak_ki_video_jaldi(self):
+        """v2.18: shak ki video chhoti (720 / 640) aur qataar mein sab se pehle sab se naya shak."""
+        q = ntcam.ClipQueue()
+        with self.assertRaises(__import__('queue').Empty): q.get_nowait()
+        q.put({'id': 'a1', 'kind': 'auto', 'from': 5000}); q.put({'id': 's1', 'kind': 'shak', 'from': 1000}); q.put({'id': 's1-c', 'kind': 'shak', 'from': 1000})
+        q.put({'id': 'r1', 'kind': 'req', 'from': 9000}); q.put({'id': 's2', 'kind': 'shak', 'from': 7000}); q.put({'id': 's2-c', 'kind': 'shak', 'from': 7000})
+        self.assertEqual(q.qsize(), 6)
+        self.assertEqual([q.get(0.01)['id'] for _ in range(6)], ['s2', 's1', 's2-c', 's1-c', 'r1', 'a1'], 'naya shak pehle, phir purana, phir madadgar camera, farmaish, baqi')
+        self.assertTrue(q.empty())
+        c = ntcam.Clips.__new__(ntcam.Clips); c.q = ntcam.ClipQueue()
+        old = ntcam.PARCHI['on']; ntcam.PARCHI['on'] = True
+        try:
+            c.shak('c1', 'e1', 1000.0, 1100.0, '2026-10-13'); c.shak('c2', 'e1', 1000.0, 1100.0, '2026-10-13', clip_id='e1-c')
+        finally:
+            ntcam.PARCHI['on'] = old
+        a, b = c.q.get_nowait(), c.q.get_nowait()
+        self.assertEqual((a['id'], a['w'], b['id'], b['w']), ('e1', ntcam.SHAK_W, 'e1-c', ntcam.SHAK_W2)); self.assertLessEqual(ntcam.SHAK_W, 720)
+        ntcam.PARCHI['on'] = False
+        try:
+            c.shak('c1', 'e2', 1000.0, 1100.0, '2026-10-13'); self.assertNotIn('w', c.q.get_nowait(), 'POS wale tareeqe mein pehle jaisi')
+        finally:
+            ntcam.PARCHI['on'] = old
+
     def test_frames_at_aur_denied(self):
         g, _, _ = self._g(); r = g.counters['nvr-3']
         fr = r.frames_at([1000.1, 1000.2, 2000.0]); self.assertEqual([t for t, _ in fr], [1000.0], 'qareeb wali aik dafa, door wali nahi')
