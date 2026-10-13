@@ -1,6 +1,6 @@
 {
-  "version": "v248",
+  "version": "v249",
   "variant": "Production",
   "buildDate": "2026-10-13",
-  "notes": "Camera ke har card aur video par hawala number (Video No. = len-den ka waqt) + number copy ka button, taake AI ki ghalti us number se batayi ja sake. Rules wahi (v244)."
+  "notes": "Hazri durust karein: ghalti se laga Check-Out ab mit sakta hai ('Check-Out mitayein' tick). Larka phir duty ke waqt par apna Check-Out laga sakta hai. Rules aur PC program wahi."
 }

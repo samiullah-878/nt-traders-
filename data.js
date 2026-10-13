@@ -425,12 +425,15 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   }
 
   /* ---------- owner: attendance ---------- */
-  async function saveAttendance({ phone, date, checkIn, checkOut, note, finalScore }) {
+  const OUT_KEYS = ['checkOut', 'checkOutTs', 'checkOutLat', 'checkOutLng', 'checkOutAccuracy', 'checkOutDistance', 'checkOutVia', 'outServerAt'];   // v249
+  async function saveAttendance({ phone, date, checkIn, checkOut, note, finalScore, clearOut = false }) {
     guardHazri();
     guardOwner();
     if (!isDate(date)) throw new Error('Tareekh durust nahi.');
     if (date > pkDate()) throw new Error('Aane wali tareekh ki hazri nahi lag sakti.');
-    const inT = to24(checkIn), outT = to24(checkOut);
+    if (clearOut && !sdk.deleteField) throw new Error('Is browser mein ye kaam nahi ho sakta.');
+    const inT = to24(checkIn), outT = clearOut ? '' : to24(checkOut);   // v249: "Check-Out mitayein" = jane ka waqt nahi
+    if (clearOut) checkOut = '';
     if (!inT) throw new Error('Aane ka waqt likhein.');
     if (checkOut && !outT) throw new Error('Jane ka waqt durust nahi.');
     if (outT && workMinutes({ checkIn: inT, checkOut: outT }) == null) throw new Error(`Jane ka waqt (${fmtTime(outT)}) aane ke waqt (${fmtTime(inT)}) se pehle hai ya 16 ghante se zyada farq hai. AM / PM check karein.`);
@@ -447,12 +450,14 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       });
       // v216: khali "jane ka waqt" se pehle se laga Check-Out (larke ka) kabhi na mitao
       if (!outT) delete patch.checkOut;
+      // v249: malik ne khud "Check-Out mitayein" chuna (ghalti se Check-In ke sath laga) — larka dobara apna Check-Out laga sake
+      if (clearOut && before) for (const k of OUT_KEYS) if (k in before) patch[k] = sdk.deleteField();
       if (!before) { patch.checkInTs = null; patch.manual = true; }
       if (before && to24(before.checkIn) !== inT) patch.checkInTs = null;
       if (before && outT && to24(before.checkOut) !== outT) patch.checkOutTs = null;
       tx.set(r, patch, { merge: true });
       const light = before ? { checkIn: before.checkIn || '', checkOut: before.checkOut || '', finalScore: before.finalScore ?? null } : null;
-      audit(tx, 'attendance', id, light, { checkIn: inT, checkOut: outT, finalScore: patch.finalScore }, note || 'Malik ne hazri durust ki');
+      audit(tx, 'attendance', id, light, { checkIn: inT, checkOut: outT, finalScore: patch.finalScore }, note || (clearOut ? 'Malik ne ghalat Check-Out mitaya' : 'Malik ne hazri durust ki'));
     });
   }
   async function deleteAttendance(id, reason) {

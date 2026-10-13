@@ -440,6 +440,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
           <label>Tareekh<input name="date" type="date" value="${date}" max="${pkDate()}" required ${a.id ? 'readonly' : ''}></label>
           ${timeField('checkIn', to24(a.checkIn), { label: 'Aaya', tickets: [to24(sch.shiftStart), ...IN_TICKETS].sort(), now: date === pkDate(), guess: 'in' })}
           ${timeField('checkOut', to24(a.checkOut), { label: 'Gaya', tickets: [...OUT_TICKETS, to24(sch.shiftEnd)].sort(), optional: true, now: date === pkDate(), guess: 'out' })}
+          ${a.checkOut && !manager ? `<label class="check"><input type="checkbox" name="clearOut"> <span>Check-Out mitayein <small>(ghalti se laga — larka dobara apna Check-Out lagaye ga)</small></span></label>` : ''}
           <label>Note <small>(kyun badla)</small><input name="note" value="${esc(a.ownerNote || '')}" maxlength="200"></label>
           <div class="btn-row sticky"><button class="btn btn-primary btn-lg">Save karein</button>${a.id ? `<button type="button" class="btn btn-ghost" data-action="att-delete" data-id="${esc(a.id)}">Hazri hatayein</button>` : ''}</div>
         </form>`;
@@ -1591,7 +1592,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       await busy(button, async () => { await data.saveStaff({ ...v, photo: sheets.staffForm?.getPhoto() }, form.dataset.phone); sheets.staffForm?.close(); }, 'Staff save ho gaya');
     },
     async att(form, v, button) {
-      await busy(button, async () => { await data.saveAttendance({ phone: form.dataset.phone, date: v.date, checkIn: v.checkIn, checkOut: v.checkOut, note: v.note }); sheets.att?.close(); }, 'Hazri save ho gayi');
+      await busy(button, async () => { await data.saveAttendance({ phone: form.dataset.phone, date: v.date, checkIn: v.checkIn, checkOut: v.checkOut, note: v.note, clearOut: !!v.clearOut }); sheets.att?.close(); }, v.clearOut ? 'Check-Out mit gaya — ab larka dobara laga sakta hai' : 'Hazri save ho gayi');
     },
     async leave(form, v, button) { await busy(button, async () => { await data.markLeave({ phone: form.dataset.phone, ...v }); sheets.leave?.close(); }, 'Chutti lag gayi'); },
     async cfg(form, v, button) { await busy(button, async () => { await data.saveConfig(v); sheets.cfg?.close(); }, 'Save ho gaya'); },

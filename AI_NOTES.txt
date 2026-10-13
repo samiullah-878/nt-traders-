@@ -1,6 +1,6 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v248   Tareekh: 2026-10-13  (camera: har card / video par hawala number 'Video No. HHMMSS'; ntcam.py v2.19; RULES wahi v244)
+Version: v249   Tareekh: 2026-10-13  (hazri: ghalat Check-Out mitana — "Check-Out mitayein"; ntcam.py v2.20 wahi; RULES wahi v244)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
 
@@ -132,6 +132,21 @@ Halat: dono camera app mein 'Galla' (malik ne upar wale ko 'Counter' nahi kiya, 
 - AI: malik ne kaha abhi isi (paid) key par chalao, "kal dekh lenge". Meri apni aazmaish ab bhi pooch kar.
 - ntcam_test 90 pass (Parchi 12). Asal AI / app par nahi dekha — malik ke agle test se.
 - Is repo par aik aur chat ne 12 Oct sham v244 (Check-Out / jaldi jane ki ijazat, rules v244) bheja — pull kar ke kaam karo.
+
+------------------------------------------------------------
+00000000000000000000000000000000000000000000000000000. v249 — HAZRI: GHALTI SE LAGA CHECK-OUT MITANA ("Check-Out mitayein")
+------------------------------------------------------------
+Malik (13 Oct raat): "Arman ka subah ghalti se Check-In aur Check-Out aik waqt par ho gaya; main ne edit kiya, edit nahi hua" (duty ka
+tala bhi nahi laga kyun ke Check-Out pehle se laga tha). Wajah: v216 — saveAttendance mein khali "Gaya" = purana Check-Out NAHI mitta
+(taake purane form se larke ka asal Check-Out na mite). Malik ke paas mitane ka koi raasta nahi tha.
+- owner.js attendanceSheet: Check-Out laga ho (aur manager nahi) to checkbox name=clearOut "Check-Out mitayein (ghalti se laga ...)".
+  forms.att -> saveAttendance({... clearOut}); toast "Check-Out mit gaya — ab larka dobara laga sakta hai".
+- data.js saveAttendance({clearOut}): outT = '' ; before ho to OUT_KEYS (checkOut, checkOutTs, checkOutLat/Lng/Accuracy/Distance,
+  checkOutVia, outServerAt) sdk.deleteField(); audit note "Malik ne ghalat Check-Out mitaya". Bina tick: pehle jaisa (v216 hifazat).
+- RULES NAHI BADLE: malik generic; larke ka Check-Out rule (!('checkOut' in resource.data) || == '') mitane ke baad phir chalta hai,
+  aur v244 ka tala duty ke waqt tak lagta hai.
+- Tests: app.dom (v249 hissa staff edit test mein): khali khana = nahi mitta; tick = poora mita, Check-In wahi; Check-Out na ho to option nahi.
+- APP_VERSION v249 (core.js, sw.js), index.html ?v=249, version.json.
 
 ------------------------------------------------------------
 0000000000000000000000000000000000000000000000000. v244 — DUTY SE PEHLE CHECK-OUT BAND + JALDI JANE KI IJAZAT

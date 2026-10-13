@@ -515,6 +515,20 @@ test('v202: Aaya/Gaya tickets aur aasan time picker', async () => {
   await click(box.querySelector('.tp-clear')); assert.equal(hidden.value, '');
   await click(box.querySelector('[data-tp-set="19:30"]')); await submit($('form[data-form=att]'));
   assert.equal(records.get(B + `staffAttendance/${today}_03001234567`).checkOut, '19:30');
+  // v249: ghalti se laga Check-Out — khali khana purana nahi mitata, "Check-Out mitayein" tick se mit-ta hai
+  await click(`[data-sheet=profile] [data-action=edit-att][data-date="${today}"]`);
+  { const f = $('form[data-form=att]'), cb = f.querySelector('input[name=clearOut]'); assert.ok(cb, 'Check-Out laga ho to mitane ka option');
+    const b2 = [...f.querySelectorAll('[data-tp]')][1]; await click(b2.querySelector('.tp-clear')); await submit(f);
+    assert.equal(records.get(B + `staffAttendance/${today}_03001234567`).checkOut, '19:30', 'sirf khali khana = asal Check-Out nahi mitta (v216)'); }
+  await click(`[data-sheet=profile] [data-action=edit-att][data-date="${today}"]`);
+  { const f = $('form[data-form=att]'); f.querySelector('input[name=clearOut]').checked = true; await submit(f);
+    const rec = records.get(B + `staffAttendance/${today}_03001234567`);
+    assert.ok(!('checkOut' in rec) && !('checkOutTs' in rec), 'Check-Out poora mit gaya'); assert.equal(rec.checkIn, '09:15', 'Check-In wahi');
+    assert.match(toastText(), /Check-Out mit gaya/); }
+  await click(`[data-sheet=profile] [data-action=edit-att][data-date="${today}"]`);
+  assert.ok(!$('form[data-form=att] input[name=clearOut]'), 'Check-Out na ho to option nahi');
+  await submit($('form[data-form=att]').querySelector('[data-tp-set="19:30"]') ? (await click([...$('form[data-form=att]').querySelectorAll('[data-tp]')][1].querySelector('[data-tp-set="19:30"]')), $('form[data-form=att]')) : $('form[data-form=att]'));
+  assert.equal(records.get(B + `staffAttendance/${today}_03001234567`).checkOut, '19:30', 'wapas lag gaya (baqi tests ke liye)');
   await click('[data-sheet=profile] [data-sheet-close]');
 });
 test('v202: raat ki duty ghalti se save ho to warning', async () => {
