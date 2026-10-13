@@ -31,7 +31,12 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '2.13'
+VERSION = '2.14'
+# v2.14: PARCHI — HAR BANDE KA ALAG JAWAB + SABOOT. 13 Oct ke test (3 larke: parchi + paisa / bina paisa / bina parchi) mein purana sawal
+#        teeno par ghalat tha. Naya sawal: har customer alag (paisa? parchi? kis tasveer ke waqt), parchi sirf customer ke apne haath ka
+#        safed kaghaz (safed kapre / galle wale ka kaghaz / parchiyon ka dhair nahi). Tasveerein har 2 s. Doosri raaye ab wahi chhota
+#        model doosri tasveeron par (bara model parchi ka wehem karta tha): dono 'parchi nahi' = shak; alag alag = 'Saaf nahi'.
+#        Sirf parchi (paisa nahi) = 'Parchi di, paisa nahi diya' ka halka card.
 # v2.13: (1) DO 'GALLA' CAMERA KHUD JURTE HAIN — malik: "tum dono ko connect karo". Parchi ka AI sirf ASAL camera par (jis par
 #        'Counter ka hissa' mark nahi = galle ke qareeb wala; warna sab se naya); doosra madadgar: us ki tasveerein usi sawal mein,
 #        us ka apna check band (dugna kharcha khatam). (2) APP KI TASVEEREIN SAAF — card mein asal camera ki 640 px (pehle 416),
@@ -91,7 +96,7 @@ PARCHI_N, PARCHI_C, PARCHI_BIG_N, PARCHI_BIG_C = 12, 12, 16, 12   # v2.2: galla 
 PARCHI_C_KEEP = 4                                          # v2.10: card (cameraFrames) mein madadgar camera ki itni hi (v2.13: 4)
 CARD_N, CARD_W, CARD_Q, CARD_MAX = 10, 640, 66, 900_000    # v2.13: card mein asal camera ki 10 saaf tasveerein; kul base64 ki had (Firestore doc 1 MB)
 PARCHI_W, PARCHI_Q = 768, 70                             # v2.8: AI ko jane wali tasveer (card mein TAPE_W 416 hi)
-PARCHI_STEP, PARCHI_MAX, PARCHI_HD_N = 4.0, 56, 20      # v2.9: har 4 s ki tasveer, had 56; itni tak hon to bari (768), zyada to 416
+PARCHI_STEP, PARCHI_MAX, PARCHI_HD_N = 2.0, 56, 20      # v2.9: har 4 s ki tasveer, had 56; itni tak hon to bari (768), zyada to 416 (v2.14: har 2 s — note dene ka lamha 2-3 s ka)
 PARCHI_PRE, PARCHI_POST, PARCHI_BIG_PRE, PARCHI_BIG_POST = 30, 12, 45, 20   # v2.6: parchi paisa se pehle ya baad mein — itne second pehle / baad tak dekho
 FX_PKR = 280.0                       # v1.9: kharcha rupay mein dikhane ke liye (andaza)
 PRICE = {'claude-haiku-4-5-20251001': (1.0, 5.0), 'claude-sonnet-5-5': (2.0, 10.0), 'claude-sonnet-4-6': (3.0, 15.0)}   # $/M tokens (in, out)
@@ -1937,22 +1942,22 @@ FLAG_TEXT = {'jeb': 'Paisa jeb / kapron mein', 'noparchi': 'Bina parchi paisa li
              'noparchi_out': 'Bina parchi paisa diya', 'parchi_saaf': 'Parchi saaf nazar nahi aayi'}
 
 # ---------- v2.2: SEEDHA CAMERA + AI (bina POS) — parchi ka rule ----------
-PARCHI_PROMPT = ('Ye tasveerein aik dukaan ki CCTV se hain, waqt ki tarteeb mein (har tasveer ke sath us ka waqt). {cams}Dukaan ka QAIDA: har '
-                 'customer pehle counter se PARCHI (chhota safed kaghaz / bill slip) leta hai, phir galle wale larke ko parchi + paisa deta hai; larka '
-                 'parchi le kar paisa galle mein rakhta hai aur baqaya USI customer ko deta hai. Ye normal hai. TARTEEB KOI BHI ho sakti hai: pehle '
-                 'parchi phir paisa, pehle paisa phir parchi, ya dono aik sath — teeno theek hain; parchi aur paisa ke beech 30-40 second ka farq bhi '
-                 'ho sakta hai (customer note gin raha ho, larka parchi parh raha ho). Is liye SAARI tasveerein dekho, sirf paisa wali nahi: safed '
-                 'parchi customer ke barhe hue haath mein, counter par rakhi hui, larke ke haath mein, ya galle / laptop ke paas — KISI BHI tasveer mein '
-                 'dikhe to parchi di gayi hai. HAATH ghaur se dekho aur parchi aur paisa mein FARQ karo: parchi chhota SAFED kaghaz hai; Pakistani '
-                 'note KABHI safed nahi hote (10 sabz, 20 narangi, 50 jamni, 100 laal, 500 sabz, 1000 neela, 5000 sarson jaisa peela) - safed = '
-                 'parchi, rangeen = note. Sirf parchi di aur paisa nahi diya to paisa "nahi" aur parchi true. Haath seene / jeb / gode ke paas dikhna '
-                 'koi baat NAHI — sirf parchi dekho.{prev} SIRF ye batao: (1) "paisa": "aaya" (kisi ne galle wale ko paisa diya), "nikla" (galle se '
-                 'paisa nikal kar kisi ko diya), "dono" (liya aur baqaya diya), "nahi" (in tasveeron mein paisa ka len-den hi nahi — sirf ginti / '
-                 'galla chhua / customer ne abhi paisa diya nahi). (2) "parchi": true agar in tasveeron mein KAHIN BHI (paisa se pehle, baad mein ya '
-                 'sath) us bande ki parchi galle wale ko di gayi (haath mein, counter par, ya galle ke paas safed parchi dikhe); false SIRF agar '
-                 'paisa saaf hila aur SAARI tasveeron mein koi parchi nazar NAHI aayi; "?" agar tasveer saaf nahi ya paisa hila hi nahi. (3) '
-                 '"kaun": jagah + kapron ka rang (naam / chehra HARGIZ nahi). (4) "why": Roman Urdu (English harf) mein aik chhoti line. '
-                 'Jawab SIRF JSON: {{"paisa": "aaya", "parchi": true, "kaun": "...", "why": "..."}}')
+PARCHI_PROMPT = ('Ye tasveerein aik dukaan ki CCTV se hain, waqt ki tarteeb mein; har tasveer ke sath us ka waqt likha hai. {cams}Dukaan ka QAIDA: har '
+                 'customer galle wale (cashier) ko PARCHI (chhota safed kaghaz / bill slip) aur PAISA (rangeen note) dono deta hai; galle wala paisa '
+                 'galle (noton ka dabba) mein rakhta hai aur baqaya deta hai. Tarteeb koi bhi ho sakti hai (pehle parchi ya pehle paisa), beech mein '
+                 '30-40 second ka farq bhi ho sakta hai. Is dauran AIK SE ZYADA customer aa sakte hain - HAR customer ko ALAG dekho; aik ki parchi '
+                 'doosre ke kaam nahi aati. PAISA = rangeen note jo CUSTOMER ke haath se galle wale ke haath mein ya us ke saamne counter par jaye. '
+                 'Pakistani note kabhi safed nahi hote (10 sabz, 20 narangi, 50 jamni, 100 laal, 500 sabz, 1000 neela, 5000 sarson jaisa peela). '
+                 'PARCHI = SIRF wo safed kaghaz jo CUSTOMER KE APNE HAATH mein nazar aaye aur wo galle wale ko de ya us ke saamne counter par rakhe. '
+                 'Ye parchi NAHI hain: customer ke safed kapre ya aasteen; galle wale ke apne haath mein pehle se maujood kaghaz; counter ya mez par '
+                 'pehle se pari parchiyon ka dhair; galle wala jo kaghaz ya note customer ko WAPAS de (baqaya); copy / register; mobile; shopper. '
+                 'Andaza mat lagao - sirf wo likho jo kisi tasveer mein saaf nazar aa raha hai.{prev} Har customer ke liye batao: "paisa": true agar us '
+                 'ne note diya (aur "paisa_waqt" = us tasveer ka waqt jis mein note us ke haath se ja raha hai), warna false. "parchi": true SIRF '
+                 'agar tum us tasveer ka waqt ("parchi_waqt") bata sako jis mein safed parchi CUSTOMER ke haath mein hai; false agar us customer ke '
+                 'haath tasveeron mein nazar aaye aur un mein parchi kahin nahi thi; "?" agar us ke haath saaf nazar hi nahi aaye. Naam / chehre ki '
+                 'pehchan HARGIZ nahi - sirf kapron ka rang aur jagah. Jawab SIRF JSON: {{"log": [{{"kaun": "kapron ka rang + jagah", "paisa": true, '
+                 '"paisa_waqt": "12:09:24", "parchi": false, "parchi_waqt": ""}}], "why": "Roman Urdu mein aik chhoti line"}} - "log" mein sirf wo '
+                 'customer jinhon ne galle wale ko kuch diya (paisa ya parchi). Koi nahi to "log": [].')
 
 
 DEBUG_KEEP = 40
@@ -2051,20 +2056,51 @@ def parchi_ai_frames(w, kf):
     return w.hd_frames(kf) if len(kf) <= PARCHI_HD_N else kf
 
 
+def _tf(v):
+    """true / false / '?' — AI kabhi lafz mein bhi likh deta hai."""
+    if v is True or v is False:
+        return v
+    if isinstance(v, str):
+        return {'true': True, 'haan': True, 'han': True, 'yes': True, 'false': False, 'nahi': False, 'no': False}.get(v.strip().lower(), '?')
+    return '?'
+
+
 def parse_parchi(text):
+    """v2.14: har bande ka alag jawab {"log": [{kaun, paisa, paisa_waqt, parchi, parchi_waqt}], "why"} -> aik faisla:
+    paisa 'aaya' agar kisi ne note diya; parchi False agar kisi PAISA DENE WALE ki parchi nahi (aik bhi), '?' agar kisi ki saaf nahi,
+    True jab sab dene walon ki parchi kisi tasveer (parchi_waqt) mein dikhi. Parchi true bina waqt ke = '?' (saboot nahi).
+    Koi paisa dene wala nahi: paisa 'nahi'; kisi ne sirf parchi di ho to only_parchi. Purana jawab ({"paisa", "parchi"}) bhi chalta hai."""
     m = re.search(r'\{.*\}', text or '', re.S)
     try:
         j = json.loads(m.group(0)) if m else {}
     except ValueError:
         j = {}
-    pa = str(j.get('paisa') or '').strip().lower()
-    pc = j.get('parchi')
-    if isinstance(pc, str):
-        pc = {'true': True, 'haan': True, 'han': True, 'yes': True, 'false': False, 'nahi': False, 'no': False}.get(pc.strip().lower(), '?')
-    elif pc is not True and pc is not False:
-        pc = '?'
-    return {'paisa': pa if pa in ('aaya', 'nikla', 'dono', 'nahi') else 'nahi' if pa in ('', 'none') else '?', 'parchi': pc,
-            'kaun': str(j.get('kaun') or '')[:80], 'why': str(j.get('why') or '')[:200]}
+    why = str(j.get('why') or '')[:200]
+    if not isinstance(j.get('log'), list):                # purana tareeqa (aik hi jawab)
+        pa = str(j.get('paisa') or '').strip().lower()
+        pc = j.get('parchi')
+        pc = _tf(pc) if (isinstance(pc, str) or pc is True or pc is False) else '?'
+        return {'paisa': pa if pa in ('aaya', 'nikla', 'dono', 'nahi') else 'nahi' if pa in ('', 'none') else '?', 'parchi': pc,
+                'kaun': str(j.get('kaun') or '')[:80], 'why': why, 'log': [], 'only_parchi': False}
+    people = []
+    for r in j['log'][:8]:
+        if not isinstance(r, dict):
+            continue
+        pw = str(r.get('parchi_waqt') or '').strip()[:20]
+        pc = _tf(r.get('parchi'))
+        if pc is True and not pw:
+            pc = '?'                                       # saboot (tasveer ka waqt) ke bagair "parchi di" nahi maante
+        people.append({'kaun': str(r.get('kaun') or '')[:60], 'paisa': _tf(r.get('paisa')) is True, 'paisa_waqt': str(r.get('paisa_waqt') or '').strip()[:20],
+                       'parchi': pc, 'parchi_waqt': pw})
+    payers = [x for x in people if x['paisa']]
+    if payers:
+        bad, unk = [x for x in payers if x['parchi'] is False], [x for x in payers if x['parchi'] == '?']
+        pick = (bad or unk or payers)[0]
+        pc = False if bad else ('?' if unk else True)
+        extra = f" [{pick['kaun']}: paisa {pick['paisa_waqt'] or '?'}" + (f", parchi {pick['parchi_waqt']}]" if pick['parchi'] is True else ', parchi nahi]' if pick['parchi'] is False else ', parchi saaf nahi]')
+        return {'paisa': 'aaya', 'parchi': pc, 'kaun': pick['kaun'], 'why': (why + extra)[:200], 'log': people, 'only_parchi': False}
+    only = [x for x in people if x['parchi'] is True]
+    return {'paisa': 'nahi', 'parchi': True if only else '?', 'kaun': only[0]['kaun'] if only else '', 'why': why, 'log': people, 'only_parchi': bool(only)}
 
 
 def ai_parchi(galla, counter, big=False, prev=''):
@@ -2072,13 +2108,13 @@ def ai_parchi(galla, counter, big=False, prev=''):
     cams = ('Do camera hain: pehle "Galla camera" ki tasveerein, phir "Counter camera" ki. In mein se AIK galle ke bilkul qareeb hai (haath, note '
             'aur parchi bare nazar aate hain) aur DOOSRA upar se poori dukaan dikhata hai (kaun banda counter par aaya) — tasveer dekh kar khud '
             'pehchano kaunsa kaunsa hai. Paisa aur parchi ka faisla QAREEB wale camera se karo; banda DOOR wale camera se pehchano. ') if counter else ''
-    content = [{'type': 'text', 'text': PARCHI_PROMPT.format(cams=cams, prev=(' Pehle chhote AI ne kaha: ' + prev + ' — ghaur se DOBARA dekho, parchi kahin bhi di gayi ho to true.') if prev else '')}]
+    content = [{'type': 'text', 'text': PARCHI_PROMPT.format(cams=cams, prev='')}]     # v2.14: doosri raaye ko pehli ka jawab nahi batate (azad raaye)
     n = 0
     for label, rows in (('Galla camera', galla), ('Counter camera', counter)):
         for t, b in rows:
             n += 1
             content += [{'type': 'text', 'text': f'{label} · Tasveer {n} ({clock(t)})'}, {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': b}}]   # v2.6: chhote AI ko bhi 416 px (288 mein parchi nahi dikhti)
-    txt, ms, model = ai_call(content, big, 260, CONFIRM_MODELS if big else (MODEL,))
+    txt, ms, model = ai_call(content, big, 5000 if big else 1200, CONFIRM_MODELS if big else (MODEL,))   # v2.14: har bande ki line — lamba jawab
     return parse_parchi(txt), ms, model
 
 
@@ -2460,27 +2496,30 @@ class Galla(threading.Thread):
             self.bump(w.cid, date, unchecked=1)
             return
         debug_sheet(f"{time.strftime('%m%d-%H%M%S', time.gmtime(at + 5 * 3600))}-{res['paisa']}-{res['parchi']}", parchi_ai_frames(w, kf) + counter_ai_frames(cam2, cf))
-        if res['paisa'] in ('nahi', '?') and res['parchi'] is not False:
+        only = bool(res.get('only_parchi'))                           # v2.14: kisi ne sirf parchi di, paisa nahi diya
+        if res['paisa'] in ('nahi', '?') and res['parchi'] is not False and not only:
             return                                                   # paisa hila hi nahi — kuch nahi
         flow = FLOW_OF.get(res['paisa'], 'aaya')
         verdict, flags, why, frames = 'normal', [], 'Parchi di — ' + res['why'], (kf, cf)
-        if res['parchi'] is not True:
+        if only:
+            verdict, flags = 'saaf_nahi', ['parchi']
+            why = FLAG_TEXT['parchi'] + ' — ' + (res['why'] or '') + (f" ({res['kaun']})" if res.get('kaun') else '')
+        elif res['parchi'] is not True:
             if getattr(w, 'second', True):
                 try:
                     kf2 = parchi_frames(w, t0, t1, PARCHI_BIG_PRE, PARCHI_BIG_POST, PARCHI_BIG_N)
                     cf2, cam2b = self.counter_frames([t for t, _ in kf2], PARCHI_BIG_C, w)
                     cam2 = cam2b or cam2
-                    r2, ms2, m2 = ai_parchi(parchi_ai_frames(w, kf2), counter_ai_frames(cam2, cf2), True, res['why'] or 'parchi nazar nahi aayi')
+                    # v2.14: doosri raaye = wahi chhota model, doosri (lambi khirki ki) tasveeron par. Bara model parchi ka wehem karta tha.
+                    r2, ms2, m2 = ai_parchi(parchi_ai_frames(w, kf2), counter_ai_frames(cam2, cf2), False, '')
                     self.bump(w.cid, date, cost=COST['last'])
                     ms, model, frames = ms + ms2, (model + '+' + m2)[:60], (kf2, cf2)
-                    if r2['paisa'] == 'nahi' and r2['parchi'] is not False:
-                        return                                       # bara AI: paisa hila hi nahi
-                    flow = FLOW_OF.get(r2['paisa'], flow)
-                    if r2['parchi'] is True:
-                        why = 'Doosre AI ne parchi dekhi: ' + (r2['why'] or '') + ' (pehle: ' + res['why'] + ')'
+                    first = res
+                    if r2['paisa'] not in ('nahi', '?') and r2['parchi'] is False and first['parchi'] is False:
+                        res, verdict = r2, 'shak'                    # dono dafa: paisa diya, parchi nahi
                     else:
-                        res = r2
-                        verdict = 'shak' if r2['parchi'] is False else 'saaf_nahi'
+                        verdict = 'saaf_nahi'                        # do raaye alag / saaf nahi — malik khud dekhe (khabar nahi)
+                        res = dict(first, why=('Do raaye alag — pehli: ' + (first['why'] or '') + ' | doosri: ' + (r2['why'] or ''))[:200])
                 except Exception as e2:
                     log('parchi doosri raaye nahi:', e2)
                     verdict = 'shak' if res['parchi'] is False else 'saaf_nahi'
@@ -2510,7 +2549,8 @@ class Galla(threading.Thread):
             self.clips.shak(w.cid, eid, t0, t1, date)
             if cam2 is not None:
                 self.clips.shak(cam2.cid, eid, t0, t1, date, clip_id=eid + '-c')
-        log('parchi', w.cid, res['paisa'], res['parchi'], verdict, '|', len(g), '+', len(c), 'tasveer |', (res.get('why') or '')[:120])
+        log('parchi', w.cid, res['paisa'], res['parchi'], verdict, '|', len(g), '+', len(c), 'tasveer |', (res.get('why') or '')[:160],
+            '|', '; '.join(f"{x['kaun'][:24]}: paisa {'haan' if x['paisa'] else 'nahi'} parchi {x['parchi']}" for x in (res.get('log') or [])[:4]))
         when = time.strftime('%I:%M %p', time.gmtime(at + 5 * 3600)).lstrip('0').lower()
         self.fire.patch(f'{BIZ}/cameras/{w.cid}', {'aiTest': f"AI chal raha hai (parchi) — aakhri {when} ({'Bina parchi' if verdict == 'shak' else 'Saaf nahi' if verdict == 'saaf_nahi' else 'Parchi di'})"[:200], 'aiTestAt': t})
 

@@ -5,6 +5,36 @@ Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf)
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
 
 ------------------------------------------------------------
+CAMERA: ntcam.py v2.14 (13 Oct) — PARCHI: HAR BANDE KA ALAG JAWAB + SABOOT  (pehli dafa asal test par sahi)
+------------------------------------------------------------
+MALIK KA TEST (13 Oct, qareeb wala camera 30ddaa6e968c-ch1 asal + upar wala madadgar, v2.13): teen larke —
+  12:09:24 neele-grey kapre: sabz note + safed parchi (PARCHI + PAISA);  12:09:52-12:10:22 neele-grey, counter par jhuka, koi note nahi
+  (BINA PAISA);  12:12:25 safed kapre: sirf note (BINA PARCHI). Purana sawal: pehle do ko aik len-den samjha "paisa nahi, parchi True"
+  (koi card nahi), teesre ko "safed parchi aur paisa diya" = teeno ghalat.
+AAZMAISH (malik ki ijazat se 15 sawal, gemini-3.5-flash-lite, recording se: qareeb wale ki har 2 s x 416 px + upar wale ki 8-12):
+  naya sawal -> parchi wala larka 3/3 "paisa + parchi (waqt ke sath)", bina parchi wala 3/3 "paisa, parchi false". Aam len-den 12:08
+  (grey banda, khata register wala): chhota "parchi false", bara model "parchi 12:07:54" (wahan haath mein safed kaghaz hai).
+  BARA MODEL (gemini-3.5-flash) ne bina parchi wale larke ko bhi "parchi 12:12:22" keh diya = wehem -> doosri raaye ke qabil nahi.
+  "Sirf paisa ke aas paas ki 31 bari (768) tasveerein + aik sawal" wala doosra marhala: teeno ko "parchi nahi" kaha (parchi wale ko
+  bhi) = bekaar, nahi lagaya.
+v2.14:
+- PARCHI_PROMPT naya: har customer ALAG ("log": [{kaun, paisa, paisa_waqt, parchi, parchi_waqt}], "why"); PAISA = customer ke haath se
+  rangeen note; PARCHI = sirf customer ke APNE haath ka safed kaghaz, aur tasveer ka waqt batana zaroori; parchi NAHI: safed kapre /
+  aasteen, galle wale ke haath ka kaghaz, parchiyon ka dhair, wapas diya kaghaz / note, copy, mobile, shopper. "Andaza mat lagao."
+- parse_parchi: paisa dene walon mein aik bhi parchi False -> parchi False (us ka kaun / waqt why mein); '?' -> '?'; sab True (waqt
+  ke sath) -> True; parchi true bina waqt = '?'. Koi dene wala nahi -> paisa 'nahi' (+ only_parchi agar kisi ne sirf parchi di).
+  Purana aik-jawab wala format bhi chalta hai.
+- PARCHI_STEP 4 -> 2 s (had 56; 20 tak 768 px warna 416). ai_parchi max tokens 260 -> 1200 (bara 5000 — warna jawab kat jata hai).
+- Doosri raaye (cam.second): ab WAHI chhota model, lambi khirki ki doosri tasveeron par, pehla jawab bataye bagair. Dono "paisa diya,
+  parchi nahi" -> SHAK (clip dono camera). Alag alag / saaf nahi -> 'saaf_nahi' ("Do raaye alag — ..."), pehle yahan 'normal' banta tha.
+- only_parchi -> card 'saaf_nahi' flags ['parchi'] ("Parchi di, paisa nahi diya") — khabar / clip nahi.
+- Log: har bande ki line bhi. ntcam_test 91 (Parchi 13) pass.
+- NA-MALOOM: (1) ghalat alarm kitne — jaiz bina-parchi len-den (khata ki wasooli, chhutta, apna kaam) ab laal aayenge; malik "Theek
+  hai" kar ke dekhe, zyada hon to qaida narm karna. (2) bina paisa wala larka (12:09:52) kisi list mein nahi aaya — us ne parchi di thi
+  ya nahi, malik se nahi poocha. (3) Qareeb wale camera mein customer baayen kinare par hai, us ka haath kam aata hai.
+- Kharcha: har check ab 30-56 tasveerein (416) + 12; shak ke shubhe par dugna. Key abhi PAID (malik: "isi par chalao").
+
+------------------------------------------------------------
 CAMERA: ntcam.py v2.13 (13 Oct) — DO 'GALLA' CAMERA KHUD JURTE HAIN + APP KI TASVEEREIN SAAF  (app ka version is se nahi badla)
 ------------------------------------------------------------
 Malik (13 Oct): "ab dono cameras chal rahe hain, tum dono ko connect karo aapas mein, aur app mein pictures clear nahi aa rahin".
