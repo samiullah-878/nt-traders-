@@ -1,6 +1,6 @@
 {
-  "version": "v245",
+  "version": "v246",
   "variant": "Production",
   "buildDate": "2026-10-13",
-  "notes": "Camera ke har card ki video ab khud aati hai (PC program v2.15) — card se \"clip mangwayein\" ka button hata diya. Rules wahi (v244)."
+  "notes": "Camera: video sirf Shak aur Saaf nahi wale cards ki (khud aati hai). Parchi di wale card ki video nahi. PC program v2.16. Rules wahi (v244)."
 }

@@ -1,6 +1,6 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v245   Tareekh: 2026-10-13  (camera: har card ki video khud + clip mangwane ka button hata; ntcam.py v2.15; RULES wahi v244)
+Version: v246   Tareekh: 2026-10-13  (camera: video sirf Shak + Saaf nahi ki, khud; ntcam.py v2.16; RULES wahi v244)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
 
@@ -19,6 +19,9 @@ nahi chahiye". (Pehle maine 'Saaf nahi' par auto video is liye nahi lagayi thi k
 - DEKHNA: Firestore ka kharcha / jagah (roz ~250 x 0.8 MB = ~200 MB, agle din mit-ti hain), laptop ka bojh, dukaan ka internet.
   Zyada lage to 'Parchi di' cards ki video band kar ke sirf 'Saaf nahi' + shak rakhna (aik line: handle_parchi mein verdict dekh kar).
 - Tests: ntcam_test 92 (Parchi 14), app.dom 30 + urdu 4 + baqi = 66 pass.
+- v246 + v2.16 (usi din, foran baad): malik: "saaf nahi aur only shak wali, baqi koi bhi video nahi aani chahiye". handle_parchi:
+  clips.auto sirf verdict 'saaf_nahi' par ('Parchi di' ki nahi); daily_video (roz ki 5 bila-tarteeb) parchi mode mein band. App:
+  "Video ka intezar / ban rahi hai / nahi bani" sirf shak / saaf nahi cards par. Ab roz ~30-60 videos (pehle andaza 250).
 
 ------------------------------------------------------------
 CAMERA: ntcam.py v2.14 (13 Oct) — PARCHI: HAR BANDE KA ALAG JAWAB + SABOOT  (pehli dafa asal test par sahi)

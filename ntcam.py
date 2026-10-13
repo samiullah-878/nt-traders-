@@ -31,7 +31,9 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '2.15'
+VERSION = '2.16'
+# v2.16: VIDEO SIRF 'Shak' aur 'Saaf nahi' ki — malik: "baqi koi bhi video nahi aani chahiye". 'Parchi di' card ki video band,
+#        roz ki bila-tarteeb 'Aaj ki videos' bhi band (PARCHI mode mein).
 # v2.15: HAR CARD KI VIDEO KHUD — malik: "jitne bhi notification aa rahe hain un sab ki video auto upload ho, clip mangwane wala option
 #        nahi chahiye". Shak: pehle jaisi (HD, dono camera, 2 minute tak). Baqi sab card ('Parchi di' / 'Saaf nahi'): asal camera ki
 #        chhoti video (640 px, 75 s tak) — kind 'auto'.
@@ -2485,10 +2487,10 @@ class Galla(threading.Thread):
                 return thin(fr, n), r
         return [], None
 
-    def handle_parchi(self, w, at, t0, t1, kf, date):
+    def handle_parchi(self, w, at, t0, t1, kf, date):   # v2.16: yahan 'aaj ki video' (daily_video) nahi banti
         """v2.2: paisa hila -> parchi di? Chhota AI. Parchi dikhi -> halka card (Normal chip mein). Na dikhi -> bara AI dobara ->
         dono kahein bina parchi -> shak (photos galla + counter, video dono camera, khabar). Saaf nahi -> 'saaf nahi' card (khabar nahi)."""
-        self.daily_video(w, t0, t1, date)
+        # v2.16: malik — sirf shak / saaf nahi ki video; roz ki bila-tarteeb video band
         cf, cam2 = self.counter_frames([t for t, _ in kf], PARCHI_C, w)
         try:
             res, ms, model = ai_parchi(parchi_ai_frames(w, kf), counter_ai_frames(cam2, cf))
@@ -2552,7 +2554,7 @@ class Galla(threading.Thread):
             self.clips.shak(w.cid, eid, t0, t1, date)
             if cam2 is not None:
                 self.clips.shak(cam2.cid, eid, t0, t1, date, clip_id=eid + '-c')
-        elif self.clips and hasattr(self.clips, 'auto'):             # v2.15: baqi har card ki bhi video khud
+        elif verdict == 'saaf_nahi' and self.clips and hasattr(self.clips, 'auto'):   # v2.15 / v2.16: 'Saaf nahi' ki video khud; 'Parchi di' ki nahi
             self.clips.auto(w.cid, eid, t0, t1, date)
         log('parchi', w.cid, res['paisa'], res['parchi'], verdict, '|', len(g), '+', len(c), 'tasveer |', (res.get('why') or '')[:160],
             '|', '; '.join(f"{x['kaun'][:24]}: paisa {'haan' if x['paisa'] else 'nahi'} parchi {x['parchi']}" for x in (res.get('log') or [])[:4]))

@@ -1059,7 +1059,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     if (cl.some(c => c.status === 'ok')) return `<span class="tag t-vid">🎬 Video</span>`;
     if (cl.some(c => c.status === 'making' || c.status === 'req')) return `<span class="tag t-off">🎬 Video ban rahi…</span>`;
     if (cl.some(c => c.status === 'error')) return `<span class="tag t-bad">🎬 Video nahi bani</span>`;
-    return (((e.verdict === 'shak' || e.matchState === 'missing') && !e.reviewed) || Date.now() - Number(e.at || 0) < 15 * 60000) ? `<span class="tag t-off">🎬 Video ka intezar</span>` : '';   // v245: har card ki video khud aati hai
+    return (((e.verdict === 'shak' || e.matchState === 'missing') && !e.reviewed) || (e.verdict === 'saaf_nahi' && Date.now() - Number(e.at || 0) < 15 * 60000)) ? `<span class="tag t-off">🎬 Video ka intezar</span>` : '';   // v246: video sirf shak / saaf nahi ki
   }
   const CLIP_ST = { req: 'PC ko farmaish gayi…', making: 'PC video bana raha hai…', error: 'Nahi bani' };
   const clipsOf = eid => (S.camClips || []).filter(c => c.eventId === eid);
@@ -1070,7 +1070,8 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       : `<span class="tag ${c.status === 'error' ? 't-bad' : 't-off'}">${esc(CLIP_ST[c.status] || c.status)}${c.status === 'error' && c.error ? ': ' + esc(c.error) : ''}</span>`).join('');
     // v245: har card ki video PC khud bhejta hai (ntcam v2.15) — "clip mangwayein" ka button hata diya (malik: "mangwane wala option nahi chahiye")
     const fresh = Date.now() - Number(e.at || 0) < 15 * 60000;
-    return `<div class="nig-clip">${rows}${!clips.length ? `<span class="tag t-off">${fresh ? '🎬 Video ban rahi hai — 1-2 minute mein khud aa jayegi' : 'Is ki video nahi bani (PC band / purana tha ya recording band thi)'}</span>` : ''}</div>`;
+    const wants = e.verdict === 'shak' || e.verdict === 'saaf_nahi' || e.matchState === 'missing';   // v246: video sirf shak / saaf nahi ki (malik)
+    return `<div class="nig-clip">${rows}${!clips.length && wants ? `<span class="tag t-off">${fresh ? '🎬 Video ban rahi hai — 1-2 minute mein khud aa jayegi' : 'Is ki video nahi bani (PC band / purana tha ya recording band thi)'}</span>` : ''}</div>`;
   }
   const hhmmss = ms => new Date(ms).toLocaleTimeString('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
   const pkMs = (date, hms) => { const [h, m, s2] = String(hms || '').split(':').map(Number); if (!Number.isFinite(h) || !Number.isFinite(m)) return NaN; return Date.parse(`${date}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s2 || 0).padStart(2, '0')}+05:00`); };

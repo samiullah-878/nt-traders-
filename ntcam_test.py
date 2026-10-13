@@ -1281,7 +1281,15 @@ class Parchi(unittest.TestCase):
                 g.handle(w, 1045.0, 1040.0, 1060.0, [], True)
         finally:
             ntcam.PARCHI['on'] = old
-        self.assertEqual(autos, [('c1', 'c1-1045000', 1040.0, 1060.0)], "'Parchi di' card ki bhi video"); self.assertEqual(clips, [], 'shak wali alag')
+        self.assertEqual(autos, [], "v2.16: 'Parchi di' card ki video nahi"); self.assertEqual(clips, [], 'shak wali alag')
+        sirf = P('{"log": [{"kaun": "grey", "paisa": false, "parchi": true, "parchi_waqt": "12:10:00"}], "why": "sirf parchi"}')
+        old = ntcam.PARCHI['on']; ntcam.PARCHI['on'] = True
+        try:
+            with mock.patch.object(ntcam, 'secrets', lambda: {'geminiKey': 'g-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_parchi', lambda *a, **k: (sirf, 5, 'm')), mock.patch.object(g, 'daily_video', lambda *a: self.fail('v2.16: roz ki bila-tarteeb video nahi')):
+                g.last_ai.clear(); g.handle(w, 2045.0, 1040.0, 1060.0, [], True)
+        finally:
+            ntcam.PARCHI['on'] = old
+        self.assertEqual(autos, [('c1', 'c1-2045000', 1040.0, 1060.0)], "'Saaf nahi' card ki video khud"); self.assertEqual(clips, [])
         q = __import__('queue').Queue(); c = ntcam.Clips.__new__(ntcam.Clips); c.q = q
         c.auto('c1', 'e1', 1000.0, 1200.0, '2026-10-13'); j = q.get_nowait()
         self.assertEqual((j['kind'], j['eventId'], j['w']), ('auto', 'e1', ntcam.AUTO_W)); self.assertEqual(j['from'], 990000); self.assertEqual(j['to'] - j['from'], ntcam.AUTO_MAX * 1000, '75 s ki had')
