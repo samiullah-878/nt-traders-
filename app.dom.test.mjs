@@ -134,7 +134,7 @@ test('malik login → Hazri tab, qataarein, tawajju', async () => {
   await click('[data-action=nig-filter][data-arg=open]'); assert.equal($$('.nig-ev').length, 2, 'na dekhe: shak + bina voucher');
   await click('.nig-ev[data-id="cc33-ch1-2"]'); await settle(12);
   const ev = () => $('[data-sheet=nig-ev]'); assert.ok(ev(), 'event sheet');
-  assert.equal(ev().querySelectorAll('.nig-strip img').length, 6, '6 tasveerein'); assert.match(ev().textContent, /Us waqt duty par/); assert.match(ev().textContent, /AI: Note jeb/);
+  assert.equal(ev().querySelectorAll('.nig-strip img').length, 6, '6 tasveerein'); assert.doesNotMatch(ev().textContent, /Us waqt duty par|Ali Raza/, 'v247: card mein larkon ke naam nahi'); assert.match(ev().textContent, /AI: Note jeb/);
   // v242: tasveerein video ki tarah khud chalti hain; tap = rokna / chalana
   assert.ok(ev().querySelector('.nig-big img[src$="F1"]'), 'pehli tasveer se shuru'); assert.match(ev().querySelector('.nig-count').textContent, /^1 \/ 6$/);
   // laptop masroof ho to timer der se chalte hain — waqt nahi, halat ka intezar
@@ -320,6 +320,19 @@ test('v243: counter camera par "Counter ka hissa" — mark karne ka button, mark
   assert.match($('main').textContent, /Counter: hissa mark hai/);
   await fake.sdk.deleteDoc(ref('cameras/ctr111-ch1')); await settle(8);
   await click('.nig-nav [data-action=nig-sec][data-arg=lenden]'); await click('[data-action=tab][data-arg=hazri]');
+});
+
+test('v247: Nigrani mein "AI ne kis waqt tak check kiya" — kitna kaam baqi hai', async () => {
+  const ref = p => ({ path: B + p, kind: 'doc', id: p.split('/').at(-1) });
+  const cam = records.get(B + 'cameras/cc33-ch1');
+  await fake.sdk.setDoc(ref('cameras/cc33-ch1'), { ...cam, watch: 'on', aiTestAt: Date.now() - 25 * 60000, aiTest: 'AI ne 11:35 am tak check kar liya — 3 harkat ka check baqi' });
+  await click('[data-action=tab][data-arg=nigrani]'); await settle(10);
+  assert.ok($('.nig-ai'), 'AI ke waqt ki line'); assert.match($('.nig-ai').textContent, /AI ne .* tak check kar liya/); assert.match($('.nig-ai').textContent, /25 minute ka kaam baqi/);
+  assert.match($('.nig-ai').textContent, /3 harkat ka check baqi/); assert.ok($('.nig-ai.tone-late'), '10 minute se zyada peeche = peela');
+  await fake.sdk.setDoc(ref('cameras/cc33-ch1'), { ...cam, watch: 'on', aiTestAt: Date.now() - 30000, aiTest: 'AI ne 12:00 pm tak check kar liya' }); await settle(10);
+  assert.match($('.nig-ai').textContent, /sab taza/); assert.equal($('.nig-ai.tone-late'), null);
+  await fake.sdk.setDoc(ref('cameras/cc33-ch1'), cam); await settle(8);
+  await click('[data-action=tab][data-arg=hazri]');
 });
 
 test('v235: camera jodna app se — network par mile camera ki halat, har aik ka password, PC khud jodta hai', async () => {

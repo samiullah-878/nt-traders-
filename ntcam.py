@@ -31,7 +31,10 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '2.16'
+VERSION = '2.17'
+# v2.17: AI NE KIS WAQT TAK CHECK KIYA — malik: "Nigrani mein aik time laga do AI ne kahan tak check kiya hai, taake pata ho kitna
+#        kaam pending hai". Galla.progress(): asal camera ke doc mein aiTestAt = us waqt tak sab len-den check ho chuke (qataar khali
+#        ho to ab se 1 minute pehle), aiTest = matn (+ kitne baqi / AI kyun ruka). Har ~1 minute.
 # v2.16: VIDEO SIRF 'Shak' aur 'Saaf nahi' ki — malik: "baqi koi bhi video nahi aani chahiye". 'Parchi di' card ki video band,
 #        roz ki bila-tarteeb 'Aaj ki videos' bhi band (PARCHI mode mein).
 # v2.15: HAR CARD KI VIDEO KHUD — malik: "jitne bhi notification aa rahe hain un sab ki video auto upload ho, clip mangwane wala option
@@ -2276,6 +2279,7 @@ class Galla(threading.Thread):
         self.watchers, self.main_cid = {}, ''                  # v2.13: sab galla camera (main loop ka dict) — do hon to aik asal
         self.moves, self.watch_of, self.crv_seen, self.nopay_at = collections.deque(maxlen=4000), {}, set(), 0   # v1.8
         self.daily = {}                                        # v1.9: (cid, date) -> aaj kitni "daily" videos
+        self.done_to, self.prog_sent, self.last_err = {}, {}, ''   # v2.17: AI ne kis waqt tak check kiya (app ko)
 
     def stat(self, cid, date):
         k = (cid, date)
@@ -2323,6 +2327,10 @@ class Galla(threading.Thread):
                 except Exception as e:
                     log('nigrani ghalti:', e, traceback.format_exc()[-300:])
             try:
+                self.progress(ready)                                 # v2.17
+            except Exception as e:
+                log('AI ka waqt nahi likha:', e)
+            try:
                 self.recheck()
             except Exception as e:
                 log('milaan ghalti:', e)
@@ -2331,6 +2339,38 @@ class Galla(threading.Thread):
             except Exception as e:
                 log('nopay ghalti:', e)
             time.sleep(2)
+
+    def progress(self, ready=(), now=None):
+        """v2.17: app ko batao AI ne kis waqt tak ka kaam kar liya — cameras/<asal>.aiTestAt (ms) + aiTest (matn).
+        Baqi len-den (hold) hon to un mein sab se pehle wale ke shuru tak; qataar khali ho to ab se 1 minute pehle tak (len-den khatam
+        hone ke ~45 s baad check hota hai). AI ruka ho (ghalti / balance) to waqt aage nahi barhta, wajah matn mein. ~1 minute mein aik dafa."""
+        if not PARCHI['on']:
+            return
+        now = now or time.time()
+        m = parchi_main(self.watchers) or next((x for x in (self.watchers or {}).values() if x.is_alive()), None)
+        if m is None:
+            return
+        for it in ready or ():
+            if it[0] is m:
+                self.done_to[m.cid] = max(self.done_to.get(m.cid, 0), it[3])
+        hhmm = lambda t: time.strftime('%I:%M %p', time.gmtime(t + 5 * 3600)).lstrip('0').lower()
+        pend = [it for it in self.hold if it[0] is m]
+        if now < self.pause_until:
+            upto = self.done_to.get(m.cid, 0)
+            if not upto:
+                return
+            text = f"AI ruka hua hai ({hhmm(upto)} tak check hua): {self.last_err or 'AI ne jawab nahi diya'}"
+        else:
+            upto = min(it[2] for it in pend) if pend else now - 60
+            upto = max(upto, self.done_to.get(m.cid, 0)) if not pend else upto
+            self.done_to[m.cid] = max(self.done_to.get(m.cid, 0), upto if not pend else 0)
+            text = f"AI ne {hhmm(upto)} tak check kar liya" + (f" — {len(pend)} harkat ka check baqi" if pend else '')
+        last = self.prog_sent.get(m.cid)
+        kind = text.split(':')[0][:12] + ('+' if pend else '')
+        if last and abs(upto - last[0]) < 55 and last[1] == kind:
+            return
+        self.prog_sent[m.cid] = (upto, kind)
+        self.fire.patch(f'{BIZ}/cameras/{m.cid}', {'aiTest': text[:200], 'aiTestAt': int(upto * 1000)})
 
     def nopay_check(self, now=None):
         """v1.8: parchi scan hui (Cash Received) lekin us ki window mein galle par koi harkat hi nahi -> 'Parchi scan · paisa nazar
@@ -2497,9 +2537,11 @@ class Galla(threading.Thread):
             self.bump(w.cid, date, checks=1, cost=COST['last'], gem=1 if str(model).startswith('gemini') else 0)
         except Exception as e:
             self.pause_until = time.time() + AI_PAUSE
+            self.last_err = str(e)[:90]                              # v2.17: app mein dikhe AI kyun ruka
             log('parchi sawal nahi chala:', e)
             self.bump(w.cid, date, unchecked=1)
             return
+        self.last_err = ''
         debug_sheet(f"{time.strftime('%m%d-%H%M%S', time.gmtime(at + 5 * 3600))}-{res['paisa']}-{res['parchi']}", parchi_ai_frames(w, kf) + counter_ai_frames(cam2, cf))
         only = bool(res.get('only_parchi'))                           # v2.14: kisi ne sirf parchi di, paisa nahi diya
         if res['paisa'] in ('nahi', '?') and res['parchi'] is not False and not only:
@@ -2558,8 +2600,7 @@ class Galla(threading.Thread):
             self.clips.auto(w.cid, eid, t0, t1, date)
         log('parchi', w.cid, res['paisa'], res['parchi'], verdict, '|', len(g), '+', len(c), 'tasveer |', (res.get('why') or '')[:160],
             '|', '; '.join(f"{x['kaun'][:24]}: paisa {'haan' if x['paisa'] else 'nahi'} parchi {x['parchi']}" for x in (res.get('log') or [])[:4]))
-        when = time.strftime('%I:%M %p', time.gmtime(at + 5 * 3600)).lstrip('0').lower()
-        self.fire.patch(f'{BIZ}/cameras/{w.cid}', {'aiTest': f"AI chal raha hai (parchi) — aakhri {when} ({'Bina parchi' if verdict == 'shak' else 'Saaf nahi' if verdict == 'saaf_nahi' else 'Parchi di'})"[:200], 'aiTestAt': t})
+        # v2.17: 'AI ne kis waqt tak check kiya' ab Galla.progress() likhta hai (har surat mein, card bane ya na bane)
 
     def handle_cheap(self, w, at, t0, t1, kf, near, date, key):
         """v1.9: 'galle se paisa bahar kis ko?' — 8 chhoti tasveerein. nikla nahi -> kuch nahi. ✅ baqaya -> halka card.

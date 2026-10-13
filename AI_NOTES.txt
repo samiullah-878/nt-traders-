@@ -1,8 +1,24 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v246   Tareekh: 2026-10-13  (camera: video sirf Shak + Saaf nahi ki, khud; ntcam.py v2.16; RULES wahi v244)
+Version: v247   Tareekh: 2026-10-13  (Nigrani: AI ne kis waqt tak check kiya + card se larkon ke naam hate; ntcam.py v2.17; RULES wahi v244)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+v247 + ntcam.py v2.17 (13 Oct) — "AI NE KIS WAQT TAK CHECK KIYA" + CARD SE LARKON KE NAAM HATE
+------------------------------------------------------------
+Malik: "Nigrani mein aik time laga do AI ne kahan tak check kiya hai, taake pata ho itne time tak pending hai kaam; aur larkon ke naam
+ki zaroorat nahi neeche narrations mein, shak ya kisi bhi nigrani par."
+- ntcam.py Galla.progress(ready): parchi mode mein asal camera (parchi_main ya akela) ke doc par aiTestAt = us waqt tak sab check ho
+  chuka: hold mein asal ke len-den baqi hon to sab se pehle wale ke shuru tak (+ "N harkat ka check baqi"), qataar khali ho to ab - 60 s.
+  AI ruka ho (pause_until, last_err) to waqt wahin aur matn "AI ruka hua hai (.. tak check hua): <wajah>". ~55 s mein aik dafa
+  (prog_sent) = roz ~1,400 chhoti likhaiyan. Naya rule nahi chahiye: aiTest / aiTestAt pehle se AGENT_KEYS mein hain.
+  handle_parchi ke aakhir ka "AI chal raha hai (parchi) — aakhri .." wala patch hata diya (dono aik hi field likhte the).
+- owner.js aiProgress(day): Nigrani > Len-den ke upar (sirf aaj): "AI ne <waqt> tak check kar liya — N minute ka kaam baqi / sab taza";
+  10 minute se zyada peeche = peela (tone-late); matn mein "ruka / nahi chala / baqi" ho to neeche chhoti line. Har minute khud taza.
+- owner.js eventSheet: "Us waqt duty par: <naam>" wali line hata di, onDutyAt / pkMinOf hata diye. AI ke matn mein naam pehle se nahi
+  hote (sirf kapron ka rang).
+- Tests: ntcam_test 93 (Parchi 15), app 67 pass (app.dom 31).
 
 ------------------------------------------------------------
 v245 + ntcam.py v2.15 (13 Oct) — HAR CARD KI VIDEO KHUD, "CLIP MANGWAYEIN" KA BUTTON HATA

@@ -1301,6 +1301,33 @@ class Parchi(unittest.TestCase):
             try: os.remove(os.path.join(ntcam.HOME, f))
             except OSError: pass
 
+    def test_v217_ai_ne_kab_tak_check_kiya(self):
+        """v2.17: app ke liye 'AI ne kis waqt tak check kiya' — qataar khali = taza; baqi ho to wahin tak; AI ruka = wajah, waqt wahin."""
+        g, writes, clips = self._g(); w = self._w(); w.is_alive = lambda: True; g.watchers = {'c1': w}
+        cam = lambda: [d for p_, d in writes if p_.endswith('/cameras/c1')]
+        old = ntcam.PARCHI['on']; ntcam.PARCHI['on'] = True
+        try:
+            g.progress([], now=10_000.0)
+            self.assertEqual(cam()[-1]['aiTestAt'], (10_000 - 60) * 1000, 'qataar khali: ab se 1 minute pehle tak'); self.assertIn('tak check kar liya', cam()[-1]['aiTest']); self.assertNotIn('baqi', cam()[-1]['aiTest'])
+            g.progress([], now=10_020.0); self.assertEqual(len(cam()), 1, '1 minute se pehle dobara nahi likhta')
+            g.progress([], now=10_070.0); self.assertEqual(len(cam()), 2)
+            g.hold = [(w, 10_100.0, 10_096.0, 10_110.0, [], True), (w, 10_130.0, 10_126.0, 10_140.0, [], True)]
+            g.progress([], now=10_200.0)
+            self.assertEqual(cam()[-1]['aiTestAt'], 10_096_000, 'baqi len-den ke shuru tak hi'); self.assertIn('2 harkat ka check baqi', cam()[-1]['aiTest'])
+            g.progress([g.hold[0]], now=10_210.0); g.hold = []
+            g.pause_until, g.last_err = 10_900.0, 'gemini 402 balance khatam'
+            g.progress([], now=10_300.0)
+            self.assertIn('AI ruka hua hai', cam()[-1]['aiTest']); self.assertIn('402', cam()[-1]['aiTest']); self.assertLessEqual(cam()[-1]['aiTestAt'], 10_210_000, 'AI ruka ho to waqt aage nahi barhta')
+            n = len(cam()); g.progress([], now=10_400.0); self.assertEqual(len(cam()), n, 'ruka hua: bar bar nahi likhta')
+            g.pause_until = 0; g.progress([], now=11_000.0); self.assertEqual(cam()[-1]['aiTestAt'], (11_000 - 60) * 1000, 'AI wapas: phir taza')
+        finally:
+            ntcam.PARCHI['on'] = old
+        ntcam.PARCHI['on'] = False
+        try:
+            g2, w2, _ = self._g(); g2.watchers = {'c1': w}; g2.progress([], now=5.0); self.assertEqual([d for p_, d in w2 if '/cameras/' in p_], [], 'POS wale tareeqe mein nahi')
+        finally:
+            ntcam.PARCHI['on'] = old
+
     def test_frames_at_aur_denied(self):
         g, _, _ = self._g(); r = g.counters['nvr-3']
         fr = r.frames_at([1000.1, 1000.2, 2000.0]); self.assertEqual([t for t, _ in fr], [1000.0], 'qareeb wali aik dafa, door wali nahi')

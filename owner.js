@@ -819,13 +819,14 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     : e.matchState === 'missing' ? `<span class="tag t-bad">${esc(missText(e))}</span>`
     : e.matchState === 'wait' ? `<span class="tag t-off">Voucher dhoond rahe…</span>`
     : e.matchState === 'nopos' ? `<span class="tag t-off">POS se jaanch nahi</span>` : '';
-  const pkMinOf = ms => { const t = new Date(ms).toLocaleTimeString('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', hour12: false }).split(':'); return Number(t[0]) * 60 + Number(t[1]); };
-  /** Us waqt duty par kaun tha (hazri se) — bahar ki parchi / break par tha to sath likha. AI chehra nahi pehchanta, ye hazri batati hai. */
-  function onDutyAt(date, ms) {
-    const m = pkMinOf(ms);
-    return data.attendanceBetween(date, date).filter(a => a.checkIn && (parseTime(a.checkIn) ?? 9999) <= m && (!a.checkOut || (parseTime(a.checkOut) ?? -1) >= m))
-      .map(a => { const out = S.outs.find(o => o.phone === a.phone && o.date === date && ['approved', 'returned'].includes(o.status) && (o.outAt || o.approvedAt || 0) <= ms && (!o.returnAt || o.returnAt >= ms)); return { name: account(a.phone)?.name || a.phone, out: !!out }; });
+  /** v247: AI ne kis waqt tak check kar liya (PC cameras.aiTestAt likhta hai — ntcam v2.17), taake pata ho kitna kaam baqi hai. Sirf aaj. */
+  function aiProgress(day) {
+    if (day !== pkDate()) return '';
+    const c = (S.cameras || []).filter(x => x.role === 'galla' && x.watch === 'on' && Number(x.aiTestAt) > 0).sort((a, b) => b.aiTestAt - a.aiTestAt)[0]; if (!c) return '';
+    const mins = Math.max(0, Math.round((Date.now() - c.aiTestAt) / 60000)), late = mins >= 10, note = /ruka|nahi chala|baqi/i.test(c.aiTest || '') ? c.aiTest : '';
+    return `<p class="notice ${late ? 'tone-late' : ''} nig-ai">${icon(late ? 'alert' : 'check', 16)} <span>AI ne <b>${esc(clockOf(c.aiTestAt))}</b> tak check kar liya — ${mins >= 2 ? `<b>${mins} minute</b> ka kaam baqi` : 'sab taza'}${note ? `<br><small>${esc(note)}</small>` : ''}</span></p>`;
   }
+  // v247: 'Us waqt duty par' (larkon ke naam) Nigrani ke card se hata diya — malik: "larkon ke naam ki zaroorat nahi".
   /** v230: "galle se paisa bahar" ki aik line + AI kharcha (PC v1.9 sasta mode). */
   function outLine(evs, stats, galla) {
     const outs = evs.filter(e => e.flow === 'nikla' && e.agent >= '1.9');
@@ -906,6 +907,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         <div class="${sum('missing') ? 'is-bad' : ''}"><b>${sum('missing')}</b><small>${pm ? 'bina parchi' : 'bina voucher'}</small></div>
       </section>` : ''}
       ${outLine(evs, stats, galla)}
+      ${aiProgress(day)}
       ${vidSum()}
       ${dailyVideos()}
       ${alerts.length && !pm ? `<button type="button" class="notice tone-bad nig-notice" data-action="nig-filter" data-arg="alerts">${icon('alert', 18)} <span><b>${alerts.length} bill cancel / badle</b> — POS mein bill ban ne ke baad badla gaya. Dekhein →</span></button>` : ''}
@@ -936,7 +938,6 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     const sheet = openSheet({ id: 'nig-ev', wide: true, title: 'Galla ki harkat', onClose: () => clearInterval(timer), render: () => {
       const e = (S.camEvents || []).find(x => x.id === id); if (!e) return '<p class="empty-line">Ye event ab nahi mila.</p>';
       const [vt, vc] = VERDICT[e.verdict] || VERDICT.saaf_nahi, frames = ui.nigFrames?.[id], i = Math.min(ui.nigIdx || 0, Math.max(0, (frames?.length || 1) - 1));
-      const duty = onDutyAt(e.date, e.at);
       return `<div class="nig-photo">${frames?.length ? `<button type="button" class="nig-big ${ui.nigPlay ? '' : 'is-paused'}" data-action="nig-play" aria-label="Rokein ya chalayein"><img src="data:image/jpeg;base64,${esc(frames[i])}" alt="Tasveer ${i + 1}"></button>
             <div class="nig-ctl"><button type="button" class="btn btn-ghost btn-sm" data-action="nig-play">${ui.nigPlay ? '⏸ Rokein' : '▶ Chalayein'}</button><b class="nig-count">${i + 1} / ${frames.length}</b><button type="button" class="btn btn-ghost btn-sm" data-action="nig-full" data-id="${esc(id)}">Poori screen</button></div>
             <div class="nig-strip">${frames.map((b, k) => `<button type="button" class="${k === i ? 'is-on' : ''}" data-action="nig-idx" data-arg="${k}" aria-label="Tasveer ${k + 1}"><img src="data:image/jpeg;base64,${esc(b)}" alt=""></button>`).join('')}</div>`
@@ -950,7 +951,6 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
           : `<span class="muted">Paisa nahi hila — milaan ki zaroorat nahi.</span>`}</div>` : ''}
         ${e.flags?.length ? `<div class="nig-flags">${flagChips(e)}</div>` : ''}
         ${storyBlock(e, id)}
-        <p class="nig-duty"><b>Us waqt duty par:</b> ${duty.length ? duty.map(d => `${nameHtml(d.name)}${d.out ? ' <small class="txt-late">(bahar tha)</small>' : ''}`).join(', ') : '<span class="muted">hazri mein koi nahi</span>'}</p>
         ${clipBlock(e)}
         ${e.reviewed ? `<p class="notice">${esc(REVIEW[e.reviewed] || '')}${e.reviewNote ? ' — ' + esc(e.reviewNote) : ''}</p>` : ''}
         <form class="form nig-review" data-form="nig-review" data-id="${esc(id)}"><label>Note (ikhtiyari)<input name="note" maxlength="200" value="${esc(e.reviewNote || '')}"></label>
