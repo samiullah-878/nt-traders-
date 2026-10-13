@@ -31,7 +31,9 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '2.18'
+VERSION = '2.19'
+# v2.19: HAWALA NUMBER — app (v248) har card / video par 'Video No. HHMMSS' (len-den ka waqt) dikhati hai; log ki 'parchi' wali line
+#        mein bhi wahi number ('No.124725'), taake malik ke bataye number se len-den foran mil jaye.
 # v2.18: SHAK KI VIDEO JALDI — malik: "video nahi aa rahi ... baad mein bohat late ho jata hai, nuqsaan hota hai". Wajah: shak ki video
 #        HD thi (20-28 tukre x 2 camera = aik video 6-8 minute mein upload) aur qataar barhti gayi — 4 baje ke shak ki video 5 baje.
 #        Ab parchi ke rule mein shak ki video 720 px (madadgar camera 640) = 2-4 tukre, aur qataar mein sab se pehle sab se naya shak.
@@ -2601,7 +2603,7 @@ class Galla(threading.Thread):
                 self.clips.shak(cam2.cid, eid, t0, t1, date, clip_id=eid + '-c')
         elif verdict == 'saaf_nahi' and self.clips and hasattr(self.clips, 'auto'):   # v2.15 / v2.16: 'Saaf nahi' ki video khud; 'Parchi di' ki nahi
             self.clips.auto(w.cid, eid, t0, t1, date)
-        log('parchi', w.cid, res['paisa'], res['parchi'], verdict, '|', len(g), '+', len(c), 'tasveer |', (res.get('why') or '')[:160],
+        log('parchi', w.cid, 'No.' + time.strftime('%H%M%S', time.gmtime(at + 5 * 3600)), res['paisa'], res['parchi'], verdict, '|', len(g), '+', len(c), 'tasveer |', (res.get('why') or '')[:160],
             '|', '; '.join(f"{x['kaun'][:24]}: paisa {'haan' if x['paisa'] else 'nahi'} parchi {x['parchi']}" for x in (res.get('log') or [])[:4]))
         # v2.17: 'AI ne kis waqt tak check kiya' ab Galla.progress() likhta hai (har surat mein, card bane ya na bane)
 

@@ -134,6 +134,10 @@ test('malik login → Hazri tab, qataarein, tawajju', async () => {
   await click('[data-action=nig-filter][data-arg=open]'); assert.equal($$('.nig-ev').length, 2, 'na dekhe: shak + bina voucher');
   await click('.nig-ev[data-id="cc33-ch1-2"]'); await settle(12);
   const ev = () => $('[data-sheet=nig-ev]'); assert.ok(ev(), 'event sheet');
+  // v248: hawala number = len-den ka waqt (HHMMSS), list ke card aur khule card dono par
+  { const e0 = records.get(B + 'cameraEvents/cc33-ch1-2'), no = new Date(e0.at).toLocaleTimeString('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).replace(/:/g, '');
+    assert.match(no, /^\d{6}$/); assert.match(ev().querySelector('.nig-ref').textContent, new RegExp('Video No\\. ' + no)); assert.ok(ev().querySelector('[data-action=nig-copy]'), 'number copy ka button');
+    assert.match($('.nig-ev[data-id="cc33-ch1-2"] .nig-no').textContent, new RegExp('No\\. ' + no)); }
   assert.equal(ev().querySelectorAll('.nig-strip img').length, 6, '6 tasveerein'); assert.doesNotMatch(ev().textContent, /Us waqt duty par|Ali Raza/, 'v247: card mein larkon ke naam nahi'); assert.match(ev().textContent, /AI: Note jeb/);
   // v242: tasveerein video ki tarah khud chalti hain; tap = rokna / chalana
   assert.ok(ev().querySelector('.nig-big img[src$="F1"]'), 'pehli tasveer se shuru'); assert.match(ev().querySelector('.nig-count').textContent, /^1 \/ 6$/);

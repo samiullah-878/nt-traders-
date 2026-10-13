@@ -1,8 +1,23 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v247   Tareekh: 2026-10-13  (Nigrani: AI ne kis waqt tak check kiya + card se larkon ke naam hate; ntcam.py v2.17; RULES wahi v244)
+Version: v248   Tareekh: 2026-10-13  (camera: har card / video par hawala number 'Video No. HHMMSS'; ntcam.py v2.19; RULES wahi v244)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+v248 + ntcam.py v2.19 (13 Oct sham) — VIDEO / CARD KA HAWALA NUMBER
+------------------------------------------------------------
+Malik: "videos par number lagao taake main us ka reference de kar tum ko bhej sakoon ke is video mein AI ne ye ghalat kiya; aur camera
+ke upar jis bande ne paisa diya bina parchi ke us ke upar nishan rahe jitni dair video chalti rahe."
+- NUMBER (ho gaya): Video No. = len-den ka waqt HHMMSS (24 ghante, Asia/Karachi) — e.at se, maslan 12:47:25 pm = 124725. Naya field /
+  rule nahi chahiye, number khud waqt hai (PC ki debug tasveer 'MMDD-HHMMSS-..' aur log mein bhi yahi). owner.js: vidNo(e), list ke
+  card par tag 'No. 124725', khule card mein 'Video No. ..' + "📋 Number copy karein" (nig-copy: number + AI ka faisla + "Meri raaye:"
+  clipboard mein — malik Claude ki chat mein paste kare), video player ke title mein 'No. ..'. ntcam log: 'parchi <cam> No.124725 ..'.
+- NISHAN (ABHI NAHI BANA): video mein bina-parchi wale bande par nishan. Tareeqa socha: AI se us bande ka dabba (jis tasveer mein note
+  de raha hai) mangwana -> crop se poore frame mein badalna -> ffmpeg drawbox clip mein (shak ki asal-camera wali video par, poori
+  video mein aik hi jagah — banda hile to nishan sath nahi hilega). Is ke liye AI par aazmaish (malik ki key) chahiye; malik se ijazat
+  maangi hai.
+- Tests: app 67 pass (hawala number ka check event wale test mein), ntcam_test 94 pass.
 
 ------------------------------------------------------------
 CAMERA: ntcam.py v2.18 (13 Oct sham) — SHAK KI VIDEO JALDI (chhoti + qataar mein sab se pehle)  (app v247 wahi)

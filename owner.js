@@ -801,6 +801,10 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
   }
   /* ---------- v222: NIGRANI tab (sirf malik) — galla par har harkat, AI ka faisla, photos, duty par kaun tha ---------- */
   const VERDICT = { normal: ['Normal', 't-ok'], shak: ['Shak', 't-bad'], saaf_nahi: ['Saaf nahi', 't-off'], error: ['AI nahi chala', 't-late'] };
+  /** v248: har card / video ka HAWALA NUMBER = len-den ka waqt (ghanta minute second, 24 ghante wali ghari) — maslan 12:47:25 pm = 124725.
+      Malik ye number bata kar keh sakta hai "is video mein AI ne ghalat kiya"; PC ki recording aur log mein yahi waqt hai. */
+  const vidNo = e => new Date(Number(e?.at) || 0).toLocaleTimeString('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).replace(/:/g, '');
+  const vidRef = e => `Video No. ${vidNo(e)} (${shortDate(e.date)}, ${clockOf(e.at)}) — AI: ${(VERDICT[e.verdict] || VERDICT.saaf_nahi)[0]} — ${e.why || ''}\nMeri raaye: `;
   const REVIEW = { ok: 'Aap ne: Theek hai', confirmed: 'Aap ne: Shak pakka' };
   // v223 GALLA MILAAN
   const FLOW = { aaya: 'Paisa aaya', nikla: 'Paisa nikla', len_den: 'Liya + baqaya', ginti: 'Sirf ginti', kuch_nahi: 'Paisa nahi hila' };
@@ -887,7 +891,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     const camChips = galla.map(c => { const live = c.watch === 'on' && camOnline() && c.enabled !== false && c.zone?.w; return `<span class="nig-cam ${live ? 'is-on' : ''}"><i></i>${esc(c.name)} · ${live ? 'nigrani chalu' : 'nigrani band'}</span>`; }).join('');
     const card = e => { const [vt, vc] = VERDICT[e.verdict] || VERDICT.saaf_nahi; return `<button type="button" class="nig-ev v-${esc(e.verdict)} ${e.matchState === 'missing' ? 'is-missing' : ''} ${e.reviewed ? 'is-seen' : ''}" data-action="nig-open" data-id="${esc(e.id)}">
         ${e.thumb ? `<img src="data:image/jpeg;base64,${esc(e.thumb)}" alt="" loading="lazy">` : `<span class="nig-noimg">${icon('camera', 22)}</span>`}
-        <span class="nig-ev-body"><span class="nig-ev-top"><b>${esc(clockOf(e.at))}</b><span class="tag ${vc}">${vt}</span>${e.reviewed ? `<span class="tag">${e.reviewed === 'ok' ? 'Theek' : 'Pakka shak'}</span>` : ''}</span>
+        <span class="nig-ev-body"><span class="nig-ev-top"><b>${esc(clockOf(e.at))}</b><span class="tag nig-no">No. ${esc(vidNo(e))}</span><span class="tag ${vc}">${vt}</span>${e.reviewed ? `<span class="tag">${e.reviewed === 'ok' ? 'Theek' : 'Pakka shak'}</span>` : ''}</span>
           ${e.flow && FLOW[e.flow] || e.matchState || vidChip(e) || e.flags?.length ? `<span class="nig-rec">${flagChips(e)}${e.flow && FLOW[e.flow] && e.flow !== 'kuch_nahi' ? `<span class="tag">${esc(FLOW[e.flow])}</span>` : ''}${matchChip(e)}${e.story?.length ? `<span class="tag t-vid">📖 Kahani · ${e.story.length}</span>` : ''}${vidChip(e)}</span>` : ''}
           <small>${esc(e.why || '')}</small><small class="muted">${esc(e.camName || '')}</small></span></button>`; };
     return `${nigNav(sec)}<section class="nig-head"><div class="day-nav"><button type="button" class="icon-btn" data-action="nig-day" data-arg="-1" aria-label="Pichla din">${icon('left')}</button>
@@ -943,6 +947,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
             <div class="nig-strip">${frames.map((b, k) => `<button type="button" class="${k === i ? 'is-on' : ''}" data-action="nig-idx" data-arg="${k}" aria-label="Tasveer ${k + 1}"><img src="data:image/jpeg;base64,${esc(b)}" alt=""></button>`).join('')}</div>`
           : frames ? `<p class="empty-line">Tasveerein nahi mileen (shayad 30 din purani ho kar mit gayin).</p>` : `<p class="loading-line">Tasveerein aa rahi hain…</p>`}</div>
         <p class="nig-meta"><b>${esc(clockOf(e.at))}</b> · ${esc(shortDate(e.date))} · ${esc(e.camName || '')} <span class="tag ${vc}">${vt}</span></p>
+        <p class="nig-ref"><b>Video No. ${esc(vidNo(e))}</b> <button type="button" class="btn btn-ghost btn-sm" data-action="nig-copy" data-id="${esc(id)}">📋 Number copy karein</button><br><small class="muted">AI ne is mein ghalti ki ho to ye number Claude ko bhej dein.</small></p>
         <p class="nig-why">${icon('check', 16)} AI: ${esc(e.why || '—')}${e.flow && FLOW[e.flow] ? ` · <b>${esc(FLOW[e.flow])}</b>` : ''}</p>
         ${e.matchState ? `<div class="nig-match m-${esc(e.match?.changed ? 'missing' : e.matchState)}">${e.matchState === 'ok' && e.match ? `${icon(e.match.changed ? 'alert' : 'check', 18)} <span><b>Record mila:</b> ${esc(recText(e.match))} · ${esc(clockOf(e.match.at))}${e.match.party && ['sale', 'crv'].includes(e.match.kind) ? ' · ' + esc(e.match.party) : ''}${e.match.kind === 'crv' && e.match.billAt ? ` <small class="muted">(bill counter par ${esc(clockOf(e.match.billAt))} bana)</small>` : ''}${e.match.changed ? `<br><b class="txt-bad">${esc(ALERT_TXT[e.match.changed] || 'Bill badla')}${e.match.changed !== 'items' ? ' → ' + money(e.match.after || 0) : ''}</b> — POS mein bill baad mein badla gaya. "Bill badle" filter mein poori tafseel.` : ''}</span>`
           : e.matchState === 'missing' ? `${icon('alert', 18)} <span><b>${esc(missText(e))}:</b> ${esc(FLOW[e.flow] || 'galla khula')}, lekin us waqt koi POS Cash Received voucher (1 min pehle / 1.5 min baad), refund, kharch ka voucher ya Galla screen "de diye" nahi mila. Chhutta, ginti ya aap ka apna kaam tha to "Theek hai".</span>`
@@ -1334,6 +1339,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       await busy(el, async () => { ui.camCode = await data.createCameraPC(); });
       rerender();
     },
+    async 'nig-copy'(el) { const e = (S.camEvents || []).find(x => x.id === el.dataset.id); if (!e) return; const t = vidRef(e); try { await navigator.clipboard.writeText(t); toast(`Video No. ${vidNo(e)} copy ho gaya — Claude ki chat mein paste karein`, 'ok'); } catch { prompt('Ye copy karein:', t); } },
     async 'cam-copy'() { const t = camCommand(); try { await navigator.clipboard.writeText(t); toast('Command copy ho gayi', 'ok'); } catch { prompt('Ye command copy karein:', t); } },
     async 'cam-snap'(el) { await busy(el, () => data.requestShot(el.dataset.id), 'PC ko keh diya — 20-30 second mein nayi tasveer'); },
     'cam-edit'(el) { ui.camEdit = el.dataset.id || ''; rerender(); },
@@ -1359,7 +1365,8 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     async 'nig-video'(el) {
       const c = (S.camClips || []).find(x => x.id === el.dataset.id); if (!c) return;
       const sec = Number(el.dataset.arg) || 0;   // v229: kahani ki line se — usi second se
-      await busy(el, async () => { const b64 = await data.loadClip(c.id); if (!b64) throw new Error('Video ke tukre nahi mile'); viewVideo(b64ToBlobUrl(b64) + (sec ? '#t=' + sec : ''), `${c.title || (c.kind === 'shak' ? 'Shak' : 'Clip')} · ${clockOf(c.from + sec * 1000)}`); const v = document.querySelector('.viewer video'); if (v && sec) v.addEventListener('loadedmetadata', () => { try { v.currentTime = sec; } catch { /* ignore */ } }, { once: true }); });
+      await busy(el, async () => { const b64 = await data.loadClip(c.id); if (!b64) throw new Error('Video ke tukre nahi mile'); const ev = c.eventId ? (S.camEvents || []).find(x => x.id === c.eventId) : null;   // v248: video par hawala number
+        viewVideo(b64ToBlobUrl(b64) + (sec ? '#t=' + sec : ''), `${ev ? 'No. ' + vidNo(ev) + ' · ' : ''}${c.title || (c.kind === 'shak' ? 'Shak' : 'Clip')} · ${clockOf(c.from + sec * 1000)}`); const v = document.querySelector('.viewer video'); if (v && sec) v.addEventListener('loadedmetadata', () => { try { v.currentTime = sec; } catch { /* ignore */ } }, { once: true }); });
     },
     'clip-req'(el) { open('clip-req', () => clipReqSheet(el.dataset.id || '')); },
     'cam-test'() { open('cam-test', () => testSheet()); },                                                         // v232

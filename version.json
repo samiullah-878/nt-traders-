@@ -1,6 +1,6 @@
 {
-  "version": "v247",
+  "version": "v248",
   "variant": "Production",
   "buildDate": "2026-10-13",
-  "notes": "Nigrani: upar likha aata hai AI ne kis waqt tak check kar liya aur kitna kaam baqi hai. Card se \"Us waqt duty par\" (larkon ke naam) hata diye. PC program v2.17. Rules wahi (v244)."
+  "notes": "Camera ke har card aur video par hawala number (Video No. = len-den ka waqt) + number copy ka button, taake AI ki ghalti us number se batayi ja sake. Rules wahi (v244)."
 }
