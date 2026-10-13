@@ -5,6 +5,24 @@ Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf)
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
 
 ------------------------------------------------------------
+CAMERA: ntcam.py v2.13 (13 Oct) — DO 'GALLA' CAMERA KHUD JURTE HAIN + APP KI TASVEEREIN SAAF  (app ka version is se nahi badla)
+------------------------------------------------------------
+Malik (13 Oct): "ab dono cameras chal rahe hain, tum dono ko connect karo aapas mein, aur app mein pictures clear nahi aa rahin".
+Halat: dono camera app mein 'Galla' (malik ne upar wale ko 'Counter' nahi kiya, 3 dafa kehne par bhi) = alag alag check, "24 + 0".
+- parchi_main(watchers): 2+ galla watcher zinda hon to ASAL = jis par zone2 ('Counter ka hissa') mark NAHI (qareeb wala naya camera
+  30ddaa6e968c-ch1; upar wale d4430eb60712-ch1 par zone2 hai); sab aik jaise hon to sab se naya (cam.createdAt -> Watch.created).
+  Galla.handle: PARCHI on aur w asal nahi -> sirf harkat ki ginti, AI nahi (dugne check khatam). Log: "do camera jure — asal: .. | madadgar: ..".
+- counter_frames(times, n, main): counter readers na hon to doosre galla watcher ki tape (416 px, us ka galla + counter ka dabba) —
+  wahi 'Counter camera' label ke sath AI ko (v2.11 ka sawal: qareeb / door khud pehchano). counter_ai_frames: bari sirf rec_only
+  (asal counter camera) ki. Shak par video dono ki (clip_id eid + '-c').
+- card_frames(w, g, c): cameraFrames mein asal ki CARD_N 10 tasveerein tape_hd se 640 px q66 (pehle 16-24 x 416), + madadgar ki 4 x 416;
+  kul base64 > 900,000 ho to asal ki kam (kam se kam 4). thumb_small 240 -> 360 px. Purane cards wahi rahenge.
+- Network 13 Oct ko 192.168.1.x ho gaya (cameras .1.32 aur .1.109) — Joiner ne khud naya raasta le liya.
+- AI: malik ne kaha abhi isi (paid) key par chalao, "kal dekh lenge". Meri apni aazmaish ab bhi pooch kar.
+- ntcam_test 90 pass (Parchi 12). Asal AI / app par nahi dekha — malik ke agle test se.
+- Is repo par aik aur chat ne 12 Oct sham v244 (Check-Out / jaldi jane ki ijazat, rules v244) bheja — pull kar ke kaam karo.
+
+------------------------------------------------------------
 0000000000000000000000000000000000000000000000000. v244 — DUTY SE PEHLE CHECK-OUT BAND + JALDI JANE KI IJAZAT
 ------------------------------------------------------------
 Malik (12 Oct sham): "Checkout ko duty timing ke sath sync karna hai — jo time likha hai us se pehle checkout na ho, upar likha ho;

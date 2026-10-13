@@ -31,7 +31,11 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '2.12'
+VERSION = '2.13'
+# v2.13: (1) DO 'GALLA' CAMERA KHUD JURTE HAIN — malik: "tum dono ko connect karo". Parchi ka AI sirf ASAL camera par (jis par
+#        'Counter ka hissa' mark nahi = galle ke qareeb wala; warna sab se naya); doosra madadgar: us ki tasveerein usi sawal mein,
+#        us ka apna check band (dugna kharcha khatam). (2) APP KI TASVEEREIN SAAF — card mein asal camera ki 640 px (pehle 416),
+#        10 + madadgar ki 4; 1 MB ki had se barhein to khud kam. 'Parchi di' card ki chhoti tasveer 240 -> 360 px.
 # v2.12: LAPTOP KA BOJH — madadgar camera (kaam 'Counter', galla + counter dono dabbe = upar se poori dukaan) shuru se halki video
 #        (sub stream) par: us se sirf 'kaun banda' chahiye. Do HD video aik sath 2-core laptop par CPU 90%+ le jati thin.
 # v2.11: DO CAMERA, KOI BHI ASAL — malik ne galle ke qareeb wale camera ko 'Galla' (asal) bana diya; upar wala 'Counter' (madadgar) ho
@@ -84,7 +88,8 @@ NOPAY_WAIT = 150                     # parchi scan (Cash Received) ke 2.5 min ba
 CHEAP_N, CHEAP_W, CHEAP_Q = 8, 288, 60   # v1.9: sasta sawal — 8 tasveerein 288 px
 COUNTER_W = 480                           # v2.2: counter camera ki tape (parchi ke liye)
 PARCHI_N, PARCHI_C, PARCHI_BIG_N, PARCHI_BIG_C = 12, 12, 16, 12   # v2.2: galla / counter tasveerein — chhota AI, bara AI (v2.6: 12 / 16; v2.10: counter 12)
-PARCHI_C_KEEP = 8                                          # v2.10: card (cameraFrames) mein counter ki itni hi
+PARCHI_C_KEEP = 4                                          # v2.10: card (cameraFrames) mein madadgar camera ki itni hi (v2.13: 4)
+CARD_N, CARD_W, CARD_Q, CARD_MAX = 10, 640, 66, 900_000    # v2.13: card mein asal camera ki 10 saaf tasveerein; kul base64 ki had (Firestore doc 1 MB)
 PARCHI_W, PARCHI_Q = 768, 70                             # v2.8: AI ko jane wali tasveer (card mein TAPE_W 416 hi)
 PARCHI_STEP, PARCHI_MAX, PARCHI_HD_N = 4.0, 56, 20      # v2.9: har 4 s ki tasveer, had 56; itni tak hon to bari (768), zyada to 416
 PARCHI_PRE, PARCHI_POST, PARCHI_BIG_PRE, PARCHI_BIG_POST = 30, 12, 45, 20   # v2.6: parchi paisa se pehle ya baad mein — itne second pehle / baad tak dekho
@@ -775,6 +780,7 @@ class Watch(threading.Thread):
         self.zone = cam.get('zone') or {}
         self.zone2 = cam.get('zone2') or {}            # v1.8: counter / len-den ka hissa (malik mark karta hai)
         self.sens = cam.get('sens') or 'mid'
+        self.created = int(cam.get('createdAt') or 0)      # v2.13: do galla camera — naya = asal
         self.cap_day = int(cam.get('aiCap') or 300)
         self.budget = float(cam.get('budget') or 200)          # v1.9: roz ka AI kharcha (Rs)
         self.second = cam.get('second', True) is not False      # v1.9: 🔴 se pehle bara AI (doosri raaye)
@@ -2004,8 +2010,40 @@ def counter_crop(f, zone):
 
 
 def counter_ai_frames(reader, cf):
-    """v2.10: counter camera ki tasveerein AI ke liye bari (tape_hd), card ke liye wahi chhoti."""
-    return reader.hd_frames(cf) if (reader is not None and cf and hasattr(reader, 'hd_frames')) else cf
+    """v2.10: counter camera ki tasveerein AI ke liye bari (tape_hd), card ke liye wahi chhoti. v2.13: madadgar 'Galla' camera
+    (door wala) ki chhoti hi — us se sirf 'kaun banda' chahiye."""
+    return reader.hd_frames(cf) if (reader is not None and cf and getattr(reader, 'rec_only', False) and hasattr(reader, 'hd_frames')) else cf
+
+
+def parchi_main(watchers):
+    """v2.13: do (ya zyada) 'Galla' camera chal rahe hon to parchi ka AI sirf AIK par — ASAL: jis par 'Counter ka hissa' (zone2) mark
+    NAHI (galle ke bilkul qareeb wala; us mein counter alag nahi hota). Sab aik jaise hon to sab se naya (createdAt). Aik hi ho to None."""
+    ws = [w for w in (watchers or {}).values() if w.is_alive()]
+    if len(ws) < 2:
+        return None
+    no2 = [w for w in ws if not (getattr(w, 'zone2', None) or {}).get('w')]
+    pool = no2 if 0 < len(no2) < len(ws) else ws
+    return max(pool, key=lambda w: (getattr(w, 'created', 0) or 0, w.cid))
+
+
+def card_frames(w, g, c):
+    """v2.13: app ke card ki tasveerein — asal camera ki CARD_N, saaf (tape_hd se CARD_W px), + madadgar ki PARCHI_C_KEEP chhoti.
+    Kul base64 CARD_MAX se zyada ho to asal ki tasveerein kam (kam se kam 4). Wapas [(t, b64)] — asal pehle, phir madadgar."""
+    c = thin(c, PARCHI_C_KEEP)
+    g = thin(g, CARD_N)
+    big = w.hd_frames(g) if hasattr(w, 'hd_frames') else g
+    out = []
+    for (t, small), (_, hd) in zip(g, big):
+        b = small
+        if hd is not small:
+            try:
+                b = small_b64(hd, CARD_W, CARD_Q)
+            except Exception:
+                b = small
+        out.append((t, b))
+    while len(out) > 4 and sum(len(b) for _, b in out + c) > CARD_MAX:
+        out = thin(out, len(out) - 2)
+    return out + c
 
 
 def parchi_ai_frames(w, kf):
@@ -2049,7 +2087,7 @@ FLOW_OF = {'aaya': 'aaya', 'nikla': 'nikla', 'dono': 'len_den'}
 
 def thumb_small(b):
     try:
-        return small_b64(b, 240, 55)
+        return small_b64(b, 360, 60)                     # v2.13: 240 -> 360 (list mein saaf; rules: thumb < 80000 harf)
     except Exception:
         return b
 
@@ -2194,6 +2232,7 @@ class Galla(threading.Thread):
         self.by_bill = {}                                      # v1.3: bill no -> camera event id
         self.clips = None                                      # v1.4: Clips thread (shak par clip)
         self.counters = {}                                     # v2.2: counter camera (readers) — parchi ki tasveerein
+        self.watchers, self.main_cid = {}, ''                  # v2.13: sab galla camera (main loop ka dict) — do hon to aik asal
         self.moves, self.watch_of, self.crv_seen, self.nopay_at = collections.deque(maxlen=4000), {}, set(), 0   # v1.8
         self.daily = {}                                        # v1.9: (cid, date) -> aaj kitni "daily" videos
 
@@ -2307,6 +2346,13 @@ class Galla(threading.Thread):
     def handle(self, w, at, t0, t1, frames, counted=False):
         date = pk_date(at)
         st = self.bump(w.cid, date, touches=0 if counted else 1)
+        if PARCHI['on']:                                             # v2.13: do galla camera — AI sirf asal par, doosra madadgar
+            m = parchi_main(self.watchers)
+            if m is not None and m.cid != self.main_cid:
+                self.main_cid = m.cid
+                log('do camera jure — asal (paisa / parchi):', m.cid, '| madadgar:', ', '.join(k for k in self.watchers if k != m.cid))
+            if m is not None and w is not m:
+                return
         if (not frames and not hasattr(w, 'key_frames')) or at - self.last_ai.get(w.cid, 0) < COOLDOWN:
             return
         key = ai_key()                                            # v2.3: chuna hua model / free / claude
@@ -2389,10 +2435,12 @@ class Galla(threading.Thread):
                           'to': int(min(t1 + 10, t0 - 5 + SHAK_MAX) * 1000), 'date': date, 'title': f'Aaj ki video {n + 1}'})
         return True
 
-    def counter_frames(self, times, n):
+    def counter_frames(self, times, n, main=None):
         """v2.2: har counter camera se un waqton ki tasveerein (pehla jis ke paas hon). v2.10: poore len-den par phaili hui n
-        (pehle sirf shuru ki n — baad ka len-den counter camera mein chhoot jata tha)."""
-        for r in list(self.counters.values()):
+        (pehle sirf shuru ki n — baad ka len-den counter camera mein chhoot jata tha). v2.13: counter camera na ho to doosra
+        'Galla' camera (madadgar) — `main` ke ilawa."""
+        others = [x for x in list(self.watchers.values()) if main is not None and x is not main and x.is_alive()]
+        for r in list(self.counters.values()) + others:
             fr = r.frames_at(times)
             if fr:
                 return thin(fr, n), r
@@ -2402,7 +2450,7 @@ class Galla(threading.Thread):
         """v2.2: paisa hila -> parchi di? Chhota AI. Parchi dikhi -> halka card (Normal chip mein). Na dikhi -> bara AI dobara ->
         dono kahein bina parchi -> shak (photos galla + counter, video dono camera, khabar). Saaf nahi -> 'saaf nahi' card (khabar nahi)."""
         self.daily_video(w, t0, t1, date)
-        cf, cam2 = self.counter_frames([t for t, _ in kf], PARCHI_C)
+        cf, cam2 = self.counter_frames([t for t, _ in kf], PARCHI_C, w)
         try:
             res, ms, model = ai_parchi(parchi_ai_frames(w, kf), counter_ai_frames(cam2, cf))
             self.bump(w.cid, date, checks=1, cost=COST['last'], gem=1 if str(model).startswith('gemini') else 0)
@@ -2420,7 +2468,7 @@ class Galla(threading.Thread):
             if getattr(w, 'second', True):
                 try:
                     kf2 = parchi_frames(w, t0, t1, PARCHI_BIG_PRE, PARCHI_BIG_POST, PARCHI_BIG_N)
-                    cf2, cam2b = self.counter_frames([t for t, _ in kf2], PARCHI_BIG_C)
+                    cf2, cam2b = self.counter_frames([t for t, _ in kf2], PARCHI_BIG_C, w)
                     cam2 = cam2b or cam2
                     r2, ms2, m2 = ai_parchi(parchi_ai_frames(w, kf2), counter_ai_frames(cam2, cf2), True, res['why'] or 'parchi nazar nahi aayi')
                     self.bump(w.cid, date, cost=COST['last'])
@@ -2450,9 +2498,7 @@ class Galla(threading.Thread):
         self.bump(w.cid, date, moneyIn=1 if flow in ('aaya', 'len_den') else 0, moneyOut=1 if flow in ('nikla', 'len_den') else 0,
                   matched=1 if verdict == 'normal' else 0, missing=1 if verdict == 'shak' else 0, shak=1 if verdict == 'shak' else 0)
         g, c = frames
-        c = thin(c, PARCHI_C_KEEP)
-        g = thin(g, 24 - len(c))                                     # v2.9: AI ko ghani gayin; card mein 24 hi (rules ki had)
-        allf = g + c
+        allf = card_frames(w, g, c)                                  # v2.13: card mein kam magar saaf (640 px), 1 MB ki had ke andar
         if verdict != 'normal':                                      # photos sirf shak / saaf nahi par (normal halka)
             self.fire.patch(f'{BIZ}/cameraFrames/{eid}', {'frames': [b for _, b in allf], 'times': [int(x * 1000) for x, _ in allf], 'at': t, 'cam': w.cid})
         doc = {'cam': w.cid, 'camName': w.name, 'at': t, 'date': date, 'verdict': verdict, 'why': why[:290], 'flow': flow,
@@ -3549,6 +3595,7 @@ def run():
     clips = Clips(fire, recorders)                 # v1.4
     galla.clips = clips
     galla.counters = readers                       # v2.2: counter camera ki tasveerein parchi ke liye
+    galla.watchers = watchers                      # v2.13: do galla camera khud jurte hain
     PARCHI['on'] = not pos_files()                 # v2.2: laptop (POS files nahi) = bina POS, parchi ka rule
     if PARCHI['on']:
         log('POS nahi — parchi ka rule (seedha camera + AI)')
