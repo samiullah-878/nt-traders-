@@ -31,7 +31,11 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '2.21'
+VERSION = '2.22'
+# v2.22: 175533 — malik: "start mein jo baqaya diya gaya wo parchi ke sath hai". (1) 'kapr' wali line jeb nahi (customer ki pehchan hi
+#        kapron se hai: 'kaale kapre' ka baqaya 'jeb' ban gaya tha) — jeb sirf saaf lafz 'jeb'. (2) aik customer do lines ('parchi di, paisa
+#        nahi' + 'paisa diya, parchi nahi') -> merge_people (same_who) = parchi + paisa, ghalat 'bina parchi' nahi. (3) BAQAYA PARCHI SE:
+#        parchi / paisa dene wale customer ko galle se paisa = baqaya. (4) kahani aik hi AI raaye ki (pehle doosri ka log + pehli ka nikla).
 # v2.21: GALLE WALA ≠ CUSTOMER + GALLE SE PAISA BAHAR — malik: "154333 mein koi customer nahi tha, na paisa diya, phir bhi notification".
 #        Wajah: AI ne galle wale larke ke note ginne ko 'customer ne bina parchi paisa diya' samjha. Ab sawal pehle galle wala pehchanta hai;
 #        us ki / mulazim ki line customer nahi (is_staff). Shak sirf jab bina-parchi wale ke paisa ka waqt likha ho. Naya "nikla": galle se
@@ -1986,9 +1990,10 @@ PARCHI_PROMPT = ('Ye tasveerein aik dukaan ki CCTV se hain, waqt ki tarteeb mein
                  'agar tum us tasveer ka waqt ("parchi_waqt") bata sako jis mein safed parchi CUSTOMER ke haath mein hai; false agar us customer ke '
                  'haath tasveeron mein nazar aaye aur un mein parchi kahin nahi thi; "?" agar us ke haath saaf nazar hi nahi aaye. "nikla" ki har line: '
                  '"waqt" = us tasveer ka waqt jis mein note galle wale ke haath se ja raha hai; "kis_ko" = jis ko diya (kapron ka rang + jagah), ya '
-                 '"jeb" agar galle wale ki apni jeb / kapron mein gaya, ya "mulazim" agar dukaan ke kisi aur larke ko diya; "paisa_diya_tha": true agar ye '
-                 'wahi customer hai jis ne isi len-den mein pehle paisa diya tha (yaani BAQAYA), false agar is ne paisa nahi diya tha, "?" agar saaf '
-                 'nahi. Naam / chehre ki pehchan HARGIZ nahi - sirf kapron ka rang aur jagah. Jawab SIRF JSON: {{"galle_wala": "kapron ka rang + jagah", '
+                 'SIRF lafz "jeb" agar galle wale ki apni jeb / kapron ke andar gaya, ya "mulazim" agar dukaan ke kisi aur larke ko diya; '
+                 '"paisa_diya_tha": true agar ye wahi customer hai jis ne isi len-den mein pehle PARCHI ya paisa diya tha (yaani BAQAYA - kis_ko '
+                 'mein wahi kapron ka rang likho jo "log" mein us customer ka hai), false agar is ne na parchi di na paisa, "?" agar saaf '
+                 'nahi. Aik customer ki aik hi line "log" mein - us ki parchi aur paisa alag waqt par hon to bhi wahi line. Naam / chehre ki pehchan HARGIZ nahi - sirf kapron ka rang aur jagah. Jawab SIRF JSON: {{"galle_wala": "kapron ka rang + jagah", '
                  '"log": [{{"kaun": "kapron ka rang + jagah", "paisa": true, "paisa_waqt": "12:09:24", "parchi": false, "parchi_waqt": ""}}], '
                  '"nikla": [{{"waqt": "12:09:40", "kis_ko": "kapron ka rang + jagah", "paisa_diya_tha": true}}], "why": "Roman Urdu mein aik chhoti line"}} '
                  '- "log" mein sirf wo CUSTOMER jinhon ne galle wale ko kuch diya (paisa ya parchi) - galle wala / mulazim kabhi nahi. Koi nahi to '
@@ -2131,7 +2136,7 @@ def parchi_story(res, frames, t0, t1):
             add(x.get('parchi_waqt'), x.get('kaun'), 'parchi')
     for o in res.get('out') or []:
         kya, kis = {'baqaya': ('baqaya', 'wahi'), 'aurko': ('diya', 'aur'), 'mulazim': ('diya', 'mulazim'), 'jeb': ('jeb', '')}.get(o['kind'], ('baqaya', '?'))
-        add(o.get('waqt'), 'Galle wala' if o['kind'] == 'jeb' else (o.get('kis') or 'Koi'), kya, kis)
+        add(o.get('waqt'), ('Galle wala' + (f" ({o['kis']})" if o.get('kis') and o['kis'].lower() != 'jeb' else '')) if o['kind'] == 'jeb' else (o.get('kis') or 'Koi'), kya, kis)
     rows.sort(key=lambda r: (r['t'] == 0, r['t']))
     return rows[:16]
 
@@ -2192,28 +2197,75 @@ def is_staff(kaun, galle=''):
     return bool(k) and (any(w in k for w in STAFF_WORDS) or (len(g) >= 4 and k == g))
 
 
-def parse_out(rows, galle, payers):
+def who_key(kaun):
+    """v2.22: customer ki pehchan ka saada roop — chhote harf, (qaus) ke andar ka matn aur nishan hata kar. 175533: 'halka neela shalwar
+    kameez (safed daarhi' aur 'halka neela shalwar kameez' aik hi banda."""
+    k = re.sub(r'\(.*?(\)|$)', ' ', str(kaun or '').lower())
+    return ' '.join(re.sub(r'[^a-z0-9 ]+', ' ', k).split())
+
+
+def same_who(a, b):
+    """v2.22: do lines aik hi customer ki? Barabar, ya aik doosre se shuru ho (kam se kam 2 lafz)."""
+    a, b = who_key(a), who_key(b)
+    if not a or not b:
+        return False
+    short, long_ = sorted((a, b), key=len)
+    return a == b or (len(short.split()) >= 2 and (long_ + ' ').startswith(short + ' '))
+
+
+def is_jeb(kis):
+    """v2.22: sirf jab AI saaf 'jeb' likhe. Pehle 'kapr' bhi jeb tha — magar customer ki pehchan hi kapron se hoti hai ('kaale kapre'),
+    is liye 175533 mein us customer ka baqaya 'Galle wala — paisa jeb mein' ban gaya."""
+    return re.search(r'\b(jeb|jaib)\b', str(kis or '').lower()) is not None
+
+
+def parse_out(rows, galle, people):
     """v2.21: "nikla" — galle se paisa bahar. Har line: {waqt, kis, kind}; kind = 'baqaya' (usi customer ko jis ne paisa diya tha),
     'aurko' (aise bande ko jis ne paisa nahi diya), 'mulazim' (dukaan ke kisi larke ko), 'jeb' (galle wale ki apni jeb), '?' (saaf nahi).
-    AI 'baqaya' kahe magar kisi customer ne paisa diya hi nahi = '?' (do baatein aapas mein nahi milti)."""
+    AI 'baqaya' kahe magar kisi customer ne paisa diya hi nahi = '?' (do baatein aapas mein nahi milti).
+    v2.22: BAQAYA PARCHI SE — jis customer ne isi len-den mein PARCHI ya paisa diya (log mein), us ko galle se paisa = baqaya, chahe AI
+    ne paisa_diya_tha false / '?' likha ho (malik: "baqaya parchi ke sath hai")."""
+    givers = [x for x in people if x.get('paisa') or x.get('parchi') is True]
     out = []
     for r in (rows if isinstance(rows, list) else [])[:6]:
         if not isinstance(r, dict):
             continue
         kis = str(r.get('kis_ko') or r.get('kis') or '').strip()[:60]
-        k = kis.lower()
         pd = _tf(r.get('paisa_diya_tha'))
-        if 'jeb' in k or 'kapr' in k:
+        if is_jeb(kis):
             kind = 'jeb'
-        elif 'mulazim' in k or is_staff(kis, galle):
+        elif 'mulazim' in kis.lower() or is_staff(kis, galle):
             kind = 'mulazim'
+        elif any(same_who(kis, x['kaun']) for x in givers):
+            kind = 'baqaya'                                # parchi / paisa dene wala customer = baqaya
         elif pd is True:
-            kind = 'baqaya' if payers else '?'
+            kind = 'baqaya' if givers else '?'
         elif pd is False:
             kind = 'aurko'
         else:
             kind = '?'
         out.append({'waqt': str(r.get('waqt') or '').strip()[:20], 'kis': kis, 'kind': kind})
+    return out
+
+
+def merge_people(people):
+    """v2.22: AI kabhi aik hi customer ko do lines mein tor deta hai (aik mein 'parchi di, paisa nahi', doosri mein 'paisa diya, parchi
+    nahi' — 175533). Ek jaise kapron wali lines jod do: paisa koi bhi haan = haan; parchi kahin dikhi (waqt ke sath) = True, warna
+    kahin 'nahi' = False, warna '?'."""
+    out = []
+    for x in people:
+        m = next((y for y in out if same_who(y['kaun'], x['kaun'])), None)
+        if m is None:
+            out.append(dict(x))
+            continue
+        m['paisa'] = m['paisa'] or x['paisa']
+        m['paisa_waqt'] = m['paisa_waqt'] or x['paisa_waqt']
+        if x['parchi'] is True and m['parchi'] is not True:
+            m['parchi'], m['parchi_waqt'] = True, x['parchi_waqt']
+        elif m['parchi'] == '?' and x['parchi'] is False:
+            m['parchi'] = False
+        if len(who_key(x['kaun'])) < len(who_key(m['kaun'])):
+            m['kaun'] = x['kaun']                          # chhota (saaf) naam rakho
     return out
 
 
@@ -2253,8 +2305,9 @@ def parse_parchi(text):
             pc = '?'                                       # saboot (tasveer ka waqt) ke bagair "parchi di" nahi maante
         people.append({'kaun': str(r.get('kaun') or '')[:60], 'paisa': _tf(r.get('paisa')) is True, 'paisa_waqt': str(r.get('paisa_waqt') or '').strip()[:20],
                        'parchi': pc, 'parchi_waqt': pw})
+    people = merge_people(people)                          # v2.22: aik customer = aik line
     payers = [x for x in people if x['paisa']]
-    out = parse_out(j.get('nikla'), galle, payers)
+    out = parse_out(j.get('nikla'), galle, people)
     if payers:
         bad, unk = [x for x in payers if x['parchi'] is False], [x for x in payers if x['parchi'] == '?']
         pick = (bad or unk or payers)[0]
@@ -2779,7 +2832,7 @@ class Galla(threading.Thread):
                'matchState': 'missing' if verdict == 'shak' else 'none', 'start': int(t0 * 1000), 'end': int(t1 * 1000),
                'thumb': thumb_small(g[len(g) // 2][1]) if verdict == 'normal' else g[len(g) // 2][1], 'n': len(allf) if verdict != 'normal' else 0,
                'ms': ms, 'model': model, 'agent': VERSION, 'flags': flags[:8]}
-        story = parchi_story(dict(res, out=out1), allf, t0, t1)     # v2.21: kis ne kya diya, galle se kis ko — app mein waqt ke sath
+        story = parchi_story(res if 'out' in res else dict(res, out=out1), allf, t0, t1)   # v2.21 kahani; v2.22: aik hi AI raaye ki (175533 mein do raayein mil gayi thin)
         if story:
             doc['story'] = story
         self.fire.patch(f'{BIZ}/cameraEvents/{eid}', doc)

@@ -1,8 +1,23 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v250   Tareekh: 2026-10-15  (Nigrani ki 2 screens: Parchi / Paisa + Galle se bahar; ntcam.py v2.21 — galle wala ≠ customer; RULES wahi v244)
+Version: v250   Tareekh: 2026-10-15  (app v250 wahi; ntcam.py v2.22 — 175533: baqaya parchi se, kapre ≠ jeb, aik customer aik line; RULES wahi v244)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+ntcam.py v2.22 (15 Oct sham) — 175533: BAQAYA PARCHI KE SATH  (app v250 wahi)
+------------------------------------------------------------
+Malik (screenshot 175533, 5:55 pm): "last mein larke ne galle se paisa nikala wo sahi hai, magar start mein jo baqaya diya gaya wo parchi
+ke sath hai". Kahani mein: 'halka neela shalwar kameez' do dafa (aik 'parchi di paisa NAHI', aik 'paisa diya parchi nahi') + 3 dafa
+'Galle wala — paisa jeb / kapron mein'; card 'Bina parchi paisa liya'. Video khud nahi dekhi (Firebase tak pahunch nahi) — screenshot se.
+- Ghalti 1 (v2.21 ki): parse_out mein 'kapr' = jeb. Customer ki pehchan hi kapron se ('kaale kapre') -> baqaya jeb ban gaya.
+  Ab is_jeb(): sirf lafz 'jeb' / 'jaib'. Kahani mein jeb line par kis bhi likha.
+- Ghalti 2: AI ne aik customer do lines mein tora -> ghalat 'bina parchi'. merge_people() (same_who: who_key = chhote harf, (qaus) hata
+  kar; barabar ya aik doosre se shuru, kam se kam 2 lafz) — paisa haan kahin bhi = haan, parchi waqt ke sath kahin = True.
+- BAQAYA PARCHI SE: parse_out(rows, galle, people) — 'log' mein parchi ya paisa dene wale customer (same_who) ko galle se paisa =
+  baqaya, chahe AI paisa_diya_tha false / '?' likhe. Prompt: paisa_diya_tha = pehle PARCHI ya paisa diya; aik customer aik line.
+- Kahani aik hi raaye ki: parchi_story(res) — res ka apna 'out' (pehle doosri raaye ka log + pehli ka nikla mil jate the).
+- ntcam_test 97 pass (12 dafa). Purana random flake (daily_video, ~5 mein 1) — Kahani / Milaan ke naqli clips mein q jora.
 
 ------------------------------------------------------------
 v250 + ntcam.py v2.21 (15 Oct) — GALLE WALA ≠ CUSTOMER + 2 SCREENS + GALLE SE PAISA BAHAR

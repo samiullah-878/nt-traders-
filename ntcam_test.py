@@ -181,7 +181,7 @@ class Milaan(unittest.TestCase):
         recs = []
         g, writes = self._g(recs)
         clips = []
-        g.clips = types.SimpleNamespace(shak=lambda cid, eid, t0, t1, date: clips.append((eid, t0, t1)))
+        g.clips = types.SimpleNamespace(shak=lambda cid, eid, t0, t1, date: clips.append((eid, t0, t1)), q=types.SimpleNamespace(put=lambda job: None))
         w = types.SimpleNamespace(cid='c1', name='Galla', cap_day=300)
         fr = [(np.random.rand(120, 160, 3) * 255).astype('uint8') for _ in range(4)]
         with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'geminiKey': 'g-x', 'cams': {}}), \
@@ -207,7 +207,7 @@ class Milaan(unittest.TestCase):
         g, writes = self._g(recs)
         g.pos.vch_ok = lambda: True
         clips = []
-        g.clips = types.SimpleNamespace(shak=lambda cid, eid, t0, t1, date: clips.append(eid))
+        g.clips = types.SimpleNamespace(shak=lambda cid, eid, t0, t1, date: clips.append(eid), q=types.SimpleNamespace(put=lambda job: None))
         w = types.SimpleNamespace(cid='c1', name='Galla', cap_day=300)
         fr = [(np.random.rand(120, 160, 3) * 255).astype('uint8') for _ in range(4)]
         with mock.patch.object(ntcam, 'secrets', lambda: {'claudeKey': 'sk-ant-x', 'geminiKey': 'g-x', 'cams': {}}), \
@@ -249,7 +249,7 @@ class EkLenDen(unittest.TestCase):
             def query(s, *a, **k): return []
         pos = types.SimpleNamespace(near=lambda a, b: [], ok_sql=lambda: True, ok_bk=lambda: True, vch_ok=lambda: True)
         g = ntcam.Galla(F(), pos); clips = []
-        g.clips = types.SimpleNamespace(shak=lambda *a: clips.append(a[1]))
+        g.clips = types.SimpleNamespace(shak=lambda *a: clips.append(a[1]), q=types.SimpleNamespace(put=lambda job: None))   # q: 'aaj ki video' bila tarteeb
         return g, writes, clips
 
     def _run(self, confirm):
@@ -354,7 +354,7 @@ class Kahani(unittest.TestCase):
             def query(s, *a, **k): return []
         pos = types.SimpleNamespace(near=lambda a, b: [r for r in recs if a <= r['at'] <= b], ok_sql=lambda: True, ok_bk=lambda: True, vch_ok=lambda: True, tender_seen=True)
         g = ntcam.Galla(F(), pos); clips = []
-        g.clips = types.SimpleNamespace(shak=lambda *a: clips.append(a[1]))
+        g.clips = types.SimpleNamespace(shak=lambda *a: clips.append(a[1]), q=types.SimpleNamespace(put=lambda job: None))   # q: 'aaj ki video' bila tarteeb
         return g, writes, clips
 
     def _w(self):
@@ -1433,6 +1433,39 @@ class Parchi(unittest.TestCase):
         rules = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'firestore.rules'), encoding='utf-8').read()
         blk = rules[rules.index('cameraEvents/{eventId}'):]; blk = blk[:blk.index('\n    }')]
         for k in ev: self.assertIn("'" + k + "'", blk, 'rules mein nahi: ' + k)
+
+    def test_v222_175533_baqaya_parchi_ke_sath(self):
+        """v2.22 (175533): customer ka baqaya 'jeb' na bane ('kaale kapre'), aik customer do lines mein na toote, parchi wale ko galle se
+        paisa = baqaya, kahani aik hi raaye ki."""
+        P = ntcam.parse_parchi
+        self.assertFalse(ntcam.is_jeb('kaale kapre')); self.assertFalse(ntcam.is_jeb('safed kapron wala customer')); self.assertTrue(ntcam.is_jeb('jeb')); self.assertTrue(ntcam.is_jeb('galle wale ki apni jeb'))
+        self.assertTrue(ntcam.same_who('halka neela shalwar kameez (safed daarhi', 'Halka neela shalwar kameez'))
+        self.assertFalse(ntcam.same_who('neela shalwar kameez', 'halka neela shalwar kameez'), 'alag customer')
+        self.assertFalse(ntcam.same_who('neela', 'neela kurta'), 'aik lafz par nahi jorte')
+        txt = ('{"galle_wala": "kursi par, grey", "log": ['
+               '{"kaun": "halka neela shalwar kameez (safed daarhi", "paisa": false, "parchi": true, "parchi_waqt": "5:55:00 pm"}, '
+               '{"kaun": "halka neela shalwar kameez", "paisa": true, "paisa_waqt": "5:55:10 pm", "parchi": false}, '
+               '{"kaun": "kaale kapre", "paisa": true, "paisa_waqt": "5:56:20 pm", "parchi": true, "parchi_waqt": "5:56:15 pm"}], '
+               '"nikla": [{"waqt": "5:55:21 pm", "kis_ko": "halka neela shalwar kameez", "paisa_diya_tha": false}, '
+               '{"waqt": "5:56:26 pm", "kis_ko": "kaale kapre", "paisa_diya_tha": "?"}], "why": "x"}')
+        r = P(txt)
+        self.assertEqual(len(r['log']), 2, 'halka neela aik hi banda'); self.assertEqual((r['log'][0]['paisa'], r['log'][0]['parchi'], r['log'][0]['parchi_waqt']), (True, True, '5:55:00 pm'))
+        self.assertEqual((r['paisa'], r['parchi']), ('aaya', True), 'bina parchi NAHI')
+        self.assertEqual([o['kind'] for o in r['out']], ['baqaya', 'baqaya'], 'parchi / paisa dene walon ko = baqaya, kaale kapre jeb nahi')
+        g, evs, frs, clips, calls = self.run_case(r)
+        ev = evs[0]; self.assertEqual((ev['verdict'], ev['flags']), ('normal', ['bahar', 'baqaya'])); self.assertEqual((len(calls), clips), (1, []), 'koi shak / doosri raaye / video nahi')
+        self.assertEqual([x['kya'] for x in ev['story'] if x['kya'] in ('parchi', 'paisa', 'jeb')], [], 'kahani mein ghalat lines nahi')
+        # parchi diya, paisa AI ko nazar nahi aaya, phir galle se usi ko = baqaya (parchi ke sath)
+        r = P('{"log": [{"kaun": "safed kurta", "paisa": false, "parchi": true, "parchi_waqt": "1:00"}], "nikla": [{"waqt": "1:01", "kis_ko": "safed kurta", "paisa_diya_tha": false}], "why": ""}')
+        self.assertEqual(r['out'][0]['kind'], 'baqaya')
+        r = P('{"log": [{"kaun": "safed kurta", "paisa": true, "paisa_waqt": "1:00", "parchi": true, "parchi_waqt": "1:00"}], "nikla": [{"waqt": "1:01", "kis_ko": "laal shirt", "paisa_diya_tha": false}], "why": ""}')
+        self.assertEqual(r['out'][0]['kind'], 'aurko', 'kisi aur ko pehle jaisa')
+        # kahani aik hi raaye ki: doosri raaye (shak ki bunyad) ho to usi ka log + usi ka nikla
+        first = P('{"log": [{"kaun": "neela", "paisa": true, "paisa_waqt": "1", "parchi": false}], "nikla": [{"waqt": "2", "kis_ko": "jeb"}], "why": "a"}')
+        second = P('{"log": [{"kaun": "neela", "paisa": true, "paisa_waqt": "1", "parchi": false}], "nikla": [], "why": "b"}')
+        g, evs, frs, clips, calls = self.run_case(first, second)
+        self.assertEqual(evs[0]['flags'][:1], ['noparchi']); self.assertFalse(any(x['kya'] == 'jeb' for x in evs[0]['story']), 'doosri raaye ki kahani — pehli ka nikla nahi mila')
+        self.assertIn('VERSION', dir(ntcam)); self.assertEqual(ntcam.VERSION, '2.22')
 
     def test_frames_at_aur_denied(self):
         g, _, _ = self._g(); r = g.counters['nvr-3']
