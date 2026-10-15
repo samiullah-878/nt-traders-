@@ -1,8 +1,32 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v249   Tareekh: 2026-10-13  (hazri: ghalat Check-Out mitana — "Check-Out mitayein"; ntcam.py v2.20 wahi; RULES wahi v244)
+Version: v250   Tareekh: 2026-10-15  (Nigrani ki 2 screens: Parchi / Paisa + Galle se bahar; ntcam.py v2.21 — galle wala ≠ customer; RULES wahi v244)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+v250 + ntcam.py v2.21 (15 Oct) — GALLE WALA ≠ CUSTOMER + 2 SCREENS + GALLE SE PAISA BAHAR
+------------------------------------------------------------
+Malik: "154333 mein koi customer nahi tha, na paisa diya, phir bhi notification aaya" (154333 = Video No. 15:43:33).
+Wajah (code se): khabar sirf verdict 'shak' par; parchi mode mein shak = dono AI raaye "paisa diya, parchi nahi". AI ne galle wale larke ke
+note ginne ko customer ka paisa samjha. Asal card / AI jawab Firebase / PC par hai — yahan se nahi dekha (malik se screenshot maanga).
+Malik ki farmaish: AI pehle customer aur galle wale larke mein farq kare; Nigrani mein upar 2 screens — (1) paisa diya parchi nahi /
+parchi di paisa nahi (2) galle se jitna paisa bahar nikla. Galle se: usi customer ko baqaya = zaroorat nahi; kisi aise ko jis ne paisa
+nahi diya = khabar + video. Dono baatein settings mein on / off.
+- ntcam v2.21: PARCHI_PROMPT "PEHLE PEHCHANO" (galle_wala) + "nikla" [{waqt, kis_ko, paisa_diya_tha}]. parse_parchi: is_staff() wali
+  line (galle wala / cashier / mulazim / kaun == galle_wala) customer nahi. parse_out(): kind baqaya | aurko | mulazim | jeb | '?'
+  ('baqaya' magar kisi ne paisa diya hi nahi = '?'). handle_parchi: screen 1 pehle jaisa + shak sirf jab bina-parchi wale ka paisa_waqt
+  ho; screen 2: BAD_OUT (aurko/mulazim/jeb) -> doosri raaye bhi kahe to shak (flags ['bahar', kind]), na kahe 'saaf_nahi' ['bahar',
+  'unsure']; baqaya -> normal ['bahar', 'baqaya']. Video: bina parchi hamesha; kisi aur ko = VIDEO_SET.aurko (default on); baqaya =
+  VIDEO_SET.baqaya (default off) — cameraPC/settings.video, apply_vault har minute. Kahani: parchi_story() -> cameraEvents.story (rules
+  mein pehle se). Naye fields NAHI (rules wahi v244). ntcam_test 96 pass.
+- functions: handleCamEvent — bahar + aurko/mulazim/jeb = "Galla: paisa kisi aur ko" (notify.aurko, default on); bina parchi = shak
+  pehle jaisa; baqaya = "Galla: baqaya diya" sirf notify.baqaya chalu ho (default band). router.test 10 pass.
+- app v250: Nigrani > Len-den mein upar 3 button: 🧾 Parchi / Paisa · 💸 Galle se bahar · 📋 Sab (purana poora view). Bina POS mein
+  default Parchi / Paisa, POS wale PC par Sab. Har screen mein ginti + chips (s1: noparchi / parchi / saaf; s2: bad / ok / saaf).
+  🔔 Khabar: naye 'Galle se paisa kisi aur ko', 'Galle se baqaya' + "Kis cheez ki video bane" (v_aurko, v_baqaya). app.dom 32 pass.
+- Pehle se fail (path ka masla, tests/ folder ke liye likhe): attendance-live, notifications, salary, shift-checkout, staff-upgrades, tasks.
+- Asal camera par abhi nahi dekha. Pehle din malik se poochna: kisi aur ko ki khabar sahi aayi? baqaya ko AI ne kisi aur to nahi samjha?
 
 ------------------------------------------------------------
 CAMERA: ntcam.py v2.20 (13 Oct sham) — VIDEO SIRF ASAL LEN-DEN KI (AI ke bataye waqt ke gird)  (app v248 wahi)

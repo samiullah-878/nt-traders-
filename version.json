@@ -1,6 +1,6 @@
 {
-  "version": "v249",
+  "version": "v250",
   "variant": "Production",
-  "buildDate": "2026-10-13",
-  "notes": "Hazri durust karein: ghalti se laga Check-Out ab mit sakta hai ('Check-Out mitayein' tick). Larka phir duty ke waqt par apna Check-Out laga sakta hai. Rules aur PC program wahi."
+  "buildDate": "2026-10-15",
+  "notes": "Nigrani mein 2 screens: Parchi / Paisa aur Galle se bahar. Galle se paisa kisi aur ko = khabar + video; baqaya = sirf setting se. AI ab galle wale larke ko customer nahi samajhta (PC v2.21). Rules wahi (v244)."
 }

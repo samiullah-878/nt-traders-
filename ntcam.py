@@ -31,7 +31,12 @@
 #   setup  = jodna / naya camera (desktop icon "NT Camera jodein")      run = peeche chalna (PC on hote hi, Startup)
 #   test   = sirf jaanch (kuch nahi badalta)
 # Firebase: apna alag login (PC code) — rules isay sirf cameras / cameraShots / cameraPC/status likhne dete hain.
-VERSION = '2.20'
+VERSION = '2.21'
+# v2.21: GALLE WALA ≠ CUSTOMER + GALLE SE PAISA BAHAR — malik: "154333 mein koi customer nahi tha, na paisa diya, phir bhi notification".
+#        Wajah: AI ne galle wale larke ke note ginne ko 'customer ne bina parchi paisa diya' samjha. Ab sawal pehle galle wala pehchanta hai;
+#        us ki / mulazim ki line customer nahi (is_staff). Shak sirf jab bina-parchi wale ke paisa ka waqt likha ho. Naya "nikla": galle se
+#        paisa kis ko — usi customer ko baqaya (halka card, khabar / video sirf setting se), kisi aur / mulazim / jeb (doosri raaye bhi kahe
+#        to shak + video, setting cameraPC/settings.video.aurko), saaf nahi = 'Saaf nahi'. Kahani (story) mein waqt ke sath kis ne kya diya.
 # v2.20: VIDEO SIRF ASAL LEN-DEN KI — malik: "172630 mein asal len-den 35 second ka hai aur clip 2 minute ki aayi, time zaya hota hai".
 #        AI har bande ka paisa / parchi ka waqt batata hai; video ab usi ke gird (15 s pehle se 20 s baad, 30-60 s) — poore jure hue
 #        (3 minute tak ke) len-den ki nahi. Waqt na mile to pehle jaisi magar 75 s tak. Chhoti video = jaldi upload.
@@ -1683,6 +1688,7 @@ def ai_mode():
 
 
 AI_SET = {'mode': 'free', 'cheap': '', 'big': ''}   # Galla Watch se (cameras.ai); v2.3: app se chuna model 'provider:model'
+VIDEO_SET = {'aurko': True, 'baqaya': False}   # v2.21: app (Nigrani > Khabar) se — galle se paisa kisi aur ko / baqaya ki video bane?
 
 # ---------- v2.3: sab AI providers (OpenAI jaisa raasta) — app ke "Keys / AI" se ----------
 KEY_NAMES = {'gemini': 'geminiKey', 'claude': 'claudeKey', 'openai': 'openaiKey', 'deepseek': 'deepseekKey', 'openrouter': 'openrouterKey',
@@ -1955,10 +1961,16 @@ FLAG_TEXT = {'jeb': 'Paisa jeb / kapron mein', 'noparchi': 'Bina parchi paisa li
              'aurko': 'Voucher ke waqt paisa kisi aur ko', 'nochange': 'Baqaya banta hi nahi tha', 'double': 'Aik bill par do dafa paisa nikla',
              'badanote': 'Chhote baqaye par bada note', 'nopay': 'Parchi scan · paisa nazar nahi aaya',
              'novoucher': 'Bina voucher paisa nikla', 'unsure': 'Paisa diya — kis ko, saaf nahi',
-             'noparchi_out': 'Bina parchi paisa diya', 'parchi_saaf': 'Parchi saaf nazar nahi aayi'}
+             'noparchi_out': 'Bina parchi paisa diya', 'parchi_saaf': 'Parchi saaf nazar nahi aayi',
+             'mulazim': 'Galle se paisa mulazim ko', 'baqaya': 'Baqaya usi customer ko'}   # v2.21
 
 # ---------- v2.2: SEEDHA CAMERA + AI (bina POS) — parchi ka rule ----------
-PARCHI_PROMPT = ('Ye tasveerein aik dukaan ki CCTV se hain, waqt ki tarteeb mein; har tasveer ke sath us ka waqt likha hai. {cams}Dukaan ka QAIDA: har '
+PARCHI_PROMPT = ('Ye tasveerein aik dukaan ki CCTV se hain, waqt ki tarteeb mein; har tasveer ke sath us ka waqt likha hai. {cams}PEHLE PEHCHANO kaun '
+                 'kaun hai: GALLE WALA (cashier / dukaan ka larka) wo hai jo galle (noton ka dabba / daraz / tokri) ke PEECHE andar wali taraf baitha '
+                 'ya khara hai, galla kholta hai aur noton ko haath lagata hai - aksar saari tasveeron mein wahi aik banda. CUSTOMER wo hain jo counter '
+                 'ki BAHAR wali taraf se aate hain aur haath aage kar ke dete / lete hain. Galle wala aur dukaan ka koi aur mulazim (andar wali taraf) '
+                 'CUSTOMER NAHI hain: galle wale ka note ginna, galle mein rakhna, galle se nikalna ya apne haath ka kaghaz customer ka paisa / parchi '
+                 'NAHI. Dukaan ka QAIDA: har '
                  'customer galle wale (cashier) ko PARCHI (chhota safed kaghaz / bill slip) aur PAISA (rangeen note) dono deta hai; galle wala paisa '
                  'galle (noton ka dabba) mein rakhta hai aur baqaya deta hai. Tarteeb koi bhi ho sakti hai (pehle parchi ya pehle paisa), beech mein '
                  '30-40 second ka farq bhi ho sakta hai. Is dauran AIK SE ZYADA customer aa sakte hain - HAR customer ko ALAG dekho; aik ki parchi '
@@ -1967,13 +1979,20 @@ PARCHI_PROMPT = ('Ye tasveerein aik dukaan ki CCTV se hain, waqt ki tarteeb mein
                  'PARCHI = SIRF wo safed kaghaz jo CUSTOMER KE APNE HAATH mein nazar aaye aur wo galle wale ko de ya us ke saamne counter par rakhe. '
                  'Ye parchi NAHI hain: customer ke safed kapre ya aasteen; galle wale ke apne haath mein pehle se maujood kaghaz; counter ya mez par '
                  'pehle se pari parchiyon ka dhair; galle wala jo kaghaz ya note customer ko WAPAS de (baqaya); copy / register; mobile; shopper. '
+                 'GALLE SE PAISA BAHAR: jab bhi galle wala galle / daraz / tokri se note NIKAL kar kisi ke haath mein de, ya apni jeb / kapron mein '
+                 'rakhe, to "nikla" mein aik line likho. Galle se nikal kar sirf ginna, haath mein pakre rehna ya wapas galle mein rakhna "nikla" NAHI. '
                  'Andaza mat lagao - sirf wo likho jo kisi tasveer mein saaf nazar aa raha hai.{prev} Har customer ke liye batao: "paisa": true agar us '
                  'ne note diya (aur "paisa_waqt" = us tasveer ka waqt jis mein note us ke haath se ja raha hai), warna false. "parchi": true SIRF '
                  'agar tum us tasveer ka waqt ("parchi_waqt") bata sako jis mein safed parchi CUSTOMER ke haath mein hai; false agar us customer ke '
-                 'haath tasveeron mein nazar aaye aur un mein parchi kahin nahi thi; "?" agar us ke haath saaf nazar hi nahi aaye. Naam / chehre ki '
-                 'pehchan HARGIZ nahi - sirf kapron ka rang aur jagah. Jawab SIRF JSON: {{"log": [{{"kaun": "kapron ka rang + jagah", "paisa": true, '
-                 '"paisa_waqt": "12:09:24", "parchi": false, "parchi_waqt": ""}}], "why": "Roman Urdu mein aik chhoti line"}} - "log" mein sirf wo '
-                 'customer jinhon ne galle wale ko kuch diya (paisa ya parchi). Koi nahi to "log": [].')
+                 'haath tasveeron mein nazar aaye aur un mein parchi kahin nahi thi; "?" agar us ke haath saaf nazar hi nahi aaye. "nikla" ki har line: '
+                 '"waqt" = us tasveer ka waqt jis mein note galle wale ke haath se ja raha hai; "kis_ko" = jis ko diya (kapron ka rang + jagah), ya '
+                 '"jeb" agar galle wale ki apni jeb / kapron mein gaya, ya "mulazim" agar dukaan ke kisi aur larke ko diya; "paisa_diya_tha": true agar ye '
+                 'wahi customer hai jis ne isi len-den mein pehle paisa diya tha (yaani BAQAYA), false agar is ne paisa nahi diya tha, "?" agar saaf '
+                 'nahi. Naam / chehre ki pehchan HARGIZ nahi - sirf kapron ka rang aur jagah. Jawab SIRF JSON: {{"galle_wala": "kapron ka rang + jagah", '
+                 '"log": [{{"kaun": "kapron ka rang + jagah", "paisa": true, "paisa_waqt": "12:09:24", "parchi": false, "parchi_waqt": ""}}], '
+                 '"nikla": [{{"waqt": "12:09:40", "kis_ko": "kapron ka rang + jagah", "paisa_diya_tha": true}}], "why": "Roman Urdu mein aik chhoti line"}} '
+                 '- "log" mein sirf wo CUSTOMER jinhon ne galle wale ko kuch diya (paisa ya parchi) - galle wala / mulazim kabhi nahi. Koi nahi to '
+                 '"log": []; galle se kuch nahi nikla to "nikla": [].')
 
 
 DEBUG_KEEP = 40
@@ -2077,6 +2096,46 @@ def focus_span(res, verdict, t0, t1):
     return a, b
 
 
+def out_span(res, kinds, t0, t1):
+    """v2.21: galle se paisa bahar ki video — sirf un 'nikla' lines ke waqt ke gird jin ka kind `kinds` mein ho. Waqt na mile to None."""
+    lo, hi = t0 - 90, t1 + 60
+    ts = [t for t in (waqt_epoch(o.get('waqt'), lo, hi) for o in (res.get('out') or []) if o.get('kind') in kinds) if t is not None]
+    if not ts:
+        return None
+    a, b = min(ts) - FOCUS_BEFORE, max(ts) + FOCUS_AFTER
+    return a, min(max(b, a + FOCUS_MIN), a + FOCUS_MAX)
+
+
+OUT_TEXT = {'baqaya': 'baqaya diya', 'aurko': 'paisa diya (is ne paisa nahi diya tha)', 'mulazim': 'paisa diya (mulazim)', 'jeb': 'paisa jeb / kapron mein',
+            '?': 'paisa diya — baqaya hai ya nahi, saaf nahi'}
+
+
+def out_line(out):
+    """v2.21: card ki 'wajah' mein galle se bahar ki chhoti line: '15:43:40 laal shirt ko paisa diya (...)'."""
+    return '; '.join(f"{o['waqt'] or '?'} {o['kis'] or 'koi'}{'' if o['kind'] == 'jeb' else ' ko'} {OUT_TEXT.get(o['kind'], '')}".strip() for o in out[:3])
+
+
+def parchi_story(res, frames, t0, t1):
+    """v2.21: parchi ke jawab se 'kahani' (cameraEvents.story — app mein waqt ke sath lines): kis customer ne paisa / parchi di, galle se
+    paisa kis ko gaya. i = card ki qareeb tareen tasveer (1 se), t = epoch ms. Waqt na mile to 0."""
+    lo, hi = t0 - 90, t1 + 60
+    rows = []
+    def add(waqt, kaun, kya, kis=''):
+        t = waqt_epoch(waqt, lo, hi)
+        i = 1 + min(range(len(frames)), key=lambda k: abs(frames[k][0] - t)) if (t is not None and frames) else 1
+        rows.append({'i': i, 't': int(t * 1000) if t is not None else 0, 'kaun': str(kaun or 'Customer')[:40], 'kya': kya, 'kis': kis, 'note': ''})
+    for x in res.get('log') or []:
+        if x.get('paisa'):
+            add(x.get('paisa_waqt'), x.get('kaun'), 'parchi_paisa' if x.get('parchi') is True else 'paisa')
+        elif x.get('parchi') is True:
+            add(x.get('parchi_waqt'), x.get('kaun'), 'parchi')
+    for o in res.get('out') or []:
+        kya, kis = {'baqaya': ('baqaya', 'wahi'), 'aurko': ('diya', 'aur'), 'mulazim': ('diya', 'mulazim'), 'jeb': ('jeb', '')}.get(o['kind'], ('baqaya', '?'))
+        add(o.get('waqt'), 'Galle wala' if o['kind'] == 'jeb' else (o.get('kis') or 'Koi'), kya, kis)
+    rows.sort(key=lambda r: (r['t'] == 0, r['t']))
+    return rows[:16]
+
+
 def parchi_main(watchers):
     """v2.13: do (ya zyada) 'Galla' camera chal rahe hon to parchi ka AI sirf AIK par — ASAL: jis par 'Counter ka hissa' (zone2) mark
     NAHI (galle ke bilkul qareeb wala; us mein counter alag nahi hota). Sab aik jaise hon to sab se naya (createdAt). Aik hi ho to None."""
@@ -2122,11 +2181,53 @@ def _tf(v):
     return '?'
 
 
+STAFF_WORDS = ('galle wal', 'galla wal', 'galle-wal', 'galla-wal', 'cashier', 'mulazim', 'dukaan ka larka', 'dukan ka larka', 'dukaan wala',
+               'dukan wala', 'staff', 'salesman')
+
+
+def is_staff(kaun, galle=''):
+    """v2.21: AI ki line galle wale / dukaan ke mulazim ki hai (customer nahi)? Wo 'customer ka paisa / parchi' nahi gina jata."""
+    k = ' '.join(str(kaun or '').lower().split())
+    g = ' '.join(str(galle or '').lower().split())
+    return bool(k) and (any(w in k for w in STAFF_WORDS) or (len(g) >= 4 and k == g))
+
+
+def parse_out(rows, galle, payers):
+    """v2.21: "nikla" — galle se paisa bahar. Har line: {waqt, kis, kind}; kind = 'baqaya' (usi customer ko jis ne paisa diya tha),
+    'aurko' (aise bande ko jis ne paisa nahi diya), 'mulazim' (dukaan ke kisi larke ko), 'jeb' (galle wale ki apni jeb), '?' (saaf nahi).
+    AI 'baqaya' kahe magar kisi customer ne paisa diya hi nahi = '?' (do baatein aapas mein nahi milti)."""
+    out = []
+    for r in (rows if isinstance(rows, list) else [])[:6]:
+        if not isinstance(r, dict):
+            continue
+        kis = str(r.get('kis_ko') or r.get('kis') or '').strip()[:60]
+        k = kis.lower()
+        pd = _tf(r.get('paisa_diya_tha'))
+        if 'jeb' in k or 'kapr' in k:
+            kind = 'jeb'
+        elif 'mulazim' in k or is_staff(kis, galle):
+            kind = 'mulazim'
+        elif pd is True:
+            kind = 'baqaya' if payers else '?'
+        elif pd is False:
+            kind = 'aurko'
+        else:
+            kind = '?'
+        out.append({'waqt': str(r.get('waqt') or '').strip()[:20], 'kis': kis, 'kind': kind})
+    return out
+
+
+BAD_OUT = ('aurko', 'mulazim', 'jeb')
+OUT_FLAG_TEXT = {'aurko': 'Galle se paisa kisi aur ko (baqaya nahi)', 'mulazim': 'Galle se paisa mulazim ko', 'jeb': 'Galle se paisa jeb / kapron mein'}          # v2.21: galle se paisa kisi aise ko jo baqaya ka haqdar nahi — khabar + video (setting)
+
+
 def parse_parchi(text):
     """v2.14: har bande ka alag jawab {"log": [{kaun, paisa, paisa_waqt, parchi, parchi_waqt}], "why"} -> aik faisla:
     paisa 'aaya' agar kisi ne note diya; parchi False agar kisi PAISA DENE WALE ki parchi nahi (aik bhi), '?' agar kisi ki saaf nahi,
     True jab sab dene walon ki parchi kisi tasveer (parchi_waqt) mein dikhi. Parchi true bina waqt ke = '?' (saboot nahi).
-    Koi paisa dene wala nahi: paisa 'nahi'; kisi ne sirf parchi di ho to only_parchi. Purana jawab ({"paisa", "parchi"}) bhi chalta hai."""
+    Koi paisa dene wala nahi: paisa 'nahi'; kisi ne sirf parchi di ho to only_parchi. Purana jawab ({"paisa", "parchi"}) bhi chalta hai.
+    v2.21: pehle galle wala ("galle_wala") pehchana jata hai — us ki / mulazim ki line "log" se nikal di jati hai (154333: galle wale ka
+    note ginna "customer ne bina parchi paisa diya" ban gaya tha). "nikla" = galle se paisa bahar -> 'out' (parse_out)."""
     m = re.search(r'\{.*\}', text or '', re.S)
     try:
         j = json.loads(m.group(0)) if m else {}
@@ -2138,11 +2239,14 @@ def parse_parchi(text):
         pc = j.get('parchi')
         pc = _tf(pc) if (isinstance(pc, str) or pc is True or pc is False) else '?'
         return {'paisa': pa if pa in ('aaya', 'nikla', 'dono', 'nahi') else 'nahi' if pa in ('', 'none') else '?', 'parchi': pc,
-                'kaun': str(j.get('kaun') or '')[:80], 'why': why, 'log': [], 'only_parchi': False}
+                'kaun': str(j.get('kaun') or '')[:80], 'why': why, 'log': [], 'only_parchi': False, 'out': [], 'galle': ''}
+    galle = str(j.get('galle_wala') or '').strip()[:60]
     people = []
     for r in j['log'][:8]:
         if not isinstance(r, dict):
             continue
+        if is_staff(r.get('kaun'), galle):
+            continue                                       # v2.21: galle wala / mulazim customer nahi
         pw = str(r.get('parchi_waqt') or '').strip()[:20]
         pc = _tf(r.get('parchi'))
         if pc is True and not pw:
@@ -2150,14 +2254,16 @@ def parse_parchi(text):
         people.append({'kaun': str(r.get('kaun') or '')[:60], 'paisa': _tf(r.get('paisa')) is True, 'paisa_waqt': str(r.get('paisa_waqt') or '').strip()[:20],
                        'parchi': pc, 'parchi_waqt': pw})
     payers = [x for x in people if x['paisa']]
+    out = parse_out(j.get('nikla'), galle, payers)
     if payers:
         bad, unk = [x for x in payers if x['parchi'] is False], [x for x in payers if x['parchi'] == '?']
         pick = (bad or unk or payers)[0]
         pc = False if bad else ('?' if unk else True)
         extra = f" [{pick['kaun']}: paisa {pick['paisa_waqt'] or '?'}" + (f", parchi {pick['parchi_waqt']}]" if pick['parchi'] is True else ', parchi nahi]' if pick['parchi'] is False else ', parchi saaf nahi]')
-        return {'paisa': 'aaya', 'parchi': pc, 'kaun': pick['kaun'], 'why': (why + extra)[:200], 'log': people, 'only_parchi': False}
+        return {'paisa': 'aaya', 'parchi': pc, 'kaun': pick['kaun'], 'why': (why + extra)[:200], 'log': people, 'only_parchi': False, 'out': out, 'galle': galle}
     only = [x for x in people if x['parchi'] is True]
-    return {'paisa': 'nahi', 'parchi': True if only else '?', 'kaun': only[0]['kaun'] if only else '', 'why': why, 'log': people, 'only_parchi': bool(only)}
+    return {'paisa': 'nahi', 'parchi': True if only else '?', 'kaun': only[0]['kaun'] if only else '', 'why': why, 'log': people, 'only_parchi': bool(only),
+            'out': out, 'galle': galle}
 
 
 def ai_parchi(galla, counter, big=False, prev=''):
@@ -2593,42 +2699,75 @@ class Galla(threading.Thread):
         self.last_err = ''
         debug_sheet(f"{time.strftime('%m%d-%H%M%S', time.gmtime(at + 5 * 3600))}-{res['paisa']}-{res['parchi']}", parchi_ai_frames(w, kf) + counter_ai_frames(cam2, cf))
         only = bool(res.get('only_parchi'))                           # v2.14: kisi ne sirf parchi di, paisa nahi diya
-        if res['paisa'] in ('nahi', '?') and res['parchi'] is not False and not only:
+        out1 = list(res.get('out') or [])                             # v2.21: galle se paisa bahar (pehli raaye)
+        pay = res['paisa'] not in ('nahi', '?')
+        if not pay and res['parchi'] is not False and not only and not out1:
             return                                                   # paisa hila hi nahi — kuch nahi
         flow = FLOW_OF.get(res['paisa'], 'aaya')
-        verdict, flags, why, frames = 'normal', [], 'Parchi di — ' + res['why'], (kf, cf)
+        need1 = not only and res['parchi'] is not True and (pay or res['parchi'] is False)   # screen 1: bina parchi?
+        need2 = any(o['kind'] in BAD_OUT for o in out1)               # screen 2: paisa kisi aur ko?
+        second, r2, frames = getattr(w, 'second', True), None, (kf, cf)
+        if (need1 or need2) and second:
+            try:
+                kf2 = parchi_frames(w, t0, t1, PARCHI_BIG_PRE, PARCHI_BIG_POST, PARCHI_BIG_N)
+                cf2, cam2b = self.counter_frames([t for t, _ in kf2], PARCHI_BIG_C, w)
+                cam2 = cam2b or cam2
+                # v2.14: doosri raaye = wahi chhota model, doosri (lambi khirki ki) tasveeron par. Bara model parchi ka wehem karta tha.
+                r2, ms2, m2 = ai_parchi(parchi_ai_frames(w, kf2), counter_ai_frames(cam2, cf2), False, '')
+                self.bump(w.cid, date, cost=COST['last'])
+                ms, model, frames = ms + ms2, (model + '+' + m2)[:60], (kf2, cf2)
+            except Exception as e2:
+                log('parchi doosri raaye nahi:', e2)
+                r2 = None
+        # ---- screen 1: parchi / paisa ----
+        v1, flags, why1, first = None, [], '', res
         if only:
-            verdict, flags = 'saaf_nahi', ['parchi']
-            why = FLAG_TEXT['parchi'] + ' — ' + (res['why'] or '') + (f" ({res['kaun']})" if res.get('kaun') else '')
-        elif res['parchi'] is not True:
-            if getattr(w, 'second', True):
-                try:
-                    kf2 = parchi_frames(w, t0, t1, PARCHI_BIG_PRE, PARCHI_BIG_POST, PARCHI_BIG_N)
-                    cf2, cam2b = self.counter_frames([t for t, _ in kf2], PARCHI_BIG_C, w)
-                    cam2 = cam2b or cam2
-                    # v2.14: doosri raaye = wahi chhota model, doosri (lambi khirki ki) tasveeron par. Bara model parchi ka wehem karta tha.
-                    r2, ms2, m2 = ai_parchi(parchi_ai_frames(w, kf2), counter_ai_frames(cam2, cf2), False, '')
-                    self.bump(w.cid, date, cost=COST['last'])
-                    ms, model, frames = ms + ms2, (model + '+' + m2)[:60], (kf2, cf2)
-                    first = res
-                    if r2['paisa'] not in ('nahi', '?') and r2['parchi'] is False and first['parchi'] is False:
-                        res, verdict = r2, 'shak'                    # dono dafa: paisa diya, parchi nahi
-                    else:
-                        verdict = 'saaf_nahi'                        # do raaye alag / saaf nahi — malik khud dekhe (khabar nahi)
-                        res = dict(first, why=('Do raaye alag — pehli: ' + (first['why'] or '') + ' | doosri: ' + (r2['why'] or ''))[:200])
-                except Exception as e2:
-                    log('parchi doosri raaye nahi:', e2)
-                    verdict = 'shak' if res['parchi'] is False else 'saaf_nahi'
+            v1, flags = 'saaf_nahi', ['parchi']
+            why1 = FLAG_TEXT['parchi'] + ' — ' + (res['why'] or '') + (f" ({res['kaun']})" if res.get('kaun') else '')
+        elif need1:
+            if r2 is not None:
+                if r2['paisa'] not in ('nahi', '?') and r2['parchi'] is False and first['parchi'] is False:
+                    res, v1 = r2, 'shak'                     # dono dafa: paisa diya, parchi nahi
+                else:
+                    v1 = 'saaf_nahi'                         # do raaye alag / saaf nahi — malik khud dekhe (khabar nahi)
+                    res = dict(first, why=('Do raaye alag — pehli: ' + (first['why'] or '') + ' | doosri: ' + (r2['why'] or ''))[:200])
             else:
-                verdict = 'shak' if res['parchi'] is False else 'saaf_nahi'
-            if verdict == 'shak' and res['paisa'] == 'nahi':            # v2.6: AI ne paisa hilta hi nahi dekha — "bina parchi" ka ilzaam nahi
-                verdict = 'saaf_nahi'
-            if verdict == 'shak':
+                v1 = 'shak' if res['parchi'] is False else 'saaf_nahi'      # doosri raaye band / na chali
+            if v1 == 'shak' and res['paisa'] == 'nahi':                    # v2.6: AI ne paisa hilta hi nahi dekha — "bina parchi" ka ilzaam nahi
+                v1 = 'saaf_nahi'
+            if v1 == 'shak' and res.get('log') and not any(x['paisa'] and x['parchi'] is False and x['paisa_waqt'] for x in res['log']):
+                v1 = 'saaf_nahi'                                           # v2.21: bina-parchi wale ke paisa ka waqt nahi = saboot nahi, shak nahi
+            if v1 == 'shak':
                 flags = ['noparchi_out' if flow == 'nikla' else 'noparchi']
-                why = FLAG_TEXT[flags[0]] + ' — ' + (res['why'] or '') + (f" ({res['kaun']})" if res.get('kaun') else '')
-            elif verdict == 'saaf_nahi':
+                why1 = FLAG_TEXT[flags[0]] + ' — ' + (res['why'] or '') + (f" ({res['kaun']})" if res.get('kaun') else '')
+            else:
                 flags = ['parchi_saaf']
-                why = FLAG_TEXT['parchi_saaf'] + ' — ' + (res['why'] or '')
+                why1 = FLAG_TEXT['parchi_saaf'] + ' — ' + (res['why'] or '')
+        elif pay:
+            v1, why1 = 'normal', 'Parchi di — ' + res['why']
+        # ---- screen 2: galle se paisa bahar ----
+        v2, why2 = None, ''
+        if out1:
+            bad = [o for o in out1 if o['kind'] in BAD_OUT]
+            if bad:
+                sure = r2 is None or any(o['kind'] in BAD_OUT for o in (r2.get('out') or []))   # doosri raaye bhi kahe (ya band / na chali)
+                if sure:
+                    kf_ = 'jeb' if any(o['kind'] == 'jeb' for o in bad) else 'mulazim' if all(o['kind'] == 'mulazim' for o in bad) else 'aurko'
+                    v2, why2 = 'shak', OUT_FLAG_TEXT[kf_] + ' — ' + out_line(bad)
+                    flags += ['bahar', kf_]
+                else:
+                    v2, why2 = 'saaf_nahi', 'Galle se paisa diya — doosri raaye mein ye nahi dikha: ' + out_line(bad)
+                    flags += ['bahar', 'unsure']
+            elif any(o['kind'] == '?' for o in out1):
+                v2, why2 = 'saaf_nahi', FLAG_TEXT['unsure'] + ' — ' + out_line(out1)
+                flags += ['bahar', 'unsure']
+            else:
+                v2, why2 = 'normal', FLAG_TEXT['baqaya'] + ' — ' + out_line(out1)
+                flags += ['bahar', 'baqaya']
+            flow = 'len_den' if pay else 'nikla'
+        rank = {'normal': 0, 'saaf_nahi': 1, 'shak': 2}
+        verdict = max((v for v in (v1, v2) if v), key=lambda v: rank[v])
+        why = ' | '.join(x for x in (why1, why2) if x)
         eid, t = f'{w.cid}-{int(at * 1000)}', int(at * 1000)
         self.bump(w.cid, date, moneyIn=1 if flow in ('aaya', 'len_den') else 0, moneyOut=1 if flow in ('nikla', 'len_den') else 0,
                   matched=1 if verdict == 'normal' else 0, missing=1 if verdict == 'shak' else 0, shak=1 if verdict == 'shak' else 0)
@@ -2639,10 +2778,16 @@ class Galla(threading.Thread):
         doc = {'cam': w.cid, 'camName': w.name, 'at': t, 'date': date, 'verdict': verdict, 'why': why[:290], 'flow': flow,
                'matchState': 'missing' if verdict == 'shak' else 'none', 'start': int(t0 * 1000), 'end': int(t1 * 1000),
                'thumb': thumb_small(g[len(g) // 2][1]) if verdict == 'normal' else g[len(g) // 2][1], 'n': len(allf) if verdict != 'normal' else 0,
-               'ms': ms, 'model': model, 'agent': VERSION, 'flags': flags}
+               'ms': ms, 'model': model, 'agent': VERSION, 'flags': flags[:8]}
+        story = parchi_story(dict(res, out=out1), allf, t0, t1)     # v2.21: kis ne kya diya, galle se kis ko — app mein waqt ke sath
+        if story:
+            doc['story'] = story
         self.fire.patch(f'{BIZ}/cameraEvents/{eid}', doc)
-        span = focus_span(res, verdict, t0, t1) if (self.clips and hasattr(self.clips, 'exact')) else None   # v2.20: video sirf asal len-den ki
-        if verdict == 'shak' and self.clips:
+        exact = bool(self.clips and hasattr(self.clips, 'exact'))
+        vid1 = v1 == 'shak'                                          # bina parchi = hamesha video
+        vid2 = v2 == 'shak' and VIDEO_SET.get('aurko', True)          # v2.21: paisa kisi aur ko — setting (default on)
+        if (vid1 or vid2) and self.clips:
+            span = (focus_span(res, 'shak', t0, t1) if vid1 else out_span({'out': out1}, BAD_OUT, t0, t1)) if exact else None   # v2.20: video sirf asal len-den ki
             if span:
                 self.clips.exact(w.cid, eid, span[0], span[1], date, 'shak', SHAK_W)
                 if cam2 is not None:
@@ -2652,12 +2797,20 @@ class Galla(threading.Thread):
                 if cam2 is not None:
                     self.clips.shak(cam2.cid, eid, t0, t1, date, clip_id=eid + '-c')
         elif verdict == 'saaf_nahi' and self.clips and hasattr(self.clips, 'auto'):   # v2.15 / v2.16: 'Saaf nahi' ki video khud; 'Parchi di' ki nahi
+            span = (focus_span(res, verdict, t0, t1) if v1 == 'saaf_nahi' else out_span({'out': out1}, ('?',) + BAD_OUT, t0, t1)) if exact else None
+            if span:
+                self.clips.exact(w.cid, eid, span[0], span[1], date, 'auto', AUTO_W)
+            else:
+                self.clips.auto(w.cid, eid, t0, t1, date)
+        elif verdict == 'normal' and v2 == 'normal' and VIDEO_SET.get('baqaya', False) and self.clips and hasattr(self.clips, 'auto'):
+            span = out_span({'out': out1}, ('baqaya',), t0, t1) if exact else None   # v2.21: baqaya ki video sirf malik chalu kare
             if span:
                 self.clips.exact(w.cid, eid, span[0], span[1], date, 'auto', AUTO_W)
             else:
                 self.clips.auto(w.cid, eid, t0, t1, date)
         log('parchi', w.cid, 'No.' + time.strftime('%H%M%S', time.gmtime(at + 5 * 3600)), res['paisa'], res['parchi'], verdict, '|', len(g), '+', len(c), 'tasveer |', (res.get('why') or '')[:160],
-            '|', '; '.join(f"{x['kaun'][:24]}: paisa {'haan' if x['paisa'] else 'nahi'} parchi {x['parchi']}" for x in (res.get('log') or [])[:4]))
+            '|', '; '.join(f"{x['kaun'][:24]}: paisa {'haan' if x['paisa'] else 'nahi'} parchi {x['parchi']}" for x in (res.get('log') or [])[:4]),
+            '| galla:', (res.get('galle') or '?')[:30], '| bahar:', out_line(out1) or '-')
         # v2.17: 'AI ne kis waqt tak check kiya' ab Galla.progress() likhta hai (har surat mein, card bane ya na bane)
 
     def handle_cheap(self, w, at, t0, t1, kf, near, date, key):
@@ -3690,6 +3843,9 @@ def apply_vault(fire, vault, settings, joiner=None):
     for which in ('cheap', 'big'):
         val = str(m.get(which) or '').strip()
         AI_SET[which] = val if (':' in val and val.split(':', 1)[0] in KEY_NAMES) else ''
+    vid = (settings or {}).get('video') or {}
+    for k, d in (('aurko', True), ('baqaya', False)):
+        VIDEO_SET[k] = d if vid.get(k) is None else bool(vid.get(k))     # v2.21: app ki setting (na ho to pehle jaisi)
     cam = (vault or {}).get('cam') or {}
     at = int((vault or {}).get('camAt') or 0)
     if joiner is not None and at > int(sec.get('vaultCamAt') or 0) and (cam.get('pw') or cam.get('pw2') or cam.get('devs')):

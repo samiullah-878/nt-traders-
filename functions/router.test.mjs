@@ -97,3 +97,19 @@ test('v234: camera khabar app se — shak band / saaf nahi chalu / clip band / b
   assert.equal((await write('posAlerts', 'b1', { kind: 'cancel', no: '1', before: 100, after: 0, at: 1, when: 2 })).length, 0, 'bill band');
   store.delete(S);
 });
+
+test('v250: galle se paisa bahar — kisi aur ko = khabar (setting), baqaya = sirf chalu ho to, bina parchi pehle jaisa', async () => {
+  const S = `${BIZ}/cameraPC/settings`; store.delete(S);
+  const base = { cam: 'c1', camName: 'Galla', at: Date.now(), date: '2026-10-15' };
+  const aur = { ...base, verdict: 'shak', why: 'Galle se paisa kisi aur ko (baqaya nahi) — 15:43:40 laal shirt ko', flags: ['bahar', 'aurko'] };
+  const baq = { ...base, verdict: 'normal', why: 'Baqaya usi customer ko', flags: ['bahar', 'baqaya'] };
+  const dono = { ...base, verdict: 'shak', why: 'Bina parchi paisa liya', flags: ['noparchi', 'bahar', 'baqaya'] };
+  const a = await write('cameraEvents', 'o1', aur); assert.equal(a.length, 1); assert.match(a[0].data.title, /paisa kisi aur ko/); assert.match(a[0].data.body, /laal shirt/);
+  assert.equal((await write('cameraEvents', 'o2', baq)).length, 0, 'baqaya default band');
+  const d = await write('cameraEvents', 'o3', dono); assert.equal(d.length, 1); assert.match(d[0].data.title, /Galla: shak/, 'bina parchi = shak ki khabar');
+  store.set(S, { notify: { aurko: false, baqaya: true, shak: true } });
+  assert.equal((await write('cameraEvents', 'o4', aur)).length, 0, 'kisi aur ko band (aur ye bina parchi nahi)');
+  const b = await write('cameraEvents', 'o5', baq); assert.equal(b.length, 1); assert.match(b[0].data.title, /baqaya diya/);
+  assert.equal((await write('cameraEvents', 'o6', { ...aur, flags: ['noparchi', 'bahar', 'aurko'] })).length, 1, 'kisi aur ko band magar bina parchi bhi = shak ki khabar');
+  store.delete(S);
+});

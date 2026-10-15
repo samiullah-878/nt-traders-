@@ -617,6 +617,13 @@ html.is-snap .live-clock,html.is-snap [data-live]{opacity:.6}
 .nig-cam i{width:8px;height:8px;border-radius:50%;background:currentColor}
 .nig-cam.is-on{background:var(--ok-bg);color:var(--ok)}.nig-cam.is-on i{animation:camLive 2s ease-out infinite}
 .nig-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+/* v250: Nigrani ki 2 screens (Parchi / Paisa · Galle se bahar) */
+.nig-views{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin:0 0 12px}
+.nig-view{display:grid;gap:2px;text-align:left;padding:12px;border:1.5px solid var(--rule);border-radius:14px;background:var(--paper);color:inherit;font:inherit;cursor:pointer;min-width:0}
+.nig-view b{font-size:.98rem;font-weight:800}.nig-view small{color:var(--muted);font-size:.75rem;font-weight:600}.nig-view i{font-style:normal}
+.nig-view.is-on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.nig-sum.nig-s3{grid-template-columns:repeat(3,1fr)}.nig-sum .is-ok b{color:var(--ok,#1f7a4d)}
+@media(max-width:420px){.nig-views{grid-template-columns:1fr 1fr}.nig-views .nig-view:last-child{grid-column:1/-1;padding:8px 12px}.nig-view b{font-size:.9rem}}
 .nig-sum div{background:var(--paper);border:1px solid var(--rule);border-radius:14px;padding:10px 8px;text-align:center;display:grid;gap:2px}
 .nig-sum b{font-size:1.5rem;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .nig-sum small{color:var(--muted);font-size:.75rem;font-weight:600}

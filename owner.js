@@ -815,9 +815,16 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
   const changedChip = m => m?.changed ? `<span class="tag t-bad">${esc(ALERT_TXT[m.changed] || 'Bill badla')}${m.changed !== 'items' ? ' → ' + money(m.after || 0) : ''}</span>` : '';
   // v229: bina voucher ka naam harkat ke mutabiq; kahani ke lal nishan (PC v1.8 flags)
   const missText = e => ['aaya', 'len_den'].includes(e.flow) ? 'Bina parchi paisa liya' : e.flow === 'nikla' ? 'Bina voucher paisa nikla' : 'Bina voucher galla khula';
-  const FLAG = { jeb: 'Paisa jeb / kapron mein', noparchi: 'Bina parchi paisa liya', parchi: 'Parchi di, paisa nahi diya', aurko: 'Voucher ke waqt paisa kisi aur ko', nochange: 'Baqaya banta hi nahi tha', double: 'Aik bill par do dafa paisa nikla', badanote: 'Chhote baqaye par bada note', nopay: 'Parchi scan · paisa nazar nahi aaya', novoucher: 'Bina voucher paisa nikla', unsure: 'Paisa diya — kis ko, saaf nahi', noparchi_out: 'Bina parchi paisa diya', parchi_saaf: 'Parchi saaf nazar nahi aayi' };
+  const FLAG = { jeb: 'Paisa jeb / kapron mein', noparchi: 'Bina parchi paisa liya', parchi: 'Parchi di, paisa nahi diya', aurko: 'Voucher ke waqt paisa kisi aur ko', nochange: 'Baqaya banta hi nahi tha', double: 'Aik bill par do dafa paisa nikla', badanote: 'Chhote baqaye par bada note', nopay: 'Parchi scan · paisa nazar nahi aaya', novoucher: 'Bina voucher paisa nikla', unsure: 'Paisa diya — kis ko, saaf nahi', noparchi_out: 'Bina parchi paisa diya', parchi_saaf: 'Parchi saaf nazar nahi aayi', mulazim: 'Galle se paisa mulazim ko' };
+  const FLAG_OK = { baqaya: 'Baqaya usi customer ko' };   // v250: PC v2.21 — 'bahar' (galle se paisa bahar) sirf nishan, chip nahi
   const parchiMode = () => /parchi/i.test(S.camPC?.pos || '');   // v233: PC bina POS chal raha (laptop) — parchi ka rule
-  const flagChips = e => (e.flags || []).filter(f => FLAG[f]).map(f => `<span class="tag t-bad">🔴 ${esc(FLAG[f])}</span>`).join('');
+  const flagChips = e => (e.flags || []).map(f => FLAG[f] ? `<span class="tag t-bad">🔴 ${esc(f === 'aurko' && e.flags.includes('bahar') ? 'Paisa kisi aur ko (baqaya nahi)' : FLAG[f])}</span>` : FLAG_OK[f] ? `<span class="tag t-ok">✅ ${esc(FLAG_OK[f])}</span>` : '').join('');
+  /* v250: Nigrani ki 2 screens — malik: "aik mein bina parchi paisa / parchi di paisa nahi, doosri mein galle se jitna paisa bahar nikla". */
+  const has = (e, ...f) => f.some(x => (e.flags || []).includes(x));
+  const S1 = { noparchi: e => has(e, 'noparchi', 'noparchi_out'), parchi: e => has(e, 'parchi'), saaf: e => has(e, 'parchi_saaf') };
+  const inS1 = e => S1.noparchi(e) || S1.parchi(e) || S1.saaf(e);
+  const inS2 = e => has(e, 'bahar') || ['nikla', 'len_den'].includes(e.flow);
+  const s2Kind = e => has(e, 'bahar') ? (has(e, 'aurko', 'mulazim', 'jeb') && e.verdict === 'shak' ? 'bad' : has(e, 'baqaya') ? 'ok' : 'saaf') : e.verdict === 'shak' ? 'bad' : e.verdict === 'normal' ? 'ok' : 'saaf';
   const KYA = { parchi_paisa: 'ne parchi + paisa diya', paisa: 'ne paisa diya (parchi nahi)', parchi: 'ne parchi di — paisa NAHI diya', rakha: 'ne paisa galle mein rakha', baqaya: 'ko galle se baqaya diya', diya: 'ko galle se paisa diya', jeb: '— paisa jeb / kapron mein', khara: 'aaya, khara raha', gaya: 'chala gaya', ginti: 'ne paisa gina' };
   const storyBad = (e, x) => x.kya === 'jeb' || x.kya === 'parchi' || x.kya === 'diya' || (x.kya === 'baqaya' && ['aur', 'mulazim'].includes(x.kis));
   const matchChip = e => e.matchState === 'ok' && e.match ? `<span class="tag ${e.match.changed ? 't-off' : 't-ok'}">${icon('check', 12)} ${esc(recText(e.match))}</span>${changedChip(e.match)}`
@@ -895,9 +902,35 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         <span class="nig-ev-body"><span class="nig-ev-top"><b>${esc(clockOf(e.at))}</b><span class="tag nig-no">No. ${esc(vidNo(e))}</span><span class="tag ${vc}">${vt}</span>${e.reviewed ? `<span class="tag">${e.reviewed === 'ok' ? 'Theek' : 'Pakka shak'}</span>` : ''}</span>
           ${e.flow && FLOW[e.flow] || e.matchState || vidChip(e) || e.flags?.length ? `<span class="nig-rec">${flagChips(e)}${e.flow && FLOW[e.flow] && e.flow !== 'kuch_nahi' ? `<span class="tag">${esc(FLOW[e.flow])}</span>` : ''}${matchChip(e)}${e.story?.length ? `<span class="tag t-vid">📖 Kahani · ${e.story.length}</span>` : ''}${vidChip(e)}</span>` : ''}
           <small>${esc(e.why || '')}</small><small class="muted">${esc(e.camName || '')}</small></span></button>`; };
-    return `${nigNav(sec)}<section class="nig-head"><div class="day-nav"><button type="button" class="icon-btn" data-action="nig-day" data-arg="-1" aria-label="Pichla din">${icon('left')}</button>
+    const head = `<section class="nig-head"><div class="day-nav"><button type="button" class="icon-btn" data-action="nig-day" data-arg="-1" aria-label="Pichla din">${icon('left')}</button>
         <b>${day === today ? 'Aaj' : esc(shortDate(day))}</b><button type="button" class="icon-btn" data-action="nig-day" data-arg="1" ${day >= today ? 'disabled' : ''} aria-label="Agla din">${icon('right')}</button></div>
-        ${camChips ? `<div class="nig-cams">${camChips}${galla.length ? `<button type="button" class="btn btn-ghost btn-sm" data-action="clip-req" data-id="">🎬 Waqt ki clip</button>` : ''}<button type="button" class="btn ${testLoad()?.start && !testLoad()?.end ? 'btn-primary' : 'btn-ghost'} btn-sm" data-action="cam-test">${testLoad()?.start && !testLoad()?.end ? '🧪 Test chal raha…' : '🧪 Test len-den'}</button></div>` : ''}</section>
+        ${camChips ? `<div class="nig-cams">${camChips}${galla.length ? `<button type="button" class="btn btn-ghost btn-sm" data-action="clip-req" data-id="">🎬 Waqt ki clip</button>` : ''}<button type="button" class="btn ${testLoad()?.start && !testLoad()?.end ? 'btn-primary' : 'btn-ghost'} btn-sm" data-action="cam-test">${testLoad()?.start && !testLoad()?.end ? '🧪 Test chal raha…' : '🧪 Test len-den'}</button></div>` : ''}</section>`;
+    const view = ui.nigView || (parchiMode() ? 'parchi' : 'sab');   // bina POS (laptop, parchi ka rule) = 2 screens pehle; POS wale PC par purana poora view
+    const s1 = evs.filter(inS1), s2 = evs.filter(inS2);
+    const viewNav = `<nav class="nig-views" role="tablist" aria-label="Len-den ki screen">${[['parchi', '🧾 Parchi / Paisa', s1.filter(e => !e.reviewed).length, s1.length], ['bahar', '💸 Galle se bahar', s2.filter(e => s2Kind(e) === 'bad' && !e.reviewed).length, s2.length], ['sab', '📋 Sab', 0, evs.length]].map(([k, t, red, n]) => `<button type="button" class="nig-view ${view === k ? 'is-on' : ''}" role="tab" aria-selected="${view === k}" data-action="nig-view" data-arg="${k}"><b>${t}</b><small>${n} card${red ? ` · <i class="txt-bad">${red} na dekhe</i>` : ''}</small></button>`).join('')}</nav>`;
+    const subChips = (id, cur, items) => `<div class="chips" role="tablist">${items.map(([k, t, n]) => `<button type="button" class="chip" role="tab" aria-selected="${cur === k}" data-action="nig-sub" data-id="${id}" data-arg="${k}"><b>${n}</b> ${t}</button>`).join('')}</div>`;
+    const listOf = rows => `<div class="nig-list">${rows.map(card).join('') || `<p class="empty-line">${!S.loaded.has('camEvents') ? 'Aa raha hai…' : 'Is din is mein kuch nahi.'}</p>`}</div>`;
+    if (view === 'parchi') {
+      const f1 = ui.nigS1 || 'all', rows = f1 === 'all' ? s1 : s1.filter(S1[f1] || (() => true));
+      return `${nigNav(sec)}${viewNav}${head}${setup}
+      <section class="nig-sum nig-s3"><div class="${s1.filter(S1.noparchi).length ? 'is-bad' : ''}"><b>${s1.filter(S1.noparchi).length}</b><small>paisa diya, parchi nahi</small></div>
+        <div><b>${s1.filter(S1.parchi).length}</b><small>parchi di, paisa nahi</small></div><div><b>${s1.filter(S1.saaf).length}</b><small>saaf nahi</small></div></section>
+      ${aiProgress(day)}
+      ${subChips('s1', f1, [['all', 'Sab', s1.length], ['noparchi', 'Paisa diya, parchi nahi', s1.filter(S1.noparchi).length], ['parchi', 'Parchi di, paisa nahi', s1.filter(S1.parchi).length], ['saaf', 'Saaf nahi', s1.filter(S1.saaf).length]])}
+      ${listOf(rows)}
+      <p class="hint">AI pehle galle wale larke ko pehchanta hai — us ka note ginna customer ka paisa nahi ginta. "Paisa diya, parchi nahi" par khabar + video (dono AI raaye ek hon tab). "Parchi di, paisa nahi" aur "Saaf nahi" ki khabar nahi — khud dekh kar "Theek hai / Shak pakka" dabayein.</p>`;
+    }
+    if (view === 'bahar') {
+      const f2 = ui.nigS2 || 'all', rows = f2 === 'all' ? s2 : s2.filter(e => s2Kind(e) === f2), k = x => s2.filter(e => s2Kind(e) === x).length;
+      return `${nigNav(sec)}${viewNav}${head}${setup}
+      <section class="nig-sum nig-s3"><div class="${k('bad') ? 'is-bad' : ''}"><b>${k('bad')}</b><small>kisi aur ko (baqaya nahi)</small></div>
+        <div class="is-ok"><b>${k('ok')}</b><small>baqaya usi customer ko</small></div><div><b>${k('saaf')}</b><small>saaf nahi</small></div></section>
+      ${aiProgress(day)}
+      ${subChips('s2', f2, [['all', 'Sab', s2.length], ['bad', '🔴 Kisi aur ko', k('bad')], ['ok', '✅ Baqaya', k('ok')], ['saaf', 'Saaf nahi', k('saaf')]])}
+      ${listOf(rows)}
+      <p class="hint">Galle se jab bhi paisa nikla. Usi customer ko baqaya = halka ✅ card (khabar / video sirf agar 🔔 Khabar mein chalu). Kisi aise ko jis ne paisa nahi diya, mulazim ko, ya jeb mein = 🔴 khabar + video (dono AI raaye ek hon tab). Settings: <button type="button" class="link" data-action="nig-sec" data-arg="khabar">🔔 Khabar</button>.</p>`;
+    }
+    return `${nigNav(sec)}${viewNav}${head}
       ${setup}
       <section class="nig-sum">
         <div><b>${sum('touches')}</b><small>galla chhua</small></div>
@@ -993,8 +1026,9 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     ['openrouter:deepseek/deepseek-v4.1-flash', 'DeepSeek V4.1 Flash (OpenRouter)'], ['openrouter:z-ai/glm-5.3-flashx', 'GLM 5.3 FlashX (OpenRouter)'], ['openrouter:xiaomi/mimo-v2.6-flash', 'MiMo V2.6 Flash (OpenRouter)'],
     ['groq:qwen/qwen3.8-27b', 'Groq Qwen 3.8 · sirf 3 tasveer']];
   const presetName = v => (AI_PRESETS.find(x => x[0] === v) || [v, v])[1] || 'Khud — free: Gemini → DeepSeek';
-  const CAM_KHABAR = [['shak', 'Bina parchi / shak', true], ['saaf', 'Parchi saaf nahi (AI pakka nahi)', false], ['clip', 'Mangwayi hui clip tayyar', true],
+  const CAM_KHABAR = [['shak', 'Bina parchi / shak', true], ['aurko', 'Galle se paisa kisi aur ko (baqaya nahi)', true], ['baqaya', 'Galle se baqaya — usi customer ko', false], ['saaf', 'Parchi saaf nahi (AI pakka nahi)', false], ['clip', 'Mangwayi hui clip tayyar', true],
     ['pcband', 'Camera PC / laptop band (dukaan ke waqt 20 minute)', true], ['bill', 'Bill cancel / badla (sirf POS wale PC par)', true]];
+  const CAM_VIDEO = [['aurko', 'Galle se paisa kisi aur ko (baqaya nahi)', true], ['baqaya', 'Baqaya — usi customer ko jis ne paisa diya', false]];   // v250 (PC v2.21)
   const last4 = v => String(v || '').slice(-4);
   function keysScreen() {
     const v = S.camVault || {}, k = v.keys || {}, cam = v.cam || {}, m = S.camSettings?.models || {};
@@ -1026,10 +1060,12 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         <p class="hint">Chuna hua model na chale (key ghalat / band) to PC khud free Gemini par chala jata hai. Kharche ka andaza sirf Claude / DeepSeek ka; baqi ka bill un ki website par.</p></form></section>`;
   }
   function khabarScreen() {
-    const n = S.camSettings?.notify || {};
+    const n = S.camSettings?.notify || {}, vd = S.camSettings?.video || {};
     return `<section class="panel pad"><form class="form" data-form="cam-notify"><h3 class="sub">🔔 Camera ki khabrein</h3>
         <p class="hint">Sirf malik ke phone par. Phone par notification chalu / test: <button type="button" class="link" data-action="notify">Phone notification</button>.</p>
         <fieldset><legend>Kis cheez ki khabar aaye</legend>${CAM_KHABAR.map(([k, t, d]) => `<label class="check"><input type="checkbox" name="n_${k}" ${(n[k] ?? d) ? 'checked' : ''}> ${esc(t)}</label>`).join('')}</fieldset>
+        <fieldset><legend>Kis cheez ki video bane</legend>${CAM_VIDEO.map(([k, t, d]) => `<label class="check"><input type="checkbox" name="v_${k}" ${(vd[k] ?? d) ? 'checked' : ''}> ${esc(t)}</label>`).join('')}
+          <p class="hint">Bina parchi paisa (shak) ki video hamesha banti hai. Ye setting PC 1 minute mein le leta hai.</p></fieldset>
         <button class="btn btn-primary">Save</button></form></section>`;
   }
   /** v230: camera card par aaj ka AI kharcha (cameraStats.cost) / budget. */
@@ -1390,6 +1426,8 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     'zone-clear'() { ui.zoneDraft = null; sheets['cam-zone']?.refresh(true); },
     'nig-day'(el) { const d = addDays(ui.nigDay || pkDate(), Number(el.dataset.arg)); if (d > pkDate()) return; ui.nigDay = d; ui.nigFilter = undefined; data.watchEvents(d); rerender(); },
     'nig-filter'(el) { ui.nigFilter = el.dataset.arg; rerender(); },
+    'nig-view'(el) { ui.nigView = el.dataset.arg || 'parchi'; rerender(); window.scrollTo?.(0, 0); },   // v250: 2 screens
+    'nig-sub'(el) { ui[el.dataset.id === 's2' ? 'nigS2' : 'nigS1'] = el.dataset.arg || 'all'; rerender(); },
     'nig-open'(el) { open('nig-ev', () => eventSheet(el.dataset.id)); },
     'nig-idx'(el) { ui.nigIdx = Number(el.dataset.arg) || 0; ui.nigPlay = false; sheets['nig-ev']?.refresh(true); },   // v242: chuni hui tasveer par ruk jao
     'nig-play'() { ui.nigPlay = !ui.nigPlay; sheets['nig-ev']?.refresh(true); },
@@ -1560,7 +1598,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       rerender();
     },
     async 'cam-notify'(form, v, button) {
-      await busy(button, () => data.saveCamSettings({ notify: Object.fromEntries(CAM_KHABAR.map(([k]) => [k, !!v['n_' + k]])) }), 'Khabar ki setting save');
+      await busy(button, () => data.saveCamSettings({ notify: Object.fromEntries(CAM_KHABAR.map(([k]) => [k, !!v['n_' + k]])), video: Object.fromEntries(CAM_VIDEO.map(([k]) => [k, !!v['v_' + k]])) }), 'Khabar ki setting save');
       rerender();
     },
     async 'cam-test'(form, v, button) { // v232

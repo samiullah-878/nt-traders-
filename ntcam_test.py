@@ -1382,6 +1382,58 @@ class Parchi(unittest.TestCase):
         eid = f'c1-{int((base + 5) * 1000)}'
         self.assertEqual(ex, [('c1', eid, -5, 30, 'shak', ntcam.SHAK_W), ('nvr-3', eid + '-c', -5, 30, 'shak', ntcam.SHAK_W2)], '35 s ki video, 170 s ke len-den mein se'); self.assertEqual(clips, [])
 
+    def test_v221_galle_wala_customer_nahi_aur_galle_se_bahar(self):
+        """v2.21: (1) galle wale / mulazim ki line customer nahi (154333: koi customer nahi tha, phir bhi 'bina parchi' ki khabar).
+        (2) "nikla" — galle se paisa: usi customer ko baqaya = halka card (khabar / video setting se); kisi aur ko = shak + video (setting);
+        doosri raaye na maane = saaf nahi. (3) shak sirf saboot (paisa ka waqt) ke sath. (4) app ki video setting PC tak."""
+        P = ntcam.parse_parchi
+        self.assertIn('PEHLE PEHCHANO', ntcam.PARCHI_PROMPT); self.assertIn('"nikla"', ntcam.PARCHI_PROMPT); self.assertIn('galle_wala', ntcam.PARCHI_PROMPT.format(cams='', prev=''))
+        galle = P('{"galle_wala": "kursi par, kala kurta", "log": [{"kaun": "kursi par, kala kurta", "paisa": true, "paisa_waqt": "15:43:30", "parchi": false}, '
+                  '{"kaun": "galle wala larka", "paisa": true, "paisa_waqt": "15:43:31", "parchi": false}], "nikla": [], "why": "note gine"}')
+        self.assertEqual((galle['paisa'], galle['log']), ('nahi', []), 'galle wala customer nahi')
+        g, evs, frs, clips, calls = self.run_case(galle); self.assertEqual((evs, clips), ([], []), '154333: koi card / khabar nahi')
+        self.assertFalse(ntcam.is_staff('daayen customer, neela kurta', 'kursi par, kala kurta')); self.assertTrue(ntcam.is_staff('Cashier'))
+        base = '{"galle_wala": "kala kurta", "log": [{"kaun": "neela kurta", "paisa": true, "paisa_waqt": "1", "parchi": true, "parchi_waqt": "2"}], '
+        baq = P(base + '"nikla": [{"waqt": "3", "kis_ko": "neela kurta", "paisa_diya_tha": true}], "why": "baqaya"}')
+        self.assertEqual(baq['out'], [{'waqt': '3', 'kis': 'neela kurta', 'kind': 'baqaya'}])
+        g, evs, frs, clips, calls = self.run_case(baq)
+        ev = evs[0]; self.assertEqual((ev['verdict'], ev['flow'], ev['flags']), ('normal', 'len_den', ['bahar', 'baqaya'])); self.assertEqual(len(calls), 1, 'baqaya par doosri raaye nahi')
+        self.assertEqual((frs, clips), ([], [])); self.assertIn('Baqaya usi customer ko', ev['why']); self.assertEqual([x['kya'] for x in ev['story']], ['parchi_paisa', 'baqaya'])
+        aur = P(base + '"nikla": [{"waqt": "4", "kis_ko": "laal shirt", "paisa_diya_tha": false}], "why": "kisi aur ko"}')
+        g, evs, frs, clips, calls = self.run_case(aur, aur)
+        ev = evs[0]; self.assertEqual(len(calls), 2, 'kisi aur ko = doosri raaye'); self.assertEqual((ev['verdict'], ev['flags'], ev['matchState']), ('shak', ['bahar', 'aurko'], 'missing'))
+        self.assertIn('kisi aur ko', ev['why']); self.assertIn('laal shirt', ev['why']); self.assertTrue(frs); self.assertEqual(len(clips), 2, 'video dono camera')
+        self.assertTrue(any(x['kya'] == 'diya' and x['kis'] == 'aur' for x in ev['story']))
+        g, evs, frs, clips, calls = self.run_case(aur, baq)
+        self.assertEqual((evs[0]['verdict'], evs[0]['flags']), ('saaf_nahi', ['bahar', 'unsure']), 'doosri raaye na maane = saaf nahi (khabar nahi)')
+        old = dict(ntcam.VIDEO_SET)
+        try:
+            ntcam.VIDEO_SET.update(aurko=False)
+            g, evs, frs, clips, calls = self.run_case(aur, aur); self.assertEqual((evs[0]['verdict'], clips), ('shak', []), 'setting band = video nahi (card + khabar phir bhi)')
+            ntcam.VIDEO_SET.update(baqaya=True)
+            g, writes, clips = self._g(); autos = []; g.clips.auto = lambda cid, eid, t0, t1, date: autos.append(eid)
+            o = ntcam.PARCHI['on']; ntcam.PARCHI['on'] = True
+            try:
+                with mock.patch.object(ntcam, 'secrets', lambda: {'geminiKey': 'g-x', 'cams': {}}), mock.patch.object(ntcam, 'ai_parchi', lambda *a, **k: (baq, 5, 'm')):
+                    g.handle(self._w(), 1045.0, 1040.0, 1060.0, [], True)
+            finally:
+                ntcam.PARCHI['on'] = o
+            self.assertEqual(autos, ['c1-1045000'], 'baqaya ki video sirf jab setting chalu')
+            ntcam.apply_vault(None, {}, {'video': {'aurko': True, 'baqaya': False}}); self.assertEqual(ntcam.VIDEO_SET, {'aurko': True, 'baqaya': False})
+            ntcam.apply_vault(None, {}, {'video': {'aurko': False}}); self.assertEqual(ntcam.VIDEO_SET, {'aurko': False, 'baqaya': False})
+            ntcam.apply_vault(None, {}, {}); self.assertEqual(ntcam.VIDEO_SET, {'aurko': True, 'baqaya': False}, 'setting na ho = pehle jaisi')
+        finally:
+            ntcam.VIDEO_SET.clear(); ntcam.VIDEO_SET.update(old)
+        jeb = P('{"galle_wala": "kala", "log": [], "nikla": [{"waqt": "5", "kis_ko": "jeb"}], "why": "jeb mein"}')
+        g, evs, frs, clips, calls = self.run_case(jeb, jeb); self.assertEqual((evs[0]['verdict'], evs[0]['flow'], evs[0]['flags']), ('shak', 'nikla', ['bahar', 'jeb']))
+        jhoot = P('{"galle_wala": "kala", "log": [], "nikla": [{"waqt": "5", "kis_ko": "neela", "paisa_diya_tha": true}], "why": ""}')
+        self.assertEqual(jhoot['out'][0]['kind'], '?', 'baqaya kaha magar kisi ne paisa diya hi nahi')
+        bewaqt = P('{"log": [{"kaun": "neela", "paisa": true, "paisa_waqt": "", "parchi": false}], "why": "x"}')
+        g, evs, frs, clips, calls = self.run_case(bewaqt, bewaqt); self.assertEqual((evs[0]['verdict'], clips), ('saaf_nahi', []), 'paisa ka waqt nahi = shak nahi')
+        rules = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'firestore.rules'), encoding='utf-8').read()
+        blk = rules[rules.index('cameraEvents/{eventId}'):]; blk = blk[:blk.index('\n    }')]
+        for k in ev: self.assertIn("'" + k + "'", blk, 'rules mein nahi: ' + k)
+
     def test_frames_at_aur_denied(self):
         g, _, _ = self._g(); r = g.counters['nvr-3']
         fr = r.frames_at([1000.1, 1000.2, 2000.0]); self.assertEqual([t for t, _ in fr], [1000.0], 'qareeb wali aik dafa, door wali nahi')

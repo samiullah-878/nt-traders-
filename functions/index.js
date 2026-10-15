@@ -142,10 +142,22 @@ const FLOW_TXT = { aaya: 'paisa aaya', nikla: 'paisa nikla', len_den: 'len-den h
 async function handleCamEvent(event, before = null) {
   const e = event.data?.data(); if (!e) return;
   const time = new Date(Number(e.at) || Date.now()).toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit' }).toLowerCase();
-  // naya event: shak par foran
-  if (!before && e.verdict === 'shak') {
-    if (!(await camOn('shak'))) return;
+  // v250 (PC v2.21): galle se paisa bahar ('bahar' flag) — kisi aur / mulazim / jeb ko = alag khabar (setting 'aurko', default chalu);
+  // usi customer ko baqaya = sirf jab malik chalu kare ('baqaya', default band). Bina parchi (screen 1) pehle jaisa 'shak' setting se.
+  const fl = e.flags || [], bahar = fl.includes('bahar');
+  const aur = bahar && e.verdict === 'shak' && ['aurko', 'mulazim', 'jeb'].some(f => fl.includes(f));
+  const shak1 = e.verdict === 'shak' && (!bahar || fl.includes('noparchi') || fl.includes('noparchi_out'));
+  if (!before && (aur || shak1)) {
+    if (aur && await camOn('aurko')) {
+      await push({ title: `Galla: paisa kisi aur ko · ${e.camName || 'camera'} · ${time}`, body: `${String(e.why || 'Galle se paisa baqaya ke ilawa diya').slice(0, 140)} — video Nigrani > Galle se bahar`, tag: `cam-${event.params.id}`, kinds: ['owner'] });
+      return;
+    }
+    if (!shak1 || !(await camOn('shak'))) return;
     await push({ title: `Galla: shak · ${e.camName || 'camera'} · ${time}`, body: `${String(e.why || 'AI ko shak hua').slice(0, 140)} — photos Nigrani mein`, tag: `cam-${event.params.id}`, kinds: ['owner'] });
+    return;
+  }
+  if (!before && bahar && fl.includes('baqaya') && e.verdict === 'normal') {
+    if (await camOn('baqaya', false)) await push({ title: `Galla: baqaya diya · ${e.camName || 'camera'} · ${time}`, body: `${String(e.why || '').slice(0, 140)} — Nigrani > Galle se bahar`, tag: `camb-${event.params.id}`, kinds: ['owner'] });
     return;
   }
   // v234: AI ko parchi saaf nazar nahi aayi — sirf jab malik ne chalu kiya ho (default band)

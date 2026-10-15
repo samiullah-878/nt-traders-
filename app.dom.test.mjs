@@ -248,6 +248,10 @@ test('v233: bina POS — parchi ka rule: default "Bina parchi", labels, do video
   await fake.sdk.setDoc(ref(`cameraStats/cc33-ch1_${d}`), { ...records.get(B + `cameraStats/cc33-ch1_${d}`), moneyIn: 9, matched: 8, missing: 1 });
   await click('[data-action=tab][data-arg=nigrani]'); await settle(12);
   await click('[data-action=nig-day][data-arg="-1"]'); await settle(10); await click('[data-action=nig-day][data-arg="1"]'); await settle(12);   // filter wapas default
+  // v250: bina POS mein pehle '🧾 Parchi / Paisa' screen; purana poora view '📋 Sab' mein
+  assert.deepEqual($$('.nig-views [data-action=nig-view]').map(b => b.dataset.arg), ['parchi', 'bahar', 'sab']); assert.match($('[data-action=nig-view][data-arg=parchi]').getAttribute('aria-selected'), /true/);
+  assert.ok($('.nig-ev[data-id="cc33-ch1-p1"]'), 'screen 1: bina parchi'); assert.ok(!$('.nig-ev[data-id="cc33-ch1-p2"]'), 'parchi + paisa wala screen 1 mein nahi');
+  await click('[data-action=nig-view][data-arg=sab]'); await settle(4);
   assert.match($('[data-action=nig-filter][data-arg=parchi]').getAttribute('aria-selected'), /true/, 'default: bina parchi');
   assert.ok($('.nig-ev[data-id="cc33-ch1-p1"]'), 'bina parchi card'); assert.ok(!$('.nig-ev[data-id="cc33-ch1-p2"]'), 'parchi wala card default mein nahi');
   assert.match($('.nig-ev[data-id="cc33-ch1-p1"]').textContent, /🔴 Bina parchi paisa liya/);
@@ -258,6 +262,45 @@ test('v233: bina POS — parchi ka rule: default "Bina parchi", labels, do video
   const vids = $$('[data-sheet=nig-ev] [data-action=nig-video]').map(b => b.textContent);
   assert.equal(vids.length, 2); assert.ok(vids.some(v => /Counter video/.test(v)) && vids.some(v => /Tokri video/.test(v)), vids.join(' | '));
   await click('[data-sheet=nig-ev] [data-sheet-close]');
+  await click('[data-action=nig-view][data-arg=parchi]'); await settle(4);
+  await fake.sdk.setDoc(ref('cameraPC/status'), st0); await settle(8);
+  await click('[data-action=tab][data-arg=hazri]');
+});
+
+test('v250: Nigrani ki 2 screens — Parchi / Paisa aur Galle se bahar (kisi aur ko / baqaya / saaf nahi)', async () => {
+  const ref = p => ({ path: B + p, kind: 'doc', id: p.split('/').at(-1) });
+  const st0 = structuredClone(records.get(B + 'cameraPC/status'));
+  await fake.sdk.setDoc(ref('cameraPC/status'), { ...st0, at: Date.now() - 30000, v: '2.21', pos: 'POS band — parchi ka rule (seedha camera + AI)' });
+  const d = C.pkDate(), at = Date.now() - 200000, ev = (id, x) => fake.sdk.setDoc(ref('cameraEvents/' + id), { cam: 'cc33-ch1', camName: 'Tokri', date: d, matchState: 'none', thumb: '/9j/Q', n: 0, ms: 5, model: 'gemini', agent: '2.21', ...x });
+  await ev('q1', { at, verdict: 'shak', flow: 'nikla', matchState: 'missing', flags: ['bahar', 'aurko'], why: 'Galle se paisa kisi aur ko (baqaya nahi) — 3:10:40 pm laal shirt ko paisa diya',
+    story: [{ i: 1, t: at, kaun: 'laal shirt', kya: 'diya', kis: 'aur', note: '' }] });
+  await ev('q2', { at: at - 1000, verdict: 'normal', flow: 'len_den', flags: ['bahar', 'baqaya'], why: 'Parchi di — x | Baqaya usi customer ko — neela kurta ko baqaya diya' });
+  await ev('q3', { at: at - 2000, verdict: 'saaf_nahi', flow: 'aaya', flags: ['parchi'], why: 'Parchi di, paisa nahi diya' });
+  await ev('q4', { at: at - 3000, verdict: 'saaf_nahi', flow: 'nikla', flags: ['bahar', 'unsure'], why: 'Paisa diya — kis ko, saaf nahi' });
+  await click('[data-action=tab][data-arg=nigrani]'); await settle(12);
+  await click('[data-action=nig-view][data-arg=parchi]'); await settle(4);
+  assert.ok($('.nig-ev[data-id="q3"]'), 'parchi di paisa nahi = screen 1'); assert.ok(!$('.nig-ev[data-id="q1"]') && !$('.nig-ev[data-id="q2"]'), 'galle se bahar wale screen 1 mein nahi');
+  assert.match($('.nig-s3').textContent, /1\s*parchi di, paisa nahi/);
+  await click('[data-action=nig-view][data-arg=bahar]'); await settle(4);
+  assert.ok($('.nig-ev[data-id="q1"]') && $('.nig-ev[data-id="q2"]') && $('.nig-ev[data-id="q4"]'), 'screen 2: sab galle se bahar'); assert.ok(!$('.nig-ev[data-id="q3"]'));
+  assert.match($('.nig-s3').textContent, /1\s*kisi aur ko/); assert.match($('.nig-s3').textContent, /\d+\s*baqaya usi customer ko/, 'POS wale purane len-den bhi (baqaya)'); assert.match($('.nig-s3').textContent, /1\s*saaf nahi/);
+  assert.match($('.nig-ev[data-id="q1"]').textContent, /🔴 Paisa kisi aur ko \(baqaya nahi\)/); assert.match($('.nig-ev[data-id="q2"]').textContent, /✅ Baqaya usi customer ko/);
+  assert.match($('[data-action=nig-view][data-arg=bahar]').textContent, /1 na dekhe/);
+  await click('[data-action=nig-sub][data-id=s2][data-arg=bad]'); await settle(2);
+  assert.deepEqual($$('.nig-ev').map(b => b.dataset.id), ['q1'], 'sirf kisi aur ko');
+  await click('[data-action=nig-sub][data-id=s2][data-arg=ok]'); { const ids = $$('.nig-ev').map(b => b.dataset.id); assert.ok(ids.includes('q2') && !ids.includes('q1') && !ids.includes('q4'), ids.join()); }
+  await click('[data-action=nig-sub][data-id=s2][data-arg=all]');
+  await click('.nig-ev[data-id="q1"]'); await settle(8); assert.match($('[data-sheet=nig-ev] .nig-story').textContent, /laal shirt ko galle se paisa diya — kisi aur ko/); await click('[data-sheet=nig-ev] [data-sheet-close]');
+  // settings: khabar + video
+  await click('.nig-nav [data-action=nig-sec][data-arg=khabar]'); await settle(6);
+  const kf = $('form[data-form=cam-notify]'); assert.equal(kf.elements.n_aurko.checked, true, 'kisi aur ko: default chalu'); assert.equal(kf.elements.n_baqaya.checked, false, 'baqaya: default band');
+  assert.equal(kf.elements.v_aurko.checked, true); assert.equal(kf.elements.v_baqaya.checked, false);
+  kf.elements.n_baqaya.checked = true; kf.elements.v_aurko.checked = false; kf.elements.v_baqaya.checked = true; await submit(kf); await settle(8);
+  const set = records.get(B + 'cameraPC/settings'); assert.equal(set.notify.baqaya, true); assert.equal(set.notify.aurko, true); assert.deepEqual(set.video, { aurko: false, baqaya: true });
+  assert.equal($('form[data-form=cam-notify]').elements.v_baqaya.checked, true, 'save ke baad wahi dikhe');
+  const kf2 = $('form[data-form=cam-notify]'); kf2.elements.n_baqaya.checked = false; kf2.elements.v_aurko.checked = true; kf2.elements.v_baqaya.checked = false; await submit(kf2); await settle(8);
+  await click('.nig-nav [data-action=nig-sec][data-arg=lenden]');
+  for (const id of ['q1', 'q2', 'q3', 'q4']) await fake.sdk.deleteDoc(ref('cameraEvents/' + id)).catch(() => {});
   await fake.sdk.setDoc(ref('cameraPC/status'), st0); await settle(8);
   await click('[data-action=tab][data-arg=hazri]');
 });
@@ -284,7 +327,7 @@ test('v234: Nigrani = camera ki poori screen — keys / password / model / khaba
   await click('.nig-nav [data-action=nig-sec][data-arg=khabar]'); await settle(6);
   const kf = $('form[data-form=cam-notify]'); assert.equal(kf.elements.n_saaf.checked, false, 'saaf nahi default band'); assert.equal(kf.elements.n_shak.checked, true);
   kf.elements.n_shak.checked = false; kf.elements.n_saaf.checked = true; await submit(kf); await settle(8);
-  assert.deepEqual(records.get(B + 'cameraPC/settings').notify, { shak: false, saaf: true, clip: true, pcband: true, bill: true });
+  assert.deepEqual(records.get(B + 'cameraPC/settings').notify, { shak: false, aurko: true, baqaya: false, saaf: true, clip: true, pcband: true, bill: true });
   assert.ok(records.get(B + 'cameraPC/settings').models, 'khabar save par model na mite');
   // doctor: save password se seedha jodna
   await click('.nig-nav [data-action=nig-sec][data-arg=doctor]'); await settle(6);

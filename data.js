@@ -1280,8 +1280,8 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
     await quick(sdk.setDoc(ref('cameraPC', 'cmd'), { kind: 'nvr', at, by: 'owner' }));
     return at;
   }
-  const CAM_NOTIFY = ['shak', 'saaf', 'clip', 'pcband', 'bill'];
-  async function saveCamSettings({ models, notify } = {}) {
+  const CAM_NOTIFY = ['shak', 'aurko', 'baqaya', 'saaf', 'clip', 'pcband', 'bill'];   // v250: aurko / baqaya = galle se paisa bahar
+  async function saveCamSettings({ models, notify, video } = {}) {
     ownerOnly();
     const doc = { at: Date.now(), by: actor() };
     if (models) {
@@ -1289,6 +1289,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       doc.models = { cheap: ok(models.cheap), big: ok(models.big) };
     }
     if (notify) doc.notify = Object.fromEntries(CAM_NOTIFY.filter(k => k in notify).map(k => [k, !!notify[k]]));
+    if (video) doc.video = Object.fromEntries(['aurko', 'baqaya'].filter(k => k in video).map(k => [k, !!video[k]]));   // v250: PC v2.21 parhta hai
     await quick(sdk.setDoc(ref('cameraPC', 'settings'), doc, { merge: true }));
   }
   async function saveZone(id, zone, which = 'zone') {   // v229: which = 'zone' (galla) | 'zone2' (counter / len-den)
