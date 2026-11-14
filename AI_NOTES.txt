@@ -1,8 +1,24 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v250   Tareekh: 2026-10-15  (app v250 wahi; ntcam.py v2.22 — 175533: baqaya parchi se, kapre ≠ jeb, aik customer aik line; RULES wahi v244)
+Version: v251   Tareekh: 2026-11-14  (Blue Khata se jorna — neeche pehla hissa)  ·  pichhla: v250 2026-10-15  (app v250 wahi; ntcam.py v2.22 — 175533: baqaya parchi se, kapre ≠ jeb, aik customer aik line; RULES wahi v244)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+v251 (14 Nov 2026) — 👥 BLUE KHATA SE JORNA: aaj ki hazri ki report malik ke WhatsApp par
+------------------------------------------------------------
+Malik: "jo hamari NT hazri wali app hai us ko Blue Khata ke saath connect karo, larkon ki report WhatsApp par aa jaye — subah 10, shaam 6, jab maangein". OK diya.
+Blue Khata ALAG repo (Noor-traders-) + ALAG Firebase (note-traders-khata-7ccc1). WhatsApp wahan ka shop PC bhejta hai (Business number).
+- Blue Khata app (Reports khirki) "Hazri app jorein" -> chaabi bana kar yeh app kholti hai: <app>/#bk=<chaabi>.
+- app.js blueJoin(): malik login ho to data.saveBlueKey(k) -> cameraPC/vault { blue: { k, at } } (vault = sirf malik + camera PC parh sakte, manager nahi) -> toast, link se chaabi hata do.
+- functions/logic.js blueSummary(): aaj ke har chalu staff ki line {n, s, e, i, o, l, lv, off, b, t} (sirf hisab; test namoone par chalaya).
+- functions/index.js blueSync(): chaabi ho to khulasa Blue Khata ke hazriIn mein REST POST {k, p} (wahan ke rules chaabi jaanchte). Kab: onHazriWrite mein
+  staffAttendance / staffOuts / staffTickets / staffRequests ki har likhai (mitana bhi) + cameraPC/vault + watchDay (har 15 min zaroor). 20 s mein ek dafa se zyada nahi,
+  wahi khulasa dobara nahi; staff / duty / chutti 5 min yaad. Khabar (push) ko nahi rokta (saath saath chalta, aakhir mein await).
+- Is app mein hazri ka koi purana kaam nahi badla; Blue Khata se yahan kuch nahi likha jata. RULES WAHI (v244) — koi naya rule nahi. AI nahi.
+- Chaabi chat / GitHub par kabhi nahi. Dobara jorna = Blue Khata se wohi button (wohi chaabi).
+- Test: node --check; functions/logic.test.mjs 5 pass. Root "npm test" mein 10 file pehle se fail hain (is badlaav se pehle bhi — happy-dom wali) — nahi chhere.
+- Yahan test nahi ho saka: asal Functions deploy, asal REST likhai, asal WhatsApp. Malik se pehli report ka screenshot.
 
 ------------------------------------------------------------
 ntcam.py v2.22 (15 Oct sham) — 175533: BAQAYA PARCHI KE SATH  (app v250 wahi)

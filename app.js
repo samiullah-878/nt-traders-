@@ -64,6 +64,14 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
       else if (error?.code === 'permission-denied') toast('Kuch data ki ijazat nahi mili (' + name + '). Logout kar ke dobara login karein.', 'bad');
     }
   });
+  // v251: 👥 Blue Khata ke "Hazri app jorein" link (#bk=chaabi) se aaye malik — chaabi ek dafa save, phir link se hata do
+  const blueJoin = () => {
+    const m = String(win.location?.hash || '').match(/bk=([A-Za-z0-9_-]{24,80})/); if (!m) return;
+    data.saveBlueKey(m[1]).then(() => {
+      try { win.history?.replaceState?.(null, '', win.location.pathname + win.location.search); } catch { /* ignore */ }
+      toast('✅ Blue Khata se jur gaya — hazri ki report ab WhatsApp par aayegi', 'good');
+    }).catch(e => toast('Blue Khata se nahi jura: ' + errorText(e), 'bad'));
+  };
   controller = createAuthController({
     auth: data.auth, sdk, accounts: data.accounts, storage,
     onReset() { data.stop(); view = null; closeSheets(); login.busy = false; try { storage?.removeItem(OWNER_IN_KEY); storage?.removeItem(SNAP_KEY); } catch { /* ignore */ } showLogin(); },
@@ -75,7 +83,7 @@ export function startApp({ sdk, sdkPromise, firebaseConfig, storage = safeLocalS
       const seq = ++sessionSeq;
       const show = make => { if (seq !== sessionSeq) return; view = make(shared); root.dataset.screen = session.role; render(); };
       const failView = error => { console.error(error); if (seq === sessionSeq) toast('App ka ek hissa load nahi hua. Internet check kar ke "Taza kholein" dabayein.', 'bad'); };
-      if (session.role === 'owner') { data.startOwner(); loadOwnerView().then(show).catch(failView); }
+      if (session.role === 'owner') { data.startOwner(); loadOwnerView().then(show).catch(failView); blueJoin(); }
       else if (session.account?.canApproveOuts === true) { data.startOwner({ role: 'manager', phone: session.phone, account: session.account }); loadManagerView().then(show).catch(failView); } // v211: manager = poora panel
       else { data.startStaff(session.phone, session.account); show(createStaffView); }
     },

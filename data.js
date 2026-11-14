@@ -1249,6 +1249,12 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
   /* ---------- v234: KEYS / PASSWORD / MODEL app mein — PC (ntcam v2.3) har minute khud uthata hai ---------- */
   const AI_PROVIDERS = ['gemini', 'claude', 'openai', 'deepseek', 'openrouter', 'groq', 'qwen', 'mistral', 'xai'];
   /** keys: {provider: naya matn | null (mitao)}; khali / undefined = wahi rahe. cam: {user, pw, pw2} (khali = wahi). */
+  /** v251: 👥 Blue Khata ki chaabi (Blue Khata app ke "Hazri app jorein" link se). Sirf malik. Server (functions) isi se aaj ki hazri bhejta hai. */
+  async function saveBlueKey(k) {
+    if (state.role !== 'owner') throw Error('Sirf malik');
+    k = String(k || ''); if (!/^[A-Za-z0-9_-]{24,80}$/.test(k)) throw Error('Chaabi durust nahi');
+    await quick(sdk.setDoc(ref('cameraPC', 'vault'), { blue: { k, at: Date.now() } }, { merge: true }));
+  }
   async function saveVault({ keys = {}, cam = null } = {}) {
     ownerOnly();
     const cur = state.camVault || {}, nk = { ...(cur.keys || {}) };
@@ -1326,7 +1332,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
 
   return {
     app, full, actor, auth, state, watchShots, createCameraPC, saveCamera, requestShot, deleteCamera,
-    watchEvents, loadFrames, reviewEvent, saveZone, pcCommand, cleanupCam, loadClip, requestClip, deleteClip, keepClip, requestTest, deleteTest, testPack, saveVault, saveCamDevice, saveCamSettings, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
+    watchEvents, loadFrames, reviewEvent, saveZone, pcCommand, cleanupCam, loadClip, requestClip, deleteClip, keepClip, requestTest, deleteTest, testPack, saveVault, saveBlueKey, saveCamDevice, saveCamSettings, projectId: firebaseConfig?.projectId || 'nt-traders', stop, startOwner, startStaff, watchMonth, attendanceBetween, allAttendance, monthLoaded, scheduleFor, payrollFor, calcFor, salaryFor,
     requestOut, cancelOut, returnOut, reviewOut, isManager, isTicketer, startBreak, endBreaks, createTicket, returnTicket, decideTicket, ticketSuggestFor,
     savePushToken, removePushToken, pushDevices, pushTestPing,
     applyDefaultShiftAll, applyDefaultSalaryAll, toggleClosed, quickPresent, closeCheckouts, getSelfie, migrateSelfies, selfiesFor, auditLog,

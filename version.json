@@ -1,6 +1,6 @@
 {
-  "version": "v250",
+  "version": "v251",
   "variant": "Production",
-  "buildDate": "2026-10-15",
-  "notes": "Nigrani mein 2 screens: Parchi / Paisa aur Galle se bahar. Galle se paisa kisi aur ko = khabar + video; baqaya = sirf setting se. AI ab galle wale larke ko customer nahi samajhta (PC v2.21). Rules wahi (v244)."
+  "buildDate": "2026-11-14",
+  "notes": "Blue Khata se jorna: Blue Khata ke \"Hazri app jorein\" link se chaabi lagti hai, server aaj ki hazri Blue Khata ko bhejta hai — report WhatsApp par (dukan ka PC). Hazri ka koi purana kaam nahi badla. Rules wahi (v244)."
 }

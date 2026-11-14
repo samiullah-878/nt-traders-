@@ -5,7 +5,7 @@ import { getMessaging } from 'firebase-admin/messaging';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions';
-import { pkDate, pkMinutes, parseTime, fmt12, scheduleFor, notArrived, checkoutPending, breaksOverdue, lateOnCheckIn, list } from './logic.js';
+import { pkDate, pkMinutes, parseTime, fmt12, scheduleFor, notArrived, checkoutPending, breaksOverdue, lateOnCheckIn, list, blueSummary } from './logic.js';
 
 initializeApp();
 const db = getFirestore();
@@ -172,6 +172,38 @@ async function handleCamEvent(event, before = null) {
   }
 }
 
+/* ---------- v251: 👥 BLUE KHATA KO AAJ KI HAZRI (malik: "hazri app ko Blue Khata se jor do, larkon ki report WhatsApp par") ----------
+   Blue Khata ALAG Firebase project hai. Malik Blue Khata se "👥 Hazri app jorein" dabata hai -> hazri app chaabi cameraPC/vault.blue.k
+   mein rakhti hai (sirf malik + camera PC parh sakte) -> yeh function aaj ka khulasa Blue Khata ke hazriIn mein {k, p} REST se likhta hai
+   (wahan ke rules chaabi jaanchte hain) -> dukan ka PC (raat-report) WhatsApp par bhejta hai. Chaabi na ho = kuch nahi. Hazri mein kuch nahi likhta. */
+const BLUE_URL = 'https://firestore.googleapis.com/v1/projects/note-traders-khata-7ccc1/databases/(default)/documents/businesses/noor-traders/hazriIn';
+let blueK = '', blueKAt = 0, blueStat = null, blueStatAt = 0, blueLast = '', blueAt = 0, blueBusy = false;
+async function blueSync(force = false) {
+  if (blueBusy || (!force && Date.now() - blueAt < 20000)) return 0;
+  blueBusy = true;
+  try {
+    if (Date.now() - blueKAt > 60000) { blueK = String(((await db.doc(`${BIZ}/cameraPC/vault`).get()).data() || {}).blue?.k || ''); blueKAt = Date.now(); }
+    if (blueK.length < 24) return 0;
+    const date = pkDate();
+    if (!blueStat || Date.now() - blueStatAt > 5 * 60000) {   // staff / duty / chutti 5 minute yaad — har likhai par dobara parhna na pade
+      const [staff, requests, schedules] = await Promise.all([rows('staffAccounts'), rows('staffRequests', col('staffRequests').where('kind', '==', 'leave')), schedulesMap()]);
+      blueStat = { staff, requests, schedules }; blueStatAt = Date.now();
+    }
+    const [cfg, attendance, outs, tickets] = await Promise.all([config(),
+      rows('staffAttendance', col('staffAttendance').where('date', '==', date)),
+      rows('staffOuts', col('staffOuts').where('date', '==', date)),
+      rows('staffTickets', col('staffTickets').where('date', '==', date))]);
+    const sum = blueSummary({ ...blueStat, attendance, outs, tickets, config: cfg, date, now: Date.now() });
+    const sig = JSON.stringify(sum.rows) + sum.d + sum.closed;
+    blueAt = Date.now();
+    if (!force && sig === blueLast) return 0;
+    const res = await fetch(BLUE_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(8000),
+      body: JSON.stringify({ fields: { k: { stringValue: blueK }, p: { stringValue: JSON.stringify(sum) } } }) });
+    if (!res.ok) { logger.warn('blue khata ne nahi liya', res.status, (await res.text()).slice(0, 200)); return 0; }
+    blueLast = sig; return 1;
+  } finally { blueBusy = false; }
+}
+
 /* ---------- v219: AIK HI JAGTI FUNCTION — sab foran wali khabrein ----------
    Pehle chaar alag functions thin (onOut FAST, baqi NORMAL = so jati thin, 1-2 minute der). Ab aik hi function (minInstances 1)
    businesses/noor-traders ki har likhai sunti hai aur kaam ki cheez par foran khabar deti hai: parchi, chutti/correction, ticket,
@@ -180,7 +212,12 @@ async function handleCamEvent(event, before = null) {
 export const onHazriWrite = onDocumentWritten({ ...FAST, document: `${BIZ}/{coll}/{docId}` }, async event => {
   const { coll, docId } = event.params || {};
   const before = event.data?.before, after = event.data?.after;
-  if (!after?.exists) return;                                   // mitaya gaya
+  // v251: hazri / bahar / ticket / chutti ki har likhai (mitana bhi) + chaabi lagte hi -> Blue Khata ko taza khulasa (khabar ke saath saath, us ko rokta nahi)
+  const vault = coll === 'cameraPC' && docId === 'vault';
+  if (vault) blueKAt = 0;
+  if (coll === 'staffRequests') blueStatAt = 0;
+  const blueP = (vault || ['staffAttendance', 'staffOuts', 'staffTickets', 'staffRequests'].includes(coll)) ? blueSync(vault).catch(error => logger.error('blue khata', error)) : null;
+  if (!after?.exists) { await blueP; return; }                  // mitaya gaya
   const created = !before?.exists, ev = { data: after, params: { id: docId } };
   try {
     if (coll === 'pushTokens') return await handlePushTest(before?.exists ? before.data() : null, after.data());
@@ -194,12 +231,14 @@ export const onHazriWrite = onDocumentWritten({ ...FAST, document: `${BIZ}/{coll
     if (coll === 'cameraEvents') return await handleCamEvent(ev);
     if (coll === 'posAlerts') return await handlePosAlert(ev);
   } catch (error) { logger.error('khabar', coll, docId, error); }
+  finally { await blueP; }
 });
 
 /* ---------- khud aane wali khabrein (har 15 minute par jaanch) ---------- */
 const stateRef = date => db.doc(`${BIZ}/pushState/${date}`);
 export const watchDay = onSchedule({ ...NORMAL, schedule: 'every 15 minutes', timeZone: TZ }, async () => {
   const date = pkDate(), nowMin = pkMinutes(), now = Date.now();
+  try { await blueSync(true); } catch (error) { logger.error('blue khata', error); }   // v251: har 15 minute zaroor (din badalna, PC ne mita diya ho)
   const cfg = await config();
   if (cfg.push?.on === false) return;
   const [staff, attendance, requests, scheds, outs] = await Promise.all([
