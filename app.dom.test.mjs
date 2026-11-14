@@ -185,7 +185,7 @@ test('malik login → Hazri tab, qataarein, tawajju', async () => {
   await app.data.saveZone('cc33-ch1', { x: 0.2004, y: 0.3, w: 0.4, h: 0.35 }); assert.deepEqual(records.get(B + 'cameras/cc33-ch1').zone, { x: 0.2, y: 0.3, w: 0.4, h: 0.35 });
   await click('[data-sheet=cam-zone] [data-sheet-close]');
   await click('[data-action=tab][data-arg=hazri]');
-  assert.ok($$('.row-pdf').length === 2, 'har staff par PDF button');
+  assert.ok($$('.register .cr-btns [data-action=pdf-staff]').length === 2, 'har staff ki line ke andar PDF button');
   assert.match($('.register').textContent, /9:00 am – 7:00 pm/); assert.match($('.register').textContent, /10h duty/);
   assert.match($('.register').textContent, /Aaya 9:25 am/);
 });
