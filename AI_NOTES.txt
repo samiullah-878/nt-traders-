@@ -18,6 +18,7 @@ Blue Khata ALAG repo (Noor-traders-) + ALAG Firebase (note-traders-khata-7ccc1).
 - Is app mein hazri ka koi purana kaam nahi badla; Blue Khata se yahan kuch nahi likha jata. RULES WAHI (v244) — koi naya rule nahi. AI nahi.
 - Chaabi chat / GitHub par kabhi nahi. Dobara jorna = Blue Khata se wohi button (wohi chaabi).
 - Test: node --check; functions/logic.test.mjs 5 pass. Root "npm test" mein 10 file pehle se fail hain (is badlaav se pehle bhi — happy-dom wali) — nahi chhere.
+- DEPLOY: pehli dafa fail — 'Runtime Node.js 20 was decommissioned on 2026-10-31'. functions/package.json engines node 22 kiya (workflow ka setup-node 20 sirf CLI chalane ko, wahi).
 - Yahan test nahi ho saka: asal Functions deploy, asal REST likhai, asal WhatsApp. Malik se pehli report ka screenshot.
 
 ------------------------------------------------------------

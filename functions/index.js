@@ -1,4 +1,4 @@
-// index.js — Noor Traders Hazri ke notifications (Firebase Cloud Functions, Node 20).
+// index.js — Noor Traders Hazri ke notifications (Firebase Cloud Functions, Node 22 — v251: Google ne Node 20 runtime 31 Oct 2026 ko band kiya, deploy 22 par).
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';

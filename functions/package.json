@@ -2,7 +2,7 @@
   "name": "nt-hazri-functions",
   "description": "Noor Traders Hazri — notifications (Cloud Functions)",
   "type": "module",
-  "engines": { "node": "20" },
+  "engines": { "node": "22" },
   "main": "index.js",
   "dependencies": {
     "firebase-admin": "^12.6.0",
