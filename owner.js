@@ -18,7 +18,7 @@ const FILTERS = [['all', 'Sab'], ['present', 'Hazir'], ['late', 'Late'], ['absen
 
 export function createOwnerView({ data, controller, rerender, logout, checkUpdate, install, manager = false }) {
   const S = data.state;
-  const ui = { openTickets: new Set(), tab: 'hazri', view: 'day', date: pkDate(), month: pkDate().slice(0, 7), filter: 'all', salaryMonth: pkDate().slice(0, 7), staffQuery: '', showInactive: false };
+  const ui = { openTickets: new Set(), tab: 'hazri', view: 'day', date: pkDate(), month: pkDate().slice(0, 7), filter: 'all', salaryMonth: pkDate().slice(0, 7), staffQuery: '', showInactive: false, pick: null };
   const activeStaff = () => S.staff.filter(s => s.active !== false);
   const context = () => ({ requests: S.requests, schedules: S.schedules, config: S.config, today: pkDate(), nowMin: pkMinutes(), now: Date.now() });
   // Hazri abhi Firebase se nahi aayi to "Ghair hazir" nahi, "Load ho rahi" dikhao (pehle yehi ghalat-fehmi hoti thi).
@@ -287,12 +287,13 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     const q = ui.staffQuery.trim().toLowerCase();
     const list = S.staff.filter(s => (ui.showInactive || s.active !== false) && (!q || `${s.name} ${s.phone} ${s.role || ''}`.toLowerCase().includes(q)));
     const inactive = S.staff.filter(s => s.active === false).length, pend = pending().length;
-    return `<div class="toolbar"><h1 class="page-title">Staff <small>${activeStaff().length}</small></h1><button type="button" class="btn btn-primary" data-action="staff-new">${icon('plus', 18)} Naya staff</button></div>
+    return `<div class="toolbar"><h1 class="page-title">Staff <small>${activeStaff().length}</small></h1><span class="tb-r"><button type="button" class="btn btn-ghost btn-sm" data-action="staff-pick-mode" aria-pressed="${ui.pick ? 'true' : 'false'}">${ui.pick ? '✕ Chunna band' : '☑ Kai chunein'}</button>${ui.pick ? '' : `<button type="button" class="btn btn-primary btn-sm" data-action="staff-new">${icon('plus', 18)} Naya staff</button>`}</span></div>
       <div class="search-inline">${icon('search', 18)}<input type="search" placeholder="Naam ya number" value="${esc(ui.staffQuery)}" data-input="staff-query" aria-label="Staff talash"></div>
-      <section class="panel"><ol class="register">${list.map(s => `<li class="row${s.active === false ? ' is-off' : ''}" data-search="${esc(`${s.name} ${s.phone} ${s.role || ''}`.toLowerCase())}"><button type="button" class="row-main" data-action="staff-edit" data-phone="${s.phone}">
-        ${avatar(s)}<span class="row-text"><b>${nameHtml(s.name)}</b><small>${esc(s.role || 'Staff')} &nbsp;|&nbsp; ${esc(s.phone)}</small><span class="tags inline"><span class="tag">${icon('clock', 14)} ${esc(dutyText(data.scheduleFor(s.phone)))}</span><span class="tag">${usesDefaultSalary(s) ? 'Default salary' : 'Apni salary ' + money(data.salaryFor(s).monthlySalary)}</span>${s.canApproveOuts ? '<span class="tag t-ink">Manager</span>' : ''}${s.canTicket ? '<span class="tag t-ink">Senior</span>' : ''}</span></span>
+      <section class="panel"><ol class="register">${list.map(s => `<li class="row${s.active === false ? ' is-off' : ''}" data-search="${esc(`${s.name} ${s.phone} ${s.role || ''}`.toLowerCase())}"><button type="button" class="row-main${ui.pick?.has(s.phone) ? ' is-pick' : ''}" data-action="${ui.pick ? 'staff-pick' : 'staff-edit'}" data-phone="${s.phone}">
+        ${ui.pick ? `<span class="pk-box" aria-hidden="true">${ui.pick.has(s.phone) ? '✓' : ''}</span>` : ''}${avatar(s)}<span class="row-text"><b>${nameHtml(s.name)}</b><small>${esc(s.role || 'Staff')} &nbsp;|&nbsp; ${esc(s.phone)}</small><span class="tags inline"><span class="tag">${icon('clock', 14)} ${esc(dutyText(data.scheduleFor(s.phone)))}</span><span class="tag">${usesDefaultSalary(s) ? 'Default salary' : 'Apni salary ' + money(data.salaryFor(s).monthlySalary)}</span>${s.canApproveOuts ? '<span class="tag t-ink">Manager</span>' : ''}${s.canTicket ? '<span class="tag t-ink">Senior</span>' : ''}</span></span>
         <span class="stamp ${s.active === false ? 'st-off' : s.loginEnabled === false ? 'st-absent' : 'st-present'}">${s.active === false ? 'Band' : s.loginEnabled === false ? 'Login band' : 'Chalu'}</span></button></li>`).join('')}</ol>
         <p class="empty-line" id="staffEmpty" ${list.length ? 'hidden' : ''}>Koi staff nahi mila.</p>
+        ${ui.pick ? `<div class="pk-bar" id="pkBar"><span class="pk-n" id="pkN">✓ ${ui.pick.size} chune</span><button type="button" class="btn btn-ghost btn-sm" data-action="staff-pick-all">Sab</button><button type="button" class="btn btn-ghost btn-sm" data-action="staff-bulk" data-arg="off">🚫 Band karo</button><button type="button" class="btn btn-ghost btn-sm txt-bad" data-action="staff-bulk" data-arg="delete">🗑 Delete</button></div>` : ''}
         ${inactive ? `<button type="button" class="link" data-action="toggle-inactive">${ui.showInactive ? 'Band kiye hue chhupayein' : `Band kiye hue bhi dikhayein (${inactive})`}</button>` : ''}
       </section>
       <button type="button" class="rule-card" data-action="tab" data-arg="settings">${icon('clock', 20)}<span><b>Duty, salary aur baqi settings</b><small>Neeche "Settings" tab mein</small></span>${icon('right', 18)}</button>`;
@@ -1568,6 +1569,29 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       await busy(el, async () => { await data.deleteStaff(el.dataset.phone); sheets.staffForm?.close(); }, 'Staff delete ho gaya');
     },
     'toggle-inactive'() { ui.showInactive = !ui.showInactive; rerender(); },
+    // v253: kai staff ek saath chunna — tick par list dobara nahi banti (foran)
+    'staff-pick-mode'() { ui.pick = ui.pick ? null : new Set(); rerender(); },
+    'staff-pick'(el) {
+      if (!ui.pick) return; const p = el.dataset.phone;
+      ui.pick.has(p) ? ui.pick.delete(p) : ui.pick.add(p);
+      el.classList.toggle('is-pick', ui.pick.has(p)); const b = el.querySelector('.pk-box'); if (b) b.textContent = ui.pick.has(p) ? '✓' : '';
+      const n = $('#pkN'); if (n) n.textContent = `✓ ${ui.pick.size} chune`;
+    },
+    'staff-pick-all'() {
+      if (!ui.pick) return; const q = ui.staffQuery.trim().toLowerCase();
+      const all = S.staff.filter(s => (ui.showInactive || s.active !== false) && (!q || `${s.name} ${s.phone} ${s.role || ''}`.toLowerCase().includes(q))).map(s => s.phone);
+      ui.pick = all.every(p => ui.pick.has(p)) ? new Set() : new Set(all); rerender();
+    },
+    async 'staff-bulk'(el) {
+      const mode = el.dataset.arg === 'delete' ? 'delete' : 'off', list = [...(ui.pick || [])];
+      if (!list.length) return toast('Pehle larke chunein (naam par tap)', 'bad');
+      const names = list.map((p, i) => `${i + 1}. ${account(p)?.name || p}`).join('\n');
+      const msg = mode === 'delete'
+        ? `In ${list.length} ko HAMESHA ke liye delete karein?\n\n${names}\n\nWapas nahi aayega. Purani hazri / salary dekhni ho to "Band karo" behtar hai.`
+        : `In ${list.length} ko band karein?\n\n${names}\n\nList se hat jayenge, login band. Purana record mehfooz — baad mein wapas chalu ho sakta hai.`;
+      if (!confirm(msg)) return;
+      await busy(el, async () => { const n = await data.bulkStaff(list, mode); ui.pick = null; toast(mode === 'delete' ? `✅ ${n} staff delete ho gaye` : `✅ ${n} staff band ho gaye`, 'ok'); rerender(); });
+    },
     salary(el) { if (el.dataset.month) { ui.salaryMonth = el.dataset.month; data.watchMonth(ui.salaryMonth); } open('salary', () => salarySheet(el.dataset.phone)); },
     async final(el) {
       const phone = el.dataset.phone, frozen = data.payrollFor(phone, ui.salaryMonth)?.state === 'final';

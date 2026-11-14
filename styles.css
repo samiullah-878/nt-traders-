@@ -851,3 +851,10 @@ ur-s.blk{margin-top:2px}
 .ur-on .tabs button{gap:0}
 .ur-on .btn{padding-block:6px}.ur-on .chip{padding-block:5px}.ur-on .tag{padding-block:3px;border-radius:14px}
 @media(min-width:860px){.ur-on .tabs button{height:auto;min-height:46px;padding-block:3px}}
+
+/* v253: staff — kai ek saath chunna */
+.tb-r{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pk-box{flex:none;width:24px;height:24px;border-radius:7px;border:2px solid var(--rule);display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;color:#fff;margin-right:8px}
+.row-main.is-pick{background:var(--ok-bg)}.row-main.is-pick .pk-box{background:var(--ok);border-color:var(--ok)}
+.pk-bar{position:sticky;bottom:calc(var(--tab-h,64px) + env(safe-area-inset-bottom,0px) + 6px);z-index:25;display:flex;gap:8px;align-items:center;flex-wrap:nowrap;overflow-x:auto;margin-top:10px;padding:8px 10px;border-radius:999px;border:1px solid var(--rule);background:var(--paper);box-shadow:0 6px 20px rgba(0,0,0,.14)}
+.pk-bar .btn{flex:none;border-radius:999px;white-space:nowrap}.pk-n{flex:none;font-weight:800;font-size:.95rem;white-space:nowrap;padding:0 4px}

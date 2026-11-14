@@ -328,6 +328,27 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       audit(tx, 'staff delete', phone, snap.exists() ? { name: snap.data().name } : null, null, 'Malik ne staff delete kiya');
     });
   }
+  /** v253: kai staff ek saath — 'off' = band (record mehfooz, login band), 'delete' = hamesha ke liye. Ek hi batch, screen foran. */
+  async function bulkStaff(phones, mode) {
+    guardOwner();
+    const list = [...new Set(phones || [])].filter(p => p && !(state.role === 'manager' && p === state.phone)).slice(0, 120);
+    if (!list.length) throw new Error('Pehle staff chunein.');
+    if (mode !== 'off' && mode !== 'delete') throw new Error('Kaam samajh nahi aaya.');
+    await fast(async tx => {
+      for (const phone of list) {
+        const old = state.staff.find(s => s.phone === phone);
+        if (mode === 'delete') {
+          tx.delete(ref('staffAccounts', phone)); tx.delete(ref('staff', phone)); tx.delete(ref('staffSchedules', phone));
+          audit(tx, 'staff delete', phone, old ? { name: old.name } : null, null, 'Malik ne staff delete kiya (kai ek saath)');
+        } else {
+          const patch = { active: false, loginEnabled: false, updatedAt: Date.now() };
+          tx.set(ref('staffAccounts', phone), patch, { merge: true }); tx.set(ref('staff', phone), patch, { merge: true });
+          audit(tx, 'staff band', phone, old ? { name: old.name, active: old.active !== false } : null, { active: false }, 'Malik ne staff band kiya (kai ek saath)');
+        }
+      }
+    });
+    return list.length;
+  }
   /** Sirf wohi hissa badalta hai jo form mein tha (duty, salary ya Check-In) — baqi waisa hi rehta hai. */
   async function saveConfig(patch) {
     guardOwner();
@@ -1341,7 +1362,7 @@ export function createData({ sdk, firebaseConfig, onChange = () => {}, onProblem
       async getAccount(phone) { const s = await sdk.getDoc(ref('staffAccounts', phone)); return s.exists() ? { ...s.data(), phone } : null; },
       async createSession(uid, phone) { await sdk.setDoc(ref('staffSessions', uid), { phone, createdAt: Date.now() }); }
     },
-    saveStaff, deleteStaff, saveConfig, saveAttendance, deleteAttendance, markLeave, cancelLeave, reviewRequest,
+    saveStaff, deleteStaff, bulkStaff, saveConfig, saveAttendance, deleteAttendance, markLeave, cancelLeave, reviewRequest,
     addExtra, removeExtra, toggleFinal, addPayment, checkIn, checkOut, sendRequest, requestOutsideCheckout, requestEarly,
     retrySync, dismissSync, drainOutbox, pendingSync, diagPing
   };

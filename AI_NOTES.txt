@@ -1,8 +1,20 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v251   Tareekh: 2026-11-14  (Blue Khata se jorna — neeche pehla hissa)  ·  pichhla: v250 2026-10-15  (app v250 wahi; ntcam.py v2.22 — 175533: baqaya parchi se, kapre ≠ jeb, aik customer aik line; RULES wahi v244)
+Version: v253   Tareekh: 2026-11-14  (Staff: kai ek saath band / delete — neeche pehla hissa)  ·  pichhla: v251 (Blue Khata se jorna)  ·  pichhla: v250 2026-10-15  (app v250 wahi; ntcam.py v2.22 — 175533: baqaya parchi se, kapre ≠ jeb, aik customer aik line; RULES wahi v244)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+v253 (14 Nov 2026) — ☑ STAFF: KAI EK SAATH BAND / DELETE
+------------------------------------------------------------
+Malik: "larkon ki list mein 1-2-3-4-5 select karein, delete — larke kaam chhor gaye hain · time na lage, jaldi ho". OK diya (Band + Delete dono).
+- owner.js Staff tab: toolbar "☑ Kai chunein" (ui.pick = Set) -> naam par tap = tick (list dobara nahi banti — foran), neeche chipki patti .pk-bar:
+  "✓ N chune" · Sab · 🚫 Band karo · 🗑 Delete. Dabane par naamon ki list ka confirm.
+- data.js bulkStaff(phones, 'off' | 'delete'): EK writeBatch (fast() — screen foran, server peeche), har larke ka staffAudit.
+    off = active false + loginEnabled false (staffAccounts + staff, merge) — hazri / salary ka record mehfooz, wapas chalu ho sakta hai.
+    delete = wahi jo deleteStaff (staffAccounts + staff + staffSchedules). Manager apna aap nahi chun sakta. Hadd 120.
+- QAIDA: kaam chhor gaye larke ke liye pehle "Band" ka mashwara do (delete wapas nahi aata). Staff list mein naya ek-saath kaam isi pick patti mein.
+- Rules wahi (v244). AI nahi. Test: node --check + purane tests; ASAL phone par nahi dekha.
 
 ------------------------------------------------------------
 Functions v252 (14 Nov 2026, app wahi v251) — 🚶 WHATSAPP SE BAHAR JANE KI REQUEST
