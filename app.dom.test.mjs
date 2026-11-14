@@ -48,9 +48,15 @@ const records = new Map([
 if (yesterday.slice(0, 7) === month) records.set(B + `staffAttendance/${yesterday}_03001234567`, { date: yesterday, phone: '03001234567', checkIn: '09:00', checkOut: '19:30', autoScore: 10 });
 const fake = fakeSdk({ records }), storage = memoryStorage();
 const app = startApp({ sdk: fake.sdk, firebaseConfig: {}, storage, win });
-const doc = win.document, $ = s => doc.querySelector(s), $$ = s => [...doc.querySelectorAll(s)];
+// v254: malik ka panel chhota — requests / notifications 🔔 ke andar, baqi kaam ⋮ ke andar, larke ki line par tap = khulna. Purane selector yahan se naye raaste par.
+const doc = win.document, $$ = s => [...doc.querySelectorAll(s)];
+const NOTI = /attention|att-card|out-card|out-list|out-btns|break-card|b-row|\.week|out-review|out-return|break-end|close-due|action=requests/, MENU = /ticket-new|break-start|toggle-closed|quick-present-all|selfies-day|pdf-day|pdf-register|action=view|action=excel/;
+const tap = el => el.dispatchEvent(new win.MouseEvent('click', { bubbles: true, cancelable: true }));
+const fix = s => typeof s === 'string' ? s.replace(/\.row-main(\[data-phone="?\d+"?\])/, '[data-action=profile]$1') : s;
+const $ = s => doc.querySelector(s) || doc.querySelector(fix(s));
 const settle = async (n = 6) => { for (let i = 0; i < n; i++) await new Promise(r => setTimeout(r, 4)); };
-const click = async sel => { const el = typeof sel === 'string' ? $(sel) : sel; assert.ok(el, 'nahi mila: ' + sel); el.dispatchEvent(new win.MouseEvent('click', { bubbles: true, cancelable: true })); await settle(); };
+const need = async s => { let el = $(s); if (!el && typeof s === 'string') { const b = NOTI.test(s) ? $('[data-action=hz-noti]') : MENU.test(s) ? $('[data-action=hz-menu]') : null; if (b) { tap(b); await settle(); el = $(s); } } return el; };
+const click = async sel => { const el = typeof sel === 'string' ? await need(sel) : sel; assert.ok(el, 'nahi mila: ' + sel); el.dispatchEvent(new win.MouseEvent('click', { bubbles: true, cancelable: true })); await settle(); };
 const submit = async form => { form.dispatchEvent(new win.Event('submit', { bubbles: true, cancelable: true })); await settle(10); };
 const fill = (form, values) => { for (const [k, v] of Object.entries(values)) { const el = form.elements[k] || form.querySelector(`[name=${k}]`); assert.ok(el, 'field nahi: ' + k); if (el.type === 'checkbox') el.checked = v; else el.value = v; } };
 const toastText = () => $('#toast').textContent;
@@ -72,10 +78,10 @@ test('malik login → Hazri tab, qataarein, tawajju', async () => {
   assert.equal($$('.register .row').length, 2);
   assert.match($('.register').textContent, /Ali Raza/); assert.match($('.register').textContent, /Late 25m/);
   assert.ok($('.ur'), 'Urdu naam apne font class ke sath');
-  assert.match($('.attention').textContent, /request/);
+  assert.match((await need('.attention')).textContent, /request/);
   // v218: phones ki jaanch — fail aur purani app Tawajju mein, sheet mein wajah
-  assert.match($('.attention').textContent, /server tak nahi gayi/); assert.match($('.attention').textContent, /Ali Raza: Check-Out .*internet/);
-  assert.match($('.attention').textContent, /phone par purani app/);
+  assert.match((await need('.attention')).textContent, /server tak nahi gayi/); assert.match((await need('.attention')).textContent, /Ali Raza: Check-Out .*internet/);
+  assert.match((await need('.attention')).textContent, /phone par purani app/);
   await click('.attention [data-action=phones]'); assert.ok($('[data-sheet=phones]'), 'Phones ki jaanch');
   assert.match($('[data-sheet=phones]').textContent, /v214/); assert.match($('[data-sheet=phones]').textContent, /Home screen app/); assert.match($('[data-sheet=phones]').textContent, /1 likhai phone mein ruki/);
   assert.match($('[data-sheet=phones]').textContent, /Check-Out server par NAHI laga .* wajah: internet/);
@@ -104,7 +110,7 @@ test('malik login → Hazri tab, qataarein, tawajju', async () => {
   await click('.nig-nav [data-action=nig-sec][data-arg=lenden]');
   // v222: NIGRANI — Tawajju se tab, khulasa, filter, event + 6 tasveerein, duty, malik ka faisla, galla ka hissa
   await click('[data-action=tab][data-arg=hazri]');
-  assert.match($('.attention').textContent, /Aaj 1 dafa galla par shak · 1 dafa bina voucher galla khula/); assert.match($('.attention').textContent, /Aaj 1 bill cancel \/ badle/);   // v226
+  assert.match((await need('.attention')).textContent, /Aaj 1 dafa galla par shak · 1 dafa bina voucher galla khula/); assert.match((await need('.attention')).textContent, /Aaj 1 bill cancel \/ badle/);   // v226
   await click('.attention [data-action=tab][data-arg=nigrani]'); await settle(12);
   assert.ok($('main.view-nigrani'), 'Nigrani tab'); assert.match($('.nig-cams').textContent, /Tokri · nigrani chalu/);
   const sumText = $('.nig-sum').textContent; assert.match(sumText, /7\s*galla chhua/); assert.match(sumText, /2\s*AI jaanch/); assert.match(sumText, /1\s*shak/); assert.match(sumText, /0\/1\s*shak dekhe/);
@@ -419,20 +425,25 @@ test('v235: camera jodna app se — network par mile camera ki halat, har aik ka
   await click('.nig-nav [data-action=nig-sec][data-arg=lenden]'); await click('[data-action=tab][data-arg=hazri]');
 });
 
-test('v237: Urdu ki line — har lafz ke neeche, Settings se chalu / band (sirf is phone par)', async () => {
+test('v254: malik ke panel par Urdu ki line NAHI (sirf mulazim ke page par) — Settings ka button phone ki pasand badalta hai', async () => {
   await settle(8);
-  assert.ok(doc.documentElement.classList.contains('ur-on'), 'shuru mein chalu');
-  assert.deepEqual($$('.tabs button ur-s').map(x => x.textContent), ['حاضری', 'تنخواہ', 'عملہ', 'نگرانی', 'ترتیبات'], 'neeche ke tabs');
-  assert.equal($('.section-label ur-s')?.textContent, 'توجہ چاہیے'); assert.ok($$('.chip ur-s').length >= 4, 'chips');
-  assert.match($('.att-card b').textContent, /^\d+ phone se Check-Out server tak nahi gayi\d+ فون سے چیک آؤٹ سرور تک نہیں گیا$/, 'ginti wala jumla');
-  assert.equal($$('.row-text b ur-s').length, 0, 'logon ke naam Roman hi');
+  assert.ok(doc.documentElement.classList.contains('no-ur'), 'malik ka panel = no-ur');
+  assert.equal($$('#app ur-s, #app ur-p').length, 0, 'panel par koi Urdu line nahi');
+  assert.match($('.tabs').textContent, /^\s*Hazri\s*Salary\s*Staff\s*Nigrani\s*Settings/, 'tabs sirf Roman');
+  assert.ok($('.top.cmp') && $('.view.cmp'), 'chhota header / view');
+  assert.ok($('[data-action=hz-noti] em'), '🔔 par ginti'); assert.ok($('[data-action=hz-menu]'), '⋮');
+  assert.equal($('.view .attention'), null, 'tawajju saamne nahi — 🔔 ke andar');
+  assert.match((await need('.att-card b')).textContent, /phone se Check-Out server tak nahi gayi/); await click('[data-sheet=hznoti] [data-sheet-close]');
+  // patli line: tap = khulna (list dobara nahi banti)
+  const row = $('.register .row.cr'); assert.ok(row && !row.classList.contains('is-open'));
+  await click('.register .row.cr [data-action=row-open]'); assert.ok(row.isConnected && row.classList.contains('is-open'), 'khul gayi');
+  await click('.register .row.cr [data-action=row-open]'); assert.ok(!row.classList.contains('is-open'), 'band');
   await click('[data-action=tab][data-arg=settings]'); await settle(6);
   const tog = () => $('.tools [data-action=urdu-toggle]'); assert.ok(tog(), 'Settings mein button');
   await click(tog()); await settle(8);
-  assert.equal($$('ur-s, ur-p').length, 0, 'band: koi Urdu line nahi'); assert.equal(storage.getItem('nt-urdu-v1'), '0'); assert.ok(!doc.documentElement.classList.contains('ur-on'));
-  assert.match(toastText(), /Urdu ki line band/); assert.match($('.tabs').textContent, /^\s*Hazri\s*Salary\s*Staff\s*Nigrani\s*Settings/, 'asal matn wapas');
+  assert.equal(storage.getItem('nt-urdu-v1'), '0'); assert.match(toastText(), /Urdu ki line band/);
   await click(tog()); await settle(8);
-  assert.ok($$('.tabs button ur-s').length === 5 && storage.getItem('nt-urdu-v1') === '1', 'dobara chalu');
+  assert.equal(storage.getItem('nt-urdu-v1'), '1', 'dobara chalu'); assert.equal($$('#app ur-s').length, 0, 'panel par phir bhi nahi');
   await click('[data-action=tab][data-arg=hazri]');
 });
 
@@ -576,11 +587,11 @@ test('v202: Aaya/Gaya tickets aur aasan time picker', async () => {
 });
 test('v202: raat ki duty ghalti se save ho to warning', async () => {
   await app.data.saveConfig({ shiftStart: '21:15', shiftEnd: '07:52', radius: 200 }); await settle();
-  assert.match($('.attention').textContent, /ghalat lag rahi/);
+  assert.match((await need('.attention')).textContent, /ghalat lag rahi/);
   await click('.attention [data-action=settings]'); assert.match($('[data-sheet=cfg-duty]').textContent, /raat ki duty/);
   const f = $('form[data-form=cfg]'); await click(f.querySelector('[data-tp-set="09:15"]')); await click([...f.querySelectorAll('[data-tp]')][1].querySelector('[data-tp-set="19:00"]'));
   await submit(f); assert.deepEqual([records.get(B + 'staffConfig/main').shiftStart, records.get(B + 'staffConfig/main').shiftEnd], ['09:15', '19:00']);
-  assert.equal($('.attention')?.textContent.includes('ghalat lag rahi') || false, false);
+  assert.equal((await need('.attention'))?.textContent.includes('ghalat lag rahi') || false, false);
 });
 test('v204: Settings tab, selfie alag, server waqt, halka karna, check-out band', async () => {
   await click('[data-action=tab][data-arg=staff]'); assert.equal($('[data-action=diag]'), null, 'Staff tab mein sirf staff');
@@ -657,7 +668,7 @@ test('v208: malik khana break — bari, waqt, sab wapas', async () => {
   await click('[data-sheet=break] [data-break-go]'); await settle(8);
   const br = [...records].filter(([k, v]) => k.includes('staffOuts/') && v.kind === 'break');
   assert.ok(br.length >= 1); assert.equal(br[0][1].minutes, 45); assert.equal(br[0][1].status, 'approved'); assert.equal(br[0][1].approvedByName, 'Malik');
-  assert.match($('.view').textContent, /khane ke break par/); assert.match($('.register').textContent, /Khana break/);
+  assert.match((await need('.break-card')).textContent, /khane ke break par/); assert.match($('.register').textContent, /Khana break/);
   await click('[data-action=break-end-all]'); await settle(6);
   assert.ok(br.every(([k]) => records.get(k).status === 'returned'), 'sab wapas');
   assert.match($('.register').textContent, /Khana .*–/);
@@ -681,7 +692,7 @@ test('v209: malik ka ticket — banana, wapsi, katauti salary mein', async () =>
   const tk = [...records].find(([k, v]) => k.includes('staffTickets/') && v.phone === '03007654321');
   assert.ok(tk, 'ticket bana'); assert.equal(tk[1].status, 'open'); assert.equal(tk[1].byName, 'Malik');
   assert.match($('.register').textContent, /Bina bataye gaya/);
-  assert.match($('.attention').textContent, /faisla baqi/);
+  assert.match((await need('.attention')).textContent, /faisla baqi/);
   await click('.attention [data-action=tickets]'); assert.ok($('[data-sheet=tickets]'));
   await click('[data-sheet=tickets] [data-action=ticket-return]'); await settle(6);
   assert.equal(records.get(tk[0]).status, 'returned');
@@ -786,7 +797,7 @@ test('logout → staff login → check-in / check-out', async () => {
   await click('.tabs [data-arg=settings]'); assert.equal($('[data-action=cameras]'), null, 'v220: manager ko Cameras nahi'); assert.equal($('.tabs [data-arg=nigrani]'), null, 'v222: manager ko Nigrani nahi'); await click('.tabs [data-arg=hazri]');
   assert.match($('.brand').textContent, /Manager panel/);
   await fake.sdk.setDoc({ path: B + 'staffOuts/m1' }, { phone: '03001234567', name: 'Ali Raza', date: today, reason: 'Washroom (chhoti hajat)', note: '', minutes: 5, status: 'pending', requestedAt: Date.now(), by: 'x' }); await settle(10);
-  assert.ok($('.out-card'), 'parchi card');
+  assert.ok(await need('.out-card'), 'parchi card');
   await click('.out-card [data-action=out-review][data-arg=yes]'); await settle(6);
   const m1 = records.get(B + 'staffOuts/m1'); assert.equal(m1.status, 'approved'); assert.equal(m1.approvedByName, 'Usman');
   assert.ok($('.out-list .b-row'), 'har naam ke aage waqt'); assert.match($('.out-list').textContent, /gaya · .* tak/);
@@ -874,6 +885,7 @@ test('v240: phone ka Back button - video / tasveer / sheet band hoti hai, poori 
   const U = await import('./ui.js');
   const back = async () => { win.history.back(); await settle(10); };
   const depth = () => Number(win.history.state?.ntLayer) || 0;
+  for (let i = 0; i < 4 && $('.sheet-wrap'); i++) { tap($('.sheet-wrap .sheet-head [data-sheet-close]')); await settle(10); }   // v254: 🔔 / ⋮ ki khuli sheet band
   const scr = $('#app').dataset.screen;
   assert.equal(depth(), 0, 'shuru mein koi qadam nahi');
   // 1) video chal rahi hai -> Back = sirf video band

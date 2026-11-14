@@ -1,6 +1,6 @@
 {
-  "version": "v253",
+  "version": "v254",
   "variant": "Production",
-  "buildDate": "2026-11-14",
-  "notes": "Staff list: \"Kai chunein\" se kai larke ek saath Band ya Delete (tez, ek hi dafa). Rules wahi (v244)."
+  "buildDate": "2026-11-15",
+  "notes": "Malik / manager ka panel chhota: ek screen par 8+ larke, upar 🔔 (requests / notifications) aur ⋮ (baqi kaam), larke ki line par tap = tafseel. Urdu ki line sirf mulazim ke page par. Rules wahi (v244)."
 }

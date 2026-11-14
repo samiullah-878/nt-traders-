@@ -1,8 +1,28 @@
 NOOR TRADERS HAZRI — AI NOTES
 =============================
-Version: v253   Tareekh: 2026-11-14  (Staff: kai ek saath band / delete — neeche pehla hissa)  ·  pichhla: v251 (Blue Khata se jorna)  ·  pichhla: v250 2026-10-15  (app v250 wahi; ntcam.py v2.22 — 175533: baqaya parchi se, kapre ≠ jeb, aik customer aik line; RULES wahi v244)
+Version: v254   Tareekh: 2026-11-15  (Malik ka panel CHHOTA: 8+ naam ek screen, 🔔 + ⋮, Urdu sirf mulazim ke page par — neeche pehla hissa)  ·  pichhla: v253 (Staff: kai ek saath band / delete)  ·  pichhla: v251 (Blue Khata se jorna)  ·  pichhla: v250 2026-10-15  (app v250 wahi; ntcam.py v2.22 — 175533: baqaya parchi se, kapre ≠ jeb, aik customer aik line; RULES wahi v244)
 Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf). Wo Devanagari aur Urdu lipi theek se nahi parh sakte.
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
+
+------------------------------------------------------------
+v254 (15 Nov 2026) — 📱 MALIK / MANAGER KA PANEL CHHOTA (8+ larke ek screen par)
+------------------------------------------------------------
+Malik (screenshots ke saath): "ek time par screen mein kam az kam 8 larkon ka naam aaye · upar bilkul small, neeche bhi bilkul small ·
+main screen ke andar three dots · notification button mein sab ki requests aur notifications · baqi chips right side par three dots ke andar ·
+aakhri tasveer (larke ki line) ke chips small" + "Urdu sirf mulazim ki hazri wale page par, har jagah nahi". OK diya.
+- QAIDA (pakka): malik / manager ke panel par Urdu ki line NAHI (html.no-ur — owner.js renderAll lagata, staffview.js render hatata; urdu.js decorate no-ur par kuch nahi karta).
+  Mulazim ka apna page (Check-In / parchi) pehle jaisa Urdu ke saath. Panel mein naya matn = sirf Roman.
+- Upar: header ek patli line (.top.cmp — NT · Noor Traders · chhota 🔍). Neeche: tabs patti 52px (:root.no-ur --tab-h).
+- Hazri tab: ek patli line .hz-bar = ‹ tareekh › · 🔔 (ginti) · ⋮.
+    🔔 hz-noti -> notiSheet: khane ke break wale + bahar jane ki parchiyan (Haan / Nahi) + Tawajju chahiye (attention) + Is hafte (weekCard). Saamne ab yeh sab NAHI.
+    ⋮ hz-menu -> menuSheet: Din / Mahina · PDF · Excel · Bina bataye gaya · Khana break · Dukaan band · Sab ghair hazir ko hazir · Selfies (data-mclose = dabate hi sheet band).
+- Larke ki line (personRow): band = photo · naam · (laal nuqta agar koi masla / request) · aaya–gaya waqt · mohar. Tap (row-open, ui.openRows — list dobara nahi banti)
+  = neeche chips + Aaya / Gaya ke waqt + "Tafseel" (profile) + PDF. Side wala bara PDF button hata (ab andar chhota).
+- Staff tab ki line bhi patli (duty / salary ke tags chhupe — form mein hain).
+- Data / hisaab / salary / rules (v244) BILKUL wahi. AI nahi.
+- QAIDA: panel mein naya chip / button saamne mat lagao — request / khabar = 🔔 ke andar (attention() / notiHtml), kaam = ⋮ (menuSheet), larke ka = line ke andar (.cr-x).
+- Tests: app.dom.test.mjs ke helper naye raaste jaante hain (need(): 🔔 / ⋮ khud kholta, .row-main[data-phone] = Tafseel). Raat 12 baje (PK) chalane par 2 test tareekh badalne se girte hain — yeh purani baat hai.
+- ASAL phone par nahi dekha (yahan sirf happy-dom) — malik se screenshot maango; 8 naam na aayein to .view.cmp .row-main ki oonchai (44px) / font chhota karo.
 
 ------------------------------------------------------------
 v253 (14 Nov 2026) — ☑ STAFF: KAI EK SAATH BAND / DELETE

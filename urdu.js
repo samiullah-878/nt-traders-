@@ -291,6 +291,7 @@ function textOf(el) {
 export function decorate(root) {
   if (!root || root.nodeType !== 1) return;
   const doc = root.ownerDocument;
+  if (doc?.documentElement?.classList?.contains('no-ur')) return;   // v254 (malik: 'Urdu sirf mulazim ki hazri wale page par'): malik / manager ke panel par Urdu ki line nahi
   const line = (u, blk) => { const s = doc.createElement('ur-s'); s.setAttribute('lang', 'ur'); s.setAttribute('dir', 'rtl'); if (blk) s.className = 'blk'; s.textContent = u; return s; };
   const walk = el => {
     if (SKIP.has(tag(el)) || el.hasAttribute?.('data-no-ur')) return;

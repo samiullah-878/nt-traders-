@@ -18,7 +18,7 @@ const FILTERS = [['all', 'Sab'], ['present', 'Hazir'], ['late', 'Late'], ['absen
 
 export function createOwnerView({ data, controller, rerender, logout, checkUpdate, install, manager = false }) {
   const S = data.state;
-  const ui = { openTickets: new Set(), tab: 'hazri', view: 'day', date: pkDate(), month: pkDate().slice(0, 7), filter: 'all', salaryMonth: pkDate().slice(0, 7), staffQuery: '', showInactive: false, pick: null };
+  const ui = { openTickets: new Set(), tab: 'hazri', view: 'day', date: pkDate(), month: pkDate().slice(0, 7), filter: 'all', salaryMonth: pkDate().slice(0, 7), staffQuery: '', showInactive: false, pick: null, openRows: new Set() };
   const activeStaff = () => S.staff.filter(s => s.active !== false);
   const context = () => ({ requests: S.requests, schedules: S.schedules, config: S.config, today: pkDate(), nowMin: pkMinutes(), now: Date.now() });
   // Hazri abhi Firebase se nahi aayi to "Ghair hazir" nahi, "Load ho rahi" dikhao (pehle yehi ghalat-fehmi hoti thi).
@@ -130,15 +130,19 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     if (['absent', 'waiting', 'loading'].includes(status) && status !== 'loading') quick = tix('in', inList, '');
     else if (a.checkIn && !a.checkOut) quick = tix('out', outList, '') + (open ? tix('in', inList, to24(a.checkIn)) : `<button type="button" class="tix-more" data-action="tix-open" data-arg="${key}">Aaya badlein</button>`);
     else if (a.checkIn) quick = open ? tix('in', inList, to24(a.checkIn)) + tix('out', outList, to24(a.checkOut)) : `<button type="button" class="tix-more" data-action="tix-open" data-arg="${key}">Waqt badlein</button>`;
-    return `<li class="row s-${status}${due ? ' is-due' : ''}">
+    // v254 (malik: "ek screen par kam az kam 8 larkon ke naam — chips chhote"): band = ek patli line (photo · naam · waqt · mohar), tap = neeche chips / waqt ke button
+    const rk = s.phone + '|' + date, isOpen = ui.openRows.has(rk), sh = v => fmtTime(v).replace(' am', '').replace(' pm', '');
+    const tm = a.checkIn ? sh(a.checkIn) + (a.checkOut ? '–' + sh(a.checkOut) : '') : '';
+    const warn = chips.some(c => /t-bad|t-late|t-early/.test(c));
+    return `<li class="row cr s-${status}${due ? ' is-due' : ''}${isOpen ? ' is-open' : ''}">
       <div class="row-col">
-        <button type="button" class="row-main" data-action="profile" data-phone="${s.phone}" data-date="${date}">
-          ${avatar(s)}<span class="row-text"><b>${nameHtml(s.name)}</b><small>${esc(s.role || 'Staff')}</small></span>
-          <span class="stamp st-${status}">${esc(stamp)}</span>
+        <button type="button" class="row-main" data-action="row-open" data-arg="${esc(rk)}" aria-expanded="${isOpen}">
+          ${avatar(s)}<span class="row-text"><b>${nameHtml(s.name)}</b></span>${warn ? '<i class="cr-dot" aria-hidden="true"></i>' : ''}
+          ${tm ? `<span class="cr-tm">${esc(tm)}</span>` : ''}<span class="stamp st-${status}">${esc(stamp)}</span>
         </button>
-        <div class="tags">${chips.join('')}</div>${quick ? `<div class="tix-wrap">${quick}</div>` : ''}
+        <div class="cr-x"><div class="tags">${chips.join('')}</div>${quick ? `<div class="tix-wrap">${quick}</div>` : ''}
+          <div class="cr-btns"><button type="button" class="btn btn-ghost btn-sm" data-action="profile" data-phone="${s.phone}" data-date="${date}">${icon('people', 15)} Tafseel</button><button type="button" class="btn btn-ghost btn-sm" data-action="pdf-staff" data-phone="${s.phone}" data-month="${date.slice(0, 7)}" aria-label="${esc(s.name)} ki PDF">${icon('pdf', 15)} PDF</button></div></div>
       </div>
-      <button type="button" class="row-pdf" data-action="pdf-staff" data-phone="${s.phone}" data-month="${date.slice(0, 7)}" aria-label="${esc(s.name)} ki PDF">${icon('pdf', 18)}<span>PDF</span></button>
     </li>`;
   }
   function weekCard() {
@@ -161,9 +165,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     const shown = rows.filter(match).sort((a, b) => (ORDER[a.due ? 'due' : a.status] - ORDER[b.due ? 'due' : b.status]) || (a.a.checkIn || '').localeCompare(b.a.checkIn || '') || String(a.account.name).localeCompare(String(b.account.name)));
     const counts = { all: rows.length, present: c.present, late: c.late, absent: c.absent + c.waiting + c.loading, leave: c.leave + c.off };
     const closed = isClosed(resolveBase(), date), reason = (S.config.closedDays || []).find(d => d.date === date)?.reason;
-    return `${date === today ? breakStatusHtml(S.outs.filter(o => o.kind === 'break' && o.status === 'approved' && o.date === today), Date.now(), o => account(o.phone)?.name || o.name || o.phone) + outCards() + attention() + weekCard() : ''}
-      ${closed ? `<p class="closed-line">${icon('alert', 18)} <span><b>${esc(dateLabel(date))}: Dukaan band</b>${reason && reason !== 'Dukaan band' ? ' — ' + esc(reason) : ''}. Is din koi ghair hazir nahi ginta.</span></p>` : ''}
-      <div class="day-tools">${date === today ? `<button type="button" class="btn btn-ghost btn-sm tone-bad-btn" data-action="ticket-new">${icon('alert', 16)} Bina bataye gaya</button>` : ''}${date === today ? `<button type="button" class="btn btn-primary btn-sm" data-action="break-start">${icon('clock', 16)} Khana break</button>` : ''}<button type="button" class="btn btn-ghost btn-sm" data-action="toggle-closed" data-arg="${date}">${closed ? 'Dukaan band hatayein' : (date === today ? 'Aaj' : 'Is din') + ' dukaan band (Eid / chutti)'}</button>${c.absent + c.waiting && data.monthLoaded(month) ? `<button type="button" class="btn btn-ghost btn-sm" data-action="quick-present-all" data-arg="${date}">Sab ghair hazir ko hazir lagao</button>` : ''}<button type="button" class="btn btn-ghost btn-sm" data-action="selfies-day" data-arg="${date}">${icon('camera', 16)} Selfies dekhein</button></div>
+    return `      ${closed ? `<p class="closed-line">${icon('alert', 18)} <span><b>${esc(dateLabel(date))}: Dukaan band</b>${reason && reason !== 'Dukaan band' ? ' — ' + esc(reason) : ''}. Is din koi ghair hazir nahi ginta.</span></p>` : ''}
       <section class="panel">
         ${strip(c, rows.length)}
         <div class="chips" role="tablist" aria-label="Filter">${FILTERS.map(([k, label]) => `<button type="button" role="tab" class="chip c-${k}" aria-selected="${ui.filter === k}" data-action="filter" data-arg="${k}"><b>${counts[k]}</b> ${label}</button>`).join('')}</div>
@@ -185,18 +187,49 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
         <td class="g-sum">${g.summary.count.present + g.summary.count.late}</td><td class="g-sum st-late">${g.summary.count.late}</td><td class="g-sum st-absent">${g.summary.count.absent}</td></tr>`).join('')}</tbody></table></div>
     </section>`;
   }
+  // v254: 🔔 = sab requests / notifications · ⋮ = baqi kaam (Din / Mahina, PDF, break, dukaan band…)
+  function notiHtml() {
+    const today = pkDate();
+    return breakStatusHtml(S.outs.filter(o => o.kind === 'break' && o.status === 'approved' && o.date === today), Date.now(), o => account(o.phone)?.name || o.name || o.phone) + outCards() + attention() + weekCard();
+  }
+  function notiCount() {
+    const today = pkDate();
+    return (attention().match(/class="att-card/g) || []).length + S.outs.filter(o => o.status === 'pending' && o.date === today).length;
+  }
+  function notiSheet() {
+    const sh = openSheet({ id: 'hznoti', wide: true, title: 'Requests aur notifications', render() { return `<div class="hz-noti">${notiHtml() || '<p class="empty-line">✅ Abhi koi request ya notification nahi.</p>'}</div>`; } });
+    sh.el.addEventListener('click', e => { if (e.target.closest('.att-card')) setTimeout(() => sh.close(), 0); });
+    return sh;
+  }
+  function menuSheet() {
+    const sh = openSheet({ id: 'hzmenu', title: 'Hazri ke kaam', render() {
+      const day = ui.view === 'day', date = ui.date, today = pkDate(), month = date.slice(0, 7);
+      const closed = isClosed(resolveBase(), date), c = countStatuses(rowsFor(date));
+      const b = (action, label, extra = '', cls = 'btn-ghost', close = true) => `<button type="button" class="btn ${cls} btn-sm" data-action="${action}" ${extra}${close ? ' data-mclose="1"' : ''}>${label}</button>`;
+      return `<div class="hz-menu">
+        <div class="switch full" role="tablist"><button type="button" role="tab" aria-selected="${day}" data-action="view" data-arg="day" data-mclose="1">Din</button><button type="button" role="tab" aria-selected="${!day}" data-action="view" data-arg="month" data-mclose="1">Mahina</button></div>
+        ${b(day ? 'pdf-day' : 'pdf-register', `${icon('pdf', 16)} ${day ? 'Is din ki hazri PDF' : 'Register PDF'}`, '', 'btn-ink', false)}
+        ${day ? '' : b('excel', `${icon('down', 16)} Excel`, `data-arg="${ui.month}"`, 'btn-ink', false)}
+        ${day && date === today ? b('ticket-new', `${icon('alert', 16)} Bina bataye gaya`, '', 'btn-ghost tone-bad-btn') : ''}
+        ${day && date === today ? b('break-start', `${icon('clock', 16)} Khana break`, '', 'btn-primary') : ''}
+        ${day ? b('toggle-closed', closed ? 'Dukaan band hatayein' : (date === today ? 'Aaj' : 'Is din') + ' dukaan band (Eid / chutti)', `data-arg="${date}"`) : ''}
+        ${day && c.absent + c.waiting && data.monthLoaded(month) ? b('quick-present-all', 'Sab ghair hazir ko hazir lagao', `data-arg="${date}"`) : ''}
+        ${day ? b('selfies-day', `${icon('camera', 16)} Selfies dekhein`, `data-arg="${date}"`) : ''}
+      </div>`; } });
+    sh.el.addEventListener('click', e => { if (e.target.closest('[data-mclose]')) setTimeout(() => sh.close(), 0); });
+    return sh;
+  }
   function hazriTab() {
     const day = ui.view === 'day', label = day ? dateLabel(ui.date) : monthLabel(ui.month);
     const atEnd = day ? ui.date >= pkDate() : ui.month >= pkDate().slice(0, 7);
-    return `<div class="toolbar">
-        <div class="switch" role="tablist"><button type="button" role="tab" aria-selected="${day}" data-action="view" data-arg="day">Din</button><button type="button" role="tab" aria-selected="${!day}" data-action="view" data-arg="month">Mahina</button></div>
-        <span class="btn-row"><button type="button" class="btn btn-ink" data-action="${day ? 'pdf-day' : 'pdf-register'}">${icon('pdf', 18)} ${day ? 'Aaj ki hazri PDF' : 'Register PDF'}</button>${day ? '' : `<button type="button" class="btn btn-ink" data-action="excel" data-arg="${ui.month}">${icon('down', 18)} Excel</button>`}</span>
-      </div>
-      <div class="datebar">
+    const n = notiCount();
+    return `<div class="hz-bar">
         <button type="button" class="icon-btn" data-action="step" data-arg="-1" aria-label="Pichla">${icon('left')}</button>
         <label class="date-pick"><span>${esc(label)}</span><input type="${day ? 'date' : 'month'}" value="${day ? ui.date : ui.month}" max="${day ? pkDate() : pkDate().slice(0, 7)}" data-change="pick-date" aria-label="Tareekh chunein"></label>
         <button type="button" class="icon-btn" data-action="step" data-arg="1" aria-label="Agla" ${atEnd ? 'disabled' : ''}>${icon('right')}</button>
         ${atEnd ? '' : '<button type="button" class="btn btn-ghost btn-sm" data-action="today">Aaj</button>'}
+        <button type="button" class="hz-ic${n ? ' has' : ''}" data-action="hz-noti" aria-label="Requests aur notifications">🔔${n ? `<em>${n}</em>` : ''}</button>
+        <button type="button" class="hz-ic" data-action="hz-menu" aria-label="Aur kaam">⋮</button>
       </div>
       ${day ? dayView() : monthView()}`;
   }
@@ -1569,6 +1602,10 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
       await busy(el, async () => { await data.deleteStaff(el.dataset.phone); sheets.staffForm?.close(); }, 'Staff delete ho gaya');
     },
     'toggle-inactive'() { ui.showInactive = !ui.showInactive; rerender(); },
+    // v254: patli line par tap = khulna / band (list dobara nahi banti — foran)
+    'row-open'(el) { const k = el.dataset.arg, on = !ui.openRows.has(k); on ? ui.openRows.add(k) : ui.openRows.delete(k); el.closest('.row')?.classList.toggle('is-open', on); el.setAttribute('aria-expanded', String(on)); },
+    'hz-noti'() { open('hznoti', notiSheet); },
+    'hz-menu'() { open('hzmenu', menuSheet); },
     // v253: kai staff ek saath chunna — tick par list dobara nahi banti (foran)
     'staff-pick-mode'() { ui.pick = ui.pick ? null : new Set(); rerender(); },
     'staff-pick'(el) {
@@ -1694,12 +1731,12 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
   function render() {
     const pend = pending().length;
     const tabs = [['hazri', 'Hazri', 'book'], ['salary', 'Salary', 'wallet'], ['staff', 'Staff', 'people'], ...(manager ? [] : [['nigrani', 'Nigrani', 'camera']]), ['settings', 'Settings', 'clock']];
-    return `<header class="top"><div class="top-in">
+    return `<header class="top cmp"><div class="top-in">
         <div class="brand"><span class="brand-mark" aria-hidden="true">NT</span><span><b>Noor Traders</b><small>${manager && !S.pendingWrites ? 'Manager panel · ' + nameHtml(S.account?.name || '') : ''}${S.pendingWrites ? `<span class="sync-pill">${icon('clock', 13)} ${S.pendingWrites} entry server par ja rahi</span>` : manager ? '' : 'Hazri register'}</small></span></div>
         <nav class="tabs" aria-label="Hisse">${tabs.map(([k, label, ic]) => `<button type="button" data-action="tab" data-arg="${k}" aria-current="${ui.tab === k ? 'page' : 'false'}">${icon(ic, 22)}<span>${label}</span>${k === 'settings' && pend + S.outs.filter(o => o.status === 'pending').length ? `<em class="badge">${pend + S.outs.filter(o => o.status === 'pending').length}</em>` : ''}</button>`).join('')}</nav>
         <button type="button" class="search-btn" data-action="search">${icon('search', 18)}<span>Talash: naam, "late is hafte"…</span></button>
       </div></header>
-      <main class="view view-${ui.tab}">${!S.loaded.has('staff') ? '<p class="loading-line">Data aa raha hai…</p>' : ''}${ui.tab === 'hazri' ? hazriTab() : ui.tab === 'salary' ? salaryTab() : ui.tab === 'staff' ? staffTab() : ui.tab === 'nigrani' && !manager ? nigraniTab() : settingsTab()}</main>`;
+      <main class="view cmp view-${ui.tab}">${!S.loaded.has('staff') ? '<p class="loading-line">Data aa raha hai…</p>' : ''}${ui.tab === 'hazri' ? hazriTab() : ui.tab === 'salary' ? salaryTab() : ui.tab === 'staff' ? staffTab() : ui.tab === 'nigrani' && !manager ? nigraniTab() : settingsTab()}</main>`;
   }
   // v211: manager sab kar sakta hai, sirf hazri lagana / badalna / hatana nahi
   if (manager) {
@@ -1707,7 +1744,7 @@ export function createOwnerView({ data, controller, rerender, logout, checkUpdat
     for (const k of ['tix', 'tix-open', 'quick-present', 'quick-present-all', 'close-due', 'toggle-closed', 'att-delete', 'migrate-selfies', 'fill-time']) if (actions[k]) actions[k] = blocked;
     forms.att = blocked;
   }
-  const renderAll = () => { const html = render(); return manager ? html.replace('<main class="view', '<main data-mgr="1" class="view') : html; };
+  const renderAll = () => { try { globalThis.document?.documentElement?.classList.add('no-ur'); } catch { /* test */ } const html = render(); return manager ? html.replace('<main class="view', '<main data-mgr="1" class="view') : html; };
   // v216: app khulte hi notification ka token chupke se taza (ijazat pehle se ho to) — har dafa button na dabana pade
   let pushChecked = false;
   function autoPush() {

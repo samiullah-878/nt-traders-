@@ -476,6 +476,7 @@ export function createStaffView({ data, rerender, logout, checkUpdate, install }
   };
 
   function render() {
+    try { globalThis.document?.documentElement?.classList.remove('no-ur'); } catch { /* test */ }   // v254: Urdu ki line sirf mulazim ke page par
     const tabs = [['hazri', 'Hazri', 'clock'], ['salary', 'Salary', 'wallet'], ['request', 'Request', 'note']];
     const pend = S.requests.filter(r => r.phone === S.phone && r.status === 'pending' && r.kind !== 'suggestion').length;
     return `<header class="top"><div class="top-in">
