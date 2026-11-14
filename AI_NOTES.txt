@@ -5,6 +5,21 @@ Malik: Samiullah (Noor Traders, Gulyana/Kharian). Zuban: ROMAN Urdu (Latin harf)
 Kaam ka tareeqa: pehle plan batao, un ke "OK" ka intezar karo, phir banao. Har update ke sath ye AI_NOTES.txt bhi update karo.
 
 ------------------------------------------------------------
+Functions v252 (14 Nov 2026, app wahi v251) — 🚶 WHATSAPP SE BAHAR JANE KI REQUEST
+------------------------------------------------------------
+Malik: "sab larkon ka code (1 Abdurehman…) · larka Business number par code likhe -> wajah chune -> roz ki pehli 2 request khud manzoor, hamein sirf khabar ·
+teesri se mujhe aur Mubeen ko request, hum OK karein · kisi bhi phone se · jitni bhi request hain WhatsApp par aayein". Layout abhi nahi badalna.
+- functions/index.js `bluein` (HTTPS onRequest, invoker public, POST JSON, chaabi = cameraPC/vault.blue.k, ghalat = 403) -> blueAct:
+    a 'out' {phone, reason, minutes, free(2), by} -> staffOuts naya doc (via 'wa', by 'whatsapp'); aaj ki ginti (break nahi ginte) <= free = status approved + outAt (khud), warna pending.
+       pehle se bahar = err 'out' · pehle se intezar = err 'pending' · band / anjaan larka = err 'staff'.
+    a 'ok' / 'no' {id, by} -> pending doc approved / rejected (transaction; pehle ho chuka = err 'done' + st).
+    a 'back' {phone, by} -> aaj ka khula bahar = returned (mins wapas).
+  Record WAHI staffOuts jo app banati hai — salary / report / push (handleOut "bahar jana chahta hai") sab pehle jaisa. App se request bhi pehle jaisi.
+- blueSummary rows: p (phone), q [id, wajah, wa?] = jawab ke intezar wali bahar ki request; top-level rq [[id, naam, kya, wajah]] = staffRequests pending (chutti / jaldi / bahar se check-out).
+- Codes (1 Abdurehman) Blue Khata ke PC par bante hain (blueAccess/hzCodes) — yahan nahi.
+- Test: blueAct naqli database par 12 surtein theek; logic.test 5 pass. ASAL deploy / WhatsApp par nahi.
+
+------------------------------------------------------------
 v251 (14 Nov 2026) — 👥 BLUE KHATA SE JORNA: aaj ki hazri ki report malik ke WhatsApp par
 ------------------------------------------------------------
 Malik: "jo hamari NT hazri wali app hai us ko Blue Khata ke saath connect karo, larkon ki report WhatsApp par aa jaye — subah 10, shaam 6, jab maangein". OK diya.

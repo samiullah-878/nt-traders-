@@ -75,14 +75,14 @@ export const list = (names, max = 4) => names.slice(0, max).join(', ') + (names.
 /** v251: 👥 Blue Khata ke liye aaj ki hazri ka khulasa (sirf hisab; WhatsApp report dukan ka PC banata hai).
  *  rows: {n naam, s duty shuru, e duty khatam, i aaya, o gaya, l late minute, lv 'f' chutti | 'h' aadhi, off weekly off,
  *         b [[k break | b bahar, 'HH:MM', minute (-1 = abhi bahar), wajah]], t bina-bataye tickets} */
-export function blueSummary({ staff = [], attendance = [], requests = [], schedules = {}, config = {}, date, outs = [], tickets = [], now = Date.now() }) {
+export function blueSummary({ staff = [], attendance = [], requests = [], schedules = {}, config = {}, date, outs = [], tickets = [], pend = [], now = Date.now() }) {
   const closed = (config.closedDays || []).some(d => d?.date === date);
   const att = new Map(attendance.filter(a => a.date === date).map(a => [a.phone, a]));
   const hm = ms => { const m = pkMinutes(new Date(Number(ms))); return `${pad(Math.floor(m / 60))}:${pad(m % 60)}`; };
   const rows = staff.filter(s => s && s.active !== false && !(s.joinDate && date < s.joinDate)).map(s => {
     const sch = scheduleFor(config, schedules[s.phone]), a = att.get(s.phone) || null;
     const lv = requests.find(r => r.phone === s.phone && r.kind === 'leave' && r.status === 'approved' && r.date <= date && (r.to || r.date) >= date);
-    const r = { n: String(s.name || s.phone || '').slice(0, 40), s: String(sch.shiftStart || ''), e: String(sch.shiftEnd || '') };
+    const r = { n: String(s.name || s.phone || '').slice(0, 40), p: String(s.phone || ''), s: String(sch.shiftStart || ''), e: String(sch.shiftEnd || '') };   // v252: p = phone (PC larke ka code isi se banata hai)
     if (a?.checkIn) { r.i = String(a.checkIn).slice(0, 10); const l = lateOnCheckIn({ attendance: a, schedule: sch, requests, date }); if (l) r.l = l; }
     if (a?.checkOut) r.o = String(a.checkOut).slice(0, 10);
     if (lv) r.lv = lv.half ? 'h' : 'f';
@@ -90,7 +90,14 @@ export function blueSummary({ staff = [], attendance = [], requests = [], schedu
     const mine = outs.filter(o => o.phone === s.phone && o.date === date && ['approved', 'returned'].includes(o.status) && Number(o.outAt) > 0).sort((x, y) => Number(x.outAt) - Number(y.outAt));
     if (mine.length) r.b = mine.slice(0, 8).map(o => [o.kind === 'break' ? 'k' : 'b', hm(o.outAt), Number(o.returnAt) > 0 ? Math.max(0, Math.round((Number(o.returnAt) - Number(o.outAt)) / 60000)) : -1, String(o.reason || '').slice(0, 20)]);
     const tk = tickets.filter(t => t.phone === s.phone && t.date === date).length; if (tk) r.t = tk;
+    const pq = outs.find(o => o.phone === s.phone && o.date === date && o.status === 'pending'); if (pq) r.q = [String(pq.id || ''), String(pq.reason || '').slice(0, 30), pq.via === 'wa' ? 1 : 0];   // v252: jawab ka intezar (bahar ki request)
     return r;
   });
-  return { v: 1, d: date, at: now, closed: closed ? 1 : 0, rows };
+  // v252: jawab ke intezar wali doosri requests (chutti / jaldi check-out / bahar se check-out) — malik + Mubeen ko WhatsApp par khabar
+  const nm = new Map(staff.map(x => [x.phone, x.name || x.phone]));
+  const rq = (pend || []).filter(r => r && r.status === 'pending').slice(0, 30).map(r => [String(r.id || ''), String(r.name || nm.get(r.phone) || r.phone || '').slice(0, 40),
+    (r.kind === 'leave' ? 'Chutti ' + (r.date || '') + (r.to && r.to !== r.date ? ' se ' + r.to : '') + (r.half === 'am' ? ' (aadha din subah)' : r.half === 'pm' ? ' (aadha din shaam)' : '')
+      : r.kind === 'early' ? 'Jaldi check-out ' + (r.checkOut || '') : r.via === 'outside' ? 'Bahar se check-out ' + (r.checkOut || '') : String(r.kind || 'request') + ' ' + (r.date || '')).trim().slice(0, 60),
+    String(r.reason || '').slice(0, 60)]);
+  return { v: 1, d: date, at: now, closed: closed ? 1 : 0, rows, rq };
 }

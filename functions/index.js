@@ -4,6 +4,8 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { onRequest } from 'firebase-functions/v2/https';
+import { timingSafeEqual } from 'node:crypto';
 import { logger } from 'firebase-functions';
 import { pkDate, pkMinutes, parseTime, fmt12, scheduleFor, notArrived, checkoutPending, breaksOverdue, lateOnCheckIn, list, blueSummary } from './logic.js';
 
@@ -189,12 +191,13 @@ async function blueSync(force = false) {
       const [staff, requests, schedules] = await Promise.all([rows('staffAccounts'), rows('staffRequests', col('staffRequests').where('kind', '==', 'leave')), schedulesMap()]);
       blueStat = { staff, requests, schedules }; blueStatAt = Date.now();
     }
-    const [cfg, attendance, outs, tickets] = await Promise.all([config(),
+    const [cfg, attendance, outs, tickets, pend] = await Promise.all([config(),
       rows('staffAttendance', col('staffAttendance').where('date', '==', date)),
       rows('staffOuts', col('staffOuts').where('date', '==', date)),
-      rows('staffTickets', col('staffTickets').where('date', '==', date))]);
-    const sum = blueSummary({ ...blueStat, attendance, outs, tickets, config: cfg, date, now: Date.now() });
-    const sig = JSON.stringify(sum.rows) + sum.d + sum.closed;
+      rows('staffTickets', col('staffTickets').where('date', '==', date)),
+      rows('staffRequests', col('staffRequests').where('status', '==', 'pending'))]);
+    const sum = blueSummary({ ...blueStat, attendance, outs, tickets, pend, config: cfg, date, now: Date.now() });
+    const sig = JSON.stringify(sum.rows) + JSON.stringify(sum.rq) + sum.d + sum.closed;
     blueAt = Date.now();
     if (!force && sig === blueLast) return 0;
     const res = await fetch(BLUE_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(8000),
@@ -203,6 +206,57 @@ async function blueSync(force = false) {
     blueLast = sig; return 1;
   } finally { blueBusy = false; }
 }
+
+/* ---------- v252: 🚶 WHATSAPP SE BAHAR JANE KI REQUEST (malik 14 Nov: "larka Business number par apna code likhe -> wajah chune -> roz ki pehli 2 khud manzoor,
+   hamein sirf khabar · teesri se hum WhatsApp par OK karein") ----------
+   Dukan ka PC (Blue Khata wa-out / hz-wa) yahan POST karta hai, WAHI chaabi (cameraPC/vault.blue.k). Yeh function sirf staffOuts likhta hai — wohi record jo app banati hai
+   (salary / report / push sab pehle jaisa). a: out {phone, reason, minutes, free} · ok / no {id, by} · back {phone, by}. Chaabi ghalat = 403. */
+async function blueAct(b) {
+  const a = String(b.a || ''), date = pkDate(), now = Date.now(), by = String(b.by || 'WhatsApp').slice(0, 60);
+  const todayOf = async phone => (await rows('staffOuts', col('staffOuts').where('date', '==', date))).filter(o => o.phone === phone);
+  if (a === 'out') {
+    const phone = String(b.phone || '').slice(0, 20), acc = phone ? (await db.doc(`${BIZ}/staffAccounts/${phone}`).get()).data() : null;
+    if (!acc || acc.active === false) return { ok: false, err: 'staff' };
+    const mine = (await todayOf(phone)).filter(o => ['pending', 'approved', 'returned'].includes(o.status));
+    if (mine.some(o => o.status === 'approved' && !o.returnAt)) return { ok: false, err: 'out' };
+    if (mine.some(o => o.status === 'pending')) return { ok: false, err: 'pending' };
+    const n = mine.filter(o => o.kind !== 'break').length + 1, free = Math.max(0, Math.min(10, Number.isFinite(Number(b.free)) ? Number(b.free) : 2)), auto = n <= free;
+    const ref = col('staffOuts').doc(), name = String(acc.name || phone).slice(0, 80);
+    const doc = { phone, name, date, reason: String(b.reason || 'Bahar').slice(0, 40), note: 'WhatsApp se (' + by + ')', minutes: Math.max(5, Math.min(480, Math.round(Number(b.minutes) || 30))),
+      status: auto ? 'approved' : 'pending', requestedAt: now, serverAt: FieldValue.serverTimestamp(), by: 'whatsapp', via: 'wa' };
+    if (auto) Object.assign(doc, { approvedAt: now, outAt: now, approvedBy: 'whatsapp', approvedByName: `Khud (roz ki pehli ${free})`, ownerNote: '' });
+    await ref.set(doc);
+    return { ok: true, id: ref.id, st: doc.status, n, name };
+  }
+  if (a === 'ok' || a === 'no') {
+    const ref = col('staffOuts').doc(String(b.id || 'x').slice(0, 80));
+    return db.runTransaction(async tx => {
+      const sn = await tx.get(ref), o = sn.exists ? sn.data() : null;
+      if (!o) return { ok: false, err: 'gone' };
+      if (o.status !== 'pending') return { ok: false, err: 'done', st: o.status, by: String(o.approvedByName || ''), name: o.name || '', phone: o.phone || '' };
+      tx.set(ref, a === 'ok' ? { status: 'approved', approvedAt: now, outAt: now, approvedBy: 'whatsapp', approvedByName: by, ownerNote: 'WhatsApp se' }
+        : { status: 'rejected', rejectedAt: now, approvedBy: 'whatsapp', approvedByName: by, ownerNote: 'WhatsApp se' }, { merge: true });
+      return { ok: true, st: a === 'ok' ? 'approved' : 'rejected', name: o.name || '', phone: o.phone || '', reason: o.reason || '' };
+    });
+  }
+  if (a === 'back') {
+    const phone = String(b.phone || '').slice(0, 20), o = (await todayOf(phone)).filter(x => x.status === 'approved' && !x.returnAt && Number(x.outAt) > 0).sort((x, y) => Number(y.outAt) - Number(x.outAt))[0];
+    if (!o) return { ok: false, err: 'notout' };
+    await col('staffOuts').doc(o.id).set({ status: 'returned', returnAt: now, returnBy: 'whatsapp', returnByName: by, returnServerAt: FieldValue.serverTimestamp() }, { merge: true });
+    return { ok: true, mins: Math.max(0, Math.round((now - Number(o.outAt)) / 60000)), reason: o.reason || '', name: o.name || '' };
+  }
+  return { ok: false, err: 'a' };
+}
+export const bluein = onRequest({ region, memory: '256MiB', invoker: 'public', maxInstances: 5 }, async (req, res) => {
+  try {
+    if (req.method !== 'POST') { res.status(405).json({ ok: false, err: 'method' }); return; }
+    const b = req.body && typeof req.body === 'object' ? req.body : {};
+    if (Date.now() - blueKAt > 60000) { blueK = String(((await db.doc(`${BIZ}/cameraPC/vault`).get()).data() || {}).blue?.k || ''); blueKAt = Date.now(); }
+    const k = Buffer.from(String(b.k || '')), want = Buffer.from(blueK);
+    if (want.length < 24 || k.length !== want.length || !timingSafeEqual(k, want)) { res.status(403).json({ ok: false, err: 'key' }); return; }
+    res.json(await blueAct(b));
+  } catch (error) { logger.error('bluein', error); res.status(500).json({ ok: false, err: String(error?.message || error).slice(0, 120) }); }
+});
 
 /* ---------- v219: AIK HI JAGTI FUNCTION — sab foran wali khabrein ----------
    Pehle chaar alag functions thin (onOut FAST, baqi NORMAL = so jati thin, 1-2 minute der). Ab aik hi function (minInstances 1)
