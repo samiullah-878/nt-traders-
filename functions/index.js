@@ -210,7 +210,7 @@ async function blueSync(force = false) {
 /* ---------- v252: 🚶 WHATSAPP SE BAHAR JANE KI REQUEST (malik 14 Nov: "larka Business number par apna code likhe -> wajah chune -> roz ki pehli 2 khud manzoor,
    hamein sirf khabar · teesri se hum WhatsApp par OK karein") ----------
    Dukan ka PC (Blue Khata wa-out / hz-wa) yahan POST karta hai, WAHI chaabi (cameraPC/vault.blue.k). Yeh function sirf staffOuts likhta hai — wohi record jo app banati hai
-   (salary / report / push sab pehle jaisa). a: out {phone, reason, minutes, free} · ok / no {id, by} · back {phone, by}. Chaabi ghalat = 403. */
+   (salary / report / push sab pehle jaisa). a: out {phone, reason, minutes, free} · ok / no {id, by} · back {phone, by} · in {phones, by} · unin {phone, by}. Chaabi ghalat = 403. */
 async function blueAct(b) {
   const a = String(b.a || ''), date = pkDate(), now = Date.now(), by = String(b.by || 'WhatsApp').slice(0, 60);
   const todayOf = async phone => (await rows('staffOuts', col('staffOuts').where('date', '==', date))).filter(o => o.phone === phone);
@@ -244,6 +244,41 @@ async function blueAct(b) {
     if (!o) return { ok: false, err: 'notout' };
     await col('staffOuts').doc(o.id).set({ status: 'returned', returnAt: now, returnBy: 'whatsapp', returnByName: by, returnServerAt: FieldValue.serverTimestamp() }, { merge: true });
     return { ok: true, mins: Math.max(0, Math.round((now - Number(o.outAt)) / 60000)), reason: o.reason || '', name: o.name || '' };
+  }
+  // v255 (malik 15 Nov: 'number select kar ke hazri lag jaye — duty par aane ka waqt ho · sirf main / Mubeen'): a: in {phones[], by} = aaj ki hazri ABHI ke waqt par
+  //   (wohi record jo malik ki app 'Malik ne lagayi' banati hai — manual, via wa). Pehle se lagi = nahi chhuti. a: unin {phone, by} = sirf WhatsApp wali, bina Check-Out hazri wapas.
+  if (a === 'in') {
+    const phones = [...new Set((Array.isArray(b.phones) ? b.phones : [b.phone]).map(x => String(x || '').slice(0, 20)).filter(Boolean))].slice(0, 60);
+    if (!phones.length) return { ok: false, err: 'a' };
+    const [cfg, scheds] = await Promise.all([config(), schedulesMap()]), min = pkMinutes(), hhmm = String(Math.floor(min / 60)).padStart(2, '0') + ':' + String(min % 60).padStart(2, '0');
+    const sc = { m10: 10, m20: 8, m30: 6, m45: 4, late: 2, ...(cfg.scores || {}) }, score = m => m <= 10 ? +sc.m10 : m <= 20 ? +sc.m20 : m <= 30 ? +sc.m30 : m <= 45 ? +sc.m45 : +sc.late;
+    const res = [];
+    for (const phone of phones) {
+      const acc = (await db.doc(`${BIZ}/staffAccounts/${phone}`).get()).data();
+      if (!acc || acc.active === false) { res.push({ phone, st: 'staff' }); continue; }
+      const sch = scheduleFor(cfg, scheds[phone] || null), start = parseTime(sch.shiftStart), late = start == null ? 0 : Math.max(0, min - start), auto = score(Math.max(0, late - Number(sch.grace ?? 10) + 10));
+      const id = `${date}_${phone}`, ref = col('staffAttendance').doc(id), name = String(acc.name || phone).slice(0, 80);
+      const r = await db.runTransaction(async tx => {
+        const sn = await tx.get(ref), o = sn.exists ? sn.data() : null;
+        if (o && o.checkIn) return { phone, st: 'had', name, t: String(o.checkIn).slice(0, 5) };
+        tx.set(ref, { id, date, phone, name, checkIn: hhmm, minutesLate: late, autoScore: auto, finalScore: auto, shiftStart: sch.shiftStart || '', ownerNote: 'WhatsApp se (' + by + ')',
+          editedAt: now, editedBy: 'whatsapp', checkInTs: null, manual: true, via: 'wa' }, { merge: true });
+        return { phone, st: 'ok', name, t: hhmm, late };
+      });
+      res.push(r);
+    }
+    return { ok: true, res, t: hhmm };
+  }
+  if (a === 'unin') {
+    const phone = String(b.phone || '').slice(0, 20), ref = col('staffAttendance').doc(`${date}_${phone}`);
+    return db.runTransaction(async tx => {
+      const sn = await tx.get(ref), o = sn.exists ? sn.data() : null;
+      if (!o || !o.checkIn) return { ok: false, err: 'none' };
+      if (o.via !== 'wa' || !o.manual) return { ok: false, err: 'own', name: o.name || '' };
+      if (o.checkOut) return { ok: false, err: 'outdone', name: o.name || '' };
+      tx.delete(ref);
+      return { ok: true, name: o.name || '', t: String(o.checkIn).slice(0, 5) };
+    });
   }
   return { ok: false, err: 'a' };
 }

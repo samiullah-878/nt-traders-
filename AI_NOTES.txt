@@ -1856,3 +1856,12 @@ Nahi hua (yahan mumkin nahi tha): asal Firebase/rules ke sath, asal phone ka cam
 - Malik ka pehla message "...user friendly bi ho or es ka" par kat gaya tha; baqi hissa abhi maloom nahi.
 - v201 ke baad: malik se poochna ke hazri theek dikh rahi hai; na ho to "App ki jaanch" ka screenshot.
 - Staff ka number badalna: abhi nahi hota (naya staff banao, purana band karo). Chahiye ho to hazri records move karne wala feature banana hoga.
+
+------------------------------------------------------------
+functions v255 (15 Nov 2026) — 👥 WHATSAPP SE HAZRI (number se)
+------------------------------------------------------------
+Malik: 'number select kar ke hazri lag jaye — duty par aane ka waqt ho · sirf main / Mubeen'.
+- functions/index.js blueAct: a: 'in' {phones[], by} = aaj ki hazri ABHI ke waqt par (staffAttendance/<date>_<phone>, manual true, via 'wa', ownerNote 'WhatsApp se (…)',
+  late / score wohi hisaab jo app ka saveAttendance). Pehle se lagi = nahi chhuti ('had'). a: 'unin' {phone} = sirf WhatsApp wali, bina Check-Out hazri delete.
+- Bhejta Blue Khata ka PC hai (pc/hz-wa.js v1.1: 'hazri 1 3 5' · 'hazri nahi 3' · 'hazri list'; sirf malik + Mubeen). App ki koi file nahi badli (version v254 hi).
+- Test: node --check; asal Firebase par nahi (router.test pehle se is machine par fail hota hai — deps). Deploy: GitHub Action (functions/**).
